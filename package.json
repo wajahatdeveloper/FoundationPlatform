@@ -1,0 +1,15 @@
+{
+  "name": "com.homam.foundationplatform",
+  "version": "1.0.0",
+  "displayName": "Foundation Platform",
+  "description": "Core foundation layer for the HOMAM project: attributes, messaging/event bus, patterns, extensions, gizmos, identity, coroutines, DebugX console, framework inspector, and shared editor tooling. Leaf dependency for all gameplay frameworks.",
+  "unity": "6000.3",
+  "author": {
+    "name": "HOMAM"
+  },
+  "dependencies": {
+    "com.cysharp.unitask": "2.3.3",
+    "com.unity.inputsystem": "1.18.0",
+    "com.unity.ugui": "2.0.0"
+  }
+}

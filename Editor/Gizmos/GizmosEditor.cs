@@ -1,0 +1,349 @@
+﻿using UnityEngine;
+using UnityEditor;
+
+namespace FoundationPlatform.Gizmos
+{
+    [CustomEditor(typeof(GizmosComponent))]
+    [CanEditMultipleObjects]
+    public class GizmosEditor : UnityEditor.Editor
+    {
+        SerializedProperty active;
+        SerializedProperty type;
+        SerializedProperty color;
+
+        SerializedProperty positionIsCenterCube;
+        SerializedProperty cubeCenter;
+        SerializedProperty cubeSize;
+
+        SerializedProperty positionIsCenterFrustum;
+        SerializedProperty frustumCenter;
+        SerializedProperty fov;
+        SerializedProperty maxRange;
+        SerializedProperty minRange;
+        SerializedProperty aspect;
+
+        SerializedProperty screenRect;
+        SerializedProperty texture;
+        SerializedProperty mat;
+
+        SerializedProperty positionIsCenterIcon;
+        SerializedProperty iconCenter;
+        SerializedProperty iconName;
+        SerializedProperty allowScaling;
+
+        SerializedProperty useTwoTransforms;
+        SerializedProperty fromV;
+        SerializedProperty toV;
+        SerializedProperty fromTr;
+        SerializedProperty toTr;
+
+        SerializedProperty mesh;
+        SerializedProperty transformIsMeshTransform;
+        SerializedProperty meshPosition;
+        SerializedProperty meshRotation;
+        SerializedProperty meshScale;
+        SerializedProperty subMeshIndex;
+
+        SerializedProperty fromR;
+        SerializedProperty directionR;
+
+        SerializedProperty positionIsCenterSphere;
+        SerializedProperty sphereCenter;
+        SerializedProperty radiusS;
+
+        SerializedProperty positionIsCenterWireCube;
+        SerializedProperty wireCubeCenter;
+        SerializedProperty wireCubeSize;
+
+        SerializedProperty wireMesh;
+        SerializedProperty transformIsWireMeshTransform;
+        SerializedProperty wireMeshPosition;
+        SerializedProperty wireMeshRotation;
+        SerializedProperty wireMeshScale;
+        SerializedProperty subWireMeshIndex;
+
+        SerializedProperty positionIsCenterWireSphere;
+        SerializedProperty wireSphereCenter;
+        SerializedProperty radiusWS;
+
+        SerializedProperty cam;
+        SerializedProperty drawVertex;
+
+        SerializedProperty useTwoTransformsLE;
+        SerializedProperty startPointLE;
+        SerializedProperty endPointLE;
+        SerializedProperty fromTrLE;
+        SerializedProperty toTrLE;
+        SerializedProperty thickness;
+
+        SerializedProperty positionCE;
+        SerializedProperty rotationCE;
+        SerializedProperty scaleCE;
+
+        SerializedProperty positionWCE;
+        SerializedProperty rotationWCE;
+        SerializedProperty scaleWCE;
+
+        void OnEnable()
+        {
+            active = serializedObject.FindProperty("active");
+            type = serializedObject.FindProperty("type");
+            color = serializedObject.FindProperty("color");
+
+            positionIsCenterCube = serializedObject.FindProperty("positionIsCenterCube");
+            cubeCenter = serializedObject.FindProperty("cubeCenter");
+            cubeSize = serializedObject.FindProperty("cubeSize");
+
+            positionIsCenterFrustum = serializedObject.FindProperty("positionIsCenterFrustum");
+            frustumCenter = serializedObject.FindProperty("frustumCenter");
+            fov = serializedObject.FindProperty("fov");
+            maxRange = serializedObject.FindProperty("maxRange");
+            minRange = serializedObject.FindProperty("minRange");
+            aspect = serializedObject.FindProperty("aspect");
+
+            screenRect = serializedObject.FindProperty("screenRect");
+            texture = serializedObject.FindProperty("texture");
+            mat = serializedObject.FindProperty("mat");
+
+            positionIsCenterIcon = serializedObject.FindProperty("positionIsCenterIcon");
+            iconCenter = serializedObject.FindProperty("iconCenter");
+            iconName = serializedObject.FindProperty("iconName");
+            allowScaling = serializedObject.FindProperty("allowScaling");
+
+            useTwoTransforms = serializedObject.FindProperty("useTwoTransforms");
+            fromV = serializedObject.FindProperty("fromV");
+            toV = serializedObject.FindProperty("toV");
+            fromTr = serializedObject.FindProperty("fromTr");
+            toTr = serializedObject.FindProperty("toTr");
+
+            mesh = serializedObject.FindProperty("mesh");
+            transformIsMeshTransform = serializedObject.FindProperty("transformIsMeshTransform");
+            meshPosition = serializedObject.FindProperty("meshPosition");
+            meshRotation = serializedObject.FindProperty("meshRotation");
+            meshScale = serializedObject.FindProperty("meshScale");
+            subMeshIndex = serializedObject.FindProperty("subMeshIndex");
+
+            fromR = serializedObject.FindProperty("fromR");
+            directionR = serializedObject.FindProperty("directionR");
+
+            positionIsCenterSphere = serializedObject.FindProperty("positionIsCenterSphere");
+            sphereCenter = serializedObject.FindProperty("sphereCenter");
+            radiusS = serializedObject.FindProperty("radiusS");
+
+            positionIsCenterWireCube = serializedObject.FindProperty("positionIsCenterWireCube");
+            wireCubeCenter = serializedObject.FindProperty("wireCubeCenter");
+            wireCubeSize = serializedObject.FindProperty("wireCubeSize");
+
+            wireMesh = serializedObject.FindProperty("wireMesh");
+            transformIsWireMeshTransform = serializedObject.FindProperty("transformIsWireMeshTransform");
+            wireMeshPosition = serializedObject.FindProperty("wireMeshPosition");
+            wireMeshRotation = serializedObject.FindProperty("wireMeshRotation");
+            wireMeshScale = serializedObject.FindProperty("wireMeshScale");
+            subWireMeshIndex = serializedObject.FindProperty("subWireMeshIndex");
+
+            positionIsCenterWireSphere = serializedObject.FindProperty("positionIsCenterWireSphere");
+            wireSphereCenter = serializedObject.FindProperty("wireSphereCenter");
+            radiusWS = serializedObject.FindProperty("radiusWS");
+
+            cam = serializedObject.FindProperty("cam");
+            drawVertex = serializedObject.FindProperty("drawVertex");
+
+            useTwoTransformsLE = serializedObject.FindProperty("useTwoTransformsLE");
+            startPointLE = serializedObject.FindProperty("startPointLE");
+            endPointLE = serializedObject.FindProperty("endPointLE");
+            fromTrLE = serializedObject.FindProperty("fromTrLE");
+            toTrLE = serializedObject.FindProperty("toTrLE");
+            thickness = serializedObject.FindProperty("thickness");
+
+            positionCE = serializedObject.FindProperty("positionCE");
+            rotationCE = serializedObject.FindProperty("rotationCE");
+            scaleCE = serializedObject.FindProperty("scaleCE");
+
+            positionWCE = serializedObject.FindProperty("positionWCE");
+            rotationWCE = serializedObject.FindProperty("rotationWCE");
+            scaleWCE = serializedObject.FindProperty("scaleWCE");
+        }
+
+        static int GetTypeIndex(string typeName)
+        {
+            for (int i = 0; i < GizmosComponent.Type.Length; i++)
+            {
+                if (typeName == GizmosComponent.Type[i])
+                    return i;
+            }
+            return 0;
+        }
+
+        public override void OnInspectorGUI()
+        {
+            serializedObject.Update();
+
+            EditorGUILayout.Separator();
+            EditorGUILayout.PropertyField(active, new GUIContent("Enable"));
+            EditorGUILayout.Separator();
+
+            bool showDisabledHelp = !active.hasMultipleDifferentValues && !active.boolValue;
+            bool showGizmoFields = active.hasMultipleDifferentValues || active.boolValue;
+
+            if (showGizmoFields)
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUI.showMixedValue = type.hasMultipleDifferentValues;
+                int typePopupIndex = type.hasMultipleDifferentValues ? 0 : GetTypeIndex(type.stringValue);
+                int newTypeIndex = EditorGUILayout.Popup("Gizmo Type", typePopupIndex, GizmosComponent.Type);
+                EditorGUI.showMixedValue = false;
+                if (EditorGUI.EndChangeCheck())
+                    type.stringValue = GizmosComponent.Type[newTypeIndex];
+
+                EditorGUILayout.PropertyField(color);
+
+                if (type.hasMultipleDifferentValues)
+                {
+                    EditorGUILayout.HelpBox("Selected objects use different gizmo types. Choose a type above to align them, or edit each type's fields after unifying.", MessageType.Info);
+                }
+                else
+                {
+                    EditorGUILayout.BeginVertical("box");
+
+                    int typeIndex = GetTypeIndex(type.stringValue);
+                    switch (typeIndex)
+                    {
+                        case 0://Cube
+                            EditorGUILayout.PropertyField(positionIsCenterCube, new GUIContent("Position is the center"));
+                            if (positionIsCenterCube.hasMultipleDifferentValues || !positionIsCenterCube.boolValue)
+                                EditorGUILayout.PropertyField(cubeCenter);
+                            EditorGUILayout.PropertyField(cubeSize);
+                            break;
+                        case 1://Frustrum
+                            EditorGUILayout.PropertyField(positionIsCenterFrustum, new GUIContent("Position is the center"));
+                            if (positionIsCenterFrustum.hasMultipleDifferentValues || !positionIsCenterFrustum.boolValue)
+                                EditorGUILayout.PropertyField(frustumCenter);
+                            EditorGUILayout.PropertyField(fov);
+                            EditorGUILayout.PropertyField(minRange);
+                            EditorGUILayout.PropertyField(maxRange);
+                            EditorGUILayout.PropertyField(aspect);
+                            break;
+                        case 2://GUITexture
+                            EditorGUILayout.PropertyField(screenRect);
+                            EditorGUILayout.PropertyField(texture);
+                            EditorGUILayout.PropertyField(mat);
+                            break;
+                        case 3://Icon
+                            EditorGUILayout.PropertyField(positionIsCenterIcon, new GUIContent("Position is the center"));
+                            if (positionIsCenterIcon.hasMultipleDifferentValues || !positionIsCenterIcon.boolValue)
+                                EditorGUILayout.PropertyField(iconCenter);
+                            EditorGUILayout.PropertyField(iconName);
+                            EditorGUILayout.PropertyField(allowScaling);
+                            break;
+                        case 4://Line
+                            EditorGUILayout.PropertyField(useTwoTransforms, new GUIContent("Use two transforms"));
+                            if (!useTwoTransforms.hasMultipleDifferentValues && !useTwoTransforms.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(fromV);
+                                EditorGUILayout.PropertyField(toV);
+                            }
+                            else if (!useTwoTransforms.hasMultipleDifferentValues && useTwoTransforms.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(fromTr);
+                                EditorGUILayout.PropertyField(toTr);
+                            }
+                            else
+                            {
+                                EditorGUILayout.PropertyField(fromV);
+                                EditorGUILayout.PropertyField(toV);
+                                EditorGUILayout.PropertyField(fromTr);
+                                EditorGUILayout.PropertyField(toTr);
+                            }
+                            break;
+                        case 5://Mesh
+                            EditorGUILayout.PropertyField(mesh);
+                            EditorGUILayout.PropertyField(transformIsMeshTransform, new GUIContent("Transform is Mesh Transform"));
+                            if (transformIsMeshTransform.hasMultipleDifferentValues || !transformIsMeshTransform.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(meshPosition);
+                                EditorGUILayout.PropertyField(meshRotation);
+                                EditorGUILayout.PropertyField(meshScale);
+                            }
+                            EditorGUILayout.PropertyField(subMeshIndex);
+                            break;
+                        case 6://Ray
+                            EditorGUILayout.PropertyField(fromR);
+                            EditorGUILayout.PropertyField(directionR);
+                            break;
+                        case 7://Sphere
+                            EditorGUILayout.PropertyField(positionIsCenterSphere, new GUIContent("Position is the center"));
+                            if (positionIsCenterSphere.hasMultipleDifferentValues || !positionIsCenterSphere.boolValue)
+                                EditorGUILayout.PropertyField(sphereCenter);
+                            EditorGUILayout.PropertyField(radiusS);
+                            break;
+                        case 8://WireCube
+                            EditorGUILayout.PropertyField(positionIsCenterWireCube, new GUIContent("Position is the center"));
+                            if (positionIsCenterWireCube.hasMultipleDifferentValues || !positionIsCenterWireCube.boolValue)
+                                EditorGUILayout.PropertyField(wireCubeCenter);
+                            EditorGUILayout.PropertyField(wireCubeSize);
+                            break;
+                        case 9://WireMesh
+                            EditorGUILayout.PropertyField(wireMesh);
+                            EditorGUILayout.PropertyField(transformIsWireMeshTransform, new GUIContent("Transform is Mesh Transform"));
+                            if (transformIsWireMeshTransform.hasMultipleDifferentValues || !transformIsWireMeshTransform.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(wireMeshPosition);
+                                EditorGUILayout.PropertyField(wireMeshRotation);
+                                EditorGUILayout.PropertyField(wireMeshScale);
+                            }
+                            EditorGUILayout.PropertyField(subWireMeshIndex);
+                            break;
+                        case 10://WireSphere
+                            EditorGUILayout.PropertyField(positionIsCenterWireSphere, new GUIContent("Position is the center"));
+                            if (positionIsCenterWireSphere.hasMultipleDifferentValues || !positionIsCenterWireSphere.boolValue)
+                                EditorGUILayout.PropertyField(wireSphereCenter);
+                            EditorGUILayout.PropertyField(radiusWS);
+                            break;
+                        case 11://CameraOrthographic
+                            EditorGUILayout.PropertyField(cam);
+                            EditorGUILayout.PropertyField(drawVertex);
+                            break;
+                        case 12://LineExtended
+                            EditorGUILayout.PropertyField(useTwoTransformsLE, new GUIContent("Use two transforms"));
+                            if (!useTwoTransformsLE.hasMultipleDifferentValues && !useTwoTransformsLE.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(startPointLE);
+                                EditorGUILayout.PropertyField(endPointLE);
+                            }
+                            else if (!useTwoTransformsLE.hasMultipleDifferentValues && useTwoTransformsLE.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(fromTrLE);
+                                EditorGUILayout.PropertyField(toTrLE);
+                            }
+                            else
+                            {
+                                EditorGUILayout.PropertyField(startPointLE);
+                                EditorGUILayout.PropertyField(endPointLE);
+                                EditorGUILayout.PropertyField(fromTrLE);
+                                EditorGUILayout.PropertyField(toTrLE);
+                            }
+                            EditorGUILayout.PropertyField(thickness);
+                            break;
+                        case 13://CubeExtended
+                            EditorGUILayout.PropertyField(positionCE);
+                            EditorGUILayout.PropertyField(rotationCE);
+                            EditorGUILayout.PropertyField(scaleCE);
+                            break;
+                        case 14://WireCubeExtended
+                            EditorGUILayout.PropertyField(positionWCE);
+                            EditorGUILayout.PropertyField(rotationWCE);
+                            EditorGUILayout.PropertyField(scaleWCE);
+                            break;
+                    }
+
+                    EditorGUILayout.EndVertical();
+                }
+            }
+
+            if (showDisabledHelp)
+                EditorGUILayout.HelpBox("GizmosComponent is disabled", MessageType.Info, true);
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+}

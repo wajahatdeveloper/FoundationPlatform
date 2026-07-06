@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6732b2eab66f6ec45ae6c3d58d1fdc62, type: 3}
+  m_Name: PackageIntegrationManifest
+  m_EditorClassIdentifier: GameEngineCore.Editor::GameEngineCore.Editor.PackageIntegration.PackageIntegrationManifest
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  packageId: FoundationPlatform
+  displayName: Foundation Platform
+  icon: {fileID: 0}
+  gameplayTags: []
+  typeMappings:
+  - TypeScript: {fileID: 11500000, guid: ded7978ee7d2d3b41bf146451d719e74, type: 3}
+    AuthoringTier: 0
+    StructuredPatterns:
+    - ConcretePrefix: Assets/Data
+      Tokens:
+      - Kind: 1
+        Literal: 
+      - Kind: 2
+        Literal: 
+      - Kind: 0
+        Literal: AnimationSets
+      - Kind: 2
+        Literal: 
+    - ConcretePrefix: Assets/Data
+      Tokens:
+      - Kind: 1
+        Literal: 
+      - Kind: 2
+        Literal: 
+      - Kind: 0
+        Literal: Items
+      - Kind: 2
+        Literal: 
+  - TypeScript: {fileID: 11500000, guid: d7a8815d52f8769449dc7ba77a897fa8, type: 3}
+    AuthoringTier: 0
+    StructuredPatterns:
+    - ConcretePrefix: Assets/Data/Domains/Characters
+      Tokens:
+      - Kind: 2
+        Literal: 
+  - TypeScript: {fileID: 11500000, guid: 2313b7a704dc7174e9512e23f9be9667, type: 3}
+    AuthoringTier: 0
+    StructuredPatterns:
+    - ConcretePrefix: Assets/Data/Domains/Characters
+      Tokens:
+      - Kind: 2
+        Literal: 
+  - TypeScript: {fileID: 11500000, guid: 644adc2d3ba1cf2499db5acb428e9c3a, type: 3}
+    AuthoringTier: 2
+    StructuredPatterns:
+    - ConcretePrefix: Assets/Data/Global/Authoring
+      Tokens: []
+  authoringChecklist:
+  - Step: Author AnimationSet assets under Assets/Data/Domains/Characters for character
+      presentation.
+  - Step: "Use Tools \u2192 FoundationPlatform \u2192 Refresh \u2192 Currency Databases
+      when Economy catalogs change."
+  - Step: Wire EventBus subscriptions through stored delegates per FoundationPlatform
+      messaging docs.
+  successSignal: Animation sets resolve in play mode and currency refresh completes
+    without errors.
+  exampleSceneAsset: {fileID: 0}
+  documentationPath: Assets/Frameworks/FoundationPlatform/ARCHITECTURE.md
+  prefabFolderPath: 
+  validateMenuPaths: []
+  packageToolMenuPaths:
+  - Tools/FoundationPlatform/Refresh/Currency Databases
+  toolsMenuPrefix: FoundationPlatform
+  setupInstructions: "SCENE SETUP:\n\u2022 EventBus/Service layer initialization\n\nASSETS
+    SETUP:\n\u2022 AnimationSet assets under character domains folder\n\nINSPECTOR
+    SETUP:\n\u2022 AnimationSet: configure clips, transition tags, sub-state behaviors"

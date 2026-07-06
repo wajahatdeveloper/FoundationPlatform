@@ -1,0 +1,17 @@
+{
+    "name": "FoundationPlatform.Editor",
+    "rootNamespace": "",
+    "references": [
+        "FoundationPlatform.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
