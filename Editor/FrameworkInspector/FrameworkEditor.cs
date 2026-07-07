@@ -1922,7 +1922,24 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 else
                 {
                     DrawObjectField(e, targets, allowScene: true);
-                    if (ie.ObjectFieldMode != InlineEditorObjectFieldModes.Foldout) expanded = true;
+                    obj = prop.objectReferenceValue;
+                    // Boxed nested editors honor Expanded; when collapsed, a foldout toggles the inline GUI.
+                    if (ie.ObjectFieldMode == InlineEditorObjectFieldModes.Boxed && ie.DrawGUI && obj != null)
+                    {
+                        if (ie.Expanded)
+                        {
+                            expanded = true;
+                        }
+                        else
+                        {
+                            expanded = EditorGUILayout.Foldout(expanded, TempContent("Nested Inspector"), true);
+                        }
+                        foldouts[foldKey] = expanded;
+                    }
+                    else if (ie.ObjectFieldMode != InlineEditorObjectFieldModes.Foldout && ie.DrawPreview && !ie.DrawGUI)
+                    {
+                        expanded = true;
+                    }
                 }
             }
             else expanded = true;
