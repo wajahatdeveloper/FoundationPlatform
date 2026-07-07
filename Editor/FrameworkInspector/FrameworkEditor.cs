@@ -29,7 +29,19 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            FrameworkInspectorRenderer.Draw(this, serializedObject, targets, _foldouts, _tabs);
+            // Last-resort net: the GUI.Scope conversions inside FrameworkInspectorRenderer keep the
+            // layout stack balanced per-element, but this still catches non-GUI failures (metadata
+            // building, tree cloning, etc.) so one broken type degrades to the default inspector
+            // instead of leaving every inspector window broken until a domain reload.
+            try
+            {
+                FrameworkInspectorRenderer.Draw(this, serializedObject, targets, _foldouts, _tabs);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FoundationPlatform.FrameworkInspector] inspector draw for '{target?.GetType().Name}' failed: {ex}");
+                DrawDefaultInspector();
+            }
             serializedObject.ApplyModifiedProperties();
         }
     }
@@ -101,6 +113,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             s_typeCache?.Clear();
             s_initDone.Clear();
             InspectorMemberResolver.ClearCache();
+            FrameworkInspectorTheme.InvalidateSkinCache();
         }
 
         [MenuItem("CONTEXT/Component/Force Rebuild Framework Inspector Cache")]
@@ -108,17 +121,6 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             ClearCache();
             Debug.Log("[FoundationPlatform.FrameworkInspector] Cache cleared successfully.");
-        }
-
-        private static GUIStyle s_centeredBoxLabelStyle;
-        private static GUIStyle CenteredBoxLabelStyle
-        {
-            get
-            {
-                if (s_centeredBoxLabelStyle == null)
-                    s_centeredBoxLabelStyle = new GUIStyle(EditorStyles.boldLabel) { alignment = TextAnchor.MiddleCenter };
-                return s_centeredBoxLabelStyle;
-            }
         }
 
         private static readonly GUIContent s_tempContent = new GUIContent();
@@ -334,28 +336,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             // Cache GUIStyles
             if (mm.DisplayAsString != null)
-            {
-                var das = mm.DisplayAsString;
-                mm.DisplayAsStringStyle = new GUIStyle(EditorStyles.label)
-                {
-                    wordWrap = !das.Overflow,
-                    richText = das.EnableRichText,
-                    alignment = das.Alignment == TextAlignment.Center ? TextAnchor.MiddleCenter
-                        : das.Alignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
-                };
-                if (das.FontSize > 0) mm.DisplayAsStringStyle.fontSize = das.FontSize;
-            }
+                mm.DisplayAsStringStyle = FrameworkInspectorTheme.CreateDisplayAsStringStyle(mm.DisplayAsString);
 
             if (mm.ProgressBar != null)
-            {
-                var pb = mm.ProgressBar;
-                mm.ProgressBarStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    alignment = pb.ValueLabelAlignment == TextAlignment.Left ? TextAnchor.MiddleLeft
-                        : pb.ValueLabelAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleCenter,
-                    normal = { textColor = Color.white },
-                };
-            }
+                mm.ProgressBarStyle = FrameworkInspectorTheme.CreateProgressBarLabelStyle(mm.ProgressBar);
 
             return mm;
         }
@@ -939,22 +923,25 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 case GroupKind.Box:
                 {
-                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    if (g.ShowLabel)
+                    // VerticalScope guarantees EndVertical fires even if a reflection call inside
+                    // RenderChildren throws, so a single bad member can't corrupt the layout stack.
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                     {
-                        string label = g.Box?.LabelText ?? g.Name;
-                        label = InspectorMemberResolver.ResolveString(targets[0], label);
-                        if (!string.IsNullOrEmpty(label))
+                        if (g.ShowLabel)
                         {
-                            if (g.Box != null && g.Box.CenterLabel)
+                            string label = g.Box?.LabelText ?? g.Name;
+                            label = InspectorMemberResolver.ResolveString(targets[0], label);
+                            if (!string.IsNullOrEmpty(label))
                             {
-                                EditorGUILayout.LabelField(label, CenteredBoxLabelStyle);
+                                if (g.Box != null && g.Box.CenterLabel)
+                                {
+                                    EditorGUILayout.LabelField(label, FrameworkInspectorTheme.CenteredSectionTitle);
+                                }
+                                else EditorGUILayout.LabelField(label, FrameworkInspectorTheme.SectionTitle);
                             }
-                            else EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
                         }
+                        RenderChildren(g, targets, foldouts, tabs);
                     }
-                    RenderChildren(g, targets, foldouts, tabs);
-                    EditorGUILayout.EndVertical();
                     break;
                 }
                 case GroupKind.Title:
@@ -962,15 +949,18 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     var t = g.TitleAttr;
                     string title = InspectorMemberResolver.ResolveString(targets[0], g.Name);
                     string subtitle = t != null ? InspectorMemberResolver.ResolveString(targets[0], t.Subtitle) : null;
-                    EditorGUILayout.Space(4);
-                    GuiKit.Title(title, subtitle,
+                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing);
+                    FrameworkInspectorTheme.DrawTitle(title, subtitle,
                         ToTextAlignment(t?.Alignment ?? TitleAlignments.Left),
                         t == null || t.HorizontalLine,
                         t == null || t.BoldTitle);
                     bool indent = t != null && t.Indent;
-                    if (indent) EditorGUI.indentLevel++;
-                    RenderChildren(g, targets, foldouts, tabs);
-                    if (indent) EditorGUI.indentLevel--;
+                    if (indent)
+                    {
+                        using (new EditorGUI.IndentLevelScope())
+                            RenderChildren(g, targets, foldouts, tabs);
+                    }
+                    else RenderChildren(g, targets, foldouts, tabs);
                     break;
                 }
                 case GroupKind.Foldout:
@@ -978,7 +968,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     // Plain foldout matching Unity's native array/struct foldout look (no dark header
                     // bar, no surrounding box — a box border overlaps the arrow and reads as broken).
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
-                    EditorGUILayout.Space(2);
+                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
                     expanded = EditorGUILayout.Foldout(expanded, InspectorMemberResolver.ResolveString(targets[0], g.Name), true);
                     var rect = GUILayoutUtility.GetLastRect();
                     if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
@@ -989,9 +979,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     foldouts[g.Path] = expanded;
                     if (expanded)
                     {
-                        EditorGUI.indentLevel++;
-                        RenderChildren(g, targets, foldouts, tabs);
-                        EditorGUI.indentLevel--;
+                        using (new EditorGUI.IndentLevelScope())
+                            RenderChildren(g, targets, foldouts, tabs);
                     }
                     break;
                 }
@@ -1018,17 +1007,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
                 case GroupKind.ButtonRow:
                 {
-                    EditorGUILayout.BeginHorizontal();
-                    RenderChildren(g, targets, foldouts, tabs);
-                    EditorGUILayout.EndHorizontal();
+                    using (new EditorGUILayout.HorizontalScope())
+                        RenderChildren(g, targets, foldouts, tabs);
                     break;
                 }
                 default: // Vertical / transparent
                 {
                     if (g.Vertical != null && g.Vertical.PaddingTop > 0) GUILayout.Space(g.Vertical.PaddingTop);
-                    EditorGUILayout.BeginVertical();
-                    RenderChildren(g, targets, foldouts, tabs);
-                    EditorGUILayout.EndVertical();
+                    using (new EditorGUILayout.VerticalScope())
+                        RenderChildren(g, targets, foldouts, tabs);
                     if (g.Vertical != null && g.Vertical.PaddingBottom > 0) GUILayout.Space(g.Vertical.PaddingBottom);
                     break;
                 }
@@ -1049,53 +1036,60 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var spec = g.Horizontal;
             string title = spec?.Title;
             if (!string.IsNullOrEmpty(title))
-                GuiKit.Title(InspectorMemberResolver.ResolveString(targets[0], title));
+                FrameworkInspectorTheme.DrawTitle(InspectorMemberResolver.ResolveString(targets[0], title));
 
             float available = EditorGUIUtility.currentViewWidth - 30f;
             float gap = spec?.Gap ?? 3f;
 
-            EditorGUILayout.BeginHorizontal();
-            if (spec != null && spec.MarginLeft > 0) GUILayout.Space(spec.MarginLeft);
-
-            bool first = true;
-            foreach (var child in g.Children)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                if (child is GroupNode sub && !GroupHasVisible(sub, targets)) continue;
-                if (child is InspectorEntry pe && pe.Metadata != null && !IsVisible(pe.Metadata, targets)) continue;
+                if (spec != null && spec.MarginLeft > 0) GUILayout.Space(spec.MarginLeft);
 
-                if (!first && gap > 0) GUILayout.Space(gap);
-                first = false;
-
-                var cell = FindHorizontalSpec(child);
-                var options = new List<GUILayoutOption>();
-                if (cell != null)
+                bool first = true;
+                foreach (var child in g.Children)
                 {
-                    if (cell.Width >= 1f) options.Add(GUILayout.Width(cell.Width));
-                    else if (cell.Width > 0f) options.Add(GUILayout.Width(available * cell.Width));
-                    if (cell.MinWidth >= 1f) options.Add(GUILayout.MinWidth(cell.MinWidth));
-                    else if (cell.MinWidth > 0f) options.Add(GUILayout.MinWidth(available * cell.MinWidth));
-                    if (cell.MaxWidth >= 1f) options.Add(GUILayout.MaxWidth(cell.MaxWidth));
-                    else if (cell.MaxWidth > 0f) options.Add(GUILayout.MaxWidth(available * cell.MaxWidth));
-                    if (cell.PaddingLeft > 0) GUILayout.Space(cell.PaddingLeft);
+                    if (child is GroupNode sub && !GroupHasVisible(sub, targets)) continue;
+                    if (child is InspectorEntry pe && pe.Metadata != null && !IsVisible(pe.Metadata, targets)) continue;
+
+                    if (!first && gap > 0) GUILayout.Space(gap);
+                    first = false;
+
+                    var cell = FindHorizontalSpec(child);
+                    var options = new List<GUILayoutOption>();
+                    if (cell != null)
+                    {
+                        if (cell.Width >= 1f) options.Add(GUILayout.Width(cell.Width));
+                        else if (cell.Width > 0f) options.Add(GUILayout.Width(available * cell.Width));
+                        if (cell.MinWidth >= 1f) options.Add(GUILayout.MinWidth(cell.MinWidth));
+                        else if (cell.MinWidth > 0f) options.Add(GUILayout.MinWidth(available * cell.MinWidth));
+                        if (cell.MaxWidth >= 1f) options.Add(GUILayout.MaxWidth(cell.MaxWidth));
+                        else if (cell.MaxWidth > 0f) options.Add(GUILayout.MaxWidth(available * cell.MaxWidth));
+                        if (cell.PaddingLeft > 0) GUILayout.Space(cell.PaddingLeft);
+                    }
+
+                    float prevLabel = EditorGUIUtility.labelWidth;
+                    using (new EditorGUILayout.VerticalScope(options.ToArray()))
+                    {
+                        try
+                        {
+                            float lw = cell?.LabelWidth ?? spec?.LabelWidth ?? 0f;
+                            if (lw > 0f && lw < 1f) lw = available * lw; // fractional label width = fraction of the view width
+                            if (lw > 0f) EditorGUIUtility.labelWidth = lw;
+
+                            if (child is GroupNode gn) RenderGroup(gn, targets, foldouts, tabs);
+                            else RenderEntry((InspectorEntry)child, targets, foldouts, tabs);
+                        }
+                        finally
+                        {
+                            EditorGUIUtility.labelWidth = prevLabel;
+                        }
+                    }
+
+                    if (cell != null && cell.PaddingRight > 0) GUILayout.Space(cell.PaddingRight);
                 }
 
-                EditorGUILayout.BeginVertical(options.ToArray());
-                float prevLabel = EditorGUIUtility.labelWidth;
-                float lw = cell?.LabelWidth ?? spec?.LabelWidth ?? 0f;
-                if (lw > 0f && lw < 1f) lw = available * lw; // fractional label width = fraction of the view width
-                if (lw > 0f) EditorGUIUtility.labelWidth = lw;
-
-                if (child is GroupNode gn) RenderGroup(gn, targets, foldouts, tabs);
-                else RenderEntry((InspectorEntry)child, targets, foldouts, tabs);
-
-                EditorGUIUtility.labelWidth = prevLabel;
-                EditorGUILayout.EndVertical();
-
-                if (cell != null && cell.PaddingRight > 0) GUILayout.Space(cell.PaddingRight);
+                if (spec != null && spec.MarginRight > 0) GUILayout.Space(spec.MarginRight);
             }
-
-            if (spec != null && spec.MarginRight > 0) GUILayout.Space(spec.MarginRight);
-            EditorGUILayout.EndHorizontal();
         }
 
         private static HorizontalGroupAttribute FindHorizontalSpec(object child)
@@ -1131,20 +1125,22 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool hideBar = pages.Count == 1 && g.Tab != null && g.Tab.HideTabGroupIfTabGroupOnlyHasOneTab;
             bool paddingless = g.Tab != null && g.Tab.Paddingless;
 
-            if (!paddingless) EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            int active = 0;
-            if (!hideBar)
+            using (EditorGUILayout.VerticalScope scope = paddingless ? null : new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                var names = new string[pages.Count];
-                for (int i = 0; i < pages.Count; i++)
-                    names[i] = InspectorMemberResolver.ResolveString(targets[0], pages[i].Name);
-                if (!tabs.TryGetValue(g.Path, out active)) active = 0;
-                active = Mathf.Clamp(active, 0, pages.Count - 1);
-                active = GUILayout.Toolbar(active, names);
-                tabs[g.Path] = active;
+                if (!paddingless) EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
+                int active = 0;
+                if (!hideBar)
+                {
+                    var names = new string[pages.Count];
+                    for (int i = 0; i < pages.Count; i++)
+                        names[i] = InspectorMemberResolver.ResolveString(targets[0], pages[i].Name);
+                    if (!tabs.TryGetValue(g.Path, out active)) active = 0;
+                    active = Mathf.Clamp(active, 0, pages.Count - 1);
+                    active = GUILayout.Toolbar(active, names);
+                    tabs[g.Path] = active;
+                }
+                RenderChildren(pages[active], targets, foldouts, tabs);
             }
-            RenderChildren(pages[active], targets, foldouts, tabs);
-            if (!paddingless) EditorGUILayout.EndVertical();
         }
 
         // ---- toggle group: header checkbox bound to ToggleMemberName; body shown while on ----
@@ -1176,35 +1172,39 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             string title = attr?.GroupTitle ?? ObjectNames.NicifyVariableName(toggleMember);
             title = InspectorMemberResolver.ResolveString(targets[0], title);
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            var prevMixed = EditorGUI.showMixedValue;
-            if (mixed) EditorGUI.showMixedValue = true;
-            EditorGUI.BeginChangeCheck();
-            bool next = EditorGUILayout.ToggleLeft(title, on, EditorStyles.boldLabel);
-            EditorGUI.showMixedValue = prevMixed;
-            if (EditorGUI.EndChangeCheck() && !failed)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                SetMemberValue(targets, toggleMember, next);
-                on = next;
-            }
-
-            if (on)
-            {
-                EditorGUI.indentLevel++;
-                foreach (var child in g.Children)
+                var prevMixed = EditorGUI.showMixedValue;
+                if (mixed) EditorGUI.showMixedValue = true;
+                EditorGUI.BeginChangeCheck();
+                bool next = EditorGUILayout.ToggleLeft(title, on, EditorStyles.boldLabel);
+                EditorGUI.showMixedValue = prevMixed;
+                if (EditorGUI.EndChangeCheck() && !failed)
                 {
-                    // The toggle member itself is the header; skip its normal row.
-                    if (child is InspectorEntry e &&
-                        ((e.Field != null && e.Field.Name == toggleMember) ||
-                         (e.Member != null && e.Member.Name == toggleMember)))
-                        continue;
-                    if (child is GroupNode sub) { if (GroupHasVisible(sub, targets)) RenderGroup(sub, targets, foldouts, tabs); }
-                    else if (child is InspectorEntry ie) RenderEntry(ie, targets, foldouts, tabs);
+                    SetMemberValue(targets, toggleMember, next);
+                    on = next;
                 }
-                EditorGUI.indentLevel--;
+
+                if (on)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        foreach (var child in g.Children)
+                        {
+                            // The toggle member itself is the header; skip its normal row.
+                            if (child is InspectorEntry e &&
+                                ((e.Field != null && e.Field.Name == toggleMember) ||
+                                 (e.Member != null && e.Member.Name == toggleMember)))
+                                continue;
+                            if (child is GroupNode sub) { if (GroupHasVisible(sub, targets)) RenderGroup(sub, targets, foldouts, tabs); }
+                            else if (child is InspectorEntry ie) RenderEntry(ie, targets, foldouts, tabs);
+                        }
+                    }
+                }
             }
-            EditorGUILayout.EndVertical();
-        }        private static void SetMemberValue(object[] targets, string name, object value)
+        }
+
+        private static void SetMemberValue(object[] targets, string name, object value)
         {
             foreach (var target in targets)
             {
@@ -1300,8 +1300,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 foreach (var t in mm.Titles)
                 {
-                    EditorGUILayout.Space(2);
-                    GuiKit.Title(InspectorMemberResolver.ResolveString(target, t.Title),
+                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
+                    FrameworkInspectorTheme.DrawTitle(InspectorMemberResolver.ResolveString(target, t.Title),
                         InspectorMemberResolver.ResolveString(target, t.Subtitle),
                         ToTextAlignment(t.TitleAlignment), t.HorizontalLine, t.Bold);
                 }
@@ -1349,107 +1349,113 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (mm.LabelWidth != null && mm.LabelWidth.Width > 0) EditorGUIUtility.labelWidth = mm.LabelWidth.Width;
             if (mm.Indent != null) EditorGUI.indentLevel += mm.Indent.IndentLevel;
 
-            // [OnInspectorGUI(prepend, append)] on a member.
-            if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Prepend)) InvokeDrawMethod(target, mm.OnInspectorGUI.Prepend);
-
-            using (new EditorGUI.DisabledScope(!enabled))
+            // try/finally guarantees labelWidth/indent/color are restored even if a reflection call
+            // below throws — otherwise a single bad member would leak state into every field after it.
+            try
             {
-                var inline = mm.InlineButtons;
-                bool hasInline = false;
-                if (inline != null)
-                    foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
+                // [OnInspectorGUI(prepend, append)] on a member.
+                if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Prepend)) InvokeDrawMethod(target, mm.OnInspectorGUI.Prepend);
 
-                bool hasReqComp = false;
-                bool reqCompNeedsAdd = false;
-                bool reqCompNeedsAssign = false;
-                Type compType = null;
-                if (mm.RequireComponentButton != null)
+                using (new EditorGUI.DisabledScope(!enabled))
                 {
-                    compType = mm.RequireComponentButton.ComponentType ?? (e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null));
-                    if (compType != null)
-                    {
-                        if (compType.IsArray)
-                        {
-                            compType = compType.GetElementType();
-                        }
-                        else if (compType.IsGenericType && compType.GetGenericTypeDefinition() == typeof(List<>))
-                        {
-                            compType = compType.GetGenericArguments()[0];
-                        }
-                    }
-                    if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
-                    {
-                        foreach (var t in targets)
-                        {
-                            var go = GetGameObject(t);
-                            if (go == null) continue;
-                            bool missingComp = go.GetComponent(compType) == null;
-                            bool missingRef = IsEntryReferenceMissing(e, t);
-                            if (missingComp) reqCompNeedsAdd = true;
-                            else if (missingRef) reqCompNeedsAssign = true;
-                        }
-                        hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
-                    }
-                }
+                    var inline = mm.InlineButtons;
+                    bool hasInline = false;
+                    if (inline != null)
+                        foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
 
-                if (hasInline || hasReqComp) EditorGUILayout.BeginHorizontal();
-
-                switch (e.EntryKind)
-                {
-                    case InspectorEntry.Kind.Field: RenderField(e, targets, foldouts, tabs); break;
-                    case InspectorEntry.Kind.Shown: RenderShown(e, targets); break;
-                    case InspectorEntry.Kind.Button: RenderButton(e, targets); break;
-                    case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
-                }
-
-                if (hasInline && inline != null)
-                {
-                    foreach (var ib in inline)
+                    bool hasReqComp = false;
+                    bool reqCompNeedsAdd = false;
+                    bool reqCompNeedsAssign = false;
+                    Type compType = null;
+                    if (mm.RequireComponentButton != null)
                     {
-                        if (!InlineButtonVisible(ib, target)) continue;
-                        string label = ib.Label != null
-                            ? InspectorMemberResolver.ResolveString(target, ib.Label)
-                            : ObjectNames.NicifyVariableName(ib.Action);
-                        var content = MakeButtonContent(label, ib.Icon);
-                        if (GUILayout.Button(content, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
-                            InvokeAction(targets, ib.Action);
-                    }
-                }
-
-                if (hasReqComp)
-                {
-                    string label = mm.RequireComponentButton.Label;
-                    if (string.IsNullOrEmpty(label))
-                        label = reqCompNeedsAdd ? "Add" : "Assign";
-                    var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
-                    if (GUILayout.Button(content, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
-                    {
-                        foreach (var t in targets)
+                        compType = mm.RequireComponentButton.ComponentType ?? (e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null));
+                        if (compType != null)
                         {
-                            var go = GetGameObject(t);
-                            if (go == null) continue;
-                            var comp = go.GetComponent(compType);
-                            if (comp == null)
+                            if (compType.IsArray)
                             {
-                                comp = Undo.AddComponent(go, compType);
-                                EditorUtility.SetDirty(go);
+                                compType = compType.GetElementType();
                             }
-                            AssignEntryComponentReference(e, t, comp);
+                            else if (compType.IsGenericType && compType.GetGenericTypeDefinition() == typeof(List<>))
+                            {
+                                compType = compType.GetGenericArguments()[0];
+                            }
                         }
-                        if (e.Property != null)
-                            e.Property.serializedObject.Update();
-                        InvokeOnValueChanged(e, targets);
+                        if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
+                        {
+                            foreach (var t in targets)
+                            {
+                                var go = GetGameObject(t);
+                                if (go == null) continue;
+                                bool missingComp = go.GetComponent(compType) == null;
+                                bool missingRef = IsEntryReferenceMissing(e, t);
+                                if (missingComp) reqCompNeedsAdd = true;
+                                else if (missingRef) reqCompNeedsAssign = true;
+                            }
+                            hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
+                        }
+                    }
+
+                    using (EditorGUILayout.HorizontalScope hscope = (hasInline || hasReqComp) ? new EditorGUILayout.HorizontalScope() : null)
+                    {
+                        switch (e.EntryKind)
+                        {
+                            case InspectorEntry.Kind.Field: RenderField(e, targets, foldouts, tabs); break;
+                            case InspectorEntry.Kind.Shown: RenderShown(e, targets); break;
+                            case InspectorEntry.Kind.Button: RenderButton(e, targets); break;
+                            case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
+                        }
+
+                        if (hasInline && inline != null)
+                        {
+                            foreach (var ib in inline)
+                            {
+                                if (!InlineButtonVisible(ib, target)) continue;
+                                string label = ib.Label != null
+                                    ? InspectorMemberResolver.ResolveString(target, ib.Label)
+                                    : ObjectNames.NicifyVariableName(ib.Action);
+                                var content = MakeButtonContent(label, ib.Icon);
+                                if (GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
+                                    InvokeAction(targets, ib.Action);
+                            }
+                        }
+
+                        if (hasReqComp)
+                        {
+                            string label = mm.RequireComponentButton.Label;
+                            if (string.IsNullOrEmpty(label))
+                                label = reqCompNeedsAdd ? "Add" : "Assign";
+                            var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
+                            if (GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
+                            {
+                                foreach (var t in targets)
+                                {
+                                    var go = GetGameObject(t);
+                                    if (go == null) continue;
+                                    var comp = go.GetComponent(compType);
+                                    if (comp == null)
+                                    {
+                                        comp = Undo.AddComponent(go, compType);
+                                        EditorUtility.SetDirty(go);
+                                    }
+                                    AssignEntryComponentReference(e, t, comp);
+                                }
+                                if (e.Property != null)
+                                    e.Property.serializedObject.Update();
+                                InvokeOnValueChanged(e, targets);
+                            }
+                        }
                     }
                 }
 
-                if (hasInline || hasReqComp) EditorGUILayout.EndHorizontal();
+                if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
             }
-
-            if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
-
-            if (mm.Indent != null) EditorGUI.indentLevel -= mm.Indent.IndentLevel;
-            EditorGUIUtility.labelWidth = prevLabelWidth;
-            GUI.color = prev;
+            finally
+            {
+                if (mm.Indent != null) EditorGUI.indentLevel -= mm.Indent.IndentLevel;
+                EditorGUIUtility.labelWidth = prevLabelWidth;
+                GUI.color = prev;
+            }
 
             if (e.SpaceAfter > 0) EditorGUILayout.Space(e.SpaceAfter);
         }
@@ -1958,31 +1964,33 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
             if (ed == null) return;
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            if (ie.DrawHeader) ed.DrawHeader();
-            if (ie.DrawGUI)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUI.indentLevel++;
-                ed.OnInspectorGUI();
-                EditorGUI.indentLevel--;
-            }
-            if (ie.DrawPreview && ed.HasPreviewGUI())
-            {
-                float ph = ie.PreviewHeight > 0 ? ie.PreviewHeight : 35f;
-                var pr = EditorGUILayout.GetControlRect(false, ph);
-                ed.OnPreviewGUI(pr, GUIStyle.none);
-            }
-            else if (ie.DrawPreview)
-            {
-                var tex = AssetPreview.GetAssetPreview(obj) ?? AssetPreview.GetMiniThumbnail(obj);
-                if (tex != null)
+                if (ie.DrawHeader) ed.DrawHeader();
+                if (ie.DrawGUI)
+                {
+                    // Nested editor's own OnInspectorGUI() is third-party/unknown code; the VerticalScope
+                    // above still guarantees this box closes even if it throws.
+                    using (new EditorGUI.IndentLevelScope())
+                        ed.OnInspectorGUI();
+                }
+                if (ie.DrawPreview && ed.HasPreviewGUI())
                 {
                     float ph = ie.PreviewHeight > 0 ? ie.PreviewHeight : 35f;
                     var pr = EditorGUILayout.GetControlRect(false, ph);
-                    GUI.DrawTexture(pr, tex, ScaleMode.ScaleToFit);
+                    ed.OnPreviewGUI(pr, GUIStyle.none);
+                }
+                else if (ie.DrawPreview)
+                {
+                    var tex = AssetPreview.GetAssetPreview(obj) ?? AssetPreview.GetMiniThumbnail(obj);
+                    if (tex != null)
+                    {
+                        float ph = ie.PreviewHeight > 0 ? ie.PreviewHeight : 35f;
+                        var pr = EditorGUILayout.GetControlRect(false, ph);
+                        GUI.DrawTexture(pr, tex, ScaleMode.ScaleToFit);
+                    }
                 }
             }
-            EditorGUILayout.EndVertical();
         }
 
         private static object[] GetTargetsForScope(SerializedProperty prop, object[] parentTargets)
@@ -2234,7 +2242,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 var cv = InspectorMemberResolver.GetValue(targets[0], pb.ColorGetter, out bool cf);
                 if (!cf && cv is Color c) fill = c;
             }
-            Color back = new Color(0.16f, 0.16f, 0.16f);
+            Color back = FrameworkInspectorTheme.ProgressBarBackground;
             if (!string.IsNullOrEmpty(pb.BackgroundColorGetter))
             {
                 var bv = InspectorMemberResolver.GetValue(targets[0], pb.BackgroundColorGetter, out bool bf);
@@ -2549,13 +2557,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static bool DrawAlignedButton(ButtonAttribute b, GUIContent content, float height)
         {
             if (b.Stretch && b.ButtonAlignment == ButtonAlignment.Stretch)
-                return GUILayout.Button(content, GUILayout.Height(height));
+                return GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.Height(height));
 
-            EditorGUILayout.BeginHorizontal();
-            if (b.ButtonAlignment != ButtonAlignment.Left) GUILayout.FlexibleSpace();
-            bool clicked = GUILayout.Button(content, GUILayout.Height(height), GUILayout.ExpandWidth(false));
-            if (b.ButtonAlignment != ButtonAlignment.Right) GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
+            bool clicked;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (b.ButtonAlignment != ButtonAlignment.Left) GUILayout.FlexibleSpace();
+                clicked = GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.Height(height), GUILayout.ExpandWidth(false));
+                if (b.ButtonAlignment != ButtonAlignment.Right) GUILayout.FlexibleSpace();
+            }
             return clicked;
         }
 
@@ -2575,16 +2585,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 s_buttonParams[key] = st;
             }
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(content, EditorStyles.boldLabel);
-            for (int i = 0; i < ps.Length; i++)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                var lbl = new GUIContent(ObjectNames.NicifyVariableName(ps[i].Name));
-                st.Values[i] = PocoInspector.DrawTypedFieldPublic(lbl, ps[i].ParameterType, st.Values[i]);
+                EditorGUILayout.LabelField(content, FrameworkInspectorTheme.SectionTitle);
+                for (int i = 0; i < ps.Length; i++)
+                {
+                    var lbl = new GUIContent(ObjectNames.NicifyVariableName(ps[i].Name));
+                    st.Values[i] = PocoInspector.DrawTypedFieldPublic(lbl, ps[i].ParameterType, st.Values[i]);
+                }
+                if (GUILayout.Button("Invoke", FrameworkInspectorTheme.CompactButton, GUILayout.Height(Mathf.Min(height, 24f))))
+                    InvokeButton(e, targets, st.Values);
             }
-            if (GUILayout.Button("Invoke", GUILayout.Height(Mathf.Min(height, 24f))))
-                InvokeButton(e, targets, st.Values);
-            EditorGUILayout.EndVertical();
         }
 
         private static object DefaultOf(Type t) => t.IsValueType ? Activator.CreateInstance(t) : null;

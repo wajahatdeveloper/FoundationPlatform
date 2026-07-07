@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace FoundationPlatform.FrameworkInspector.Editor
 {
@@ -18,7 +20,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
     {
         private FrameworkInspectorDemoData _data;
         private UnityEditor.Editor _editor;
-        private Vector2 _scroll;
+        private IMGUIContainer _imguiContainer;
 
         [MenuItem(MenuPaths.Diagnostics.FrameworkInspectorDemo, false, MenuPriorities.Diagnostics + 1)]
         private static void Open() => GetWindow<FrameworkInspectorDemoWindow>("Framework Inspector Demo");
@@ -36,14 +38,29 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (_data != null) DestroyImmediate(_data);
         }
 
-        private void OnGUI()
+        private void CreateGUI()
         {
-            EditorGUILayout.HelpBox(
+            var root = rootVisualElement;
+            root.style.flexDirection = FlexDirection.Column;
+
+            var banner = new HelpBox(
                 "This inspector is drawn by FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor (in-house). " +
-                "Every field below uses a FoundationPlatform.FrameworkInspector attribute.", MessageType.Info);
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                "Every field below uses a FoundationPlatform.FrameworkInspector attribute.",
+                HelpBoxMessageType.Info);
+            root.Add(banner);
+
+            var scroll = new ScrollView(ScrollViewMode.Vertical);
+            scroll.style.flexGrow = 1;
+            _imguiContainer = new IMGUIContainer(DrawInspectorImgui);
+            scroll.Add(_imguiContainer);
+            root.Add(scroll);
+        }
+
+        private void DrawInspectorImgui()
+        {
+            FrameworkInspectorTheme.BeginInspectorScope();
             if (_editor != null) _editor.OnInspectorGUI();
-            EditorGUILayout.EndScrollView();
+            FrameworkInspectorTheme.EndInspectorScope();
         }
     }
 

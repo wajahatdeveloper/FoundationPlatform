@@ -24,14 +24,6 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private const BindingFlags MemberFlags =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         private const float CellPad = 2f;
-        private const float RowHeight = 18f;
-
-        private static readonly Color HeaderBg = new(0.18f, 0.18f, 0.20f);
-        private static readonly Color RowBgA = new(0f, 0f, 0f, 0.10f);
-        private static readonly Color RowBgB = new(1f, 1f, 1f, 0.03f);
-        private static readonly Color GridLine = new(0f, 0f, 0f, 0.35f);
-        private static GUIStyle _cellLabel;
-        private static GUIStyle _headerLabel;
 
         private sealed class Column
         {
@@ -121,13 +113,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         /// <summary>Read-only-friendly grid over a live list (reflection). Used by monitoring windows.</summary>
         public static void DrawValueTable(IList list, Type elementType, string title = null)
         {
-            EnsureStyles();
             var cols = GetColumns(elementType);
             if (!string.IsNullOrEmpty(title))
-                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
 
-            float rowH = RowHeight * MaxLines(cols);
-            DrawHeaderRow(cols);
+            float rowH = FrameworkInspectorTheme.RowHeight * MaxLines(cols);
+            DrawHeaderRow(cols, title ?? elementType?.FullName);
 
             if (list == null || list.Count == 0)
             {
@@ -139,7 +130,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 object element = list[i];
                 Rect row = EditorGUILayout.GetControlRect(false, rowH);
-                EditorGUI.DrawRect(row, (i & 1) == 0 ? RowBgA : RowBgB);
+                EditorGUI.DrawRect(row, (i & 1) == 0 ? FrameworkInspectorTheme.TableRowBackgroundA : FrameworkInspectorTheme.TableRowBackgroundB);
                 LayoutCells(row, cols, (cell, col) => DrawValueCell(cell, col, element));
             }
         }
@@ -155,14 +146,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (col.IsButton)
                 {
                     string label = string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name;
-                    if (GUI.Button(cell, label, EditorStyles.miniButton) && col.Method.GetParameters().Length == 0)
+                    if (GUI.Button(cell, label, FrameworkInspectorTheme.CompactButton) && col.Method.GetParameters().Length == 0)
                         col.Method.Invoke(element, null);
                 }
                 else
                 {
                     object value = col.Field != null ? col.Field.GetValue(element)
                         : col.Property != null && col.Property.CanRead ? col.Property.GetValue(element) : null;
-                    GUI.Label(cell, value != null ? value.ToString() : string.Empty, _cellLabel);
+                    GUI.Label(cell, value != null ? value.ToString() : string.Empty, FrameworkInspectorTheme.TableCell);
                 }
             }
             catch { /* defensive: never let one cell break the table */ }
@@ -178,7 +169,6 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         /// <summary>Editable grid over an array/list SerializedProperty. Used for authoring <c>[TableList]</c> fields.</summary>
         public static void DrawSerializedTable(SerializedProperty arrayProp, Type elementType, TableListAttribute settings, GUIContent label)
         {
-            EnsureStyles();
             if (arrayProp == null || !arrayProp.isArray) return;
             settings ??= new TableListAttribute();
             string key = arrayProp.propertyPath;
@@ -197,12 +187,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (settings.AlwaysExpanded)
-                    EditorGUILayout.LabelField(headerText, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(headerText, FrameworkInspectorTheme.SectionTitle);
                 else
                     arrayProp.isExpanded = EditorGUILayout.Foldout(arrayProp.isExpanded, headerText, true);
                 GUILayout.FlexibleSpace();
                 if (!settings.HideToolbar && !settings.IsReadOnly &&
-                    GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
+                    GUILayout.Button("+", FrameworkInspectorTheme.CompactButton, GUILayout.Width(22)))
                 {
                     arrayProp.InsertArrayElementAtIndex(arrayProp.arraySize);
                     arrayProp.serializedObject.ApplyModifiedProperties();
@@ -236,8 +226,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            float rowH = RowHeight * MaxLines(cols);
-            DrawHeaderRow(cols, settings.ShowIndexLabels, !settings.IsReadOnly, settings.DefaultMinColumnWidth);
+            float rowH = FrameworkInspectorTheme.RowHeight * MaxLines(cols);
+            DrawHeaderRow(cols, key, settings.ShowIndexLabels, !settings.IsReadOnly, settings.DefaultMinColumnWidth);
 
             // --- Scroll view (bounded height) ---
             bool scroll = settings.DrawScrollView && settings.MaxScrollViewHeight > 0
@@ -256,12 +246,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 var element = arrayProp.GetArrayElementAtIndex(i);
                 Rect row = EditorGUILayout.GetControlRect(false, rowH);
-                EditorGUI.DrawRect(row, (i & 1) == 0 ? RowBgA : RowBgB);
+                EditorGUI.DrawRect(row, (i & 1) == 0 ? FrameworkInspectorTheme.TableRowBackgroundA : FrameworkInspectorTheme.TableRowBackgroundB);
 
                 float x = row.x;
                 if (settings.ShowIndexLabels)
                 {
-                    GUI.Label(new Rect(x, row.y, 24, row.height), i.ToString(), _cellLabel);
+                    GUI.Label(new Rect(x, row.y, 24, row.height), i.ToString(), FrameworkInspectorTheme.TableCell);
                     x += 24;
                 }
 
@@ -275,7 +265,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
                 if (!settings.IsReadOnly)
                 {
-                    if (GUI.Button(new Rect(row.xMax - 18, row.y, 16, RowHeight), "×", EditorStyles.miniButton))
+                    if (GUI.Button(new Rect(row.xMax - 18, row.y, 16, FrameworkInspectorTheme.RowHeight), "×", FrameworkInspectorTheme.CompactButton))
                         removeAt = i;
                 }
             }
@@ -298,7 +288,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             if (col.IsButton)
             {
-                if (boxed != null && GUI.Button(cell, string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name, EditorStyles.miniButton)
+                if (boxed != null && GUI.Button(cell, string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name, FrameworkInspectorTheme.CompactButton)
                     && col.Method.GetParameters().Length == 0)
                     col.Method.Invoke(boxed, null);
                 GUI.color = prev;
@@ -318,7 +308,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     string text;
                     try { text = col.Property.GetValue(boxed)?.ToString() ?? string.Empty; }
                     catch { text = "<n/a>"; }
-                    GUI.Label(cell, text, _cellLabel); // getter-only prop
+                    GUI.Label(cell, text, FrameworkInspectorTheme.TableCell); // getter-only prop
                 }
             }
             GUI.color = prev;
@@ -326,23 +316,23 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- shared layout
 
-        private static void DrawHeaderRow(List<Column> cols, bool indexColumn = false, bool actionColumn = false, int minColumnWidth = 40)
+        private static void DrawHeaderRow(List<Column> cols, string key = null, bool indexColumn = false, bool actionColumn = false, int minColumnWidth = 40)
         {
-            Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
-            EditorGUI.DrawRect(header, HeaderBg);
+            Rect header = EditorGUILayout.GetControlRect(false, FrameworkInspectorTheme.RowHeight);
+            EditorGUI.DrawRect(header, FrameworkInspectorTheme.TableHeaderBackground);
             float x = header.x;
             if (indexColumn)
             {
-                GUI.Label(new Rect(x, header.y, 24, header.height), "#", _headerLabel);
+                GUI.Label(new Rect(x, header.y, 24, header.height), "#", FrameworkInspectorTheme.TableHeader);
                 x += 24;
             }
             float actionReserve = actionColumn ? 20f : 0f;
             var widths = ResolveWidths(cols, header.width - (x - header.x) - actionReserve, minColumnWidth);
             for (int c = 0; c < cols.Count; c++)
             {
-                GUI.Label(new Rect(x + CellPad, header.y, widths[c] - CellPad * 2, header.height), cols[c].Header, _headerLabel);
-                EditorGUI.DrawRect(new Rect(x, header.y, 1, header.height), GridLine);
-                HandleColumnResize(new Rect(x + widths[c] - 3f, header.y, 6f, header.height), cols[c], widths[c]);
+                GUI.Label(new Rect(x + CellPad, header.y, widths[c] - CellPad * 2, header.height), cols[c].Header, FrameworkInspectorTheme.TableHeader);
+                EditorGUI.DrawRect(new Rect(x, header.y, 1, header.height), FrameworkInspectorTheme.TableGridLine);
+                HandleColumnResize(new Rect(x + widths[c] - 3f, header.y, 6f, header.height), cols[c], widths[c], key, c);
                 x += widths[c];
             }
         }
@@ -351,10 +341,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static float s_dragStartX;
         private static float s_dragStartW;
 
-        private static void HandleColumnResize(Rect handle, Column col, float currentWidth)
+        private static void HandleColumnResize(Rect handle, Column col, float currentWidth, string key, int columnIndex)
         {
             EditorGUIUtility.AddCursorRect(handle, MouseCursor.ResizeHorizontal);
-            int id = GUIUtility.GetControlID(FocusType.Passive);
+            // Hashed on the table's property path + column index (not call order) so column count/order
+            // changes elsewhere can't shift which control receives the resize drag.
+            int hint = (key ?? string.Empty).GetHashCode() ^ (columnIndex * 397);
+            int id = GUIUtility.GetControlID(hint, FocusType.Passive);
             var e = Event.current;
             switch (e.GetTypeForControl(id))
             {
@@ -434,13 +427,6 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
             color = new Color(col.Color.R, col.Color.G, col.Color.B, col.Color.A);
             return true;
-        }
-
-        private static void EnsureStyles()
-        {
-            if (_cellLabel != null) return;
-            _cellLabel = new GUIStyle(EditorStyles.label) { fontSize = 11, clipping = TextClipping.Clip };
-            _headerLabel = new GUIStyle(EditorStyles.miniBoldLabel) { fontSize = 11, clipping = TextClipping.Clip };
         }
     }
 }

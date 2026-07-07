@@ -116,11 +116,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (IsVisible(s.Members[i].Info, target)) { anyVisible = true; break; }
                 if (!anyVisible) continue; // no visible members → skip header entirely
 
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                FrameworkInspectorTheme.BeginSection();
                 string title = LastSegment(s.GroupPath);
                 bool expanded = true;
                 if (s.Group == PocoGroupKind.Foldout)
                 {
+                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
                     string key = "grp:" + s.GroupPath;
                     if (!s_nestedFoldouts.TryGetValue(key, out expanded)) expanded = s.GroupExpandedDefault;
                     expanded = EditorGUILayout.Foldout(expanded, title, true);
@@ -128,7 +129,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
                 else
                 {
-                    EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
                 }
 
                 if (expanded)
@@ -136,7 +137,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     for (int i = 0; i < s.Members.Count; i++)
                         if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
                 }
-                EditorGUILayout.EndVertical();
+                FrameworkInspectorTheme.EndSection();
             }
         }
 
@@ -257,8 +258,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var title = src.GetCustomAttribute<TitleAttribute>();
             if (title != null)
             {
-                EditorGUILayout.Space(2);
-                EditorGUILayout.LabelField(title.Title, EditorStyles.boldLabel);
+                EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
+                var align = title.TitleAlignment == TitleAlignments.Centered ? TextAlignment.Center
+                    : title.TitleAlignment == TitleAlignments.Right ? TextAlignment.Right : TextAlignment.Left;
+                FrameworkInspectorTheme.DrawTitle(title.Title, title.Subtitle, align, title.HorizontalLine, title.Bold);
             }
 
             var space = src.GetCustomAttribute<PropertySpaceAttribute>();
@@ -289,7 +292,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (string.IsNullOrEmpty(label)) label = ObjectNames.NicifyVariableName(m.Method.Name);
             else label = InspectorMemberResolver.ResolveString(target, label);
             float h = FrameworkInspectorRenderer.ButtonHeight(m.Button);
-            if (GUILayout.Button(label, GUILayout.Height(h)) && m.Method.GetParameters().Length == 0)
+            if (GUILayout.Button(label, FrameworkInspectorTheme.CompactButton, GUILayout.Height(h)) && m.Method.GetParameters().Length == 0)
                 m.Method.Invoke(m.Method.IsStatic ? null : target, null);
         }
 
@@ -310,7 +313,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 var declaredType = m.Field != null ? m.Field.FieldType : m.Property?.PropertyType;
                 var et = GetListElementType(declaredType) ?? (items.Count > 0 ? items[0]?.GetType() : null);
                 if (!hideLabel && !string.IsNullOrEmpty(label))
-                    EditorGUILayout.LabelField($"{label} ({items.Count})", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField($"{label} ({items.Count})", FrameworkInspectorTheme.SectionTitle);
                 if (et != null && IsComplexElement(et))
                 {
                     TableRenderer.DrawValueTable(items, et, null);
@@ -330,6 +333,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 string key = (m.Info.DeclaringType?.FullName ?? "") + "." + m.Info.Name;
                 if (!s_nestedFoldouts.TryGetValue(key, out bool exp)) exp = true;
+                EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
                 exp = EditorGUILayout.Foldout(exp, string.IsNullOrEmpty(label) ? m.Info.Name : label, true);
                 s_nestedFoldouts[key] = exp;
                 if (exp)

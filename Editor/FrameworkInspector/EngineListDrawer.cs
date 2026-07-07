@@ -56,28 +56,29 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool expanded = !showFoldout || prop.isExpanded;
 
             // --- Header row ---
-            EditorGUILayout.BeginHorizontal();
-            string headerText = $"{label.text} ({prop.arraySize})";
-            if (showFoldout)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true);
-                expanded = prop.isExpanded;
-            }
-            else EditorGUILayout.LabelField(headerText, EditorStyles.boldLabel);
+                string headerText = $"{label.text} ({prop.arraySize})";
+                if (showFoldout)
+                {
+                    prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true);
+                    expanded = prop.isExpanded;
+                }
+                else EditorGUILayout.LabelField(headerText, EditorStyles.boldLabel);
 
-            GUILayout.FlexibleSpace();
+                GUILayout.FlexibleSpace();
 
-            if (lds != null && !string.IsNullOrEmpty(lds.OnTitleBarGUI))
-            {
-                foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
-            }
+                if (lds != null && !string.IsNullOrEmpty(lds.OnTitleBarGUI))
+                {
+                    foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
+                }
 
-            if (!readOnly && (lds == null || !lds.HideAddButton))
-            {
-                if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
-                    AddElement(e, targets, elemType, lds, occ);
+                if (!readOnly && (lds == null || !lds.HideAddButton))
+                {
+                    if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
+                        AddElement(e, targets, elemType, lds, occ);
+                }
             }
-            EditorGUILayout.EndHorizontal();
 
             if (!expanded) return;
 
@@ -101,14 +102,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 pageCount = (count + pageSize - 1) / pageSize;
                 s_pages.TryGetValue(key, out page);
                 page = Mathf.Clamp(page, 0, pageCount - 1);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                using (new EditorGUI.DisabledScope(page <= 0))
-                    if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.Width(24))) page--;
-                GUILayout.Label($"{page + 1}/{pageCount}", EditorStyles.miniLabel, GUILayout.ExpandWidth(false));
-                using (new EditorGUI.DisabledScope(page >= pageCount - 1))
-                    if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(24))) page++;
-                EditorGUILayout.EndHorizontal();
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace();
+                    using (new EditorGUI.DisabledScope(page <= 0))
+                        if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.Width(24))) page--;
+                    GUILayout.Label($"{page + 1}/{pageCount}", EditorStyles.miniLabel, GUILayout.ExpandWidth(false));
+                    using (new EditorGUI.DisabledScope(page >= pageCount - 1))
+                        if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(24))) page++;
+                }
                 s_pages[key] = page;
                 start = page * pageSize;
                 end = Mathf.Min(start + pageSize, count);
@@ -118,65 +120,68 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool movable = !readOnly && (lds == null || lds.DraggableItems);
             bool removable = !readOnly && (lds == null || !lds.HideRemoveButton);
 
-            EditorGUI.indentLevel++;
             int removeIndex = -1, moveFrom = -1, moveTo = -1;
             var evt = Event.current;
             bool repaint = evt.type == EventType.Repaint;
             if (repaint) s_rowRects[key] = new List<(int, Rect)>();
 
-            for (int i = start; i < end; i++)
+            using (new EditorGUI.IndentLevelScope())
             {
-                var elemProp = prop.GetArrayElementAtIndex(i);
-                string elemLabel = ElementLabel(elemProp, lds, showIndex, i);
-
-                if (!string.IsNullOrEmpty(search) &&
-                    elemLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0 &&
-                    ElementValueText(elemProp).IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-
-                if (lds != null && !string.IsNullOrEmpty(lds.OnBeginListElementGUI))
+                for (int i = start; i < end; i++)
                 {
-                    foreach (var t in targets) InvokeHook(t, lds.OnBeginListElementGUI, i);
+                    var elemProp = prop.GetArrayElementAtIndex(i);
+                    string elemLabel = ElementLabel(elemProp, lds, showIndex, i);
+
+                    if (!string.IsNullOrEmpty(search) &&
+                        elemLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0 &&
+                        ElementValueText(elemProp).IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+
+                    if (lds != null && !string.IsNullOrEmpty(lds.OnBeginListElementGUI))
+                    {
+                        foreach (var t in targets) InvokeHook(t, lds.OnBeginListElementGUI, i);
+                    }
+
+                    // HorizontalScope/VerticalScope below guarantee the row closes even if DrawElement
+                    // throws (e.g. a reflection-driven element drawer) — otherwise one bad row would
+                    // corrupt the layout stack for every row after it.
+                    using (var rowScope = new EditorGUILayout.HorizontalScope())
+                    {
+                        if (repaint) s_rowRects[key].Add((i, rowScope.rect));
+
+                        if (movable)
+                        {
+                            GUILayout.Label("≡", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(14), GUILayout.Height(18));
+                            HandleRowDrag(GUILayoutUtility.GetLastRect(), key, i, ref moveFrom, ref moveTo);
+                        }
+
+                        using (new EditorGUILayout.VerticalScope())
+                        using (new EditorGUI.DisabledScope(readOnly))
+                            DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel);
+
+                        if (removable)
+                        {
+                            if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(20), GUILayout.Height(18)))
+                                removeIndex = i;
+                        }
+                    }
+
+                    if (lds != null && !string.IsNullOrEmpty(lds.OnEndListElementGUI))
+                    {
+                        foreach (var t in targets) InvokeHook(t, lds.OnEndListElementGUI, i);
+                    }
                 }
 
-                var rowRect = EditorGUILayout.BeginHorizontal();
-                if (repaint) s_rowRects[key].Add((i, rowRect));
-
-                if (movable)
+                // Insertion indicator while dragging over this list.
+                if (repaint && s_dragKey == key && s_dropIndex >= 0 && s_rowRects.TryGetValue(key, out var rects) && rects.Count > 0)
                 {
-                    GUILayout.Label("≡", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(14), GUILayout.Height(18));
-                    HandleRowDrag(GUILayoutUtility.GetLastRect(), key, i, ref moveFrom, ref moveTo);
-                }
-
-                EditorGUILayout.BeginVertical();
-                using (new EditorGUI.DisabledScope(readOnly))
-                    DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel);
-                EditorGUILayout.EndVertical();
-
-                if (removable)
-                {
-                    if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(20), GUILayout.Height(18)))
-                        removeIndex = i;
-                }
-                EditorGUILayout.EndHorizontal();
-
-                if (lds != null && !string.IsNullOrEmpty(lds.OnEndListElementGUI))
-                {
-                    foreach (var t in targets) InvokeHook(t, lds.OnEndListElementGUI, i);
+                    Rect line;
+                    var after = rects.FindIndex(r => r.index >= s_dropIndex);
+                    if (after >= 0) { var r = rects[after].rect; line = new Rect(r.x, r.yMin - 1, r.width, 2); }
+                    else { var r = rects[rects.Count - 1].rect; line = new Rect(r.x, r.yMax - 1, r.width, 2); }
+                    EditorGUI.DrawRect(line, new Color(0.24f, 0.49f, 0.90f));
                 }
             }
-
-            // Insertion indicator while dragging over this list.
-            if (repaint && s_dragKey == key && s_dropIndex >= 0 && s_rowRects.TryGetValue(key, out var rects) && rects.Count > 0)
-            {
-                Rect line;
-                var after = rects.FindIndex(r => r.index >= s_dropIndex);
-                if (after >= 0) { var r = rects[after].rect; line = new Rect(r.x, r.yMin - 1, r.width, 2); }
-                else { var r = rects[rects.Count - 1].rect; line = new Rect(r.x, r.yMax - 1, r.width, 2); }
-                EditorGUI.DrawRect(line, new Color(0.24f, 0.49f, 0.90f));
-            }
-
-            EditorGUI.indentLevel--;
 
             if (moveFrom >= 0 && moveTo != moveFrom)
             {
@@ -197,7 +202,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static void HandleRowDrag(Rect handleRect, string key, int index, ref int moveFrom, ref int moveTo)
         {
             EditorGUIUtility.AddCursorRect(handleRect, MouseCursor.MoveArrow);
-            int id = GUIUtility.GetControlID(FocusType.Passive);
+            // Hashed on the list's property path + row index (not call order) so paging/searching/filtering,
+            // which change how many rows precede this one, can't shift which control receives the drag.
+            int id = GUIUtility.GetControlID((key + "#row" + index).GetHashCode(), FocusType.Passive);
             var evt = Event.current;
             switch (evt.GetTypeForControl(id))
             {

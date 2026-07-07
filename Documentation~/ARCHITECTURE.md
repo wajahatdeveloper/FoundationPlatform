@@ -204,6 +204,16 @@ Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenera
 | Tool | Location | Purpose |
 |---|---|---|
 | Framework Inspector | `Editor/FrameworkInspector/` | reflection-driven inspector engine (attribute-based groups, expression resolver, dropdowns, list drawer) |
+
+### Framework Inspector IMGUI theme
+
+Inspector chrome (groups, buttons, tables, progress bars, menu selection) is centralized in `Editor/FrameworkInspector/FrameworkInspectorTheme.cs`. `GuiKit` is the public facade for non-inspector editor windows that need the same boxes/foldouts/titles.
+
+- Default serialized fields still draw through `EditorGUILayout.PropertyField` (native inspector alignment).
+- `[FoldoutGroup]` keeps plain foldouts on nested objects to avoid arrow/box overlap.
+- Action buttons use compact toolbar styling (`EditorStyles.miniButton` via theme).
+- Visual regression harness: **Tools → HOMAM → Framework Inspector Demo** (UIToolkit shell + `IMGUIContainer`).
+
 | UI Validation | `Editor/Validation/UI/` | enforces UI hierarchy/naming conventions, runs as asset postprocessor |
 | Preset Automation | `Editor/Tools/PresetAutomation/` | enforces asset presets on import |
 | DebugX Console | `Editor/Console/` | see Logging section above |
