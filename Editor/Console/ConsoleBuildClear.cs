@@ -1,9 +1,9 @@
 using FoundationPlatform.DebugX;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>Clears the console when a player build starts, if the per-project setting is enabled.</summary>
     internal sealed class ConsoleBuildClear : IPreprocessBuildWithReport

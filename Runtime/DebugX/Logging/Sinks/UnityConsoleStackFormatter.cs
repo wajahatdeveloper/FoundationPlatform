@@ -141,12 +141,8 @@ namespace FoundationPlatform.DebugX
         {
             if (!foundCaller)
             {
-                if (trimmed.StartsWith("at DebugXLogging.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("DebugXLogging.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("at DebugX.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("DebugX.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("at DebugXBuilder.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("DebugXBuilder.", StringComparison.Ordinal))
+                if (trimmed.StartsWith("at FoundationPlatform.DebugX.", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("FoundationPlatform.DebugX.", StringComparison.Ordinal))
                 {
                     return true;
                 }

@@ -1,10 +1,9 @@
 using System.IO;
 using FoundationPlatform.DebugX;
-using DebugXLogging;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Builds an inline source-code snippet (a few lines around the log's caller line, with the caller

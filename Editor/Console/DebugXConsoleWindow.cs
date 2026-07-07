@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using FoundationPlatform.DebugX;
-using DebugXLogging;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -11,7 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// In-house replacement for Editor Console Pro 3, built on UI Toolkit. Reads the always-on

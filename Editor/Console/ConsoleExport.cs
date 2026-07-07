@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 using UnityEditor;
 using UnityEngine;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     internal enum ExportFormat { Text, Csv, Ndjson }
 

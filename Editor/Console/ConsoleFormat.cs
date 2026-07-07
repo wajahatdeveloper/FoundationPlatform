@@ -1,9 +1,8 @@
 using System.Text;
 using FoundationPlatform.DebugX;
-using DebugXLogging;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Builds the display-only strings for an entry (property text, filtered stack) lazily on the main

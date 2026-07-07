@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using FoundationPlatform.DebugX;
-using DebugXLogging;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>One display row: an entry plus how many identical entries it represents when collapsed.</summary>
     internal struct RowRef

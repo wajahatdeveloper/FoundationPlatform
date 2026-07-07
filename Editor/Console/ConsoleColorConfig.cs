@@ -1,8 +1,7 @@
 using FoundationPlatform.DebugX;
-using DebugXLogging;
 using UnityEngine;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Appearance facade over <see cref="DebugXConsoleSettings"/> (per-project). Per-channel tints are

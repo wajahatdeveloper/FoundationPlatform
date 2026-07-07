@@ -1,11 +1,10 @@
 using System.Text.RegularExpressions;
 using FoundationPlatform.DebugX;
-using DebugXLogging;
-using DebugXLogging.ConsoleView;
+using FoundationPlatform.DebugX.ConsoleView;
 using UnityEditor;
 using UnityEngine;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Resolves and opens source locations from console rows and stack frames. Handles both Unity's

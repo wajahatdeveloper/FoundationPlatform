@@ -5,7 +5,7 @@ namespace FoundationPlatform.DebugX
 {
 	internal static class ExplicitErrorDedupe
 	{
-		private const string ExplicitlyLoggedKey = "DebugXLogging.ExplicitlyLogged";
+		private const string ExplicitlyLoggedKey = "FoundationPlatform.DebugX.ExplicitlyLogged";
 
 		[ThreadStatic]
 		private static HashSet<string> s_failureMessages;

@@ -4,6 +4,13 @@
   "displayName": "Foundation Platform",
   "description": "Core foundation layer for the HOMAM project: attributes, messaging/event bus, patterns, extensions, gizmos, identity, coroutines, DebugX console, framework inspector, and shared editor tooling. Leaf dependency for all gameplay frameworks.",
   "unity": "6000.3",
+  "keywords": [
+    "eventbus",
+    "logging",
+    "coroutine",
+    "foundation",
+    "core"
+  ],
   "author": {
     "name": "HOMAM"
   },

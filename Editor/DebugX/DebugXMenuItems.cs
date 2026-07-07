@@ -5,7 +5,7 @@ using System.IO;
 using FoundationPlatform.DebugX;
 using FoundationPlatform.Utilities.Menus;
 
-namespace DebugXLogging
+namespace FoundationPlatform.DebugX
 {
     /// <summary>
     /// Editor menu items for DebugX

@@ -25,7 +25,7 @@ namespace FoundationPlatform.DebugX
         };
 
         // Internal class/namespace identifiers
-        private const string DebugXLoggingNamespace = "DebugXLogging";
+        private const string DebugXNamespace = "FoundationPlatform.DebugX";
         private const string DebugXClassName = "DebugX";
         private const string DebugXBuilderClassName = "DebugXBuilder";
 
@@ -171,15 +171,9 @@ namespace FoundationPlatform.DebugX
             bool isInternalMethodName = Array.IndexOf(InternalMethodNames, methodName) >= 0;
             if (!isInternalMethodName) return false;
             
-            // Check if it's in DebugXLogging namespace
-            if (ns == DebugXLoggingNamespace) return true;
-            
-            // Check if it's in DebugX class (global namespace - empty or null namespace)
-            if ((string.IsNullOrEmpty(ns) || ns == "") && typeName == DebugXClassName) return true;
-            
-            // Check if it's DebugXBuilder class (in DebugXLogging namespace)
-            if (typeName == DebugXBuilderClassName) return true;
-            
+            // DebugX / DebugXBuilder both live in FoundationPlatform.DebugX
+            if (ns == DebugXNamespace && (typeName == DebugXClassName || typeName == DebugXBuilderClassName)) return true;
+
             return false;
         }
 
@@ -304,7 +298,7 @@ namespace FoundationPlatform.DebugX
                 foreach (var line in lines)
                 {
                     string trimmed = line.TrimStart();
-                    // Skip DebugX internals (DebugX., DebugXLogging., DebugXBuilder.) and the extractor itself.
+
                     if (trimmed.StartsWith("DebugX", StringComparison.Ordinal)) continue;
                     if (trimmed.StartsWith("UnityEngine.StackTraceUtility", StringComparison.Ordinal)) continue;
 

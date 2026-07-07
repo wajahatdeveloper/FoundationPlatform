@@ -3,7 +3,7 @@ using FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEngine;
 
-namespace DebugXLogging.ConsoleView.Editor
+namespace FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Project Settings page (Project/DebugX Console) for the per-project console settings. Edits the
