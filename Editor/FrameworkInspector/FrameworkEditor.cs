@@ -972,6 +972,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
                     EditorGUILayout.Space(2);
                     expanded = EditorGUILayout.Foldout(expanded, InspectorMemberResolver.ResolveString(target, g.Name), true);
+                    var rect = GUILayoutUtility.GetLastRect();
+                    if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
+                    {
+                        expanded = !expanded;
+                        Event.current.Use();
+                    }
                     foldouts[g.Path] = expanded;
                     if (expanded)
                     {
@@ -1833,6 +1839,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 // Collapsible foldout header; skip the body when collapsed.
                 e.Property.isExpanded = EditorGUILayout.Foldout(e.Property.isExpanded,
                     lbl ?? TempContent(e.Property.displayName), true);
+                var rect = GUILayoutUtility.GetLastRect();
+                if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
+                {
+                    e.Property.isExpanded = !e.Property.isExpanded;
+                    Event.current.Use();
+                }
                 if (!e.Property.isExpanded) return;
                 indent = true;
             }
