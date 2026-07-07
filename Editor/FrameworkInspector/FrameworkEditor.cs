@@ -1756,9 +1756,19 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static void DrawDefaultField(InspectorEntry e, object[] targets)
         {
             var label = GetLabel(e, targets);
+            var prop = e.Property;
             EditorGUI.BeginChangeCheck();
-            if (label != null) EditorGUILayout.PropertyField(e.Property, label, true);
-            else EditorGUILayout.PropertyField(e.Property, true);
+            // Long bool labels truncate inside indented foldouts; ToggleLeft uses the full row width.
+            if (prop.propertyType == SerializedPropertyType.Boolean
+                && label != null && label != GUIContent.none
+                && !string.IsNullOrEmpty(label.text) && label.text.Length > 30)
+            {
+                bool v = EditorGUILayout.ToggleLeft(label, prop.boolValue);
+                if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, targets); }
+                return;
+            }
+            if (label != null) EditorGUILayout.PropertyField(prop, label, true);
+            else EditorGUILayout.PropertyField(prop, true);
             if (EditorGUI.EndChangeCheck())
             {
                 ApplyNumericConstraints(e, targets);
@@ -2617,7 +2627,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (mm.HideIfs != null)
             {
                 foreach (var h in mm.HideIfs)
-                    if (!InspectorMemberResolver.EvaluateBool(target, h.Condition, h.Value, h.HasValue, false)) return false;
+                    if (InspectorMemberResolver.EvaluateBool(target, h.Condition, h.Value, h.HasValue, false)) return false;
             }
             return true;
         }
