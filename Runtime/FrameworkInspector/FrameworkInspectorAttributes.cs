@@ -68,6 +68,18 @@ namespace FoundationPlatform.FrameworkInspector
         public InlineButtonAttribute(string action, string label) { Action = action; Label = label; }
     }
 
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public sealed class RequireComponentButtonAttribute : Attribute
+    {
+        public Type ComponentType;
+        public string Label;
+        public string Icon;
+
+        public RequireComponentButtonAttribute() { }
+        public RequireComponentButtonAttribute(Type type) { ComponentType = type; }
+        public RequireComponentButtonAttribute(Type type, string label) { ComponentType = type; Label = label; }
+    }
+
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
     public sealed class OnValueChangedAttribute : Attribute
     {

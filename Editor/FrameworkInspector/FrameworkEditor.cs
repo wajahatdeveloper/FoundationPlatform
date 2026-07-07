@@ -261,6 +261,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             mm.Headers = new List<HeaderAttribute>(headers).ToArray();
             mm.DetailedInfoBoxes = new List<DetailedInfoBoxAttribute>(detailedInfoBoxes).ToArray();
             mm.InlineButtons = new List<InlineButtonAttribute>(m.GetCustomAttributes<InlineButtonAttribute>()).ToArray();
+            mm.RequireComponentButton = m.GetCustomAttribute<RequireComponentButtonAttribute>();
 
             // Validation
             mm.Required = m.GetCustomAttribute<RequiredAttribute>();
@@ -1225,6 +1226,52 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
+        private static void AssignEntryComponentReference(InspectorEntry e, object target, UnityEngine.Object reference)
+        {
+            var uo = target as UnityEngine.Object;
+            if (uo == null) return;
+
+            if (e.Property != null)
+            {
+                var so = new SerializedObject(uo);
+                var prop = so.FindProperty(e.Property.propertyPath);
+                if (prop != null && prop.propertyType == SerializedPropertyType.ObjectReference)
+                {
+                    Undo.RecordObject(uo, "Assign Component");
+                    prop.objectReferenceValue = reference;
+                    so.ApplyModifiedProperties();
+                    return;
+                }
+            }
+
+            var memberName = e.Field?.Name ?? e.Member?.Name;
+            if (!string.IsNullOrEmpty(memberName))
+                SetMemberValue(new[] { target }, memberName, reference);
+        }
+
+        private static bool IsEntryReferenceMissing(InspectorEntry e, object target)
+        {
+            var uo = target as UnityEngine.Object;
+            if (e.Property != null && uo != null)
+            {
+                var so = new SerializedObject(uo);
+                var prop = so.FindProperty(e.Property.propertyPath);
+                if (prop != null && prop.propertyType == SerializedPropertyType.ObjectReference)
+                    return prop.objectReferenceValue == null;
+            }
+
+            if (e.Field != null)
+                return SafeGet(e.Field, target) == null;
+
+            if (e.Member is PropertyInfo pi && pi.CanRead)
+            {
+                try { return pi.GetValue(pi.GetGetMethod(true).IsStatic ? null : target) == null; }
+                catch { return true; }
+            }
+
+            return false;
+        }
+
         // ---------------------------------------------------------------- entry pipeline
         // Decorator order: [Title] → info boxes → validation messages → the (possibly wrapped) field.
 
@@ -1319,7 +1366,40 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (inline != null)
                     foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
 
-                if (hasInline) EditorGUILayout.BeginHorizontal();
+                bool hasReqComp = false;
+                bool reqCompNeedsAdd = false;
+                bool reqCompNeedsAssign = false;
+                Type compType = null;
+                if (mm.RequireComponentButton != null)
+                {
+                    compType = mm.RequireComponentButton.ComponentType ?? (e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null));
+                    if (compType != null)
+                    {
+                        if (compType.IsArray)
+                        {
+                            compType = compType.GetElementType();
+                        }
+                        else if (compType.IsGenericType && compType.GetGenericTypeDefinition() == typeof(List<>))
+                        {
+                            compType = compType.GetGenericArguments()[0];
+                        }
+                    }
+                    if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
+                    {
+                        foreach (var t in targets)
+                        {
+                            var go = GetGameObject(t);
+                            if (go == null) continue;
+                            bool missingComp = go.GetComponent(compType) == null;
+                            bool missingRef = IsEntryReferenceMissing(e, t);
+                            if (missingComp) reqCompNeedsAdd = true;
+                            else if (missingRef) reqCompNeedsAssign = true;
+                        }
+                        hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
+                    }
+                }
+
+                if (hasInline || hasReqComp) EditorGUILayout.BeginHorizontal();
 
                 switch (e.EntryKind)
                 {
@@ -1341,8 +1421,35 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         if (GUILayout.Button(content, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
                             InvokeAction(targets, ib.Action);
                     }
-                    EditorGUILayout.EndHorizontal();
                 }
+
+                if (hasReqComp)
+                {
+                    string label = mm.RequireComponentButton.Label;
+                    if (string.IsNullOrEmpty(label))
+                        label = reqCompNeedsAdd ? "Add" : "Assign";
+                    var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
+                    if (GUILayout.Button(content, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
+                    {
+                        foreach (var t in targets)
+                        {
+                            var go = GetGameObject(t);
+                            if (go == null) continue;
+                            var comp = go.GetComponent(compType);
+                            if (comp == null)
+                            {
+                                comp = Undo.AddComponent(go, compType);
+                                EditorUtility.SetDirty(go);
+                            }
+                            AssignEntryComponentReference(e, t, comp);
+                        }
+                        if (e.Property != null)
+                            e.Property.serializedObject.Update();
+                        InvokeOnValueChanged(e, targets);
+                    }
+                }
+
+                if (hasInline || hasReqComp) EditorGUILayout.EndHorizontal();
             }
 
             if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
@@ -1357,18 +1464,26 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static bool InlineButtonVisible(InlineButtonAttribute ib, object target)
             => string.IsNullOrEmpty(ib.ShowIf) || InspectorMemberResolver.EvaluateBool(target, ib.ShowIf, null, false, true);
 
+        private static readonly Dictionary<string, Texture> s_buttonIconCache = new Dictionary<string, Texture>();
+
         private static GUIContent MakeButtonContent(string label, string icon)
         {
-            if (!string.IsNullOrEmpty(icon))
-            {
-                try
-                {
-                    var ic = EditorGUIUtility.IconContent(icon);
-                    if (ic != null && ic.image != null) return new GUIContent(label, ic.image);
-                }
-                catch { }
-            }
+            if (!string.IsNullOrEmpty(icon) && TryGetCachedEditorIcon(icon, out var tex))
+                return new GUIContent(label, tex);
             return new GUIContent(label);
+        }
+
+        private static bool TryGetCachedEditorIcon(string icon, out Texture tex)
+        {
+            if (s_buttonIconCache.TryGetValue(icon, out tex))
+                return tex != null;
+
+            tex = null;
+            var ic = EditorGUIUtility.IconContent(icon);
+            if (ic != null && ic.image != null)
+                tex = ic.image;
+            s_buttonIconCache[icon] = tex;
+            return tex != null;
         }
 
         private static void DrawDetailedInfoBox(InspectorEntry e, object target, DetailedInfoBoxAttribute info, Dictionary<string, bool> foldouts)
@@ -2816,6 +2931,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     yield return p;
         }
 
+        private static GameObject GetGameObject(object target)
+        {
+            if (target is Component c) return c.gameObject;
+            if (target is GameObject go) return go;
+            return null;
+        }
+
         private static bool IsUnitySerialized(FieldInfo f)
         {
             if (f.IsStatic) return false;
@@ -2906,6 +3028,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // Button specifics
         public ButtonAttribute Button;
         public InlineButtonAttribute[] InlineButtons;
+        public RequireComponentButtonAttribute RequireComponentButton;
 
         // Flags
         public bool IsFlagsEnum;
