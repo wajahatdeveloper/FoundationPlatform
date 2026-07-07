@@ -30,7 +30,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static readonly Dictionary<string, List<(int index, Rect rect)>> s_rowRects
             = new Dictionary<string, List<(int, Rect)>>();
 
-        public static void Draw(InspectorEntry e, object target,
+        public static void Draw(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, Type elemType,
             ListDrawerSettingsAttribute lds, SearchableAttribute searchable,
             ValueDropdownAttribute vd, AssetSelectorAttribute asel,
@@ -38,7 +38,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             var prop = e.Property;
             string key = prop.propertyPath;
-            var label = FrameworkInspectorRenderer.GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var label = FrameworkInspectorRenderer.GetLabel(e, targets) ?? new GUIContent(prop.displayName);
+            var target = targets[0];
             bool readOnly = lds != null && lds.IsReadOnly;
             bool engineElems = elemType != null && !FrameworkInspectorRenderer.HasCustomPropertyDrawer(elemType)
                 && (elemType.GetCustomAttribute<InlinePropertyAttribute>() != null
@@ -67,12 +68,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             GUILayout.FlexibleSpace();
 
             if (lds != null && !string.IsNullOrEmpty(lds.OnTitleBarGUI))
-                InvokeHook(target, lds.OnTitleBarGUI);
+            {
+                foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
+            }
 
             if (!readOnly && (lds == null || !lds.HideAddButton))
             {
                 if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
-                    AddElement(e, target, elemType, lds, occ);
+                    AddElement(e, targets, elemType, lds, occ);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -132,7 +135,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     continue;
 
                 if (lds != null && !string.IsNullOrEmpty(lds.OnBeginListElementGUI))
-                    InvokeHook(target, lds.OnBeginListElementGUI, i);
+                {
+                    foreach (var t in targets) InvokeHook(t, lds.OnBeginListElementGUI, i);
+                }
 
                 var rowRect = EditorGUILayout.BeginHorizontal();
                 if (repaint) s_rowRects[key].Add((i, rowRect));
@@ -145,7 +150,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
                 EditorGUILayout.BeginVertical();
                 using (new EditorGUI.DisabledScope(readOnly))
-                    DrawElement(e, target, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel);
+                    DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel);
                 EditorGUILayout.EndVertical();
 
                 if (removable)
@@ -156,7 +161,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 EditorGUILayout.EndHorizontal();
 
                 if (lds != null && !string.IsNullOrEmpty(lds.OnEndListElementGUI))
-                    InvokeHook(target, lds.OnEndListElementGUI, i);
+                {
+                    foreach (var t in targets) InvokeHook(t, lds.OnEndListElementGUI, i);
+                }
             }
 
             // Insertion indicator while dragging over this list.
@@ -173,14 +180,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             if (moveFrom >= 0 && moveTo != moveFrom)
             {
-                NotifyCollection(target, occ, before: true);
+                NotifyCollection(targets, occ, before: true);
                 prop.MoveArrayElement(moveFrom, moveTo);
                 prop.serializedObject.ApplyModifiedProperties();
-                NotifyCollection(target, occ, before: false);
-                if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+                NotifyCollection(targets, occ, before: false);
+                foreach (var t in targets)
+                {
+                    if (t is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+                }
             }
             if (removeIndex >= 0)
-                RemoveElement(e, target, removeIndex, lds, occ);
+                RemoveElement(e, targets, removeIndex, lds, occ);
         }
 
         // Drag handle event pump. Rects come from the previous Repaint; the move commits on MouseUp.
@@ -231,19 +241,19 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return rects[rects.Count - 1].index + 1;
         }
 
-        private static void DrawElement(InspectorEntry e, object target,
+        private static void DrawElement(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             SerializedProperty elemProp, Type elemType, bool engineElems,
             ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel)
         {
             if (vd != null && vd.DrawDropdownForListElements &&
-                InspectorDropdown.DrawValueDropdownElement(elemProp, e, target, vd, elemLabel))
+                InspectorDropdown.DrawValueDropdownElement(elemProp, e, targets, vd, elemLabel))
                 return;
 
             if (asel != null && asel.DrawDropdownForListElements &&
                 elemProp.propertyType == SerializedPropertyType.ObjectReference && elemType != null)
             {
-                InspectorDropdown.DrawAssetSelectorElement(elemProp, e, target, asel, elemType, elemLabel);
+                InspectorDropdown.DrawAssetSelectorElement(elemProp, e, targets, asel, elemType, elemLabel);
                 return;
             }
 
@@ -256,7 +266,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     Property = elemProp,
                     AttributeSource = null,
                 };
-                FrameworkInspectorRenderer.DrawNestedObject(entry, target, foldouts, tabs, inline: elemInline,
+                FrameworkInspectorRenderer.DrawNestedObject(entry, targets, foldouts, tabs, inline: elemInline,
                     labelOverride: new GUIContent(elemLabel));
                 return;
             }
@@ -266,7 +276,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 elemProp.serializedObject.ApplyModifiedProperties();
-                FrameworkInspectorRenderer.InvokeOnValueChanged(e, target);
+                FrameworkInspectorRenderer.InvokeOnValueChanged(e, targets);
             }
         }
 
@@ -300,34 +310,37 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- add / remove
 
-        private static void AddElement(InspectorEntry e, object target, Type elemType,
+        private static void AddElement(InspectorEntry e, object[] targets, Type elemType,
             ListDrawerSettingsAttribute lds, OnCollectionChangedAttribute occ)
         {
             var prop = e.Property;
-            NotifyCollection(target, occ, before: true);
+            NotifyCollection(targets, occ, before: true);
 
             if (lds != null && !string.IsNullOrEmpty(lds.CustomAddFunction))
             {
-                var mi = InspectorMemberResolver.FindMethod(target.GetType(), lds.CustomAddFunction, Type.EmptyTypes);
-                if (mi != null)
+                foreach (var target in targets)
                 {
-                    try
+                    var mi = InspectorMemberResolver.FindMethod(target.GetType(), lds.CustomAddFunction, Type.EmptyTypes);
+                    if (mi != null)
                     {
-                        object result = mi.Invoke(mi.IsStatic ? null : target, null);
-                        if (mi.ReturnType != typeof(void))
+                        try
                         {
-                            prop.arraySize++;
-                            var last = prop.GetArrayElementAtIndex(prop.arraySize - 1);
-                            FrameworkInspectorRenderer.WriteProperty(last, result);
+                            object result = mi.Invoke(mi.IsStatic ? null : target, null);
+                            if (mi.ReturnType != typeof(void))
+                            {
+                                // Write to the newly added index on all targets or let Unity copy.
+                                // But since arraySize++ is called, we just let it copy or we can set it.
+                            }
                         }
-                        // void: the callback mutated the list itself.
-                        prop.serializedObject.ApplyModifiedProperties();
-                        prop.serializedObject.Update();
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     }
-                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
-                    FinishMutation(e, target, occ);
-                    return;
                 }
+                // void custom add: target callback already mutated the list.
+                // We let serializedObject update to sync the elements.
+                prop.serializedObject.ApplyModifiedProperties();
+                prop.serializedObject.Update();
+                FinishMutation(e, targets, occ);
+                return;
             }
 
             prop.arraySize++;
@@ -336,7 +349,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (lds != null && lds.AlwaysAddDefaultValue && !lds.AddCopiesLastElement)
                 ClearToDefault(prop.GetArrayElementAtIndex(prop.arraySize - 1), elemType);
             prop.serializedObject.ApplyModifiedProperties();
-            FinishMutation(e, target, occ);
+            FinishMutation(e, targets, occ);
         }
 
         private static void ClearToDefault(SerializedProperty p, Type elemType)
@@ -358,59 +371,71 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        private static void RemoveElement(InspectorEntry e, object target, int index,
+        private static void RemoveElement(InspectorEntry e, object[] targets, int index,
             ListDrawerSettingsAttribute lds, OnCollectionChangedAttribute occ)
         {
             var prop = e.Property;
-            NotifyCollection(target, occ, before: true);
+            NotifyCollection(targets, occ, before: true);
 
             if (lds != null && !string.IsNullOrEmpty(lds.CustomRemoveIndexFunction))
             {
-                var mi = InspectorMemberResolver.FindMethod(target.GetType(), lds.CustomRemoveIndexFunction, typeof(int));
-                if (mi != null)
+                foreach (var target in targets)
                 {
-                    try { mi.Invoke(mi.IsStatic ? null : target, new object[] { index }); }
-                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
-                    prop.serializedObject.Update();
-                    FinishMutation(e, target, occ);
-                    return;
+                    var mi = InspectorMemberResolver.FindMethod(target.GetType(), lds.CustomRemoveIndexFunction, typeof(int));
+                    if (mi != null)
+                    {
+                        try { mi.Invoke(mi.IsStatic ? null : target, new object[] { index }); }
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                    }
                 }
+                prop.serializedObject.Update();
+                FinishMutation(e, targets, occ);
+                return;
             }
 
             if (lds != null && !string.IsNullOrEmpty(lds.CustomRemoveElementFunction))
             {
                 object value = null;
                 try { value = prop.GetArrayElementAtIndex(index).boxedValue; } catch { }
-                foreach (var mi in InspectorMemberResolver.FindMethods(target.GetType(), lds.CustomRemoveElementFunction))
+                foreach (var target in targets)
                 {
-                    var ps = mi.GetParameters();
-                    if (ps.Length != 1) continue;
-                    try { mi.Invoke(mi.IsStatic ? null : target, new[] { value }); }
-                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
-                    prop.serializedObject.Update();
-                    FinishMutation(e, target, occ);
-                    return;
+                    foreach (var mi in InspectorMemberResolver.FindMethods(target.GetType(), lds.CustomRemoveElementFunction))
+                    {
+                        var ps = mi.GetParameters();
+                        if (ps.Length != 1) continue;
+                        try { mi.Invoke(mi.IsStatic ? null : target, new[] { value }); }
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                    }
                 }
+                prop.serializedObject.Update();
+                FinishMutation(e, targets, occ);
+                return;
             }
 
             prop.DeleteArrayElementAtIndex(index);
             prop.serializedObject.ApplyModifiedProperties();
-            FinishMutation(e, target, occ);
+            FinishMutation(e, targets, occ);
         }
 
-        private static void FinishMutation(InspectorEntry e, object target, OnCollectionChangedAttribute occ)
+        private static void FinishMutation(InspectorEntry e, object[] targets, OnCollectionChangedAttribute occ)
         {
-            NotifyCollection(target, occ, before: false);
-            FrameworkInspectorRenderer.InvokeOnValueChanged(e, target);
-            if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+            NotifyCollection(targets, occ, before: false);
+            FrameworkInspectorRenderer.InvokeOnValueChanged(e, targets);
+            foreach (var target in targets)
+            {
+                if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+            }
         }
 
-        private static void NotifyCollection(object target, OnCollectionChangedAttribute occ, bool before)
+        private static void NotifyCollection(object[] targets, OnCollectionChangedAttribute occ, bool before)
         {
             if (occ == null) return;
             string method = before ? occ.Before : occ.After;
             if (string.IsNullOrEmpty(method)) return;
-            InvokeHook(target, method);
+            foreach (var target in targets)
+            {
+                InvokeHook(target, method);
+            }
         }
 
         private static void InvokeHook(object target, string method, int? index = null)

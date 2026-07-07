@@ -29,7 +29,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            FrameworkInspectorRenderer.Draw(this, serializedObject, target, _foldouts, _tabs);
+            FrameworkInspectorRenderer.Draw(this, serializedObject, targets, _foldouts, _tabs);
             serializedObject.ApplyModifiedProperties();
         }
     }
@@ -551,7 +551,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             bool drawScriptRow = true, HashSet<string> skipFields = null)
         {
-            Type type = target.GetType();
+            Draw(editor, so, new[] { target }, foldouts, tabs, drawScriptRow, skipFields);
+        }
+
+        public static void Draw(UnityEditor.Editor editor, SerializedObject so, object[] targets,
+            Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
+            bool drawScriptRow = true, HashSet<string> skipFields = null)
+        {
+            Type type = targets[0].GetType();
             var meta = GetOrCreateMetadata(type);
 
             // --- Script row (matches Unity's default look) ---
@@ -565,7 +572,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            DrawTypeInfoBoxes(meta, target);
+            DrawTypeInfoBoxes(meta, targets);
 
             var entries = GetPooledList();
             int seq = 0;
@@ -581,28 +588,28 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 AddFieldEntry(entries, it.Copy(), meta, ref seq);
             }
 
-            AddReflectedEntries(entries, meta, target, ref seq);
-            RenderScope(entries, target, foldouts, tabs);
+            AddReflectedEntries(entries, meta, targets, ref seq);
+            RenderScope(entries, targets, foldouts, tabs);
             ReleasePooledList(entries);
         }
 
-        private static void DrawTypeInfoBoxes(TypeMetadata meta, object target)
+        private static void DrawTypeInfoBoxes(TypeMetadata meta, object[] targets)
         {
             if (meta.TypeInfoBoxes != null)
             {
                 foreach (var box in meta.TypeInfoBoxes)
-                    EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, box.Message), MessageType.Info);
+                    EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(targets[0], box.Message), MessageType.Info);
             }
         }
 
         // Build + group + render a set of entries against a target instance. Shared by the root
         // SerializedObject draw and nested [InlineProperty] objects (which drive it off child props).
-        private static void RenderScope(List<InspectorEntry> entries, object target,
+        private static void RenderScope(List<InspectorEntry> entries, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             entries.Sort((a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : a.Sequence.CompareTo(b.Sequence));
 
-            var type = target.GetType();
+            var type = targets[0].GetType();
             var meta = GetOrCreateMetadata(type);
 
             var flatMap = new Dictionary<string, GroupNode>();
@@ -623,7 +630,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             SortGroupChildren(root);
-            RenderChildren(root, target, foldouts, tabs);
+            RenderChildren(root, targets, foldouts, tabs);
         }
 
         // Sibling ordering: groups take the Order of their defining attribute (default 0) and the
@@ -902,30 +909,30 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- rendering
 
-        private static void RenderChildren(GroupNode group, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderChildren(GroupNode group, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             foreach (var child in group.Children)
             {
-                if (child is GroupNode g) { if (GroupHasVisible(g, target)) RenderGroup(g, target, foldouts, tabs); }
-                else if (child is InspectorEntry e) RenderEntry(e, target, foldouts, tabs);
+                if (child is GroupNode g) { if (GroupHasVisible(g, targets)) RenderGroup(g, targets, foldouts, tabs); }
+                else if (child is InspectorEntry e) RenderEntry(e, targets, foldouts, tabs);
             }
         }
 
         // A group with no visible descendant entry is skipped entirely (no empty header/box).
-        private static bool GroupHasVisible(GroupNode g, object target)
+        private static bool GroupHasVisible(GroupNode g, object[] targets)
         {
             foreach (var child in g.Children)
             {
                 if (child is InspectorEntry e)
                 {
-                    if (e.Metadata == null || IsVisible(e.Metadata, target)) return true;
+                    if (e.Metadata == null || IsVisible(e.Metadata, targets)) return true;
                 }
-                else if (child is GroupNode sub && GroupHasVisible(sub, target)) return true;
+                else if (child is GroupNode sub && GroupHasVisible(sub, targets)) return true;
             }
             return false;
         }
 
-        private static void RenderGroup(GroupNode g, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderGroup(GroupNode g, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             switch (g.Kind)
             {
@@ -935,7 +942,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (g.ShowLabel)
                     {
                         string label = g.Box?.LabelText ?? g.Name;
-                        label = InspectorMemberResolver.ResolveString(target, label);
+                        label = InspectorMemberResolver.ResolveString(targets[0], label);
                         if (!string.IsNullOrEmpty(label))
                         {
                             if (g.Box != null && g.Box.CenterLabel)
@@ -945,15 +952,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                             else EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
                         }
                     }
-                    RenderChildren(g, target, foldouts, tabs);
+                    RenderChildren(g, targets, foldouts, tabs);
                     EditorGUILayout.EndVertical();
                     break;
                 }
                 case GroupKind.Title:
                 {
                     var t = g.TitleAttr;
-                    string title = InspectorMemberResolver.ResolveString(target, g.Name);
-                    string subtitle = t != null ? InspectorMemberResolver.ResolveString(target, t.Subtitle) : null;
+                    string title = InspectorMemberResolver.ResolveString(targets[0], g.Name);
+                    string subtitle = t != null ? InspectorMemberResolver.ResolveString(targets[0], t.Subtitle) : null;
                     EditorGUILayout.Space(4);
                     GuiKit.Title(title, subtitle,
                         ToTextAlignment(t?.Alignment ?? TitleAlignments.Left),
@@ -961,7 +968,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         t == null || t.BoldTitle);
                     bool indent = t != null && t.Indent;
                     if (indent) EditorGUI.indentLevel++;
-                    RenderChildren(g, target, foldouts, tabs);
+                    RenderChildren(g, targets, foldouts, tabs);
                     if (indent) EditorGUI.indentLevel--;
                     break;
                 }
@@ -971,7 +978,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     // bar, no surrounding box — a box border overlaps the arrow and reads as broken).
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
                     EditorGUILayout.Space(2);
-                    expanded = EditorGUILayout.Foldout(expanded, InspectorMemberResolver.ResolveString(target, g.Name), true);
+                    expanded = EditorGUILayout.Foldout(expanded, InspectorMemberResolver.ResolveString(targets[0], g.Name), true);
                     var rect = GUILayoutUtility.GetLastRect();
                     if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
                     {
@@ -982,36 +989,36 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (expanded)
                     {
                         EditorGUI.indentLevel++;
-                        RenderChildren(g, target, foldouts, tabs);
+                        RenderChildren(g, targets, foldouts, tabs);
                         EditorGUI.indentLevel--;
                     }
                     break;
                 }
                 case GroupKind.Horizontal:
                 {
-                    RenderHorizontalGroup(g, target, foldouts, tabs);
+                    RenderHorizontalGroup(g, targets, foldouts, tabs);
                     break;
                 }
                 case GroupKind.TabContainer:
                 {
-                    RenderTabGroup(g, target, foldouts, tabs);
+                    RenderTabGroup(g, targets, foldouts, tabs);
                     break;
                 }
                 case GroupKind.TabPage:
                 {
                     // Rendered by its TabContainer; reaching here means the page is orphaned — draw plain.
-                    RenderChildren(g, target, foldouts, tabs);
+                    RenderChildren(g, targets, foldouts, tabs);
                     break;
                 }
                 case GroupKind.Toggle:
                 {
-                    RenderToggleGroup(g, target, foldouts, tabs);
+                    RenderToggleGroup(g, targets, foldouts, tabs);
                     break;
                 }
                 case GroupKind.ButtonRow:
                 {
                     EditorGUILayout.BeginHorizontal();
-                    RenderChildren(g, target, foldouts, tabs);
+                    RenderChildren(g, targets, foldouts, tabs);
                     EditorGUILayout.EndHorizontal();
                     break;
                 }
@@ -1019,7 +1026,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 {
                     if (g.Vertical != null && g.Vertical.PaddingTop > 0) GUILayout.Space(g.Vertical.PaddingTop);
                     EditorGUILayout.BeginVertical();
-                    RenderChildren(g, target, foldouts, tabs);
+                    RenderChildren(g, targets, foldouts, tabs);
                     EditorGUILayout.EndVertical();
                     if (g.Vertical != null && g.Vertical.PaddingBottom > 0) GUILayout.Space(g.Vertical.PaddingBottom);
                     break;
@@ -1036,12 +1043,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---- horizontal group: per-member column widths (0 = flex, <1 = fraction, >=1 = pixels) ----
 
-        private static void RenderHorizontalGroup(GroupNode g, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderHorizontalGroup(GroupNode g, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             var spec = g.Horizontal;
             string title = spec?.Title;
             if (!string.IsNullOrEmpty(title))
-                GuiKit.Title(InspectorMemberResolver.ResolveString(target, title));
+                GuiKit.Title(InspectorMemberResolver.ResolveString(targets[0], title));
 
             float available = EditorGUIUtility.currentViewWidth - 30f;
             float gap = spec?.Gap ?? 3f;
@@ -1052,8 +1059,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool first = true;
             foreach (var child in g.Children)
             {
-                if (child is GroupNode sub && !GroupHasVisible(sub, target)) continue;
-                if (child is InspectorEntry pe && pe.Metadata != null && !IsVisible(pe.Metadata, target)) continue;
+                if (child is GroupNode sub && !GroupHasVisible(sub, targets)) continue;
+                if (child is InspectorEntry pe && pe.Metadata != null && !IsVisible(pe.Metadata, targets)) continue;
 
                 if (!first && gap > 0) GUILayout.Space(gap);
                 first = false;
@@ -1077,8 +1084,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (lw > 0f && lw < 1f) lw = available * lw; // fractional label width = fraction of the view width
                 if (lw > 0f) EditorGUIUtility.labelWidth = lw;
 
-                if (child is GroupNode gn) RenderGroup(gn, target, foldouts, tabs);
-                else RenderEntry((InspectorEntry)child, target, foldouts, tabs);
+                if (child is GroupNode gn) RenderGroup(gn, targets, foldouts, tabs);
+                else RenderEntry((InspectorEntry)child, targets, foldouts, tabs);
 
                 EditorGUIUtility.labelWidth = prevLabel;
                 EditorGUILayout.EndVertical();
@@ -1106,17 +1113,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---- tab group: pages are child groups; nested groups render inside their page ----
 
-        private static void RenderTabGroup(GroupNode g, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderTabGroup(GroupNode g, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             var pages = new List<GroupNode>();
             var strays = new List<InspectorEntry>();
             foreach (var c in g.Children)
             {
-                if (c is GroupNode page) { if (GroupHasVisible(page, target)) pages.Add(page); }
+                if (c is GroupNode page) { if (GroupHasVisible(page, targets)) pages.Add(page); }
                 else if (c is InspectorEntry e) strays.Add(e);
             }
 
-            foreach (var s in strays) RenderEntry(s, target, foldouts, tabs);
+            foreach (var s in strays) RenderEntry(s, targets, foldouts, tabs);
 
             if (pages.Count == 0) return;
 
@@ -1129,41 +1136,55 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 var names = new string[pages.Count];
                 for (int i = 0; i < pages.Count; i++)
-                    names[i] = InspectorMemberResolver.ResolveString(target, pages[i].Name);
+                    names[i] = InspectorMemberResolver.ResolveString(targets[0], pages[i].Name);
                 if (!tabs.TryGetValue(g.Path, out active)) active = 0;
                 active = Mathf.Clamp(active, 0, pages.Count - 1);
                 active = GUILayout.Toolbar(active, names);
                 tabs[g.Path] = active;
             }
-            RenderChildren(pages[active], target, foldouts, tabs);
+            RenderChildren(pages[active], targets, foldouts, tabs);
             if (!paddingless) EditorGUILayout.EndVertical();
         }
 
         // ---- toggle group: header checkbox bound to ToggleMemberName; body shown while on ----
 
-        private static void RenderToggleGroup(GroupNode g, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderToggleGroup(GroupNode g, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             var attr = g.Toggle;
             string toggleMember = attr?.ToggleMemberName ?? g.Name;
+            
+            bool mixed = false;
             bool on = false;
-            var val = InspectorMemberResolver.GetValue(target, toggleMember, out bool failed);
-            if (!failed && val is bool b) on = b;
+            var vals = new bool[targets.Length];
+            bool failed = false;
+            for (int i = 0; i < targets.Length; i++)
+            {
+                var val = InspectorMemberResolver.GetValue(targets[i], toggleMember, out bool f);
+                if (f) failed = true;
+                vals[i] = val is bool b && b;
+            }
+            if (!failed && targets.Length > 0)
+            {
+                on = vals[0];
+                for (int i = 1; i < vals.Length; i++)
+                {
+                    if (vals[i] != on) mixed = true;
+                }
+            }
 
             string title = attr?.GroupTitle ?? ObjectNames.NicifyVariableName(toggleMember);
-            title = InspectorMemberResolver.ResolveString(target, title);
+            title = InspectorMemberResolver.ResolveString(targets[0], title);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            var prevMixed = EditorGUI.showMixedValue;
+            if (mixed) EditorGUI.showMixedValue = true;
             EditorGUI.BeginChangeCheck();
             bool next = EditorGUILayout.ToggleLeft(title, on, EditorStyles.boldLabel);
+            EditorGUI.showMixedValue = prevMixed;
             if (EditorGUI.EndChangeCheck() && !failed)
             {
-                SetMemberValue(target, toggleMember, next);
+                SetMemberValue(targets, toggleMember, next);
                 on = next;
-                if (next && attr != null && attr.CollapseOthersOnExpand)
-                {
-                    // Sibling toggle groups could collapse when one expands; we approximate by
-                    // turning off nothing (state is data, not UI) — expansion == the toggle itself.
-                }
             }
 
             if (on)
@@ -1176,49 +1197,54 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         ((e.Field != null && e.Field.Name == toggleMember) ||
                          (e.Member != null && e.Member.Name == toggleMember)))
                         continue;
-                    if (child is GroupNode sub) { if (GroupHasVisible(sub, target)) RenderGroup(sub, target, foldouts, tabs); }
-                    else if (child is InspectorEntry ie) RenderEntry(ie, target, foldouts, tabs);
+                    if (child is GroupNode sub) { if (GroupHasVisible(sub, targets)) RenderGroup(sub, targets, foldouts, tabs); }
+                    else if (child is InspectorEntry ie) RenderEntry(ie, targets, foldouts, tabs);
                 }
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
-        }
-
-        private static void SetMemberValue(object target, string name, object value)
+        }        private static void SetMemberValue(object[] targets, string name, object value)
         {
-            var uo = target as UnityEngine.Object;
-            if (uo != null) Undo.RecordObject(uo, "Inspector");
-            var t = target.GetType();
-            try
+            foreach (var target in targets)
             {
-                var f = FindField(t, name);
-                if (f != null) { f.SetValue(target, value); }
-                else
+                var uo = target as UnityEngine.Object;
+                if (uo != null) Undo.RecordObject(uo, "Inspector");
+                var t = target.GetType();
+                try
                 {
-                    var p = t.GetProperty(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (p != null && p.CanWrite) p.SetValue(p.GetSetMethod(true).IsStatic ? null : target, value);
+                    var f = FindField(t, name);
+                    if (f != null) { f.SetValue(target, value); }
+                    else
+                    {
+                        var p = t.GetProperty(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                        if (p != null && p.CanWrite) p.SetValue(p.GetGetMethod(true).IsStatic ? null : target, value);
+                    }
                 }
+                catch { }
+                if (uo != null) EditorUtility.SetDirty(uo);
             }
-            catch { }
-            if (uo != null) EditorUtility.SetDirty(uo);
         }
 
         // ---------------------------------------------------------------- entry pipeline
         // Decorator order: [Title] → info boxes → validation messages → the (possibly wrapped) field.
 
-        private static void RenderEntry(InspectorEntry e, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
+        private static void RenderEntry(InspectorEntry e, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             var mm = e.Metadata;
             if (mm == null)
             {
-                DrawDefaultField(e, target);
+                DrawDefaultField(e, targets);
                 return;
             }
 
             // Visibility (ShowIf/HideIf/HideInEditorMode/...).
-            if (!IsVisible(mm, target)) return;
+            if (!IsVisible(mm, targets)) return;
 
-            RunInitHooks(e, target);
+            foreach (var t in targets)
+            {
+                RunInitHooks(e, t);
+            }
+            var target = targets[0];
 
             if (e.SpaceBefore > 0) EditorGUILayout.Space(e.SpaceBefore);
 
@@ -1269,14 +1295,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             // Validation feedback draws ABOVE the field.
-            RenderValidation(e, target);
+            RenderValidation(e, targets);
 
             // Enabled (EnableIf/DisableIf/ReadOnly).
-            bool enabled = IsEnabled(mm, target);
+            bool enabled = IsEnabled(mm, targets);
 
             // GUI color.
             Color prev = GUI.color;
-            if (TryGetGuiColor(mm, target, out var col)) GUI.color = col;
+            if (TryGetGuiColor(mm, targets, out var col)) GUI.color = col;
 
             // LabelWidth / Indent scopes.
             float prevLabelWidth = EditorGUIUtility.labelWidth;
@@ -1297,9 +1323,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
                 switch (e.EntryKind)
                 {
-                    case InspectorEntry.Kind.Field: RenderField(e, target, foldouts, tabs); break;
-                    case InspectorEntry.Kind.Shown: RenderShown(e, target); break;
-                    case InspectorEntry.Kind.Button: RenderButton(e, target); break;
+                    case InspectorEntry.Kind.Field: RenderField(e, targets, foldouts, tabs); break;
+                    case InspectorEntry.Kind.Shown: RenderShown(e, targets); break;
+                    case InspectorEntry.Kind.Button: RenderButton(e, targets); break;
                     case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
                 }
 
@@ -1313,7 +1339,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                             : ObjectNames.NicifyVariableName(ib.Action);
                         var content = MakeButtonContent(label, ib.Icon);
                         if (GUILayout.Button(content, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
-                            InvokeAction(target, ib.Action);
+                            InvokeAction(targets, ib.Action);
                     }
                     EditorGUILayout.EndHorizontal();
                 }
@@ -1374,7 +1400,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 foreach (var init in mm.InitHooks)
                 {
-                    if (!string.IsNullOrEmpty(init.Action)) InvokeAction(target, init.Action);
+                    if (!string.IsNullOrEmpty(init.Action)) InvokeAction(new[] { target }, init.Action);
                     else if (mm.Member is MethodInfo mi && mi.GetParameters().Length == 0)
                         try { mi.Invoke(mi.IsStatic ? null : target, null); } catch { }
                 }
@@ -1403,36 +1429,40 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        private static void InvokeAction(object target, string methodName)
+        private static void InvokeAction(object[] targets, string methodName)
         {
-            if (target is UnityEngine.Object uo)
+            foreach (var target in targets)
             {
-                Undo.RecordObject(uo, $"Action: {methodName}");
+                if (target is UnityEngine.Object uo)
+                {
+                    Undo.RecordObject(uo, $"Action: {methodName}");
+                }
+                var mi = InspectorMemberResolver.FindMethod(target.GetType(), methodName, Type.EmptyTypes);
+                try { mi?.Invoke(mi.IsStatic ? null : target, null); }
+                catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{methodName}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                if (target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
             }
-            var mi = InspectorMemberResolver.FindMethod(target.GetType(), methodName, Type.EmptyTypes);
-            try { mi?.Invoke(mi.IsStatic ? null : target, null); }
-            catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{methodName}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
-            if (target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
         }
 
         // ---------------------------------------------------------------- field rendering
 
-        private static void RenderField(InspectorEntry e, object target,
+        private static void RenderField(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
             var mm = e.Metadata;
             var prop = e.Property;
+            var target = targets[0];
 
             if (mm == null)
             {
-                DrawDefaultField(e, target);
+                DrawDefaultField(e, targets);
                 return;
             }
 
             // [DrawWithUnity] → always the stock drawer.
             if (mm.DrawWithUnity != null)
             {
-                DrawDefaultField(e, target);
+                DrawDefaultField(e, targets);
                 return;
             }
 
@@ -1443,11 +1473,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (elemType0 != null)
                 {
                     EditorGUI.BeginChangeCheck();
-                    TableRenderer.DrawSerializedTable(prop, elemType0, mm.TableList, GetLabel(e, target));
+                    TableRenderer.DrawSerializedTable(prop, elemType0, mm.TableList, GetLabel(e, targets));
                     if (EditorGUI.EndChangeCheck())
                     {
                         prop.serializedObject.ApplyModifiedProperties();
-                        InvokeOnValueChanged(e, target);
+                        InvokeOnValueChanged(e, targets);
                     }
                     return;
                 }
@@ -1469,18 +1499,18 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     || (vdList != null && vdList.DrawDropdownForListElements)
                     || (asList != null && asList.DrawDropdownForListElements))
                 {
-                    EngineListDrawer.Draw(e, target, foldouts, tabs, elemType, lds, searchable, vdList, asList, occ);
+                    EngineListDrawer.Draw(e, targets, foldouts, tabs, elemType, lds, searchable, vdList, asList, occ);
                     return;
                 }
             }
 
             // [ValueDropdown(getter)] → dropdown of allowed values.
-            if (mm.ValueDropdown != null && InspectorDropdown.DrawValueDropdown(e, target, mm.ValueDropdown, GetLabelText(e, target))) return;
+            if (mm.ValueDropdown != null && InspectorDropdown.DrawValueDropdown(e, targets, mm.ValueDropdown, GetLabelText(e, targets))) return;
 
             // [AssetSelector] on a single object reference.
             if (mm.AssetSelector != null && prop.propertyType == SerializedPropertyType.ObjectReference)
             {
-                InspectorDropdown.DrawAssetSelector(e, target, mm.AssetSelector);
+                InspectorDropdown.DrawAssetSelector(e, targets, mm.AssetSelector);
                 return;
             }
 
@@ -1488,87 +1518,87 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (mm.DisplayAsString != null)
             {
                 object v = e.Field != null ? SafeGet(e.Field, target) : ReadProperty(prop);
-                DrawDisplayAsString(GetLabel(e, target) ?? TempContent(prop.displayName), v?.ToString() ?? string.Empty, mm);
+                DrawDisplayAsString(GetLabel(e, targets) ?? TempContent(prop.displayName), v?.ToString() ?? string.Empty, mm);
                 return;
             }
 
             // [ToggleLeft] bool → left-aligned checkbox (label right of the box).
             if (prop.propertyType == SerializedPropertyType.Boolean && mm.ToggleLeft != null)
             {
-                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUI.BeginChangeCheck();
                 bool v = EditorGUILayout.ToggleLeft(lbl, prop.boolValue);
-                if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, targets); }
                 return;
             }
 
             // [MultiLineProperty(lines)] string → text area.
             if (mm.MultiLineProperty != null && prop.propertyType == SerializedPropertyType.String)
             {
-                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
                 float h = Mathf.Max(1, mm.MultiLineProperty.Lines) * EditorGUIUtility.singleLineHeight;
                 string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(h));
-                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, targets); }
                 return;
             }
 
             // [TextArea(min, max)] string → text area.
             if (mm.TextArea != null && prop.propertyType == SerializedPropertyType.String)
             {
-                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
                 float minH = Mathf.Max(1, mm.TextArea.minLines) * EditorGUIUtility.singleLineHeight;
                 float maxH = Mathf.Max(1, mm.TextArea.maxLines) * EditorGUIUtility.singleLineHeight;
                 string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(minH), GUILayout.MaxHeight(maxH));
-                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, targets); }
                 return;
             }
 
             // [Multiline(lines)] string → text area.
             if (mm.Multiline != null && prop.propertyType == SerializedPropertyType.String)
             {
-                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
                 float h = Mathf.Max(1, mm.Multiline.lines) * EditorGUIUtility.singleLineHeight;
                 string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(h));
-                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, targets); }
                 return;
             }
 
             // [PropertyRange(min,max)] numeric → slider (getters resolved via member names).
-            if (mm.PropertyRange != null && TryDrawPropertyRange(e, target, mm.PropertyRange)) return;
+            if (mm.PropertyRange != null && TryDrawPropertyRange(e, targets, mm.PropertyRange)) return;
 
             // [MinMaxSlider] on Vector2/Vector2Int.
-            if (mm.MinMaxSlider != null && TryDrawMinMaxSlider(e, target, mm.MinMaxSlider)) return;
+            if (mm.MinMaxSlider != null && TryDrawMinMaxSlider(e, targets, mm.MinMaxSlider)) return;
 
             // [ProgressBar] on a numeric.
-            if (mm.ProgressBar != null && TryDrawProgressBar(e, target, mm.ProgressBar)) return;
+            if (mm.ProgressBar != null && TryDrawProgressBar(e, targets, mm.ProgressBar)) return;
 
             // [EnumToggleButtons] on an enum.
             if (prop.propertyType == SerializedPropertyType.Enum &&
                 mm.EnumToggleButtons != null &&
-                TryDrawEnumToggleButtons(e, target))
+                TryDrawEnumToggleButtons(e, targets))
                 return;
 
             // Object-reference specials.
             if (prop.propertyType == SerializedPropertyType.ObjectReference)
             {
-                if (mm.PreviewField != null) { DrawPreviewField(e, target, mm.PreviewField); return; }
+                if (mm.PreviewField != null) { DrawPreviewField(e, targets, mm.PreviewField); return; }
 
-                if (mm.InlineEditor != null) { DrawInlineEditor(e, target, mm.InlineEditor, foldouts); return; }
+                if (mm.InlineEditor != null) { DrawInlineEditor(e, targets, mm.InlineEditor, foldouts); return; }
 
                 if (mm.AssetsOnly != null)
                 {
-                    DrawObjectField(e, target, allowScene: false);
+                    DrawObjectField(e, targets, allowScene: false);
                     return;
                 }
                 if (mm.SceneObjectsOnly != null)
                 {
-                    DrawSceneObjectField(e, target);
+                    DrawSceneObjectField(e, targets);
                     return;
                 }
             }
@@ -1585,30 +1615,30 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 float prevLw = EditorGUIUtility.labelWidth;
                 if (mm.InlineProperty != null && mm.InlineProperty.LabelWidth > 0) EditorGUIUtility.labelWidth = mm.InlineProperty.LabelWidth;
-                DrawNestedObject(e, target, foldouts, tabs, inline: explicitInline);
+                DrawNestedObject(e, targets, foldouts, tabs, inline: explicitInline);
                 EditorGUIUtility.labelWidth = prevLw;
                 return;
             }
 
             // Default field + numeric constraints ([MinValue]/[MaxValue]/[Wrap]).
-            DrawDefaultField(e, target);
+            DrawDefaultField(e, targets);
         }
 
-        private static void DrawDefaultField(InspectorEntry e, object target)
+        private static void DrawDefaultField(InspectorEntry e, object[] targets)
         {
-            var label = GetLabel(e, target);
+            var label = GetLabel(e, targets);
             EditorGUI.BeginChangeCheck();
             if (label != null) EditorGUILayout.PropertyField(e.Property, label, true);
             else EditorGUILayout.PropertyField(e.Property, true);
             if (EditorGUI.EndChangeCheck())
             {
-                ApplyNumericConstraints(e, target);
-                Commit(e, target);
+                ApplyNumericConstraints(e, targets);
+                Commit(e, targets);
             }
         }
 
         // [MinValue]/[MaxValue] clamp and [Wrap] wrap the edited value (floats, ints, vectors).
-        private static void ApplyNumericConstraints(InspectorEntry e, object target)
+        private static void ApplyNumericConstraints(InspectorEntry e, object[] targets)
         {
             var src = e.AttributeSource;
             if (src == null) return;
@@ -1619,8 +1649,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var wrap = src.GetCustomAttribute<WrapAttribute>();
             if (minA == null && maxA == null && wrap == null) return;
 
-            double min = minA != null ? (minA.Expression != null ? ResolveNumber(target, minA.Expression, double.MinValue) : minA.Min) : double.MinValue;
-            double max = maxA != null ? (maxA.Expression != null ? ResolveNumber(target, maxA.Expression, double.MaxValue) : maxA.Max) : double.MaxValue;
+            double min = minA != null ? (minA.Expression != null ? ResolveNumber(targets[0], minA.Expression, double.MinValue) : minA.Min) : double.MinValue;
+            double max = maxA != null ? (maxA.Expression != null ? ResolveNumber(targets[0], maxA.Expression, double.MaxValue) : maxA.Max) : double.MaxValue;
 
             double Constrain(double v)
             {
@@ -1644,10 +1674,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        internal static void Commit(InspectorEntry e, object target)
+        internal static void Commit(InspectorEntry e, object[] targets)
         {
             e.Property.serializedObject.ApplyModifiedProperties();
-            InvokeOnValueChanged(e, target);
+            InvokeOnValueChanged(e, targets);
         }
 
         private static object SafeGet(FieldInfo f, object target)
@@ -1667,39 +1697,39 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        private static void DrawObjectField(InspectorEntry e, object target, bool allowScene)
+        private static void DrawObjectField(InspectorEntry e, object[] targets, bool allowScene)
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, allowScene);
-            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, target); }
+            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, targets); }
         }
 
         // [SceneObjectsOnly]: reject persistent assets on assignment.
-        private static void DrawSceneObjectField(InspectorEntry e, object target)
+        private static void DrawSceneObjectField(InspectorEntry e, object[] targets)
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, true);
             if (EditorGUI.EndChangeCheck())
             {
                 if (obj != null && EditorUtility.IsPersistent(obj))
                     Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{prop.displayName}' accepts scene objects only.");
-                else { prop.objectReferenceValue = obj; Commit(e, target); }
+                else { prop.objectReferenceValue = obj; Commit(e, targets); }
             }
         }
 
         // [PreviewField]: square preview that IS the picker (tall ObjectField rects draw as previews).
-        private static void DrawPreviewField(InspectorEntry e, object target, PreviewFieldAttribute pf)
+        private static void DrawPreviewField(InspectorEntry e, object[] targets, PreviewFieldAttribute pf)
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
             float h = pf.Height > 0 ? pf.Height : 64f;
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
 
             var rect = EditorGUILayout.GetControlRect(false, h);
             var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
@@ -1713,12 +1743,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUI.ObjectField(square, prop.objectReferenceValue, t, true);
-            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, target); }
+            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, targets); }
         }
 
         private static readonly Dictionary<int, UnityEditor.Editor> s_inlineEditors = new Dictionary<int, UnityEditor.Editor>();
 
-        private static void DrawInlineEditor(InspectorEntry e, object target, InlineEditorAttribute ie, Dictionary<string, bool> foldouts)
+        private static void DrawInlineEditor(InspectorEntry e, object[] targets, InlineEditorAttribute ie, Dictionary<string, bool> foldouts)
         {
             var prop = e.Property;
             var obj = prop.objectReferenceValue;
@@ -1739,7 +1769,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (ie.ObjectFieldMode == InlineEditorObjectFieldModes.Foldout && obj != null)
                 {
                     var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-                    var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                    var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                     var rect = EditorGUILayout.GetControlRect();
                     var foldRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height);
                     expanded = EditorGUI.Foldout(foldRect, expanded, lbl, true);
@@ -1747,12 +1777,12 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         rect.width - EditorGUIUtility.labelWidth, rect.height);
                     EditorGUI.BeginChangeCheck();
                     var picked = EditorGUI.ObjectField(fieldRect, prop.objectReferenceValue, t, true);
-                    if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = picked; Commit(e, target); }
+                    if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = picked; Commit(e, targets); }
                     foldouts[foldKey] = expanded;
                 }
                 else
                 {
-                    DrawObjectField(e, target, allowScene: true);
+                    DrawObjectField(e, targets, allowScene: true);
                     if (ie.ObjectFieldMode != InlineEditorObjectFieldModes.Foldout) expanded = true;
                 }
             }
@@ -1761,7 +1791,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             obj = prop.objectReferenceValue;
             if (obj == null || !expanded) return;
             // Guard against inlining the object being inspected (infinite recursion).
-            if (obj == (UnityEngine.Object)target) return;
+            if (Array.IndexOf(targets, obj) >= 0) return;
 
             int id = obj.GetInstanceID();
             if (!s_inlineEditors.TryGetValue(id, out var ed) || ed == null || ed.target != obj)
@@ -1799,21 +1829,34 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             EditorGUILayout.EndVertical();
         }
 
+        private static object[] GetTargetsForScope(SerializedProperty prop, object[] parentTargets)
+        {
+            if (parentTargets == null || parentTargets.Length == 0) return Array.Empty<object>();
+            if (prop == null || string.IsNullOrEmpty(prop.propertyPath)) return parentTargets;
+
+            var list = new List<object>();
+            foreach (var t in parentTargets)
+            {
+                var val = InspectorMemberResolver.GetPropertyValue(t, prop.propertyPath, out bool failed);
+                if (!failed && val != null) list.Add(val);
+            }
+            return list.ToArray();
+        }
+
         // Draw a nested serializable object through the engine. inline=true → no wrapper
         // ([InlineProperty]); inline=false → collapsible foldout (default collapsed), the default
         // rendering of an attributed nested object.
-        internal static void DrawNestedObject(InspectorEntry e, object target,
+        internal static void DrawNestedObject(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, bool inline,
             GUIContent labelOverride = null)
         {
-            object inst = null;
-            try { inst = e.Property.boxedValue; } catch { }
+            object[] nestedTargets = GetTargetsForScope(e.Property, targets);
 
-            var lbl = labelOverride ?? GetLabel(e, target);
+            var lbl = labelOverride ?? GetLabel(e, targets);
             bool hideLabel = lbl == GUIContent.none;
 
             // Fallback: no boxed instance (multi-edit/unresolvable) → default field draw.
-            if (inst == null)
+            if (nestedTargets == null || nestedTargets.Length == 0)
             {
                 if (lbl != null) EditorGUILayout.PropertyField(e.Property, lbl, true);
                 else EditorGUILayout.PropertyField(e.Property, true);
@@ -1852,14 +1895,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (indent) EditorGUI.indentLevel++;
             try
             {
-                var nestedMeta = GetOrCreateMetadata(inst.GetType());
-                DrawTypeInfoBoxes(nestedMeta, inst);
+                var nestedMeta = GetOrCreateMetadata(nestedTargets[0].GetType());
+                DrawTypeInfoBoxes(nestedMeta, nestedTargets);
                 var nested = GetPooledList();
                 int seq = 0;
                 foreach (var child in ChildProperties(e.Property))
                     AddFieldEntry(nested, child, nestedMeta, ref seq);
-                AddReflectedEntries(nested, nestedMeta, inst, ref seq);
-                RenderScope(nested, inst, foldouts, tabs);
+                AddReflectedEntries(nested, nestedMeta, nestedTargets, ref seq);
+                RenderScope(nested, nestedTargets, foldouts, tabs);
                 ReleasePooledList(nested);
             }
             catch (Exception ex)
@@ -1906,45 +1949,45 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return false;
         }
 
-        private static bool TryDrawPropertyRange(InspectorEntry e, object target, PropertyRangeAttribute pr)
+        private static bool TryDrawPropertyRange(InspectorEntry e, object[] targets, PropertyRangeAttribute pr)
         {
-            double min = ResolveNumber(target, pr.MinGetter, pr.Min);
-            double max = ResolveNumber(target, pr.MaxGetter, pr.Max);
+            double min = ResolveNumber(targets[0], pr.MinGetter, pr.Min);
+            double max = ResolveNumber(targets[0], pr.MaxGetter, pr.Max);
             var prop = e.Property;
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             if (prop.propertyType == SerializedPropertyType.Integer)
             {
                 EditorGUI.BeginChangeCheck();
                 int v = EditorGUILayout.IntSlider(lbl, prop.intValue, (int)min, (int)max);
-                if (EditorGUI.EndChangeCheck()) { prop.intValue = v; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.intValue = v; Commit(e, targets); }
                 return true;
             }
             if (prop.propertyType == SerializedPropertyType.Float)
             {
                 EditorGUI.BeginChangeCheck();
                 float v = EditorGUILayout.Slider(lbl, prop.floatValue, (float)min, (float)max);
-                if (EditorGUI.EndChangeCheck()) { prop.floatValue = v; Commit(e, target); }
+                if (EditorGUI.EndChangeCheck()) { prop.floatValue = v; Commit(e, targets); }
                 return true;
             }
             return false;
         }
 
-        private static bool TryDrawMinMaxSlider(InspectorEntry e, object target, MinMaxSliderAttribute mms)
+        private static bool TryDrawMinMaxSlider(InspectorEntry e, object[] targets, MinMaxSliderAttribute mms)
         {
             var prop = e.Property;
             float lo = mms.MinValue, hi = mms.MaxValue;
             if (!string.IsNullOrEmpty(mms.MinMaxValueGetter))
             {
-                var v = InspectorMemberResolver.GetValue(target, mms.MinMaxValueGetter, out bool failed);
+                var v = InspectorMemberResolver.GetValue(targets[0], mms.MinMaxValueGetter, out bool failed);
                 if (!failed && v is Vector2 range) { lo = range.x; hi = range.y; }
             }
             else
             {
-                lo = (float)ResolveNumber(target, mms.MinValueGetter, lo);
-                hi = (float)ResolveNumber(target, mms.MaxValueGetter, hi);
+                lo = (float)ResolveNumber(targets[0], mms.MinValueGetter, lo);
+                hi = (float)ResolveNumber(targets[0], mms.MaxValueGetter, hi);
             }
 
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
 
             if (prop.propertyType == SerializedPropertyType.Vector2)
             {
@@ -1972,7 +2015,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     v.x = Mathf.Clamp(v.x, lo, Mathf.Min(v.y, hi));
                     v.y = Mathf.Clamp(v.y, Mathf.Max(v.x, lo), hi);
                     prop.vector2Value = v;
-                    Commit(e, target);
+                    Commit(e, targets);
                 }
                 return true;
             }
@@ -2000,7 +2043,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     prop.vector2IntValue = new Vector2Int(
                         Mathf.RoundToInt(Mathf.Clamp(fx, lo, fy)),
                         Mathf.RoundToInt(Mathf.Clamp(fy, fx, hi)));
-                    Commit(e, target);
+                    Commit(e, targets);
                 }
                 return true;
             }
@@ -2008,7 +2051,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return false;
         }
 
-        private static bool TryDrawProgressBar(InspectorEntry e, object target, ProgressBarAttribute pb)
+        private static bool TryDrawProgressBar(InspectorEntry e, object[] targets, ProgressBarAttribute pb)
         {
             var prop = e.Property;
             double value;
@@ -2020,24 +2063,24 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 default: return false;
             }
 
-            double min = ResolveNumber(target, pb.MinGetter, pb.Min);
-            double max = ResolveNumber(target, pb.MaxGetter, pb.Max);
+            double min = ResolveNumber(targets[0], pb.MinGetter, pb.Min);
+            double max = ResolveNumber(targets[0], pb.MaxGetter, pb.Max);
             if (max <= min) max = min + 1;
 
             Color fill = new Color(pb.R, pb.G, pb.B);
             if (!string.IsNullOrEmpty(pb.ColorGetter))
             {
-                var cv = InspectorMemberResolver.GetValue(target, pb.ColorGetter, out bool cf);
+                var cv = InspectorMemberResolver.GetValue(targets[0], pb.ColorGetter, out bool cf);
                 if (!cf && cv is Color c) fill = c;
             }
             Color back = new Color(0.16f, 0.16f, 0.16f);
             if (!string.IsNullOrEmpty(pb.BackgroundColorGetter))
             {
-                var bv = InspectorMemberResolver.GetValue(target, pb.BackgroundColorGetter, out bool bf);
+                var bv = InspectorMemberResolver.GetValue(targets[0], pb.BackgroundColorGetter, out bool bf);
                 if (!bf && bv is Color bc) back = bc;
             }
 
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             float height = Mathf.Max(EditorGUIUtility.singleLineHeight, pb.Height);
             var rect = EditorGUILayout.GetControlRect(false, height);
             rect = EditorGUI.PrefixLabel(rect, lbl);
@@ -2067,7 +2110,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     value = min + t * (max - min);
                     if (isInt) prop.intValue = (int)Math.Round(value);
                     else prop.floatValue = (float)value;
-                    Commit(e, target);
+                    Commit(e, targets);
                 }
             }
 
@@ -2090,7 +2133,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 string text = null;
                 if (!string.IsNullOrEmpty(pb.CustomValueStringGetter))
-                    text = InspectorMemberResolver.ResolveString(target, pb.CustomValueStringGetter);
+                    text = InspectorMemberResolver.ResolveString(targets[0], pb.CustomValueStringGetter);
                 if (string.IsNullOrEmpty(text))
                     text = isInt ? $"{(int)value}/{(int)max}" : $"{value:0.##}";
                 var style = e.Metadata?.ProgressBarStyle ?? EditorStyles.miniLabel;
@@ -2099,13 +2142,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return true;
         }
 
-        private static bool TryDrawEnumToggleButtons(InspectorEntry e, object target)
+        private static bool TryDrawEnumToggleButtons(InspectorEntry e, object[] targets)
         {
             var enumType = e.Field?.FieldType;
             if (enumType == null || !enumType.IsEnum) return false;
 
             var prop = e.Property;
-            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             var names = Enum.GetNames(enumType);
             var values = (Array)Enum.GetValues(enumType);
             bool flags = enumType.GetCustomAttribute<FlagsAttribute>() != null;
@@ -2124,7 +2167,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (EditorGUI.EndChangeCheck() && next >= 0)
                 {
                     prop.intValue = Convert.ToInt32(values.GetValue(next));
-                    Commit(e, target);
+                    Commit(e, targets);
                 }
                 return true;
             }
@@ -2148,7 +2191,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (EditorGUI.EndChangeCheck() && result != cur)
             {
                 prop.intValue = result;
-                Commit(e, target);
+                Commit(e, targets);
             }
             return true;
         }
@@ -2205,11 +2248,80 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return null;
         }
 
+        private static bool IsMixed(object[] values)
+        {
+            if (values == null || values.Length <= 1) return false;
+            var first = values[0];
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (!Equals(first, values[i])) return true;
+            }
+            return false;
+        }
+
         // [ShowInInspector] members: editable when writable (fields and set-able properties);
         // complex values recurse through the POCO inspector (property-tree style).
-        private static void RenderShown(InspectorEntry e, object target)
+        private static void RenderShown(InspectorEntry e, object[] targets)
         {
-            PocoInspector.DrawSingleMember(target, e.Member);
+            if (targets.Length > 1)
+            {
+                var mm = e.Metadata;
+                if (mm == null || e.Member == null) return;
+
+                var valueType = e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null);
+                if (valueType == null) return;
+
+                var values = new object[targets.Length];
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    if (e.Field != null) values[i] = SafeGet(e.Field, targets[i]);
+                    else if (e.Member is PropertyInfo pi) values[i] = pi.GetValue(targets[i]);
+                }
+
+                bool mixed = IsMixed(values);
+                object value = values[0];
+
+                string label = GetLabelText(e, targets);
+                bool hideLabel = mm.HideLabel;
+                bool readOnly = e.Member is PropertyInfo pi2 && !pi2.CanWrite;
+
+                if (mm.DisplayAsString != null || readOnly)
+                {
+                    string text = mixed ? "—" : (value?.ToString() ?? string.Empty);
+                    if (hideLabel) EditorGUILayout.LabelField(text);
+                    else EditorGUILayout.LabelField(label, text);
+                    return;
+                }
+
+                var prevMixed = EditorGUI.showMixedValue;
+                if (mixed) EditorGUI.showMixedValue = true;
+
+                EditorGUI.BeginChangeCheck();
+                object edited = PocoInspector.DrawTypedFieldPublic(hideLabel ? GUIContent.none : TempContent(label), valueType, value);
+
+                EditorGUI.showMixedValue = prevMixed;
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    foreach (var target in targets)
+                    {
+                        var uo = target as UnityEngine.Object;
+                        if (uo != null) Undo.RecordObject(uo, "Inspector");
+                        try
+                        {
+                            if (e.Field != null) e.Field.SetValue(target, edited);
+                            else if (e.Member is PropertyInfo pi3) pi3.SetValue(target, edited);
+                        }
+                        catch { }
+                        if (uo != null) EditorUtility.SetDirty(uo);
+                    }
+                    InvokeOnValueChanged(e, targets);
+                }
+            }
+            else
+            {
+                PocoInspector.DrawSingleMember(targets[0], e.Member);
+            }
         }
 
         // ---------------------------------------------------------------- buttons
@@ -2236,8 +2348,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             };
         }
 
-        private static void RenderButton(InspectorEntry e, object target)
+        private static void RenderButton(InspectorEntry e, object[] targets)
         {
+            var target = targets[0];
             string label = e.Button.Name;
             if (string.IsNullOrEmpty(label)) label = ObjectNames.NicifyVariableName(e.ButtonMethod.Name);
             else label = InspectorMemberResolver.ResolveString(target, label);
@@ -2249,11 +2362,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (ps.Length == 0)
             {
                 if (DrawAlignedButton(e.Button, content, height))
-                    InvokeButton(e, target, null);
+                    InvokeButton(e, targets, null);
             }
             else if (e.Button.DisplayParameters)
             {
-                DrawParameterizedButton(e, target, content, height, ps);
+                DrawParameterizedButton(e, targets, content, height, ps);
             }
             else
             {
@@ -2288,8 +2401,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             => (target?.GetHashCode() ?? 0) + ":" + e.ButtonMethod.DeclaringType?.FullName + "." + e.ButtonMethod.Name;
 
         // Parameterized [Button]: a box with one field per parameter + an invoke button.
-        private static void DrawParameterizedButton(InspectorEntry e, object target, GUIContent content, float height, ParameterInfo[] ps)
+        private static void DrawParameterizedButton(InspectorEntry e, object[] targets, GUIContent content, float height, ParameterInfo[] ps)
         {
+            var target = targets[0];
             string key = ButtonKey(e, target);
             if (!s_buttonParams.TryGetValue(key, out var st) || st.Values == null || st.Values.Length != ps.Length)
             {
@@ -2307,34 +2421,37 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 st.Values[i] = PocoInspector.DrawTypedFieldPublic(lbl, ps[i].ParameterType, st.Values[i]);
             }
             if (GUILayout.Button("Invoke", GUILayout.Height(Mathf.Min(height, 24f))))
-                InvokeButton(e, target, st.Values);
+                InvokeButton(e, targets, st.Values);
             EditorGUILayout.EndVertical();
         }
 
         private static object DefaultOf(Type t) => t.IsValueType ? Activator.CreateInstance(t) : null;
 
-        private static void InvokeButton(InspectorEntry e, object target, object[] args)
+        private static void InvokeButton(InspectorEntry e, object[] targets, object[] args)
         {
-            if (target is UnityEngine.Object uo)
+            foreach (var target in targets)
             {
-                Undo.RecordObject(uo, $"Button: {e.ButtonMethod.Name}");
-            }
-            try
-            {
-                object result = e.ButtonMethod.Invoke(e.ButtonMethod.IsStatic ? null : target, args);
-                if (e.ButtonMethod.ReturnType != typeof(void))
+                if (target is UnityEngine.Object uo)
                 {
-                    string key = ButtonKey(e, target);
-                    if (!s_buttonParams.TryGetValue(key, out var st)) s_buttonParams[key] = st = new ButtonParamState();
-                    st.LastResult = result;
-                    st.HasResult = true;
+                    Undo.RecordObject(uo, $"Button: {e.ButtonMethod.Name}");
                 }
+                try
+                {
+                    object result = e.ButtonMethod.Invoke(e.ButtonMethod.IsStatic ? null : target, args);
+                    if (e.ButtonMethod.ReturnType != typeof(void))
+                    {
+                        string key = ButtonKey(e, target);
+                        if (!s_buttonParams.TryGetValue(key, out var st)) s_buttonParams[key] = st = new ButtonParamState();
+                        st.LastResult = result;
+                        st.HasResult = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[FoundationPlatform.FrameworkInspector] Button '{e.ButtonMethod.Name}' threw: {ex.InnerException?.Message ?? ex.Message}");
+                }
+                if (e.Button.DirtyOnClick && target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
             }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[FoundationPlatform.FrameworkInspector] Button '{e.ButtonMethod.Name}' threw: {ex.InnerException?.Message ?? ex.Message}");
-            }
-            if (e.Button.DirtyOnClick && target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
         }
 
         // ---------------------------------------------------------------- metadata
@@ -2349,9 +2466,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             e.TabName = mm.TabName;
         }
 
-        internal static bool IsVisible(MemberMetadata mm, object target)
+        internal static bool IsVisible(MemberMetadata mm, object[] targets)
         {
-            if (mm == null) return true;
+            if (mm == null || targets == null || targets.Length == 0) return true;
+            var target = targets[0];
             if (mm.HideInEditorMode && !Application.isPlaying) return false;
             if (mm.HideInPlayMode && Application.isPlaying) return false;
             if (mm.ShowInPlayMode && !Application.isPlaying) return false;
@@ -2369,9 +2487,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return true;
         }
 
-        private static bool IsEnabled(MemberMetadata mm, object target)
+        private static bool IsEnabled(MemberMetadata mm, object[] targets)
         {
-            if (mm == null) return true;
+            if (mm == null || targets == null || targets.Length == 0) return true;
+            var target = targets[0];
             if (mm.ReadOnly) return false;
             if (mm.DisableInEditorMode && !Application.isPlaying) return false;
             if (mm.DisableInPlayMode && Application.isPlaying) return false;
@@ -2389,10 +2508,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return true;
         }
 
-        private static bool TryGetGuiColor(MemberMetadata mm, object target, out Color color)
+        private static bool TryGetGuiColor(MemberMetadata mm, object[] targets, out Color color)
         {
             color = Color.white;
-            if (mm == null || mm.GUIColor == null) return false;
+            if (mm == null || mm.GUIColor == null || targets == null || targets.Length == 0) return false;
+            var target = targets[0];
             var attr = mm.GUIColor;
             if (!string.IsNullOrEmpty(attr.GetColor))
             {
@@ -2407,16 +2527,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- validation (drawn above the field)
 
-        private static void RenderValidation(InspectorEntry e, object target)
+        private static void RenderValidation(InspectorEntry e, object[] targets)
         {
             var mm = e.Metadata;
-            if (mm == null) return;
+            if (mm == null || targets == null || targets.Length == 0) return;
+            var target = targets[0];
 
             if (mm.Required != null && e.Property != null && IsEmptyRef(e.Property))
             {
                 string msg = mm.Required.ErrorMessage != null
                     ? InspectorMemberResolver.ResolveString(target, mm.Required.ErrorMessage)
-                    : $"{GetLabelText(e, target) ?? e.Property.displayName} is required.";
+                    : $"{GetLabelText(e, targets) ?? e.Property.displayName} is required.";
                 EditorGUILayout.HelpBox(msg, ToMsgType(mm.Required.MessageType));
             }
 
@@ -2512,17 +2633,26 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- helpers
 
-        internal static void InvokeOnValueChanged(InspectorEntry e, object target)
+        internal static void InvokeOnValueChanged(InspectorEntry e, object[] targets)
         {
             var src = e.AttributeSource;
-            if (src == null) return;
+            if (src == null || targets == null) return;
             bool any = false;
             foreach (var attr in src.GetCustomAttributes<OnValueChangedAttribute>())
             {
-                InvokeChangeAction(e, target, attr);
+                foreach (var target in targets)
+                {
+                    InvokeChangeAction(e, target, attr);
+                }
                 any = true;
             }
-            if (any && target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+            if (any)
+            {
+                foreach (var target in targets)
+                {
+                    if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+                }
+            }
         }
 
         // Supports both callback shapes: M() and M(T newValue).
@@ -2548,25 +2678,25 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] OnValueChanged '{attr.Action}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
         }
 
-        internal static GUIContent GetLabel(InspectorEntry e, object target)
+        internal static GUIContent GetLabel(InspectorEntry e, object[] targets)
         {
             var mm = e.Metadata;
             if (mm == null) return null;
             if (mm.HideLabel) return GUIContent.none;
             if (mm.CachedLabel != null) return mm.CachedLabel;
 
-            string text = GetLabelText(e, target);
+            string text = GetLabelText(e, targets);
             string tooltip = mm.Tooltip?.tooltip;
             if (text != null) return new GUIContent(text, tooltip);
             if (!string.IsNullOrEmpty(tooltip)) return new GUIContent(e.Property.displayName, tooltip);
             return null; // let PropertyField use its default
         }
 
-        internal static string GetLabelText(InspectorEntry e, object target)
+        internal static string GetLabelText(InspectorEntry e, object[] targets)
         {
             var mm = e.Metadata;
             if (mm == null || mm.LabelText == null) return null;
-            string text = InspectorMemberResolver.ResolveString(target, mm.LabelText.Text);
+            string text = InspectorMemberResolver.ResolveString(targets[0], mm.LabelText.Text);
             if (mm.LabelText.NicifyText && !string.IsNullOrEmpty(text)) text = ObjectNames.NicifyVariableName(text);
             return text;
         }

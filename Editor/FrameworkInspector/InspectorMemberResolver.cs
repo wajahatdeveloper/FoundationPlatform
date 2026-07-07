@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Collections;
 
 namespace FoundationPlatform.FrameworkInspector.Editor
 {
@@ -61,6 +62,60 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             return GetMemberChainValue(target, name, out failed);
+        }
+
+        public static object GetPropertyValue(object root, string propertyPath, out bool failed)
+        {
+            failed = false;
+            if (root == null || string.IsNullOrEmpty(propertyPath))
+            {
+                failed = true;
+                return null;
+            }
+
+            object current = root;
+            string[] parts = propertyPath.Split('.');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string part = parts[i];
+                if (part == "Array" && i + 1 < parts.Length && parts[i + 1].StartsWith("data["))
+                {
+                    string dataPart = parts[i + 1];
+                    i++; // skip next part
+                    int openIdx = dataPart.IndexOf('[');
+                    int closeIdx = dataPart.IndexOf(']');
+                    if (openIdx >= 0 && closeIdx > openIdx)
+                    {
+                        string indexStr = dataPart.Substring(openIdx + 1, closeIdx - openIdx - 1);
+                        if (int.TryParse(indexStr, out int index))
+                        {
+                            current = GetElementAt(current, index, out bool elementFailed);
+                            if (elementFailed) { failed = true; return null; }
+                        }
+                        else { failed = true; return null; }
+                    }
+                    else { failed = true; return null; }
+                }
+                else
+                {
+                    current = GetSingleMember(current, part, out bool memberFailed);
+                    if (memberFailed) { failed = true; return null; }
+                }
+            }
+            return current;
+        }
+
+        private static object GetElementAt(object listObj, int index, out bool failed)
+        {
+            failed = false;
+            if (listObj == null) { failed = true; return null; }
+            if (listObj is IList list)
+            {
+                if (index >= 0 && index < list.Count)
+                    return list[index];
+            }
+            failed = true;
+            return null;
         }
 
         private static object GetMemberChainValue(object target, string chain, out bool failed)

@@ -27,21 +27,21 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // ---------------------------------------------------------------- ValueDropdown
 
         /// <summary>Draw the dropdown for a scalar field. Returns false when the getter is unresolvable → caller falls back.</summary>
-        public static bool DrawValueDropdown(InspectorEntry e, object target, ValueDropdownAttribute vd, string labelText)
+        public static bool DrawValueDropdown(InspectorEntry e, object[] targets, ValueDropdownAttribute vd, string labelText)
         {
-            var options = BuildValueOptions(target, vd);
+            var options = BuildValueOptions(targets[0], vd);
             if (options == null) return false;
-            DrawDropdownForProperty(e.Property, e, target, vd, options, labelText ?? e.Property.displayName);
+            DrawDropdownForProperty(e.Property, e, targets, vd, options, labelText ?? e.Property.displayName);
             return true;
         }
 
         /// <summary>Draw the dropdown row for a collection element (DrawDropdownForListElements).</summary>
-        public static bool DrawValueDropdownElement(SerializedProperty elemProp, InspectorEntry owner, object target,
+        public static bool DrawValueDropdownElement(SerializedProperty elemProp, InspectorEntry owner, object[] targets,
             ValueDropdownAttribute vd, string label)
         {
-            var options = BuildValueOptions(target, vd);
+            var options = BuildValueOptions(targets[0], vd);
             if (options == null) return false;
-            DrawDropdownForProperty(elemProp, owner, target, vd, options, label);
+            DrawDropdownForProperty(elemProp, owner, targets, vd, options, label);
             return true;
         }
 
@@ -71,7 +71,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return options;
         }
 
-        private static void DrawDropdownForProperty(SerializedProperty prop, InspectorEntry owner, object target,
+        private static void DrawDropdownForProperty(SerializedProperty prop, InspectorEntry owner, object[] targets,
             ValueDropdownAttribute vd, List<Option> options, string label)
         {
             object current = FrameworkInspectorRenderer.ReadProperty(prop);
@@ -89,7 +89,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var src = owner.AttributeSource;
             var field = owner.Field;
 
-            Action<object> apply = value => ApplyDeferred(so, path, value, src, field, target);
+            Action<object> apply = value => ApplyDeferred(so, path, value, src, field, targets);
 
             if (options.Count >= vd.NumberOfItemsBeforeEnablingSearch)
             {
@@ -114,7 +114,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         }
 
         private static void ApplyDeferred(SerializedObject so, string path, object value,
-            MemberInfo src, FieldInfo field, object target)
+            MemberInfo src, FieldInfo field, object[] targets)
         {
             try
             {
@@ -125,7 +125,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 so.ApplyModifiedProperties();
 
                 var entry = new InspectorEntry { Property = p, Field = field, AttributeSource = src };
-                FrameworkInspectorRenderer.InvokeOnValueChanged(entry, target);
+                FrameworkInspectorRenderer.InvokeOnValueChanged(entry, targets);
             }
             catch (Exception ex)
             {
@@ -135,11 +135,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- AssetSelector
 
-        public static void DrawAssetSelector(InspectorEntry e, object target, AssetSelectorAttribute asel)
+        public static void DrawAssetSelector(InspectorEntry e, object[] targets, AssetSelectorAttribute asel)
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = FrameworkInspectorRenderer.GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = FrameworkInspectorRenderer.GetLabel(e, targets) ?? new GUIContent(prop.displayName);
 
             var rect = EditorGUILayout.GetControlRect();
             const float btnW = 20f;
@@ -148,7 +148,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUI.ObjectField(fieldRect, lbl, prop.objectReferenceValue, t, false);
-            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; FrameworkInspectorRenderer.Commit(e, target); }
+            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; FrameworkInspectorRenderer.Commit(e, targets); }
 
             if (EditorGUI.DropdownButton(btnRect, new GUIContent("▾"), FocusType.Keyboard))
             {
@@ -157,13 +157,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 string path = prop.propertyPath;
                 var src = e.AttributeSource;
                 var field = e.Field;
-                Action<object> apply = value => ApplyDeferred(so, path, value, src, field, target);
+                Action<object> apply = value => ApplyDeferred(so, path, value, src, field, targets);
                 SearchableDropdownWindow.Show(rect, asel.DropdownTitle ?? lbl.text, options, prop.objectReferenceValue, apply);
             }
         }
 
         /// <summary>Asset dropdown row for a collection element.</summary>
-        public static void DrawAssetSelectorElement(SerializedProperty elemProp, InspectorEntry owner, object target,
+        public static void DrawAssetSelectorElement(SerializedProperty elemProp, InspectorEntry owner, object[] targets,
             AssetSelectorAttribute asel, Type elemType, string label)
         {
             var rect = EditorGUILayout.GetControlRect();
@@ -184,7 +184,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 var options = BuildAssetOptions(elemType, asel);
                 var so = elemProp.serializedObject;
                 string path = elemProp.propertyPath;
-                Action<object> apply = value => ApplyDeferred(so, path, value, owner.AttributeSource, owner.Field, target);
+                Action<object> apply = value => ApplyDeferred(so, path, value, owner.AttributeSource, owner.Field, targets);
                 SearchableDropdownWindow.Show(rect, asel.DropdownTitle ?? label, options, elemProp.objectReferenceValue, apply);
             }
         }
