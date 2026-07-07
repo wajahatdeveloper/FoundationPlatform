@@ -19,7 +19,15 @@ See [Documentation~/ARCHITECTURE.md](Documentation~/ARCHITECTURE.md) for namespa
 
 ## Install
 
-Embedded package — already present at `Packages/com.homam.foundationplatform/` in this repo. To reuse elsewhere, copy the folder into another project's `Packages/` directory or reference it as a local/git UPM dependency.
+Embedded package — already present at `Packages/com.homam.foundationplatform/` in this repo.
+
+Released standalone via [OpenUPM](https://openupm.com/) at `com.homam.foundationplatform`:
+
+```
+openupm add com.homam.foundationplatform
+```
+
+or add the scoped registry manually in `Packages/manifest.json` — see [openupm.com/docs/getting-started.html](https://openupm.com/docs/getting-started.html).
 
 ## Dependencies
 
@@ -52,3 +60,7 @@ await handle.WaitForComplete();
 ## Status
 
 Active development — no test suite yet, API may shift. See [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE.md) — free to use and modify, keep the copyright notice, don't represent it as your own work.
