@@ -60,6 +60,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public float SpaceBefore;
         public float SpaceAfter;
         public HorizontalGroupAttribute OwnHorizontal; // this member's own horizontal-cell spec
+        public MemberMetadata Metadata;
     }
 
     internal sealed class GroupNode
@@ -92,11 +93,466 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // Keyed by target hash + member name; cleared on domain reload.
         private static readonly HashSet<long> s_initDone = new HashSet<long>();
 
+        private static Dictionary<Type, TypeMetadata> s_typeCache = new Dictionary<Type, TypeMetadata>();
+
+        [InitializeOnLoadMethod]
+        public static void ClearCache()
+        {
+            s_typeCache?.Clear();
+            s_initDone.Clear();
+            InspectorMemberResolver.ClearCache();
+        }
+
+        [MenuItem("CONTEXT/Component/Force Rebuild Framework Inspector Cache")]
+        private static void ForceRebuildCache(MenuCommand command)
+        {
+            ClearCache();
+            Debug.Log("[FoundationPlatform.FrameworkInspector] Cache cleared successfully.");
+        }
+
+        private static GUIStyle s_centeredBoxLabelStyle;
+        private static GUIStyle CenteredBoxLabelStyle
+        {
+            get
+            {
+                if (s_centeredBoxLabelStyle == null)
+                    s_centeredBoxLabelStyle = new GUIStyle(EditorStyles.boldLabel) { alignment = TextAnchor.MiddleCenter };
+                return s_centeredBoxLabelStyle;
+            }
+        }
+
+        private static readonly GUIContent s_tempContent = new GUIContent();
+        internal static GUIContent TempContent(string text, string tooltip = null)
+        {
+            s_tempContent.text = text;
+            s_tempContent.tooltip = tooltip;
+            return s_tempContent;
+        }
+
+        internal static TypeMetadata GetOrCreateMetadata(Type type)
+        {
+            if (s_typeCache == null)
+            {
+                s_typeCache = new Dictionary<Type, TypeMetadata>();
+            }
+            if (!s_typeCache.TryGetValue(type, out var meta))
+            {
+                meta = BuildTypeMetadata(type);
+                s_typeCache[type] = meta;
+            }
+            return meta;
+        }
+
+        private static TypeMetadata BuildTypeMetadata(Type type)
+        {
+            var meta = new TypeMetadata { Type = type };
+
+            // 1. Build serialized fields map
+            foreach (var f in AllFields(type))
+            {
+                var mm = BuildMemberMetadata(f);
+                meta.SerializedFieldMap[f.Name] = mm;
+            }
+
+            // 2. Build shown members (reflected [ShowInInspector] fields/properties)
+            var shownList = new List<MemberMetadata>();
+            foreach (var m in EnumerateShowInInspector(type))
+            {
+                shownList.Add(BuildMemberMetadata(m));
+            }
+            meta.ShownMembers = shownList.ToArray();
+
+            // 3. Build buttons and inspector guis
+            var buttonsList = new List<MemberMetadata>();
+            var guisList = new List<MemberMetadata>();
+            foreach (var mi in AllMethods(type))
+            {
+                var btn = mi.GetCustomAttribute<ButtonAttribute>();
+                if (btn != null)
+                {
+                    buttonsList.Add(BuildMemberMetadata(mi, btn));
+                }
+                else if (mi.GetCustomAttribute<OnInspectorGUIAttribute>() != null && mi.GetParameters().Length == 0)
+                {
+                    guisList.Add(BuildMemberMetadata(mi));
+                }
+            }
+            meta.Buttons = buttonsList.ToArray();
+            meta.InspectorGuis = guisList.ToArray();
+
+            // 4. Cache type info boxes
+            var boxes = type.GetCustomAttributes<TypeInfoBoxAttribute>(true);
+            meta.TypeInfoBoxes = new List<TypeInfoBoxAttribute>(boxes).ToArray();
+
+            // 5. Pre-build GroupNode tree template (Phase 2a)
+            meta.GroupTreeTemplate = BuildGroupTreeTemplate(meta);
+
+            return meta;
+        }
+
+        private static MemberMetadata BuildMemberMetadata(MemberInfo m, ButtonAttribute btnAttr = null)
+        {
+            var mm = new MemberMetadata
+            {
+                Member = m,
+                Name = m.Name,
+                Field = m as FieldInfo,
+                FieldType = (m is FieldInfo fi) ? fi.FieldType : ((m is PropertyInfo pi) ? pi.PropertyType : null)
+            };
+
+            // Group attributes
+            var groupAttrs = new List<Attribute>();
+            foreach (var attr in m.GetCustomAttributes())
+            {
+                if (attr is BoxGroupAttribute || attr is FoldoutGroupAttribute || 
+                    attr is TitleGroupAttribute || attr is TabGroupAttribute || 
+                    attr is HorizontalGroupAttribute || attr is VerticalGroupAttribute || 
+                    attr is ToggleGroupAttribute || attr is ButtonGroupAttribute)
+                {
+                    groupAttrs.Add(attr);
+                }
+            }
+            mm.GroupAttributes = groupAttrs.ToArray();
+
+            // Spacing
+            var space = m.GetCustomAttribute<PropertySpaceAttribute>();
+            if (space != null)
+            {
+                mm.SpaceBefore = space.SpaceBefore;
+                mm.SpaceAfter = space.SpaceAfter;
+            }
+            else
+            {
+                var unitySpace = m.GetCustomAttribute<SpaceAttribute>();
+                if (unitySpace != null) mm.SpaceBefore = unitySpace.height;
+            }
+
+            // Ordering
+            var order = m.GetCustomAttribute<PropertyOrderAttribute>();
+            if (order != null) mm.Order = order.Order;
+
+            // Visibility / Enabled
+            mm.HideInEditorMode = m.GetCustomAttribute<HideInEditorModeAttribute>() != null;
+            mm.HideInPlayMode = m.GetCustomAttribute<HideInPlayModeAttribute>() != null;
+            mm.ShowInPlayMode = m.GetCustomAttribute<ShowInPlayModeAttribute>() != null;
+            
+            var showIfs = m.GetCustomAttributes<ShowIfAttribute>();
+            var hideIfs = m.GetCustomAttributes<HideIfAttribute>();
+            var enableIfs = m.GetCustomAttributes<EnableIfAttribute>();
+            var disableIfs = m.GetCustomAttributes<DisableIfAttribute>();
+
+            mm.ShowIfs = new List<ShowIfAttribute>(showIfs).ToArray();
+            mm.HideIfs = new List<HideIfAttribute>(hideIfs).ToArray();
+            mm.EnableIfs = new List<EnableIfAttribute>(enableIfs).ToArray();
+            mm.DisableIfs = new List<DisableIfAttribute>(disableIfs).ToArray();
+
+            mm.ReadOnly = m.GetCustomAttribute<ReadOnlyAttribute>() != null;
+            mm.DisableInEditorMode = m.GetCustomAttribute<DisableInEditorModeAttribute>() != null;
+            mm.DisableInPlayMode = m.GetCustomAttribute<DisableInPlayModeAttribute>() != null;
+
+            // Decorators
+            var titles = m.GetCustomAttributes<TitleAttribute>();
+            var infoBoxes = m.GetCustomAttributes<InfoBoxAttribute>();
+            var headers = m.GetCustomAttributes<HeaderAttribute>();
+            var detailedInfoBoxes = m.GetCustomAttributes<DetailedInfoBoxAttribute>();
+
+            mm.Titles = new List<TitleAttribute>(titles).ToArray();
+            mm.InfoBoxes = new List<InfoBoxAttribute>(infoBoxes).ToArray();
+            mm.Headers = new List<HeaderAttribute>(headers).ToArray();
+            mm.DetailedInfoBoxes = new List<DetailedInfoBoxAttribute>(detailedInfoBoxes).ToArray();
+            mm.InlineButtons = new List<InlineButtonAttribute>(m.GetCustomAttributes<InlineButtonAttribute>()).ToArray();
+
+            // Validation
+            mm.Required = m.GetCustomAttribute<RequiredAttribute>();
+            var validateInputs = m.GetCustomAttributes<ValidateInputAttribute>();
+            mm.ValidateInputs = new List<ValidateInputAttribute>(validateInputs).ToArray();
+
+            // Color
+            mm.GUIColor = m.GetCustomAttribute<GUIColorAttribute>();
+
+            // Hooks
+            var initHooks = m.GetCustomAttributes<OnInspectorInitAttribute>();
+            var valChanges = m.GetCustomAttributes<OnValueChangedAttribute>();
+
+            mm.InitHooks = new List<OnInspectorInitAttribute>(initHooks).ToArray();
+            mm.ValueChangedHooks = new List<OnValueChangedAttribute>(valChanges).ToArray();
+
+            // Drawing attributes
+            mm.DrawWithUnity = m.GetCustomAttribute<DrawWithUnityAttribute>();
+            mm.TableList = m.GetCustomAttribute<TableListAttribute>();
+            mm.ListDrawerSettings = m.GetCustomAttribute<ListDrawerSettingsAttribute>();
+            mm.Searchable = m.GetCustomAttribute<SearchableAttribute>();
+            mm.ValueDropdown = m.GetCustomAttribute<ValueDropdownAttribute>();
+            mm.AssetSelector = m.GetCustomAttribute<AssetSelectorAttribute>();
+            mm.OnCollectionChanged = m.GetCustomAttribute<OnCollectionChangedAttribute>();
+            mm.InlineProperty = m.GetCustomAttribute<InlinePropertyAttribute>() ?? 
+                (mm.FieldType != null ? mm.FieldType.GetCustomAttribute<InlinePropertyAttribute>() : null);
+            mm.DisplayAsString = m.GetCustomAttribute<DisplayAsStringAttribute>();
+            mm.ToggleLeft = m.GetCustomAttribute<ToggleLeftAttribute>();
+            mm.MultiLineProperty = m.GetCustomAttribute<MultiLinePropertyAttribute>();
+            mm.TextArea = m.GetCustomAttribute<TextAreaAttribute>();
+            mm.Multiline = m.GetCustomAttribute<MultilineAttribute>();
+            mm.PropertyRange = m.GetCustomAttribute<PropertyRangeAttribute>();
+            mm.MinMaxSlider = m.GetCustomAttribute<MinMaxSliderAttribute>();
+            mm.ProgressBar = m.GetCustomAttribute<ProgressBarAttribute>();
+            mm.EnumToggleButtons = m.GetCustomAttribute<EnumToggleButtonsAttribute>();
+            mm.PreviewField = m.GetCustomAttribute<PreviewFieldAttribute>();
+            mm.InlineEditor = m.GetCustomAttribute<InlineEditorAttribute>();
+            mm.AssetsOnly = m.GetCustomAttribute<AssetsOnlyAttribute>();
+            mm.SceneObjectsOnly = m.GetCustomAttribute<SceneObjectsOnlyAttribute>();
+
+            // Label / Tooltip / Layout modifiers
+            mm.HideLabel = m.GetCustomAttribute<HideLabelAttribute>() != null;
+            mm.Tooltip = m.GetCustomAttribute<TooltipAttribute>();
+            mm.LabelText = m.GetCustomAttribute<LabelTextAttribute>();
+            mm.Indent = m.GetCustomAttribute<IndentAttribute>();
+            mm.LabelWidth = m.GetCustomAttribute<LabelWidthAttribute>();
+            mm.OnInspectorGUI = m.GetCustomAttribute<OnInspectorGUIAttribute>();
+            mm.OwnHorizontal = m.GetCustomAttribute<HorizontalGroupAttribute>();
+
+            // Button (if method and attribute passed)
+            mm.Button = btnAttr;
+
+            // Flags
+            if (mm.FieldType != null && mm.FieldType.IsEnum)
+            {
+                mm.IsFlagsEnum = mm.FieldType.GetCustomAttribute<FlagsAttribute>() != null;
+            }
+
+            // Cache GUIContent if label text is completely static
+            if (mm.HideLabel)
+            {
+                mm.CachedLabel = GUIContent.none;
+            }
+            else if (mm.LabelText != null && !mm.LabelText.Text.StartsWith("$") && !mm.LabelText.Text.StartsWith("@"))
+            {
+                string text = mm.LabelText.Text;
+                string tooltip = mm.Tooltip?.tooltip;
+                mm.CachedLabel = new GUIContent(text, tooltip);
+            }
+
+            // Cache GUIStyles
+            if (mm.DisplayAsString != null)
+            {
+                var das = mm.DisplayAsString;
+                mm.DisplayAsStringStyle = new GUIStyle(EditorStyles.label)
+                {
+                    wordWrap = !das.Overflow,
+                    richText = das.EnableRichText,
+                    alignment = das.Alignment == TextAlignment.Center ? TextAnchor.MiddleCenter
+                        : das.Alignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
+                };
+                if (das.FontSize > 0) mm.DisplayAsStringStyle.fontSize = das.FontSize;
+            }
+
+            if (mm.ProgressBar != null)
+            {
+                var pb = mm.ProgressBar;
+                mm.ProgressBarStyle = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    alignment = pb.ValueLabelAlignment == TextAlignment.Left ? TextAnchor.MiddleLeft
+                        : pb.ValueLabelAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleCenter,
+                    normal = { textColor = Color.white },
+                };
+            }
+
+            return mm;
+        }
+
+        private static GroupNode BuildGroupTreeTemplate(TypeMetadata meta)
+        {
+            var root = new GroupNode { Path = string.Empty, Kind = GroupKind.Vertical, KindResolved = true };
+            
+            var allMembers = new List<MemberMetadata>();
+            if (meta.SerializedFieldMap != null) allMembers.AddRange(meta.SerializedFieldMap.Values);
+            if (meta.ShownMembers != null) allMembers.AddRange(meta.ShownMembers);
+            if (meta.Buttons != null) allMembers.AddRange(meta.Buttons);
+            if (meta.InspectorGuis != null) allMembers.AddRange(meta.InspectorGuis);
+
+            int dummySeq = 0;
+            foreach (var mm in allMembers)
+            {
+                string containerPath = ResolveContainerTemplate(root, mm, ref dummySeq);
+                mm.ResolvedContainerPath = containerPath;
+            }
+
+            return root;
+        }
+
+        private static string ResolveContainerTemplate(GroupNode root, MemberMetadata mm, ref int seq)
+        {
+            var source = mm.Member;
+            if (source == null) return string.Empty;
+
+            string containerPath = string.Empty;
+            int maxDepth = -1;
+
+            foreach (var attr in mm.GroupAttributes)
+            {
+                string path = null;
+                switch (attr)
+                {
+                    case BoxGroupAttribute b:
+                        path = b.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Box;
+                            if (b.Order != 0f) n.Order = b.Order;
+                            if (!b.ShowLabel) n.ShowLabel = false;
+                            if (n.Box == null) n.Box = b;
+                            else
+                            {
+                               if (b.CenterLabel) n.Box.CenterLabel = true;
+                               if (b.LabelText != null) n.Box.LabelText = b.LabelText;
+                            }
+                        });
+                        break;
+                    case FoldoutGroupAttribute f:
+                        path = f.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Foldout;
+                            if (f.Order != 0f) n.Order = f.Order;
+                            if (f.HasDefinedExpanded) n.DefaultExpanded = f.Expanded;
+                            if (n.FoldoutAttr == null) n.FoldoutAttr = f;
+                        });
+                        break;
+                    case TitleGroupAttribute t:
+                        path = t.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Title;
+                            if (t.Order != 0f) n.Order = t.Order;
+                            if (n.TitleAttr == null || t.Subtitle != null || t.Alignment != TitleAlignments.Left
+                                || !t.HorizontalLine || !t.BoldTitle || t.Indent)
+                                n.TitleAttr = t;
+                        });
+                        break;
+                    case TabGroupAttribute tg:
+                        RegisterTemplate(root, tg.GroupID, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.TabContainer;
+                            if (tg.Order != 0f) n.Order = tg.Order;
+                            if (n.Tab == null || tg.Paddingless || tg.HideTabGroupIfTabGroupOnlyHasOneTab) n.Tab = tg;
+                        });
+                        path = tg.GroupID + "/" + tg.TabName;
+                        RegisterTemplate(root, path, ref seq, n => { n.Kind = GroupKind.TabPage; });
+                        break;
+                    case HorizontalGroupAttribute h:
+                        path = h.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Horizontal;
+                            if (h.Order != 0f) n.Order = h.Order;
+                            if (n.Horizontal == null || !string.IsNullOrEmpty(h.Title) || h.LabelWidth > 0f) n.Horizontal = h;
+                        });
+                        break;
+                    case VerticalGroupAttribute v:
+                        path = v.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Vertical;
+                            n.KindResolved = true;
+                            if (v.Order != 0f) n.Order = v.Order;
+                            if (n.Vertical == null || v.PaddingTop > 0f || v.PaddingBottom > 0f) n.Vertical = v;
+                        });
+                        break;
+                    case ToggleGroupAttribute tog:
+                        path = tog.ToggleMemberName;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.Toggle;
+                            if (tog.Order != 0f) n.Order = tog.Order;
+                            if (n.Toggle == null || tog.GroupTitle != null) n.Toggle = tog;
+                        });
+                        break;
+                    case ButtonGroupAttribute bg:
+                        path = string.IsNullOrEmpty(bg.GroupID) ? "_DefaultButtonGroup" : bg.GroupID;
+                        RegisterTemplate(root, path, ref seq, n =>
+                        {
+                            n.Kind = GroupKind.ButtonRow;
+                            if (bg.Order != 0f) n.Order = bg.Order;
+                        });
+                        break;
+                }
+
+                if (string.IsNullOrEmpty(path)) continue;
+                int depth = CountSegments(path);
+                if (depth > maxDepth) { maxDepth = depth; containerPath = path; }
+            }
+
+            return containerPath;
+        }
+
+        private static void RegisterTemplate(GroupNode root, string path, ref int seq, Action<GroupNode> configure)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            var node = GetNode(root, path, seq++);
+            configure(node);
+            node.KindResolved = true;
+        }
+
+        private static readonly Stack<List<InspectorEntry>> s_listPool = new Stack<List<InspectorEntry>>();
+
+        private static List<InspectorEntry> GetPooledList()
+        {
+            if (s_listPool.Count > 0)
+            {
+                var l = s_listPool.Pop();
+                l.Clear();
+                return l;
+            }
+            return new List<InspectorEntry>();
+        }
+
+        private static void ReleasePooledList(List<InspectorEntry> list)
+        {
+            list.Clear();
+            s_listPool.Push(list);
+        }
+
+        private static GroupNode CloneGroupNode(GroupNode source, Dictionary<string, GroupNode> flatMap)
+        {
+            var clone = new GroupNode
+            {
+                Path = source.Path,
+                Name = source.Name,
+                Kind = source.Kind,
+                KindResolved = source.KindResolved,
+                Order = source.Order,
+                Sequence = source.Sequence,
+                DefaultExpanded = source.DefaultExpanded,
+                ShowLabel = source.ShowLabel,
+                Box = source.Box,
+                FoldoutAttr = source.FoldoutAttr,
+                TitleAttr = source.TitleAttr,
+                Tab = source.Tab,
+                Toggle = source.Toggle,
+                Horizontal = source.Horizontal,
+                Vertical = source.Vertical
+            };
+            if (!string.IsNullOrEmpty(clone.Path))
+            {
+                flatMap[clone.Path] = clone;
+            }
+            foreach (var child in source.Children)
+            {
+                if (child is GroupNode childGroup)
+                {
+                    var childClone = CloneGroupNode(childGroup, flatMap);
+                    clone.Children.Add(childClone);
+                    clone.SubGroups[childClone.Name] = childClone;
+                }
+            }
+            return clone;
+        }
+
         public static void Draw(UnityEditor.Editor editor, SerializedObject so, object target,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             bool drawScriptRow = true, HashSet<string> skipFields = null)
         {
             Type type = target.GetType();
+            var meta = GetOrCreateMetadata(type);
 
             // --- Script row (matches Unity's default look) ---
             if (drawScriptRow)
@@ -109,9 +565,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            DrawTypeInfoBoxes(type, target);
+            DrawTypeInfoBoxes(meta, target);
 
-            var entries = new List<InspectorEntry>();
+            var entries = GetPooledList();
             int seq = 0;
 
             // --- Serialized fields (exact serialized set comes from the SerializedObject) ---
@@ -122,17 +578,21 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 enter = false;
                 if (it.propertyPath == "m_Script") continue;
                 if (skipFields != null && skipFields.Contains(it.name)) continue;
-                AddFieldEntry(entries, it.Copy(), target, ref seq);
+                AddFieldEntry(entries, it.Copy(), meta, ref seq);
             }
 
-            AddReflectedEntries(entries, type, target, ref seq);
+            AddReflectedEntries(entries, meta, target, ref seq);
             RenderScope(entries, target, foldouts, tabs);
+            ReleasePooledList(entries);
         }
 
-        private static void DrawTypeInfoBoxes(Type type, object target)
+        private static void DrawTypeInfoBoxes(TypeMetadata meta, object target)
         {
-            foreach (var box in type.GetCustomAttributes<TypeInfoBoxAttribute>(true))
-                EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, box.Message), MessageType.Info);
+            if (meta.TypeInfoBoxes != null)
+            {
+                foreach (var box in meta.TypeInfoBoxes)
+                    EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, box.Message), MessageType.Info);
+            }
         }
 
         // Build + group + render a set of entries against a target instance. Shared by the root
@@ -142,9 +602,25 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             entries.Sort((a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : a.Sequence.CompareTo(b.Sequence));
 
-            var root = new GroupNode { Path = string.Empty, Kind = GroupKind.Vertical, KindResolved = true };
+            var type = target.GetType();
+            var meta = GetOrCreateMetadata(type);
+
+            var flatMap = new Dictionary<string, GroupNode>();
+            var root = CloneGroupNode(meta.GroupTreeTemplate, flatMap);
+
             foreach (var e in entries)
-                ResolveContainer(root, e, target).Children.Add(e);
+            {
+                var mm = e.Metadata;
+                string path = mm?.ResolvedContainerPath;
+                if (!string.IsNullOrEmpty(path) && flatMap.TryGetValue(path, out var node))
+                {
+                    node.Children.Add(e);
+                }
+                else
+                {
+                    root.Children.Add(e);
+                }
+            }
 
             SortGroupChildren(root);
             RenderChildren(root, target, foldouts, tabs);
@@ -167,68 +643,86 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (child is GroupNode g) SortGroupChildren(g);
         }
 
-        private static void AddFieldEntry(List<InspectorEntry> entries, SerializedProperty prop, object target, ref int seq)
+        private static void AddFieldEntry(List<InspectorEntry> entries, SerializedProperty prop, TypeMetadata meta, ref int seq)
         {
-            var field = FindField(target.GetType(), prop.name);
-            var e = new InspectorEntry
-            {
-                EntryKind = InspectorEntry.Kind.Field,
-                Property = prop,
-                Field = field,
-                AttributeSource = field,
-                Sequence = seq++,
-            };
-            ApplyMemberMetadata(e, field, target);
-            entries.Add(e);
-        }
-
-        private static void AddReflectedEntries(List<InspectorEntry> entries, Type type, object target, ref int seq)
-        {
-            if (type == null) return;
-            foreach (var m in EnumerateShowInInspector(type))
+            if (meta.SerializedFieldMap.TryGetValue(prop.name, out var mm))
             {
                 var e = new InspectorEntry
                 {
-                    EntryKind = InspectorEntry.Kind.Shown,
-                    Member = m,
-                    AttributeSource = m,
+                    EntryKind = InspectorEntry.Kind.Field,
+                    Property = prop,
+                    Field = mm.Field,
+                    AttributeSource = mm.Member,
                     Sequence = seq++,
+                    Metadata = mm
                 };
-                ApplyMemberMetadata(e, m, target);
+                ApplyMemberMetadata(e, mm);
                 entries.Add(e);
             }
-
-            foreach (var mi in AllMethods(type))
+            else
             {
-                var btn = mi.GetCustomAttribute<ButtonAttribute>();
-                if (btn != null)
+                var e = new InspectorEntry
+                {
+                    EntryKind = InspectorEntry.Kind.Field,
+                    Property = prop,
+                    Sequence = seq++
+                };
+                entries.Add(e);
+            }
+        }
+
+        private static void AddReflectedEntries(List<InspectorEntry> entries, TypeMetadata meta, object target, ref int seq)
+        {
+            if (meta.ShownMembers != null)
+            {
+                foreach (var mm in meta.ShownMembers)
+                {
+                    var e = new InspectorEntry
+                    {
+                        EntryKind = InspectorEntry.Kind.Shown,
+                        Member = mm.Member,
+                        AttributeSource = mm.Member,
+                        Sequence = seq++,
+                        Metadata = mm
+                    };
+                    ApplyMemberMetadata(e, mm);
+                    entries.Add(e);
+                }
+            }
+
+            if (meta.Buttons != null)
+            {
+                foreach (var mm in meta.Buttons)
                 {
                     var e = new InspectorEntry
                     {
                         EntryKind = InspectorEntry.Kind.Button,
-                        ButtonMethod = mi,
-                        Button = btn,
-                        Member = mi,
-                        AttributeSource = mi,
+                        ButtonMethod = mm.Member as MethodInfo,
+                        Button = mm.Button,
+                        Member = mm.Member,
+                        AttributeSource = mm.Member,
                         Sequence = seq++,
+                        Metadata = mm
                     };
-                    ApplyMemberMetadata(e, mi, target);
+                    ApplyMemberMetadata(e, mm);
                     entries.Add(e);
-                    continue;
                 }
+            }
 
-                // [OnInspectorGUI] on a parameterless method → invoked at its position to draw custom IMGUI.
-                if (mi.GetCustomAttribute<OnInspectorGUIAttribute>() != null && mi.GetParameters().Length == 0)
+            if (meta.InspectorGuis != null)
+            {
+                foreach (var mm in meta.InspectorGuis)
                 {
                     var e = new InspectorEntry
                     {
                         EntryKind = InspectorEntry.Kind.InspectorGui,
-                        ButtonMethod = mi,
-                        Member = mi,
-                        AttributeSource = mi,
+                        ButtonMethod = mm.Member as MethodInfo,
+                        Member = mm.Member,
+                        AttributeSource = mm.Member,
                         Sequence = seq++,
+                        Metadata = mm
                     };
-                    ApplyMemberMetadata(e, mi, target);
+                    ApplyMemberMetadata(e, mm);
                     entries.Add(e);
                 }
             }
@@ -424,7 +918,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 if (child is InspectorEntry e)
                 {
-                    if (e.AttributeSource == null || IsVisible(e.AttributeSource, target)) return true;
+                    if (e.Metadata == null || IsVisible(e.Metadata, target)) return true;
                 }
                 else if (child is GroupNode sub && GroupHasVisible(sub, target)) return true;
             }
@@ -446,8 +940,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         {
                             if (g.Box != null && g.Box.CenterLabel)
                             {
-                                var style = new GUIStyle(EditorStyles.boldLabel) { alignment = TextAnchor.MiddleCenter };
-                                EditorGUILayout.LabelField(label, style);
+                                EditorGUILayout.LabelField(label, CenteredBoxLabelStyle);
                             }
                             else EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
                         }
@@ -554,7 +1047,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             foreach (var child in g.Children)
             {
                 if (child is GroupNode sub && !GroupHasVisible(sub, target)) continue;
-                if (child is InspectorEntry pe && pe.AttributeSource != null && !IsVisible(pe.AttributeSource, target)) continue;
+                if (child is InspectorEntry pe && pe.Metadata != null && !IsVisible(pe.Metadata, target)) continue;
 
                 if (!first && gap > 0) GUILayout.Space(gap);
                 first = false;
@@ -709,68 +1202,87 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static void RenderEntry(InspectorEntry e, object target, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
-            var src = e.AttributeSource;
+            var mm = e.Metadata;
+            if (mm == null)
+            {
+                DrawDefaultField(e, target);
+                return;
+            }
 
             // Visibility (ShowIf/HideIf/HideInEditorMode/...).
-            if (src != null && !IsVisible(src, target)) return;
+            if (!IsVisible(mm, target)) return;
 
             RunInitHooks(e, target);
 
             if (e.SpaceBefore > 0) EditorGUILayout.Space(e.SpaceBefore);
 
-            if (src != null)
+            // [Title] decorator(s).
+            if (mm.Titles != null)
             {
-                // [Title] decorator(s).
-                foreach (var t in src.GetCustomAttributes<TitleAttribute>())
+                foreach (var t in mm.Titles)
                 {
                     EditorGUILayout.Space(2);
                     GuiKit.Title(InspectorMemberResolver.ResolveString(target, t.Title),
                         InspectorMemberResolver.ResolveString(target, t.Subtitle),
                         ToTextAlignment(t.TitleAlignment), t.HorizontalLine, t.Bold);
                 }
+            }
 
-                // InfoBox(es) attached to the member.
-                foreach (var info in src.GetCustomAttributes<InfoBoxAttribute>())
+            // Unity's native [Header] attribute
+            if (mm.Headers != null)
+            {
+                foreach (var h in mm.Headers)
+                {
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField(h.header, EditorStyles.boldLabel);
+                }
+            }
+
+            // InfoBox(es) attached to the member.
+            if (mm.InfoBoxes != null)
+            {
+                foreach (var info in mm.InfoBoxes)
                 {
                     if (!string.IsNullOrEmpty(info.VisibleIf) &&
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
                     EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, info.Message), ToMsgType(info.InfoMessageType));
                 }
+            }
 
-                foreach (var info in src.GetCustomAttributes<DetailedInfoBoxAttribute>())
+            // DetailedInfoBox(es).
+            if (mm.DetailedInfoBoxes != null)
+            {
+                foreach (var info in mm.DetailedInfoBoxes)
                 {
                     if (!string.IsNullOrEmpty(info.VisibleIf) &&
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
                     DrawDetailedInfoBox(e, target, info, foldouts);
                 }
-
-                // Validation feedback draws ABOVE the field.
-                RenderValidation(e, target);
             }
 
+            // Validation feedback draws ABOVE the field.
+            RenderValidation(e, target);
+
             // Enabled (EnableIf/DisableIf/ReadOnly).
-            bool enabled = src == null || IsEnabled(src, target);
+            bool enabled = IsEnabled(mm, target);
 
             // GUI color.
             Color prev = GUI.color;
-            if (src != null && TryGetGuiColor(src, target, out var col)) GUI.color = col;
+            if (TryGetGuiColor(mm, target, out var col)) GUI.color = col;
 
             // LabelWidth / Indent scopes.
             float prevLabelWidth = EditorGUIUtility.labelWidth;
-            var lw = src?.GetCustomAttribute<LabelWidthAttribute>();
-            if (lw != null && lw.Width > 0) EditorGUIUtility.labelWidth = lw.Width;
-            var ind = src?.GetCustomAttribute<IndentAttribute>();
-            if (ind != null) EditorGUI.indentLevel += ind.IndentLevel;
+            if (mm.LabelWidth != null && mm.LabelWidth.Width > 0) EditorGUIUtility.labelWidth = mm.LabelWidth.Width;
+            if (mm.Indent != null) EditorGUI.indentLevel += mm.Indent.IndentLevel;
 
             // [OnInspectorGUI(prepend, append)] on a member.
-            var onGui = src?.GetCustomAttribute<OnInspectorGUIAttribute>();
-            if (onGui != null && !string.IsNullOrEmpty(onGui.Prepend)) InvokeDrawMethod(target, onGui.Prepend);
+            if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Prepend)) InvokeDrawMethod(target, mm.OnInspectorGUI.Prepend);
 
             using (new EditorGUI.DisabledScope(!enabled))
             {
-                var inline = src?.GetCustomAttributes<InlineButtonAttribute>();
+                var inline = mm.InlineButtons;
                 bool hasInline = false;
                 if (inline != null)
                     foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
@@ -785,7 +1297,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
                 }
 
-                if (hasInline)
+                if (hasInline && inline != null)
                 {
                     foreach (var ib in inline)
                     {
@@ -801,9 +1313,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            if (onGui != null && !string.IsNullOrEmpty(onGui.Append)) InvokeDrawMethod(target, onGui.Append);
+            if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
 
-            if (ind != null) EditorGUI.indentLevel -= ind.IndentLevel;
+            if (mm.Indent != null) EditorGUI.indentLevel -= mm.Indent.IndentLevel;
             EditorGUIUtility.labelWidth = prevLabelWidth;
             GUI.color = prev;
 
@@ -845,22 +1357,28 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // [OnInspectorInit] + [OnValueChanged(InvokeOnInitialize = true)] — run once per member.
         private static void RunInitHooks(InspectorEntry e, object target)
         {
-            var src = e.AttributeSource;
-            if (src == null) return;
+            var mm = e.Metadata;
+            if (mm == null || mm.Member == null) return;
 
-            long key = ((long)(target?.GetHashCode() ?? 0) << 32) ^ (uint)(src.DeclaringType?.FullName ?? "").GetHashCode() ^ (uint)src.Name.GetHashCode();
+            long key = ((long)(target?.GetHashCode() ?? 0) << 32) ^ (uint)(mm.Member.DeclaringType?.FullName ?? "").GetHashCode() ^ (uint)mm.Name.GetHashCode();
             if (s_initDone.Contains(key)) return;
             s_initDone.Add(key);
 
-            foreach (var init in src.GetCustomAttributes<OnInspectorInitAttribute>())
+            if (mm.InitHooks != null)
             {
-                if (!string.IsNullOrEmpty(init.Action)) InvokeAction(target, init.Action);
-                else if (src is MethodInfo mi && mi.GetParameters().Length == 0)
-                    try { mi.Invoke(mi.IsStatic ? null : target, null); } catch { }
+                foreach (var init in mm.InitHooks)
+                {
+                    if (!string.IsNullOrEmpty(init.Action)) InvokeAction(target, init.Action);
+                    else if (mm.Member is MethodInfo mi && mi.GetParameters().Length == 0)
+                        try { mi.Invoke(mi.IsStatic ? null : target, null); } catch { }
+                }
             }
 
-            foreach (var ovc in src.GetCustomAttributes<OnValueChangedAttribute>())
-                if (ovc.InvokeOnInitialize) InvokeChangeAction(e, target, ovc);
+            if (mm.ValueChangedHooks != null)
+            {
+                foreach (var ovc in mm.ValueChangedHooks)
+                    if (ovc.InvokeOnInitialize) InvokeChangeAction(e, target, ovc);
+            }
         }
 
         private static void InvokeDrawMethod(object target, string methodName)
@@ -881,10 +1399,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static void InvokeAction(object target, string methodName)
         {
+            if (target is UnityEngine.Object uo)
+            {
+                Undo.RecordObject(uo, $"Action: {methodName}");
+            }
             var mi = InspectorMemberResolver.FindMethod(target.GetType(), methodName, Type.EmptyTypes);
             try { mi?.Invoke(mi.IsStatic ? null : target, null); }
             catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{methodName}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
-            if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+            if (target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
         }
 
         // ---------------------------------------------------------------- field rendering
@@ -892,25 +1414,30 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static void RenderField(InspectorEntry e, object target,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
-            var src = e.AttributeSource;
+            var mm = e.Metadata;
             var prop = e.Property;
 
+            if (mm == null)
+            {
+                DrawDefaultField(e, target);
+                return;
+            }
+
             // [DrawWithUnity] → always the stock drawer.
-            if (src?.GetCustomAttribute<DrawWithUnityAttribute>() != null)
+            if (mm.DrawWithUnity != null)
             {
                 DrawDefaultField(e, target);
                 return;
             }
 
             // [TableList] on an array/list → grid renderer.
-            var table = src?.GetCustomAttribute<TableListAttribute>();
-            if (table != null && prop.isArray && e.Field != null)
+            if (mm.TableList != null && prop.isArray && e.Field != null)
             {
                 var elemType0 = GetElementType(e.Field.FieldType);
                 if (elemType0 != null)
                 {
                     EditorGUI.BeginChangeCheck();
-                    TableRenderer.DrawSerializedTable(prop, elemType0, table, GetLabel(e, target));
+                    TableRenderer.DrawSerializedTable(prop, elemType0, mm.TableList, GetLabel(e, target));
                     if (EditorGUI.EndChangeCheck())
                     {
                         prop.serializedObject.ApplyModifiedProperties();
@@ -923,14 +1450,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // Collections that need the engine list drawer.
             if (prop.isArray && prop.propertyType == SerializedPropertyType.Generic)
             {
-                var lds = src?.GetCustomAttribute<ListDrawerSettingsAttribute>();
-                var searchable = src?.GetCustomAttribute<SearchableAttribute>();
-                var vdList = src?.GetCustomAttribute<ValueDropdownAttribute>();
-                var asList = src?.GetCustomAttribute<AssetSelectorAttribute>();
-                var occ = src?.GetCustomAttribute<OnCollectionChangedAttribute>();
+                var lds = mm.ListDrawerSettings;
+                var searchable = mm.Searchable;
+                var vdList = mm.ValueDropdown;
+                var asList = mm.AssetSelector;
+                var occ = mm.OnCollectionChanged;
                 var elemType = GetElementType(e.Field?.FieldType);
                 bool engineElems = elemType != null && !HasCustomPropertyDrawer(elemType)
-                    && (elemType.GetCustomAttribute<InlinePropertyAttribute>() != null || TypeHasEngineAttributes(elemType));
+                    && (mm.InlineProperty != null || TypeHasEngineAttributes(elemType));
 
                 if (lds != null || searchable != null || occ != null || engineElems
                     || (vdList != null && vdList.DrawDropdownForListElements)
@@ -942,31 +1469,27 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             // [ValueDropdown(getter)] → dropdown of allowed values.
-            var vd = src?.GetCustomAttribute<ValueDropdownAttribute>();
-            if (vd != null && InspectorDropdown.DrawValueDropdown(e, target, vd, GetLabelText(e, target))) return;
+            if (mm.ValueDropdown != null && InspectorDropdown.DrawValueDropdown(e, target, mm.ValueDropdown, GetLabelText(e, target))) return;
 
             // [AssetSelector] on a single object reference.
-            var asel = src?.GetCustomAttribute<AssetSelectorAttribute>();
-            if (asel != null && prop.propertyType == SerializedPropertyType.ObjectReference)
+            if (mm.AssetSelector != null && prop.propertyType == SerializedPropertyType.ObjectReference)
             {
-                InspectorDropdown.DrawAssetSelector(e, target, asel);
+                InspectorDropdown.DrawAssetSelector(e, target, mm.AssetSelector);
                 return;
             }
 
             // [DisplayAsString] → read-only text.
-            var das = src?.GetCustomAttribute<DisplayAsStringAttribute>();
-            if (das != null)
+            if (mm.DisplayAsString != null)
             {
                 object v = e.Field != null ? SafeGet(e.Field, target) : ReadProperty(prop);
-                DrawDisplayAsString(GetLabel(e, target) ?? new GUIContent(prop.displayName), v?.ToString() ?? string.Empty, das);
+                DrawDisplayAsString(GetLabel(e, target) ?? TempContent(prop.displayName), v?.ToString() ?? string.Empty, mm);
                 return;
             }
 
             // [ToggleLeft] bool → left-aligned checkbox (label right of the box).
-            if (prop.propertyType == SerializedPropertyType.Boolean &&
-                src?.GetCustomAttribute<ToggleLeftAttribute>() != null)
+            if (prop.propertyType == SerializedPropertyType.Boolean && mm.ToggleLeft != null)
             {
-                var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
                 EditorGUI.BeginChangeCheck();
                 bool v = EditorGUILayout.ToggleLeft(lbl, prop.boolValue);
                 if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, target); }
@@ -974,51 +1497,70 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             // [MultiLineProperty(lines)] string → text area.
-            var ml = src?.GetCustomAttribute<MultiLinePropertyAttribute>();
-            if (ml != null && prop.propertyType == SerializedPropertyType.String)
+            if (mm.MultiLineProperty != null && prop.propertyType == SerializedPropertyType.String)
             {
-                var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
-                float h = Mathf.Max(1, ml.Lines) * EditorGUIUtility.singleLineHeight;
+                float h = Mathf.Max(1, mm.MultiLineProperty.Lines) * EditorGUIUtility.singleLineHeight;
+                string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(h));
+                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
+                return;
+            }
+
+            // [TextArea(min, max)] string → text area.
+            if (mm.TextArea != null && prop.propertyType == SerializedPropertyType.String)
+            {
+                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                EditorGUILayout.LabelField(lbl);
+                EditorGUI.BeginChangeCheck();
+                float minH = Mathf.Max(1, mm.TextArea.minLines) * EditorGUIUtility.singleLineHeight;
+                float maxH = Mathf.Max(1, mm.TextArea.maxLines) * EditorGUIUtility.singleLineHeight;
+                string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(minH), GUILayout.MaxHeight(maxH));
+                if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
+                return;
+            }
+
+            // [Multiline(lines)] string → text area.
+            if (mm.Multiline != null && prop.propertyType == SerializedPropertyType.String)
+            {
+                var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
+                EditorGUILayout.LabelField(lbl);
+                EditorGUI.BeginChangeCheck();
+                float h = Mathf.Max(1, mm.Multiline.lines) * EditorGUIUtility.singleLineHeight;
                 string s = EditorGUILayout.TextArea(prop.stringValue, GUILayout.MinHeight(h));
                 if (EditorGUI.EndChangeCheck()) { prop.stringValue = s; Commit(e, target); }
                 return;
             }
 
             // [PropertyRange(min,max)] numeric → slider (getters resolved via member names).
-            var pr = src?.GetCustomAttribute<PropertyRangeAttribute>();
-            if (pr != null && TryDrawPropertyRange(e, target, pr)) return;
+            if (mm.PropertyRange != null && TryDrawPropertyRange(e, target, mm.PropertyRange)) return;
 
             // [MinMaxSlider] on Vector2/Vector2Int.
-            var mms = src?.GetCustomAttribute<MinMaxSliderAttribute>();
-            if (mms != null && TryDrawMinMaxSlider(e, target, mms)) return;
+            if (mm.MinMaxSlider != null && TryDrawMinMaxSlider(e, target, mm.MinMaxSlider)) return;
 
             // [ProgressBar] on a numeric.
-            var pb = src?.GetCustomAttribute<ProgressBarAttribute>();
-            if (pb != null && TryDrawProgressBar(e, target, pb)) return;
+            if (mm.ProgressBar != null && TryDrawProgressBar(e, target, mm.ProgressBar)) return;
 
             // [EnumToggleButtons] on an enum.
             if (prop.propertyType == SerializedPropertyType.Enum &&
-                src?.GetCustomAttribute<EnumToggleButtonsAttribute>() != null &&
+                mm.EnumToggleButtons != null &&
                 TryDrawEnumToggleButtons(e, target))
                 return;
 
             // Object-reference specials.
             if (prop.propertyType == SerializedPropertyType.ObjectReference)
             {
-                var pf = src?.GetCustomAttribute<PreviewFieldAttribute>();
-                if (pf != null) { DrawPreviewField(e, target, pf); return; }
+                if (mm.PreviewField != null) { DrawPreviewField(e, target, mm.PreviewField); return; }
 
-                var ie = src?.GetCustomAttribute<InlineEditorAttribute>();
-                if (ie != null) { DrawInlineEditor(e, target, ie, foldouts); return; }
+                if (mm.InlineEditor != null) { DrawInlineEditor(e, target, mm.InlineEditor, foldouts); return; }
 
-                if (src?.GetCustomAttribute<AssetsOnlyAttribute>() != null)
+                if (mm.AssetsOnly != null)
                 {
                     DrawObjectField(e, target, allowScene: false);
                     return;
                 }
-                if (src?.GetCustomAttribute<SceneObjectsOnlyAttribute>() != null)
+                if (mm.SceneObjectsOnly != null)
                 {
                     DrawSceneObjectField(e, target);
                     return;
@@ -1030,15 +1572,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // attribute (draw under a collapsible foldout). Plain data (only Unity attrs) and types with
             // their own custom PropertyDrawer fall through to the default PropertyField below.
             var fieldType = e.Field?.FieldType;
-            var inlineAttr = src?.GetCustomAttribute<InlinePropertyAttribute>()
-                             ?? (fieldType != null ? fieldType.GetCustomAttribute<InlinePropertyAttribute>() : null);
-            bool explicitInline = inlineAttr != null;
+            bool explicitInline = mm.InlineProperty != null;
             if (prop.propertyType == SerializedPropertyType.Generic && prop.hasVisibleChildren && !prop.isArray
                 && !HasCustomPropertyDrawer(fieldType)
                 && (explicitInline || TypeHasEngineAttributes(fieldType)))
             {
                 float prevLw = EditorGUIUtility.labelWidth;
-                if (inlineAttr != null && inlineAttr.LabelWidth > 0) EditorGUIUtility.labelWidth = inlineAttr.LabelWidth;
+                if (mm.InlineProperty != null && mm.InlineProperty.LabelWidth > 0) EditorGUIUtility.labelWidth = mm.InlineProperty.LabelWidth;
                 DrawNestedObject(e, target, foldouts, tabs, inline: explicitInline);
                 EditorGUIUtility.labelWidth = prevLw;
                 return;
@@ -1111,20 +1651,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---- exotic value drawers ---------------------------------------------------
 
-        private static void DrawDisplayAsString(GUIContent label, string text, DisplayAsStringAttribute das)
+        private static void DrawDisplayAsString(GUIContent label, string text, MemberMetadata mm)
         {
-            var style = new GUIStyle(EditorStyles.label)
-            {
-                wordWrap = !das.Overflow,
-                richText = das.EnableRichText,
-                alignment = das.Alignment == TextAlignment.Center ? TextAnchor.MiddleCenter
-                    : das.Alignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
-            };
-            if (das.FontSize > 0) style.fontSize = das.FontSize;
+            var style = mm.DisplayAsStringStyle ?? EditorStyles.label;
             using (new EditorGUI.DisabledScope(true))
             {
                 if (label == GUIContent.none) EditorGUILayout.LabelField(text, style);
-                else EditorGUILayout.LabelField(label, new GUIContent(text), style);
+                else EditorGUILayout.LabelField(label, TempContent(text), style);
             }
         }
 
@@ -1132,7 +1665,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, allowScene);
             if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, target); }
@@ -1143,7 +1676,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, true);
             if (EditorGUI.EndChangeCheck())
@@ -1160,7 +1693,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
             float h = pf.Height > 0 ? pf.Height : 64f;
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
 
             var rect = EditorGUILayout.GetControlRect(false, h);
             var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
@@ -1200,7 +1733,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (ie.ObjectFieldMode == InlineEditorObjectFieldModes.Foldout && obj != null)
                 {
                     var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-                    var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+                    var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
                     var rect = EditorGUILayout.GetControlRect();
                     var foldRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height);
                     expanded = EditorGUI.Foldout(foldRect, expanded, lbl, true);
@@ -1288,7 +1821,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool indent;
             if (inline)
             {
-                if (!hideLabel) EditorGUILayout.LabelField(lbl ?? new GUIContent(e.Property.displayName));
+                if (!hideLabel) EditorGUILayout.LabelField(lbl ?? TempContent(e.Property.displayName));
                 indent = !hideLabel;
             }
             else if (hideLabel)
@@ -1299,7 +1832,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 // Collapsible foldout header; skip the body when collapsed.
                 e.Property.isExpanded = EditorGUILayout.Foldout(e.Property.isExpanded,
-                    lbl ?? new GUIContent(e.Property.displayName), true);
+                    lbl ?? TempContent(e.Property.displayName), true);
                 if (!e.Property.isExpanded) return;
                 indent = true;
             }
@@ -1307,13 +1840,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (indent) EditorGUI.indentLevel++;
             try
             {
-                DrawTypeInfoBoxes(inst.GetType(), inst);
-                var nested = new List<InspectorEntry>();
+                var nestedMeta = GetOrCreateMetadata(inst.GetType());
+                DrawTypeInfoBoxes(nestedMeta, inst);
+                var nested = GetPooledList();
                 int seq = 0;
                 foreach (var child in ChildProperties(e.Property))
-                    AddFieldEntry(nested, child, inst, ref seq);
-                AddReflectedEntries(nested, inst.GetType(), inst, ref seq);
+                    AddFieldEntry(nested, child, nestedMeta, ref seq);
+                AddReflectedEntries(nested, nestedMeta, inst, ref seq);
                 RenderScope(nested, inst, foldouts, tabs);
+                ReleasePooledList(nested);
             }
             catch (Exception ex)
             {
@@ -1364,7 +1899,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             double min = ResolveNumber(target, pr.MinGetter, pr.Min);
             double max = ResolveNumber(target, pr.MaxGetter, pr.Max);
             var prop = e.Property;
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
             if (prop.propertyType == SerializedPropertyType.Integer)
             {
                 EditorGUI.BeginChangeCheck();
@@ -1397,7 +1932,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 hi = (float)ResolveNumber(target, mms.MaxValueGetter, hi);
             }
 
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
 
             if (prop.propertyType == SerializedPropertyType.Vector2)
             {
@@ -1490,7 +2025,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (!bf && bv is Color bc) back = bc;
             }
 
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
             float height = Mathf.Max(EditorGUIUtility.singleLineHeight, pb.Height);
             var rect = EditorGUILayout.GetControlRect(false, height);
             rect = EditorGUI.PrefixLabel(rect, lbl);
@@ -1546,12 +2081,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     text = InspectorMemberResolver.ResolveString(target, pb.CustomValueStringGetter);
                 if (string.IsNullOrEmpty(text))
                     text = isInt ? $"{(int)value}/{(int)max}" : $"{value:0.##}";
-                var style = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    alignment = pb.ValueLabelAlignment == TextAlignment.Left ? TextAnchor.MiddleLeft
-                        : pb.ValueLabelAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleCenter,
-                    normal = { textColor = Color.white },
-                };
+                var style = e.Metadata?.ProgressBarStyle ?? EditorStyles.miniLabel;
                 GUI.Label(barRect, text, style);
             }
             return true;
@@ -1563,7 +2093,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (enumType == null || !enumType.IsEnum) return false;
 
             var prop = e.Property;
-            var lbl = GetLabel(e, target) ?? new GUIContent(prop.displayName);
+            var lbl = GetLabel(e, target) ?? TempContent(prop.displayName);
             var names = Enum.GetNames(enumType);
             var values = (Array)Enum.GetValues(enumType);
             bool flags = enumType.GetCustomAttribute<FlagsAttribute>() != null;
@@ -1773,6 +2303,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static void InvokeButton(InspectorEntry e, object target, object[] args)
         {
+            if (target is UnityEngine.Object uo)
+            {
+                Undo.RecordObject(uo, $"Button: {e.ButtonMethod.Name}");
+            }
             try
             {
                 object result = e.ButtonMethod.Invoke(e.ButtonMethod.IsStatic ? null : target, args);
@@ -1788,60 +2322,72 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 Debug.LogError($"[FoundationPlatform.FrameworkInspector] Button '{e.ButtonMethod.Name}' threw: {ex.InnerException?.Message ?? ex.Message}");
             }
-            if (e.Button.DirtyOnClick && target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+            if (e.Button.DirtyOnClick && target is UnityEngine.Object uo2) EditorUtility.SetDirty(uo2);
         }
 
         // ---------------------------------------------------------------- metadata
 
-        private static void ApplyMemberMetadata(InspectorEntry e, MemberInfo m, object target)
+        private static void ApplyMemberMetadata(InspectorEntry e, MemberMetadata mm)
         {
-            if (m == null) return;
-
-            var order = m.GetCustomAttribute<PropertyOrderAttribute>();
-            if (order != null) e.Order = order.Order;
-
-            var space = m.GetCustomAttribute<PropertySpaceAttribute>();
-            if (space != null) { e.SpaceBefore = space.SpaceBefore; e.SpaceAfter = space.SpaceAfter; }
+            if (mm == null) return;
+            e.Order = mm.Order;
+            e.SpaceBefore = mm.SpaceBefore;
+            e.SpaceAfter = mm.SpaceAfter;
+            e.OwnHorizontal = mm.OwnHorizontal;
+            e.TabName = mm.TabName;
         }
 
-        internal static bool IsVisible(MemberInfo m, object target)
+        internal static bool IsVisible(MemberMetadata mm, object target)
         {
-            if (m.GetCustomAttribute<HideInEditorModeAttribute>() != null && !Application.isPlaying) return false;
-            if (m.GetCustomAttribute<HideInPlayModeAttribute>() != null && Application.isPlaying) return false;
-            if (m.GetCustomAttribute<ShowInPlayModeAttribute>() != null && !Application.isPlaying) return false;
+            if (mm == null) return true;
+            if (mm.HideInEditorMode && !Application.isPlaying) return false;
+            if (mm.HideInPlayMode && Application.isPlaying) return false;
+            if (mm.ShowInPlayMode && !Application.isPlaying) return false;
 
-            foreach (var s in m.GetCustomAttributes<ShowIfAttribute>())
-                if (!InspectorMemberResolver.EvaluateBool(target, s.Condition, s.Value, s.HasValue, true)) return false;
-            foreach (var h in m.GetCustomAttributes<HideIfAttribute>())
-                if (InspectorMemberResolver.EvaluateBool(target, h.Condition, h.Value, h.HasValue, false)) return false;
+            if (mm.ShowIfs != null)
+            {
+                foreach (var s in mm.ShowIfs)
+                    if (!InspectorMemberResolver.EvaluateBool(target, s.Condition, s.Value, s.HasValue, true)) return false;
+            }
+            if (mm.HideIfs != null)
+            {
+                foreach (var h in mm.HideIfs)
+                    if (!InspectorMemberResolver.EvaluateBool(target, h.Condition, h.Value, h.HasValue, false)) return false;
+            }
             return true;
         }
 
-        private static bool IsEnabled(MemberInfo m, object target)
+        private static bool IsEnabled(MemberMetadata mm, object target)
         {
-            if (m.GetCustomAttribute<ReadOnlyAttribute>() != null) return false;
-            if (m.GetCustomAttribute<DisableInEditorModeAttribute>() != null && !Application.isPlaying) return false;
-            if (m.GetCustomAttribute<DisableInPlayModeAttribute>() != null && Application.isPlaying) return false;
+            if (mm == null) return true;
+            if (mm.ReadOnly) return false;
+            if (mm.DisableInEditorMode && !Application.isPlaying) return false;
+            if (mm.DisableInPlayMode && Application.isPlaying) return false;
 
-            foreach (var en in m.GetCustomAttributes<EnableIfAttribute>())
-                if (!InspectorMemberResolver.EvaluateBool(target, en.Condition, en.Value, en.HasValue, true)) return false;
-            foreach (var di in m.GetCustomAttributes<DisableIfAttribute>())
-                if (InspectorMemberResolver.EvaluateBool(target, di.Condition, di.Value, di.HasValue, false)) return false;
+            if (mm.EnableIfs != null)
+            {
+                foreach (var en in mm.EnableIfs)
+                    if (!InspectorMemberResolver.EvaluateBool(target, en.Condition, en.Value, en.HasValue, true)) return false;
+            }
+            if (mm.DisableIfs != null)
+            {
+                foreach (var di in mm.DisableIfs)
+                    if (InspectorMemberResolver.EvaluateBool(target, di.Condition, di.Value, di.HasValue, false)) return false;
+            }
             return true;
         }
 
-        private static bool TryGetGuiColor(MemberInfo m, object target, out Color color)
+        private static bool TryGetGuiColor(MemberMetadata mm, object target, out Color color)
         {
             color = Color.white;
-            var attr = m.GetCustomAttribute<GUIColorAttribute>();
-            if (attr == null) return false;
+            if (mm == null || mm.GUIColor == null) return false;
+            var attr = mm.GUIColor;
             if (!string.IsNullOrEmpty(attr.GetColor))
             {
                 var v = InspectorMemberResolver.GetValue(target, attr.GetColor, out bool failed);
                 if (!failed && v is Color c) { color = c; return true; }
-                // "#RRGGBB(AA)" / named HTML color literals.
                 if (ColorUtility.TryParseHtmlString(attr.GetColor, out var html)) { color = html; return true; }
-                return false; // unresolved → skip tint
+                return false;
             }
             color = new Color(attr.R, attr.G, attr.B, attr.A);
             return true;
@@ -1851,26 +2397,29 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static void RenderValidation(InspectorEntry e, object target)
         {
-            var src = e.AttributeSource;
+            var mm = e.Metadata;
+            if (mm == null) return;
 
-            var req = src.GetCustomAttribute<RequiredAttribute>();
-            if (req != null && e.Property != null && IsEmptyRef(e.Property))
+            if (mm.Required != null && e.Property != null && IsEmptyRef(e.Property))
             {
-                string msg = req.ErrorMessage != null
-                    ? InspectorMemberResolver.ResolveString(target, req.ErrorMessage)
+                string msg = mm.Required.ErrorMessage != null
+                    ? InspectorMemberResolver.ResolveString(target, mm.Required.ErrorMessage)
                     : $"{GetLabelText(e, target) ?? e.Property.displayName} is required.";
-                EditorGUILayout.HelpBox(msg, ToMsgType(req.MessageType));
+                EditorGUILayout.HelpBox(msg, ToMsgType(mm.Required.MessageType));
             }
 
-            foreach (var v in src.GetCustomAttributes<ValidateInputAttribute>())
+            if (mm.ValidateInputs != null)
             {
-                if (!RunValidator(v, target, e, out bool ok, out string message, out InfoMessageType msgType)) continue;
-                if (!ok)
+                foreach (var v in mm.ValidateInputs)
                 {
-                    string msg = message ?? (v.DefaultMessage != null
-                        ? InspectorMemberResolver.ResolveString(target, v.DefaultMessage)
-                        : "Invalid value.");
-                    EditorGUILayout.HelpBox(msg, ToMsgType(msgType));
+                    if (!RunValidator(v, target, e, out bool ok, out string message, out InfoMessageType msgType)) continue;
+                    if (!ok)
+                    {
+                        string msg = message ?? (v.DefaultMessage != null
+                            ? InspectorMemberResolver.ResolveString(target, v.DefaultMessage)
+                            : "Invalid value.");
+                        EditorGUILayout.HelpBox(msg, ToMsgType(msgType));
+                    }
                 }
             }
         }
@@ -1989,19 +2538,24 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         internal static GUIContent GetLabel(InspectorEntry e, object target)
         {
-            if (e.AttributeSource?.GetCustomAttribute<HideLabelAttribute>() != null)
-                return GUIContent.none;
+            var mm = e.Metadata;
+            if (mm == null) return null;
+            if (mm.HideLabel) return GUIContent.none;
+            if (mm.CachedLabel != null) return mm.CachedLabel;
+
             string text = GetLabelText(e, target);
-            if (text != null) return new GUIContent(text);
+            string tooltip = mm.Tooltip?.tooltip;
+            if (text != null) return new GUIContent(text, tooltip);
+            if (!string.IsNullOrEmpty(tooltip)) return new GUIContent(e.Property.displayName, tooltip);
             return null; // let PropertyField use its default
         }
 
         internal static string GetLabelText(InspectorEntry e, object target)
         {
-            var lt = e.AttributeSource?.GetCustomAttribute<LabelTextAttribute>();
-            if (lt == null) return null;
-            string text = InspectorMemberResolver.ResolveString(target, lt.Text);
-            if (lt.NicifyText && !string.IsNullOrEmpty(text)) text = ObjectNames.NicifyVariableName(text);
+            var mm = e.Metadata;
+            if (mm == null || mm.LabelText == null) return null;
+            string text = InspectorMemberResolver.ResolveString(target, mm.LabelText.Text);
+            if (mm.LabelText.NicifyText && !string.IsNullOrEmpty(text)) text = ObjectNames.NicifyVariableName(text);
             return text;
         }
 
@@ -2127,6 +2681,114 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             bool serializable = f.IsPublic || f.GetCustomAttribute<SerializeField>() != null;
             return serializable;
         }
+    }
+
+    internal sealed class MemberMetadata
+    {
+        public MemberInfo Member;
+        public string Name;
+        public FieldInfo Field;
+        public Type FieldType;
+
+        // Grouping attributes
+        public Attribute[] GroupAttributes;
+        public string ResolvedContainerPath;
+
+        // Ordering / Spacing
+        public float Order;
+        public float SpaceBefore;
+        public float SpaceAfter;
+
+        // Visibility / Enabled
+        public bool HideInEditorMode;
+        public bool HideInPlayMode;
+        public bool ShowInPlayMode;
+        public ShowIfAttribute[] ShowIfs;
+        public HideIfAttribute[] HideIfs;
+        public bool ReadOnly;
+        public bool DisableInEditorMode;
+        public bool DisableInPlayMode;
+        public EnableIfAttribute[] EnableIfs;
+        public DisableIfAttribute[] DisableIfs;
+
+        // Decorators
+        public TitleAttribute[] Titles;
+        public InfoBoxAttribute[] InfoBoxes;
+        public HeaderAttribute[] Headers;
+        public DetailedInfoBoxAttribute[] DetailedInfoBoxes;
+
+        // Validation
+        public RequiredAttribute Required;
+        public ValidateInputAttribute[] ValidateInputs;
+
+        // Color
+        public GUIColorAttribute GUIColor;
+
+        // Hooks
+        public OnInspectorInitAttribute[] InitHooks;
+        public OnValueChangedAttribute[] ValueChangedHooks;
+
+        // Drawing attributes
+        public DrawWithUnityAttribute DrawWithUnity;
+        public TableListAttribute TableList;
+        public ListDrawerSettingsAttribute ListDrawerSettings;
+        public SearchableAttribute Searchable;
+        public ValueDropdownAttribute ValueDropdown;
+        public AssetSelectorAttribute AssetSelector;
+        public OnCollectionChangedAttribute OnCollectionChanged;
+        public InlinePropertyAttribute InlineProperty;
+        public DisplayAsStringAttribute DisplayAsString;
+        public ToggleLeftAttribute ToggleLeft;
+        public MultiLinePropertyAttribute MultiLineProperty;
+        public TextAreaAttribute TextArea;
+        public MultilineAttribute Multiline;
+        public PropertyRangeAttribute PropertyRange;
+        public MinMaxSliderAttribute MinMaxSlider;
+        public ProgressBarAttribute ProgressBar;
+        public EnumToggleButtonsAttribute EnumToggleButtons;
+        public PreviewFieldAttribute PreviewField;
+        public InlineEditorAttribute InlineEditor;
+        public AssetsOnlyAttribute AssetsOnly;
+        public SceneObjectsOnlyAttribute SceneObjectsOnly;
+
+        // Label / Tooltip / Layout modifiers
+        public bool HideLabel;
+        public TooltipAttribute Tooltip;
+        public LabelTextAttribute LabelText;
+        public IndentAttribute Indent;
+        public LabelWidthAttribute LabelWidth;
+        public OnInspectorGUIAttribute OnInspectorGUI;
+        public HorizontalGroupAttribute OwnHorizontal;
+        public string TabName;
+
+        // Button specifics
+        public ButtonAttribute Button;
+        public InlineButtonAttribute[] InlineButtons;
+
+        // Flags
+        public bool IsFlagsEnum;
+
+        // Cached GUIContent for static labels
+        public GUIContent CachedLabel;
+
+        // Cached GUIStyles to prevent allocations
+        public GUIStyle DisplayAsStringStyle;
+        public GUIStyle ProgressBarStyle;
+    }
+
+    internal sealed class TypeMetadata
+    {
+        public Type Type;
+        public MemberMetadata[] ShownMembers;
+        public MemberMetadata[] Buttons;
+        public MemberMetadata[] InspectorGuis;
+        public TypeInfoBoxAttribute[] TypeInfoBoxes;
+        
+        // Fast lookup for serialized fields
+        public Dictionary<string, MemberMetadata> SerializedFieldMap = new Dictionary<string, MemberMetadata>();
+
+        // Pre-built GroupNode tree template
+        public GroupNode GroupTreeTemplate;
     }
 }
 #endif

@@ -26,6 +26,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private const BindingFlags Flags =
             BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
+        private static readonly Dictionary<(Type, string), MemberInfo> s_memberCache = new Dictionary<(Type, string), MemberInfo>();
+        private static readonly Dictionary<(Type, string, string), MethodInfo> s_methodCache = new Dictionary<(Type, string, string), MethodInfo>();
+        private static readonly Dictionary<(Type, string), List<MethodInfo>> s_methodsCache = new Dictionary<(Type, string), List<MethodInfo>>();
+
+        public static void ClearCache()
+        {
+            s_memberCache.Clear();
+            s_methodCache.Clear();
+            s_methodsCache.Clear();
+        }
+
         // ------------------------------------------------------------------ member access
 
         /// <summary>Resolve a value from a member name (field/property/parameterless method), supporting dotted chains.</summary>
@@ -75,25 +86,30 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static object GetSingleMember(object target, string name, out bool failed)
         {
             failed = false;
+            if (target == null)
+            {
+                failed = true;
+                return null;
+            }
             Type t = target.GetType();
+            var key = (t, name);
+            if (!s_memberCache.TryGetValue(key, out var member))
+            {
+                member = FindSingleMemberInfo(t, name);
+                s_memberCache[key] = member;
+            }
+
+            if (member == null)
+            {
+                failed = true;
+                return null;
+            }
+
             try
             {
-                for (var cur = t; cur != null && cur != typeof(object); cur = cur.BaseType)
-                {
-                    const BindingFlags F = BindingFlags.Instance | BindingFlags.Static |
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-
-                    var field = cur.GetField(name, F);
-                    if (field != null) return field.GetValue(field.IsStatic ? null : target);
-
-                    var prop = cur.GetProperty(name, F);
-                    if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
-                        return prop.GetValue(prop.GetGetMethod(true).IsStatic ? null : target);
-
-                    var method = cur.GetMethod(name, F, null, Type.EmptyTypes, null);
-                    if (method != null && method.ReturnType != typeof(void))
-                        return method.Invoke(method.IsStatic ? null : target, null);
-                }
+                if (member is FieldInfo f) return f.GetValue(f.IsStatic ? null : target);
+                if (member is PropertyInfo p && p.CanRead) return p.GetValue(p.GetGetMethod(true).IsStatic ? null : target);
+                if (member is MethodInfo m) return m.Invoke(m.IsStatic ? null : target, null);
             }
             catch
             {
@@ -102,6 +118,27 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
 
             failed = true;
+            return null;
+        }
+
+        private static MemberInfo FindSingleMemberInfo(Type t, string name)
+        {
+            for (var cur = t; cur != null && cur != typeof(object); cur = cur.BaseType)
+            {
+                const BindingFlags F = BindingFlags.Instance | BindingFlags.Static |
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
+                var field = cur.GetField(name, F);
+                if (field != null) return field;
+
+                var prop = cur.GetProperty(name, F);
+                if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
+                    return prop;
+
+                var method = cur.GetMethod(name, F, null, Type.EmptyTypes, null);
+                if (method != null && method.ReturnType != typeof(void))
+                    return method;
+            }
             return null;
         }
 
@@ -465,6 +502,18 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         /// <summary>Find a method by name walking the type hierarchy (any parameter list matching <paramref name="paramTypes"/>).</summary>
         public static MethodInfo FindMethod(Type t, string name, params Type[] paramTypes)
         {
+            string paramKey = paramTypes == null || paramTypes.Length == 0 ? "empty" : string.Join(",", (object[])paramTypes);
+            var key = (t, name, paramKey);
+            if (!s_methodCache.TryGetValue(key, out var mi))
+            {
+                mi = FindMethodUncached(t, name, paramTypes);
+                s_methodCache[key] = mi;
+            }
+            return mi;
+        }
+
+        private static MethodInfo FindMethodUncached(Type t, string name, Type[] paramTypes)
+        {
             for (var cur = t; cur != null && cur != typeof(object); cur = cur.BaseType)
             {
                 var mi = cur.GetMethod(name,
@@ -475,15 +524,21 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return null;
         }
 
-        /// <summary>All methods with the given name (for signature probing), most-derived first.</summary>
         public static IEnumerable<MethodInfo> FindMethods(Type t, string name)
         {
-            for (var cur = t; cur != null && cur != typeof(object); cur = cur.BaseType)
+            var key = (t, name);
+            if (!s_methodsCache.TryGetValue(key, out var list))
             {
-                var methods = cur.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                for (int i = 0; i < methods.Length; i++)
-                    if (methods[i].Name == name) yield return methods[i];
+                list = new List<MethodInfo>();
+                for (var cur = t; cur != null && cur != typeof(object); cur = cur.BaseType)
+                {
+                    var methods = cur.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    for (int i = 0; i < methods.Length; i++)
+                        if (methods[i].Name == name) list.Add(methods[i]);
+                }
+                s_methodsCache[key] = list;
             }
+            return list;
         }
 
         private static bool IsMemberChain(string s)
