@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using FoundationPlatform.DebugX;
 using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;

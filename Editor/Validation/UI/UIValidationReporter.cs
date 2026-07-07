@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace FoundationPlatform.Editor.Utilities.Validation.UI
 {
+using FoundationPlatform.DebugX;
+    
     internal static class UIValidationReporter
     {
         private const string LogPrefix = "[UI conventions]";

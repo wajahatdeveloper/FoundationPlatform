@@ -1,4 +1,5 @@
 using System.IO;
+using FoundationPlatform.DebugX;
 using DebugXLogging;
 using UnityEngine;
 using UnityEngine.UIElements;

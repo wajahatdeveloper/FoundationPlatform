@@ -1,3 +1,4 @@
+using FoundationPlatform.DebugX;
 using DebugXLogging.ConsoleView;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;

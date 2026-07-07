@@ -6,6 +6,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using FoundationPlatform.DebugX;
 using FoundationPlatform.Editor.Animation;
 using UnityEditor.Animations;
 using UnityEngine.AI;

@@ -4,6 +4,8 @@ using System.IO;
 
 namespace FoundationPlatform.Utilities.Menus
 {
+using FoundationPlatform.DebugX;
+    
     /// <summary>
     /// Shared codegen file-write guard. Consolidates the identical <c>WriteIfChanged</c> that
     /// was duplicated in <c>Weaver</c> and <c>AbilityLogicRebuilder</c>. Only writes when the

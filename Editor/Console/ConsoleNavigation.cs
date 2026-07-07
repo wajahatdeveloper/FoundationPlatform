@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FoundationPlatform.DebugX;
 using DebugXLogging;
 using DebugXLogging.ConsoleView;
 using UnityEditor;

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using FoundationPlatform.DebugX;
 using FoundationPlatform.Utilities.Menus;
 
 namespace DebugXLogging

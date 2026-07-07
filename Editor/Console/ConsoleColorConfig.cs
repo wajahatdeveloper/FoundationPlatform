@@ -1,3 +1,4 @@
+using FoundationPlatform.DebugX;
 using DebugXLogging;
 using UnityEngine;
 

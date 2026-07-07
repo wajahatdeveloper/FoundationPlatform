@@ -9,6 +9,8 @@ using FoundationPlatform.Utilities.Menus;
 
 namespace FoundationPlatform.Editor.Tools
 {
+using FoundationPlatform.DebugX;
+    
     /// <summary>
     /// Handles lightmap data preservation for prefabs, allowing lightmaps to be baked once and reused across scenes.
     /// This component automatically applies stored lightmap data when the prefab is instantiated.
