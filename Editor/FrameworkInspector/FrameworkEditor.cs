@@ -6,10 +6,10 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
-    /// Base inspector that renders the <see cref="Framework.Inspector"/> attributes through the
+    /// Base inspector that renders the <see cref="FoundationPlatform.FrameworkInspector"/> attributes through the
     /// in-house drawer engine. A type opts in with a 3-line editor:
     /// <code>[CustomEditor(typeof(Foo))] class FooEditor : FrameworkEditor { }</code>
     /// A concrete <c>[CustomEditor(typeof(T))]</c> beats the global <see cref="FrameworkFallbackEditor"/>,
@@ -883,7 +883,7 @@ namespace Framework.Inspector.Editor
         {
             var mi = InspectorMemberResolver.FindMethod(target.GetType(), methodName, Type.EmptyTypes);
             try { mi?.Invoke(mi.IsStatic ? null : target, null); }
-            catch (Exception ex) { Debug.LogWarning($"[Framework.Inspector] '{methodName}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
+            catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{methodName}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
             if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
         }
 
@@ -1026,7 +1026,7 @@ namespace Framework.Inspector.Editor
             }
 
             // Nested serializable object — recurse through the engine (property-tree style) when it
-            // either carries [InlineProperty] (draw inline, no wrapper) OR declares ANY Framework.Inspector
+            // either carries [InlineProperty] (draw inline, no wrapper) OR declares ANY FoundationPlatform.FrameworkInspector
             // attribute (draw under a collapsible foldout). Plain data (only Unity attrs) and types with
             // their own custom PropertyDrawer fall through to the default PropertyField below.
             var fieldType = e.Field?.FieldType;
@@ -1149,7 +1149,7 @@ namespace Framework.Inspector.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 if (obj != null && EditorUtility.IsPersistent(obj))
-                    Debug.LogWarning($"[Framework.Inspector] '{prop.displayName}' accepts scene objects only.");
+                    Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] '{prop.displayName}' accepts scene objects only.");
                 else { prop.objectReferenceValue = obj; Commit(e, target); }
             }
         }
@@ -1318,16 +1318,16 @@ namespace Framework.Inspector.Editor
             catch (Exception ex)
             {
                 // Degrade to flat children rather than blanking the whole inspector.
-                Debug.LogWarning($"[Framework.Inspector] nested draw of '{e.Property?.propertyPath}' failed: {ex.Message}");
+                Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] nested draw of '{e.Property?.propertyPath}' failed: {ex.Message}");
                 foreach (var child in ChildProperties(e.Property))
                     EditorGUILayout.PropertyField(child, true);
             }
             if (indent) EditorGUI.indentLevel--;
         }
 
-        // Cached: does the type declare ANY Framework.Inspector attribute (on itself or any member)?
+        // Cached: does the type declare ANY FoundationPlatform.FrameworkInspector attribute (on itself or any member)?
         // Used to auto-recurse attributed nested objects without requiring an explicit [InlineProperty].
-        private const string EngineAttrNamespace = "Framework.Inspector";
+        private const string EngineAttrNamespace = "FoundationPlatform.FrameworkInspector";
         private static readonly Dictionary<Type, bool> s_engineAttrTypes = new Dictionary<Type, bool>();
 
         internal static bool TypeHasEngineAttributes(Type t)
@@ -1786,7 +1786,7 @@ namespace Framework.Inspector.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Framework.Inspector] Button '{e.ButtonMethod.Name}' threw: {ex.InnerException?.Message ?? ex.Message}");
+                Debug.LogError($"[FoundationPlatform.FrameworkInspector] Button '{e.ButtonMethod.Name}' threw: {ex.InnerException?.Message ?? ex.Message}");
             }
             if (e.Button.DirtyOnClick && target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
         }
@@ -1984,7 +1984,7 @@ namespace Framework.Inspector.Editor
                     }
                 }
             }
-            catch (Exception ex) { Debug.LogWarning($"[Framework.Inspector] OnValueChanged '{attr.Action}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
+            catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] OnValueChanged '{attr.Action}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
         }
 
         internal static GUIContent GetLabel(InspectorEntry e, object target)

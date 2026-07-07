@@ -1,5 +1,5 @@
 using System;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
 namespace FoundationPlatform.Animation

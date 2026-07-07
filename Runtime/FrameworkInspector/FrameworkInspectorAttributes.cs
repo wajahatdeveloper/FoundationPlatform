@@ -1,6 +1,6 @@
 using System;
 
-namespace Framework.Inspector
+namespace FoundationPlatform.FrameworkInspector
 {
     // ---- Enums -------------------------------------------------------------
 

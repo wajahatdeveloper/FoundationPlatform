@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Resolves the member-name / "$member" / "@expression" strings that the attributes accept

@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Native IMGUI grid renderer backing <c>[TableList]</c>. Renders one

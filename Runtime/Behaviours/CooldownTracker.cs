@@ -1,4 +1,4 @@
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 using UnityEngine.Events;
 

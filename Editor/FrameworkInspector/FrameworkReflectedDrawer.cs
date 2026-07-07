@@ -3,11 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Reusable property drawer for a nested <c>[Serializable]</c> type that carries engine-only members

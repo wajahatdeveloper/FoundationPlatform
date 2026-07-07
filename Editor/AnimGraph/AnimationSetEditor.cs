@@ -12,7 +12,7 @@ using UnityEngine;
 namespace FoundationPlatform.Editor.Utilities
 {
 	[CustomEditor(typeof(AnimationSet))]
-	internal class AnimationSetEditor : Framework.Inspector.Editor.FrameworkEditor
+	internal class AnimationSetEditor : FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor
 	{
 		private const float DragHandleInset = 18f;
 
@@ -86,10 +86,10 @@ namespace FoundationPlatform.Editor.Utilities
 			
 			EditorGUILayout.Space(12);
 			
-			Framework.Inspector.Editor.GuiKit.BeginBox();
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox();
 			DrawBlendProfileSection();
 			DrawValidationSection();
-			Framework.Inspector.Editor.GuiKit.EndBox();
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
 			
 			DrawCopyEntriesSection();
 			
@@ -122,7 +122,7 @@ namespace FoundationPlatform.Editor.Utilities
 			if (inherited.Count > 0)
 			{
 				EditorGUILayout.Space(10);
-				Framework.Inspector.Editor.GuiKit.BeginBox("Inherited Entries");
+				FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox("Inherited Entries");
 				foreach (var entry in inherited)
 				{
 					if (entry == null) continue;
@@ -147,7 +147,7 @@ namespace FoundationPlatform.Editor.Utilities
 					EditorGUI.EndDisabledGroup();
 					EditorGUILayout.Space(2);
 				}
-				Framework.Inspector.Editor.GuiKit.EndBox();
+				FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
 			}
 		}
 
@@ -220,10 +220,10 @@ namespace FoundationPlatform.Editor.Utilities
 
 		private void DrawCopyEntriesSection()
 		{
-			Framework.Inspector.Editor.GuiKit.BeginBox();
-			Framework.Inspector.Editor.GuiKit.BeginBoxHeader();
-			_copyFoldout = Framework.Inspector.Editor.GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
-			Framework.Inspector.Editor.GuiKit.EndBoxHeader();
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox();
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBoxHeader();
+			_copyFoldout = FoundationPlatform.FrameworkInspector.Editor.GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBoxHeader();
 
 			if (_copyFoldout)
 			{
@@ -244,7 +244,7 @@ namespace FoundationPlatform.Editor.Utilities
 					}
 				}
 			}
-			Framework.Inspector.Editor.GuiKit.EndBox();
+			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
 			EditorGUILayout.Space(2);
 		}
 

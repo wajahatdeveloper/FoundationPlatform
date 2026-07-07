@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using FoundationPlatform.Animation;
 using FoundationPlatform.Editor.Utilities.Debugging;
-using Framework.Inspector.Editor;
+using FoundationPlatform.FrameworkInspector.Editor;
 
 namespace FoundationPlatform.Editor.Utilities
 {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using FoundationPlatform;
 using UnityEngine;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 
 namespace FoundationPlatform.Animation
 {

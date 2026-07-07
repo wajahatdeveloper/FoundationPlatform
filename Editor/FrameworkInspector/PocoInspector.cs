@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Reflection inspector for a plain C# object (not a <see cref="UnityEngine.Object"/>) — the

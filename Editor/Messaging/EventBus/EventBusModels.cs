@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 
 namespace FoundationPlatform.Editor.Utilities.Messaging
 {

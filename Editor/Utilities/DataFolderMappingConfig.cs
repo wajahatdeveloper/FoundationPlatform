@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 

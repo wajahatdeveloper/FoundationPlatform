@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Dropdown infrastructure for <c>[ValueDropdown]</c> and <c>[AssetSelector]</c>.
@@ -129,7 +129,7 @@ namespace Framework.Inspector.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[Framework.Inspector] dropdown apply failed: {ex.Message}");
+                Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] dropdown apply failed: {ex.Message}");
             }
         }
 

@@ -2,11 +2,11 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Native IMGUI layout helpers used by this project's editor windows/inspectors (boxes, box
-    /// headers, foldouts, titles). Lives in the autoreferenced Framework.Inspector.Editor assembly so
+    /// headers, foldouts, titles). Lives in the autoreferenced FoundationPlatform.FrameworkInspector.Editor assembly so
     /// every editor asmdef can use it without a reference edit.
     /// </summary>
     public static class GuiKit

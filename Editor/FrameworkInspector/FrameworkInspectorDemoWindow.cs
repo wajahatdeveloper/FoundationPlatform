@@ -5,12 +5,12 @@ using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Live parity harness for the <see cref="FrameworkEditor"/> engine. Menu:
     /// <c>Tools/HOMAM/Framework Inspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
-    /// that exercises every supported <see cref="Framework.Inspector"/> attribute, drawn through the
+    /// that exercises every supported <see cref="FoundationPlatform.FrameworkInspector"/> attribute, drawn through the
     /// in-house engine. Use it as the visual regression harness for the attribute surface.
     /// Editor-only asset — never ships.
     /// </summary>
@@ -39,8 +39,8 @@ namespace Framework.Inspector.Editor
         private void OnGUI()
         {
             EditorGUILayout.HelpBox(
-                "This inspector is drawn by Framework.Inspector.Editor.FrameworkEditor (in-house). " +
-                "Every field below uses a Framework.Inspector attribute.", MessageType.Info);
+                "This inspector is drawn by FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor (in-house). " +
+                "Every field below uses a FoundationPlatform.FrameworkInspector attribute.", MessageType.Info);
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             if (_editor != null) _editor.OnInspectorGUI();
             EditorGUILayout.EndScrollView();

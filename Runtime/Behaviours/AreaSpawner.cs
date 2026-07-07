@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using FoundationPlatform.DebugX;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 

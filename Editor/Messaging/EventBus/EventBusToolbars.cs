@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Framework.Inspector;
+using FoundationPlatform.FrameworkInspector;
 
 namespace FoundationPlatform.Editor.Utilities.Messaging
 {

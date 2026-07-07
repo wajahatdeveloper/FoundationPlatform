@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Collection renderer honoring the <c>[ListDrawerSettings]</c> surface — foldout, index labels,
@@ -324,7 +324,7 @@ namespace Framework.Inspector.Editor
                         prop.serializedObject.ApplyModifiedProperties();
                         prop.serializedObject.Update();
                     }
-                    catch (Exception ex) { Debug.LogWarning($"[Framework.Inspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     FinishMutation(e, target, occ);
                     return;
                 }
@@ -370,7 +370,7 @@ namespace Framework.Inspector.Editor
                 if (mi != null)
                 {
                     try { mi.Invoke(mi.IsStatic ? null : target, new object[] { index }); }
-                    catch (Exception ex) { Debug.LogWarning($"[Framework.Inspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     prop.serializedObject.Update();
                     FinishMutation(e, target, occ);
                     return;
@@ -386,7 +386,7 @@ namespace Framework.Inspector.Editor
                     var ps = mi.GetParameters();
                     if (ps.Length != 1) continue;
                     try { mi.Invoke(mi.IsStatic ? null : target, new[] { value }); }
-                    catch (Exception ex) { Debug.LogWarning($"[Framework.Inspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                    catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     prop.serializedObject.Update();
                     FinishMutation(e, target, occ);
                     return;
@@ -427,7 +427,7 @@ namespace Framework.Inspector.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[Framework.Inspector] list hook '{method}' threw: {ex.InnerException?.Message ?? ex.Message}");
+                Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] list hook '{method}' threw: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
     }

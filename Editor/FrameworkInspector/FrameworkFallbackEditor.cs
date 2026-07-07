@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace Framework.Inspector.Editor
+namespace FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Global fallback inspector that renders EVERY object through the in-house
-    /// <see cref="FrameworkEditor"/> engine, so every object with <see cref="Framework.Inspector"/>
+    /// <see cref="FrameworkEditor"/> engine, so every object with <see cref="FoundationPlatform.FrameworkInspector"/>
     /// attributes draws correctly without a per-type editor.
     /// A concrete <c>[CustomEditor(typeof(T))]</c> always beats this <c>isFallback</c> editor, so
     /// hand-written inspectors keep priority.
