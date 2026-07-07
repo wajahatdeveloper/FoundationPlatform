@@ -31,6 +31,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             var options = BuildValueOptions(targets[0], vd);
             if (options == null) return false;
+            FrameworkInspectorRenderer.DrawUnityHeaders(e.Metadata);
             DrawDropdownForProperty(e.Property, e, targets, vd, options, labelText ?? e.Property.displayName);
             return true;
         }

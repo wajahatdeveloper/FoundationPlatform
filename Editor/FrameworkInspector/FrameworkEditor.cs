@@ -1307,15 +1307,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            // Unity's native [Header] attribute
-            if (mm.Headers != null)
-            {
-                foreach (var h in mm.Headers)
-                {
-                    EditorGUILayout.Space(4);
-                    EditorGUILayout.LabelField(h.header, EditorStyles.boldLabel);
-                }
-            }
+            // Unity's native [Header] is drawn by PropertyField on the default path.
+            // Custom field drawers in RenderField call DrawUnityHeaders first.
 
             // InfoBox(es) attached to the member.
             if (mm.InfoBoxes != null)
@@ -1561,6 +1554,16 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- field rendering
 
+        internal static void DrawUnityHeaders(MemberMetadata mm)
+        {
+            if (mm?.Headers == null) return;
+            foreach (var h in mm.Headers)
+            {
+                EditorGUILayout.Space(4);
+                EditorGUILayout.LabelField(h.header, EditorStyles.boldLabel);
+            }
+        }
+
         private static void RenderField(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
@@ -1587,6 +1590,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 var elemType0 = GetElementType(e.Field.FieldType);
                 if (elemType0 != null)
                 {
+                    DrawUnityHeaders(mm);
                     EditorGUI.BeginChangeCheck();
                     TableRenderer.DrawSerializedTable(prop, elemType0, mm.TableList, GetLabel(e, targets));
                     if (EditorGUI.EndChangeCheck())
@@ -1614,6 +1618,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     || (vdList != null && vdList.DrawDropdownForListElements)
                     || (asList != null && asList.DrawDropdownForListElements))
                 {
+                    DrawUnityHeaders(mm);
                     EngineListDrawer.Draw(e, targets, foldouts, tabs, elemType, lds, searchable, vdList, asList, occ);
                     return;
                 }
@@ -1625,6 +1630,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [AssetSelector] on a single object reference.
             if (mm.AssetSelector != null && prop.propertyType == SerializedPropertyType.ObjectReference)
             {
+                DrawUnityHeaders(mm);
                 InspectorDropdown.DrawAssetSelector(e, targets, mm.AssetSelector);
                 return;
             }
@@ -1632,6 +1638,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [DisplayAsString] → read-only text.
             if (mm.DisplayAsString != null)
             {
+                DrawUnityHeaders(mm);
                 object v = e.Field != null ? SafeGet(e.Field, target) : ReadProperty(prop);
                 DrawDisplayAsString(GetLabel(e, targets) ?? TempContent(prop.displayName), v?.ToString() ?? string.Empty, mm);
                 return;
@@ -1640,6 +1647,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [ToggleLeft] bool → left-aligned checkbox (label right of the box).
             if (prop.propertyType == SerializedPropertyType.Boolean && mm.ToggleLeft != null)
             {
+                DrawUnityHeaders(mm);
                 var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUI.BeginChangeCheck();
                 bool v = EditorGUILayout.ToggleLeft(lbl, prop.boolValue);
@@ -1650,6 +1658,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [MultiLineProperty(lines)] string → text area.
             if (mm.MultiLineProperty != null && prop.propertyType == SerializedPropertyType.String)
             {
+                DrawUnityHeaders(mm);
                 var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
@@ -1662,6 +1671,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [TextArea(min, max)] string → text area.
             if (mm.TextArea != null && prop.propertyType == SerializedPropertyType.String)
             {
+                DrawUnityHeaders(mm);
                 var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
@@ -1675,6 +1685,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // [Multiline(lines)] string → text area.
             if (mm.Multiline != null && prop.propertyType == SerializedPropertyType.String)
             {
+                DrawUnityHeaders(mm);
                 var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUILayout.LabelField(lbl);
                 EditorGUI.BeginChangeCheck();
@@ -1702,17 +1713,19 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             // Object-reference specials.
             if (prop.propertyType == SerializedPropertyType.ObjectReference)
             {
-                if (mm.PreviewField != null) { DrawPreviewField(e, targets, mm.PreviewField); return; }
+                if (mm.PreviewField != null) { DrawUnityHeaders(mm); DrawPreviewField(e, targets, mm.PreviewField); return; }
 
-                if (mm.InlineEditor != null) { DrawInlineEditor(e, targets, mm.InlineEditor, foldouts); return; }
+                if (mm.InlineEditor != null) { DrawUnityHeaders(mm); DrawInlineEditor(e, targets, mm.InlineEditor, foldouts); return; }
 
                 if (mm.AssetsOnly != null)
                 {
+                    DrawUnityHeaders(mm);
                     DrawObjectField(e, targets, allowScene: false);
                     return;
                 }
                 if (mm.SceneObjectsOnly != null)
                 {
+                    DrawUnityHeaders(mm);
                     DrawSceneObjectField(e, targets);
                     return;
                 }
@@ -1728,6 +1741,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 && !HasCustomPropertyDrawer(fieldType)
                 && (explicitInline || TypeHasEngineAttributes(fieldType)))
             {
+                DrawUnityHeaders(mm);
                 float prevLw = EditorGUIUtility.labelWidth;
                 if (mm.InlineProperty != null && mm.InlineProperty.LabelWidth > 0) EditorGUIUtility.labelWidth = mm.InlineProperty.LabelWidth;
                 DrawNestedObject(e, targets, foldouts, tabs, inline: explicitInline);
@@ -2072,6 +2086,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             if (prop.propertyType == SerializedPropertyType.Integer)
             {
+                DrawUnityHeaders(e.Metadata);
                 EditorGUI.BeginChangeCheck();
                 int v = EditorGUILayout.IntSlider(lbl, prop.intValue, (int)min, (int)max);
                 if (EditorGUI.EndChangeCheck()) { prop.intValue = v; Commit(e, targets); }
@@ -2079,6 +2094,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
             if (prop.propertyType == SerializedPropertyType.Float)
             {
+                DrawUnityHeaders(e.Metadata);
                 EditorGUI.BeginChangeCheck();
                 float v = EditorGUILayout.Slider(lbl, prop.floatValue, (float)min, (float)max);
                 if (EditorGUI.EndChangeCheck()) { prop.floatValue = v; Commit(e, targets); }
@@ -2106,6 +2122,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             if (prop.propertyType == SerializedPropertyType.Vector2)
             {
+                DrawUnityHeaders(e.Metadata);
                 var v = prop.vector2Value;
                 EditorGUI.BeginChangeCheck();
                 if (mms.ShowFields)
@@ -2137,6 +2154,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
             if (prop.propertyType == SerializedPropertyType.Vector2Int)
             {
+                DrawUnityHeaders(e.Metadata);
                 var v = prop.vector2IntValue;
                 float fx = v.x, fy = v.y;
                 EditorGUI.BeginChangeCheck();
@@ -2178,6 +2196,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 default: return false;
             }
 
+            DrawUnityHeaders(e.Metadata);
             double min = ResolveNumber(targets[0], pb.MinGetter, pb.Min);
             double max = ResolveNumber(targets[0], pb.MaxGetter, pb.Max);
             if (max <= min) max = min + 1;
@@ -2262,6 +2281,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var enumType = e.Field?.FieldType;
             if (enumType == null || !enumType.IsEnum) return false;
 
+            DrawUnityHeaders(e.Metadata);
             var prop = e.Property;
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             var names = Enum.GetNames(enumType);
