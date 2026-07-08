@@ -23,17 +23,23 @@ namespace FoundationPlatform.Editor.Utilities
 			var w    = position.width;
 			var y    = position.y;
 
-			var foldRect = new Rect(x, y, w, line);
-			property.isExpanded = EditorGUI.Foldout(foldRect, property.isExpanded, label, true);
-			y += line + sp;
-
-			if (!property.isExpanded)
+			// [HideLabel] arrives as GUIContent.none: skip the foldout header, draw children flush.
+			bool headerless = label == null || label == GUIContent.none;
+			if (!headerless)
 			{
-				EditorGUI.EndProperty();
-				return;
+				var foldRect = new Rect(x, y, w, line);
+				property.isExpanded = EditorGUI.Foldout(foldRect, property.isExpanded, label, true);
+				y += line + sp;
+
+				if (!property.isExpanded)
+				{
+					EditorGUI.EndProperty();
+					return;
+				}
+
+				EditorGUI.indentLevel++;
 			}
 
-			EditorGUI.indentLevel++;
 			DrawNextEntryPopup(ref y, x, w, line, sp, property);
 			DrawTargetEntryHint(ref y, x, w, line, sp, property);
 			DrawRelativeField(ref y, x, w, line, sp, property, "transitionIn");
@@ -41,7 +47,8 @@ namespace FoundationPlatform.Editor.Utilities
 			DrawRelativeField(ref y, x, w, line, sp, property, "useEntryTransitionBackForTerminal");
 			DrawRelativeField(ref y, x, w, line, sp, property, "useLinkHold");
 			DrawHoldFields(ref y, x, w, line, sp, property);
-			EditorGUI.indentLevel--;
+			if (!headerless)
+				EditorGUI.indentLevel--;
 
 			EditorGUI.EndProperty();
 		}
@@ -50,8 +57,9 @@ namespace FoundationPlatform.Editor.Utilities
 		{
 			var line = EditorGUIUtility.singleLineHeight;
 			var sp   = EditorGUIUtility.standardVerticalSpacing;
-			var h    = line + sp;
-			if (!property.isExpanded)
+			bool headerless = label == null || label == GUIContent.none;
+			var h    = headerless ? 0f : line + sp;
+			if (!headerless && !property.isExpanded)
 				return h;
 
 			var nextIdProp = property.FindPropertyRelative("nextEntryId");

@@ -29,13 +29,17 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static float Line => EditorGUIUtility.singleLineHeight;
 
+        // [HideLabel] on the host field arrives as GUIContent.none: draw children flush, no foldout header.
+        private static bool IsHeaderless(GUIContent label) => label == null || label == GUIContent.none;
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             object inst = SafeBoxed(property);
             if (inst == null) return EditorGUI.GetPropertyHeight(property, label, true); // fallback (multi-edit/unresolved)
 
-            float h = Line; // foldout header
-            if (!property.isExpanded) return h;
+            bool headerless = IsHeaderless(label);
+            float h = headerless ? 0f : Line; // foldout header (skipped when headerless)
+            if (!headerless && !property.isExpanded) return h;
 
             Type t = inst.GetType();
             foreach (var child in Children(property))
@@ -54,14 +58,20 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             object inst = SafeBoxed(property);
             if (inst == null) { EditorGUI.PropertyField(position, property, label, true); return; }
 
-            var header = new Rect(position.x, position.y, position.width, Line);
-            property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true);
-            if (!property.isExpanded) return;
+            bool headerless = IsHeaderless(label);
+            float y = position.y;
+            int indent = EditorGUI.indentLevel;
+
+            if (!headerless)
+            {
+                var header = new Rect(position.x, position.y, position.width, Line);
+                property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true);
+                if (!property.isExpanded) return;
+                y = header.yMax;
+                EditorGUI.indentLevel = indent + 1; // children indented under the header
+            }
 
             Type t = inst.GetType();
-            float y = header.yMax;
-            int indent = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = indent + 1;
 
             foreach (var child in Children(property))
             {

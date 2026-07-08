@@ -866,32 +866,38 @@ namespace FoundationPlatform.Editor.Utilities
 			float x    = position.x;
 			float line = EditorGUIUtility.singleLineHeight;
 
-			Rect foldRect = new Rect(x, y, w, line);
-			var foldLabel = SplitSequenceSuffixLabel(label, out var sequenceSuffix);
-			var foldoutRect = foldRect;
-			if (!string.IsNullOrEmpty(sequenceSuffix))
-				foldoutRect.xMax -= SequenceSuffixWidth + 4f;
-
-			EditorGUI.BeginChangeCheck();
-			bool expanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, foldLabel, true);
-			if (EditorGUI.EndChangeCheck())
-				property.isExpanded = expanded;
-
-			if (!string.IsNullOrEmpty(sequenceSuffix))
+			// [HideLabel] arrives as GUIContent.none: skip the foldout header, draw children flush.
+			bool headerless = label == null || label == GUIContent.none;
+			if (!headerless)
 			{
-				var suffixRect = new Rect(foldRect.xMax - SequenceSuffixWidth, foldRect.y, SequenceSuffixWidth, foldRect.height);
-				EditorGUI.LabelField(suffixRect, sequenceSuffix, GetSequenceSuffixStyle());
+				Rect foldRect = new Rect(x, y, w, line);
+				var foldLabel = SplitSequenceSuffixLabel(label, out var sequenceSuffix);
+				var foldoutRect = foldRect;
+				if (!string.IsNullOrEmpty(sequenceSuffix))
+					foldoutRect.xMax -= SequenceSuffixWidth + 4f;
+
+				EditorGUI.BeginChangeCheck();
+				bool expanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, foldLabel, true);
+				if (EditorGUI.EndChangeCheck())
+					property.isExpanded = expanded;
+
+				if (!string.IsNullOrEmpty(sequenceSuffix))
+				{
+					var suffixRect = new Rect(foldRect.xMax - SequenceSuffixWidth, foldRect.y, SequenceSuffixWidth, foldRect.height);
+					EditorGUI.LabelField(suffixRect, sequenceSuffix, GetSequenceSuffixStyle());
+				}
+
+				y += line + sp;
+
+				if (!property.isExpanded)
+				{
+					EditorGUI.EndProperty();
+					return;
+				}
+
+				EditorGUI.indentLevel++;
 			}
 
-			y += line + sp;
-
-			if (!property.isExpanded)
-			{
-				EditorGUI.EndProperty();
-				return;
-			}
-
-			EditorGUI.indentLevel++;
 			DrawEntryField(ref y, x, w, sp, property, "id");
 			DrawEntryField(ref y, x, w, sp, property, "category");
 			DrawEntryField(ref y, x, w, sp, property, "clip", true);
@@ -900,7 +906,8 @@ namespace FoundationPlatform.Editor.Utilities
 			DrawEntryField(ref y, x, w, sp, property, "rootMotionMode");
 			DrawEntryField(ref y, x, w, sp, property, "suspendTranslation");
 			DrawLinkField(ref y, x, w, sp, property);
-			EditorGUI.indentLevel--;
+			if (!headerless)
+				EditorGUI.indentLevel--;
 
 			EditorGUI.EndProperty();
 		}
@@ -937,8 +944,9 @@ namespace FoundationPlatform.Editor.Utilities
 		{
 			float line = EditorGUIUtility.singleLineHeight;
 			float sp   = EditorGUIUtility.standardVerticalSpacing;
-			float h    = line + sp;
-			if (!property.isExpanded)
+			bool headerless = label == null || label == GUIContent.none;
+			float h    = headerless ? 0f : line + sp;
+			if (!headerless && !property.isExpanded)
 				return h;
 
 			h += GetEntryFieldHeight(property, "id", sp);
