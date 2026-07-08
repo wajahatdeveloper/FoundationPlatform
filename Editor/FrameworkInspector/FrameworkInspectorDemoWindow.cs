@@ -67,6 +67,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
     [CustomEditor(typeof(FrameworkInspectorDemoData))]
     public sealed class FrameworkInspectorDemoDataEditor : FrameworkEditor { }
 
+    [CustomPropertyDrawer(typeof(FrameworkInspectorDemoData.DemoPayload))]
+    internal sealed class DemoPayloadDrawer : FrameworkReflectedDrawer { }
+
     /// <summary>Editor-only data object exercising the supported attribute surface.</summary>
     [TypeInfoBox("[TypeInfoBox] — drawn at the top of the inspector for this type.")]
     public sealed class FrameworkInspectorDemoData : ScriptableObject
@@ -352,6 +355,74 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         [Button("Parameterized (result shown below)")]
         private string Combine(string prefix, int number) => $"{prefix}-{number}";
 
+        [PropertyOrder(104)]
+        [Button("Box Style", Style = ButtonStyle.Box, Icon = "d_SaveAs", IconAlignment = IconAlignment.LeftEdge)]
+        private void BoxStyleButton() => Debug.Log("[Demo] box-style button");
+
+        [PropertyOrder(105)]
+        [Button(Style = ButtonStyle.FoldoutButton, Icon = "d_PlayButton", IconAlignment = IconAlignment.RightOfText)]
+        private void FoldoutStyleButton() => Debug.Log("[Demo] foldout-style button");
+
+        // --- ToggleLeft / VerticalGroup / DrawWithUnity ---
+        [Title("Layout Extras")]
+        [VerticalGroup("Extras", PaddingTop = 4, PaddingBottom = 4)]
+        [ToggleLeft]
+        public bool toggleLeftBool = true;
+
+        [VerticalGroup("Extras")]
+        [DrawWithUnity]
+        public Vector3 unityDrawnVector = Vector3.one;
+
+        [VerticalGroup("Extras")]
+        [InfoBox("GUIAlwaysEnabled info — drawn even when parent would disable.", GUIAlwaysEnabled = true)]
+        [DisableIf(nameof(toggleLeftBool))]
+        public string disabledUnlessToggleOff = "disabled when toggleLeftBool is true";
+
+        // --- Dictionary drawer ---
+        [Title("Dictionary")]
+        [ShowInInspector, ReadOnly, DictionaryDrawerSettings(KeyLabel = "Id", ValueLabel = "Label", KeyColumnWidth = 80)]
+        private Dictionary<int, string> demoDictionary => new Dictionary<int, string>
+        {
+            { 1, "alpha" }, { 2, "beta" }, { 42, "answer" },
+        };
+
+        // --- HideReferenceObjectPicker ---
+        [Title("HideReferenceObjectPicker")]
+        public DemoHiddenPicker hiddenPicker = new DemoHiddenPicker();
+
+        [Serializable]
+        [HideReferenceObjectPicker]
+        public class DemoHiddenPicker
+        {
+            public string note = "No reference picker chrome on this nested type.";
+            public int value = 1;
+        }
+
+        // --- RequireComponentButton ---
+        [Title("Require Component")]
+        [RequireComponentButton(typeof(BoxCollider), "Add BoxCollider", Icon = "d_Toolbar Plus")]
+        public BoxCollider optionalCollider;
+
+        // --- Foldout VisibleIf (partial: group visibility) ---
+        [Title("Foldout VisibleIf")]
+        public bool showFoldoutGroup;
+
+        [FoldoutGroup("ConditionalFoldout", VisibleIf = nameof(showFoldoutGroup))]
+        public string foldoutVisibleField = "visible when showFoldoutGroup";
+
+        // --- Nested list elements (FrameworkReflectedDrawer pattern) ---
+        [Title("Nested List Payloads")]
+        [ListDrawerSettings(ShowIndexLabels = true)]
+        public List<DemoPayload> payloadList = new List<DemoPayload>
+        {
+            new DemoPayload { label = "row A", weight = 1 },
+            new DemoPayload { label = "row B", weight = 5 },
+        };
+
+        [InfoBox("Partial support: CollapseOthersOnExpand, ShowIf/HideIf Animate, ValueDropdown AppendNextDrawer — API only.", InfoMessageType.Warning)]
+        [PropertyOrder(199)]
+        public string unsupportedApiNote = "see DOCS/FrameworkInspector.md";
+
         // --- Fragment pattern repro (nested box paths + inline payload + private base button) ---
         [Title("Fragment Pattern")]
         public DemoFragment fragment = new DemoFragment();
@@ -395,7 +466,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         [OnInspectorGUI]
         private void CustomGuiBlock()
         {
-            EditorGUILayout.HelpBox("[OnInspectorGUI] — this block is drawn by a method on the target.", MessageType.None);
+            GuiKit.InfoBox("[OnInspectorGUI] — this block is drawn by a method on the target.", InfoMessageType.None);
         }
 
         [PropertyOrder(201)]

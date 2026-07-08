@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +39,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         /// writable values are editable and complex values recurse (property-tree behavior).
         /// </summary>
         public static void DrawSingleMember(object target, MemberInfo mi)
+            => DrawSingleMember(target, mi, null);
+
+        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata)
         {
             var m = MakeMember(mi, 0);
             try
@@ -48,11 +52,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     var btn = mi.GetCustomAttribute<ButtonAttribute>();
                     if (btn != null) { m.IsButton = true; m.Button = btn; m.Method = method; DrawButton(m, target); return; }
                 }
-                DrawValue(m, target, 0);
+                DrawValue(m, target, 0, metadata);
             }
             catch (Exception ex)
             {
-                EditorGUILayout.HelpBox($"{mi.Name}: {ex.InnerException?.Message ?? ex.Message}", MessageType.Error);
+                FrameworkInspectorTheme.DrawInfoBox($"{mi.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error);
             }
         }
 
@@ -252,7 +256,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 if (!string.IsNullOrEmpty(info.VisibleIf) &&
                     !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                     continue;
-                EditorGUILayout.HelpBox(ResolveText(target, info.Message), ToMsgType(info.InfoMessageType));
+                FrameworkInspectorTheme.DrawInfoBox(ResolveText(target, info.Message), info.InfoMessageType);
             }
 
             var title = src.GetCustomAttribute<TitleAttribute>();
@@ -271,7 +275,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 // [OnInspectorGUI] method — invoke to draw its own custom IMGUI.
                 try { m.Method.Invoke(m.Method.IsStatic ? null : target, null); }
-                catch (Exception ex) { EditorGUILayout.HelpBox($"[OnInspectorGUI] {m.Method.Name}: {ex.InnerException?.Message ?? ex.Message}", MessageType.Error); }
+                catch (Exception ex) { FrameworkInspectorTheme.DrawInfoBox($"[OnInspectorGUI] {m.Method.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error); }
                 if (space != null && space.SpaceAfter > 0) EditorGUILayout.Space(space.SpaceAfter);
                 return;
             }
@@ -292,25 +296,42 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (string.IsNullOrEmpty(label)) label = ObjectNames.NicifyVariableName(m.Method.Name);
             else label = InspectorMemberResolver.ResolveString(target, label);
             float h = FrameworkInspectorRenderer.ButtonHeight(m.Button);
-            if (GUILayout.Button(label, FrameworkInspectorTheme.CompactButton, GUILayout.Height(h)) && m.Method.GetParameters().Length == 0)
+            var content = new GUIContent(label);
+            if (!string.IsNullOrEmpty(m.Button.Icon))
+            {
+                var ic = EditorGUIUtility.IconContent(m.Button.Icon);
+                if (ic != null && ic.image != null) content.image = ic.image;
+            }
+            var pseudo = new ButtonAttribute { Stretch = true, ButtonAlignment = ButtonAlignment.Stretch, Style = m.Button.Style, IconAlignment = m.Button.IconAlignment };
+            if (FrameworkInspectorRenderer.DrawAlignedButtonPublic(pseudo, content, h) && m.Method.GetParameters().Length == 0)
                 m.Method.Invoke(m.Method.IsStatic ? null : target, null);
         }
 
-        private static void DrawValue(Member m, object target, int depth)
+        private static void DrawValue(Member m, object target, int depth, MemberMetadata metadata = null)
         {
             string label = ResolveText(target, GetLabel(m.Info));
             bool hideLabel = m.Info.GetCustomAttribute<HideLabelAttribute>() != null;
             bool displayString = m.Info.GetCustomAttribute<DisplayAsStringAttribute>() != null;
-            bool readOnly = m.Property != null && !m.Property.CanWrite;
+            bool readOnly = m.Info.GetCustomAttribute<ReadOnlyAttribute>() != null
+                || m.Property != null && !m.Property.CanWrite;
 
             object value = ReadValue(m, target);
+
+            var declaredType = m.Field != null ? m.Field.FieldType : m.Property?.PropertyType;
+            var dictSettings = metadata?.DictionaryDrawerSettings ?? m.Info.GetCustomAttribute<DictionaryDrawerSettingsAttribute>();
+            if (EngineDictionaryDrawer.IsDictionaryType(declaredType) || value is IDictionary)
+            {
+                var lbl = hideLabel ? GUIContent.none : new GUIContent(label);
+                string foldKey = (m.Info.DeclaringType?.FullName ?? "") + "." + m.Info.Name;
+                EngineDictionaryDrawer.Draw(value, dictSettings, lbl, readOnly, foldKey);
+                return;
+            }
 
             // Any enumerable (List/array/IReadOnlyList/HashSet/...) except string → grid or bullet list.
             if (value is System.Collections.IEnumerable seq && !(value is string))
             {
                 var items = new List<object>();
                 foreach (var o in seq) items.Add(o);
-                var declaredType = m.Field != null ? m.Field.FieldType : m.Property?.PropertyType;
                 var et = GetListElementType(declaredType) ?? (items.Count > 0 ? items[0]?.GetType() : null);
                 if (!hideLabel && !string.IsNullOrEmpty(label))
                     EditorGUILayout.LabelField($"{label} ({items.Count})", FrameworkInspectorTheme.SectionTitle);

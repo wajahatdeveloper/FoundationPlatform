@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
 namespace FoundationPlatform.FrameworkInspector.Editor
@@ -33,6 +34,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public static void Title(string title, string subtitle, TextAlignment textAlignment = TextAlignment.Left,
             bool horizontalLine = true, bool boldLabel = true)
             => FrameworkInspectorTheme.DrawTitle(title, subtitle, textAlignment, horizontalLine, boldLabel);
+
+        public static void InfoBox(string message, InfoMessageType type = InfoMessageType.Info)
+            => FrameworkInspectorTheme.DrawInfoBox(message, type);
+
+        public static void ValidationBox(string message, InfoMessageType type = InfoMessageType.Error)
+            => FrameworkInspectorTheme.DrawValidationBox(message, type);
+
+        public static int Toolbar(int selected, string[] labels)
+            => FrameworkInspectorTheme.Toolbar(selected, labels);
     }
 }
 #endif

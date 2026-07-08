@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
@@ -25,6 +26,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static GUIStyle s_menuRow;
         private static GUIStyle s_menuRowSelected;
 
+        private static GUIStyle s_buttonBox;
+        private static GUIStyle s_buttonFoldout;
+
         [InitializeOnLoadMethod]
         private static void OnLoad() => InvalidateSkinCache();
 
@@ -43,6 +47,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             s_tableCell = null;
             s_menuRow = null;
             s_menuRowSelected = null;
+            s_buttonBox = null;
+            s_buttonFoldout = null;
         }
 
         private static void EnsureSkin()
@@ -165,6 +171,44 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
+        public static Color InfoBoxBackground(InfoMessageType type)
+        {
+            EnsureSkin();
+            return type switch
+            {
+                InfoMessageType.Error => EditorGUIUtility.isProSkin
+                    ? new Color(0.45f, 0.12f, 0.12f, 0.35f)
+                    : new Color(0.95f, 0.75f, 0.75f, 0.9f),
+                InfoMessageType.Warning => EditorGUIUtility.isProSkin
+                    ? new Color(0.45f, 0.35f, 0.05f, 0.35f)
+                    : new Color(0.98f, 0.92f, 0.70f, 0.95f),
+                InfoMessageType.Info => EditorGUIUtility.isProSkin
+                    ? new Color(0.12f, 0.28f, 0.45f, 0.35f)
+                    : new Color(0.78f, 0.88f, 0.98f, 0.95f),
+                _ => EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.12f)
+                    : new Color(0f, 0f, 0f, 0.06f),
+            };
+        }
+
+        public static Color InfoBoxBorder(InfoMessageType type)
+        {
+            EnsureSkin();
+            return type switch
+            {
+                InfoMessageType.Error => EditorGUIUtility.isProSkin
+                    ? new Color(0.85f, 0.25f, 0.25f, 0.55f)
+                    : new Color(0.75f, 0.15f, 0.15f, 0.45f),
+                InfoMessageType.Warning => EditorGUIUtility.isProSkin
+                    ? new Color(0.95f, 0.75f, 0.15f, 0.55f)
+                    : new Color(0.85f, 0.65f, 0.05f, 0.45f),
+                InfoMessageType.Info => EditorGUIUtility.isProSkin
+                    ? new Color(0.35f, 0.65f, 0.95f, 0.55f)
+                    : new Color(0.15f, 0.45f, 0.85f, 0.45f),
+                _ => SectionRuleColor,
+            };
+        }
+
         // --- Styles ----------------------------------------------------------------------
 
         public static GUIStyle SectionTitle
@@ -201,6 +245,37 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         }
 
         public static GUIStyle CompactButton => EditorStyles.miniButton;
+
+        public static GUIStyle ButtonBox
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_buttonBox == null)
+                    s_buttonBox = new GUIStyle(EditorStyles.miniButton) { fixedHeight = CompactButtonHeight };
+                return s_buttonBox;
+            }
+        }
+
+        public static GUIStyle ButtonFoldout
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_buttonFoldout == null)
+                {
+                    s_buttonFoldout = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
+                }
+                return s_buttonFoldout;
+            }
+        }
+
+        public static GUIStyle ButtonStyleFor(ButtonStyle style) => style switch
+        {
+            ButtonStyle.Box => new GUIStyle(EditorStyles.helpBox) { padding = new RectOffset(6, 6, 6, 6) },
+            ButtonStyle.FoldoutButton => ButtonFoldout,
+            _ => CompactButton,
+        };
 
         public static GUIStyle TableHeader
         {
@@ -347,6 +422,33 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (horizontalLine)
                 EditorGUI.DrawRect(new Rect(rect.x, rect.yMax, rect.width, 1f), SectionRuleColor);
             EditorGUILayout.Space(2f);
+        }
+
+        /// <summary>Themed callout matching FrameworkInspector chrome (replaces raw HelpBox in engine UI).</summary>
+        public static void DrawInfoBox(string message, InfoMessageType type = InfoMessageType.Info)
+        {
+            if (string.IsNullOrEmpty(message)) return;
+            var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
+            float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
+            var rect = EditorGUILayout.GetControlRect(false, h + 8f);
+            EditorGUI.DrawRect(rect, InfoBoxBackground(type));
+            var border = InfoBoxBorder(type);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
+            EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
+            GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
+            EditorGUILayout.Space(SectionSpacing * 0.5f);
+        }
+
+        public static void DrawValidationBox(string message, InfoMessageType type = InfoMessageType.Error)
+            => DrawInfoBox(message, type);
+
+        /// <summary>Skin-aware toolbar for tab groups.</summary>
+        public static int Toolbar(int selected, string[] labels)
+        {
+            var style = new GUIStyle(EditorStyles.toolbarButton) { fixedHeight = 22f };
+            return GUILayout.Toolbar(selected, labels, style);
         }
     }
 }

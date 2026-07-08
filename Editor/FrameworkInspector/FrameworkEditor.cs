@@ -284,6 +284,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             mm.DrawWithUnity = m.GetCustomAttribute<DrawWithUnityAttribute>();
             mm.TableList = m.GetCustomAttribute<TableListAttribute>();
             mm.ListDrawerSettings = m.GetCustomAttribute<ListDrawerSettingsAttribute>();
+            mm.DictionaryDrawerSettings = m.GetCustomAttribute<DictionaryDrawerSettingsAttribute>();
             mm.Searchable = m.GetCustomAttribute<SearchableAttribute>();
             mm.ValueDropdown = m.GetCustomAttribute<ValueDropdownAttribute>();
             mm.AssetSelector = m.GetCustomAttribute<AssetSelectorAttribute>();
@@ -583,7 +584,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (meta.TypeInfoBoxes != null)
             {
                 foreach (var box in meta.TypeInfoBoxes)
-                    EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(targets[0], box.Message), MessageType.Info);
+                    FrameworkInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(targets[0], box.Message), InfoMessageType.Info);
             }
         }
 
@@ -906,6 +907,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // A group with no visible descendant entry is skipped entirely (no empty header/box).
         private static bool GroupHasVisible(GroupNode g, object[] targets)
         {
+            if (!IsGroupVisible(g, targets)) return false;
             foreach (var child in g.Children)
             {
                 if (child is InspectorEntry e)
@@ -917,8 +919,19 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return false;
         }
 
+        private static bool IsGroupVisible(GroupNode g, object[] targets)
+        {
+            if (g.FoldoutAttr != null && !string.IsNullOrEmpty(g.FoldoutAttr.VisibleIf) && targets != null && targets.Length > 0)
+            {
+                if (!InspectorMemberResolver.EvaluateBool(targets[0], g.FoldoutAttr.VisibleIf, null, false, true))
+                    return false;
+            }
+            return true;
+        }
+
         private static void RenderGroup(GroupNode g, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs)
         {
+            if (!IsGroupVisible(g, targets)) return;
             switch (g.Kind)
             {
                 case GroupKind.Box:
@@ -1136,7 +1149,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         names[i] = InspectorMemberResolver.ResolveString(targets[0], pages[i].Name);
                     if (!tabs.TryGetValue(g.Path, out active)) active = 0;
                     active = Mathf.Clamp(active, 0, pages.Count - 1);
-                    active = GUILayout.Toolbar(active, names);
+                    active = FrameworkInspectorTheme.Toolbar(active, names);
                     tabs[g.Path] = active;
                 }
                 RenderChildren(pages[active], targets, foldouts, tabs);
@@ -1318,7 +1331,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (!string.IsNullOrEmpty(info.VisibleIf) &&
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
-                    EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, info.Message), ToMsgType(info.InfoMessageType));
+                    FrameworkInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(target, info.Message), info.InfoMessageType);
                 }
             }
 
@@ -1465,11 +1478,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         private static readonly Dictionary<string, Texture> s_buttonIconCache = new Dictionary<string, Texture>();
 
-        private static GUIContent MakeButtonContent(string label, string icon)
+        private static GUIContent MakeButtonContent(string label, string icon, IconAlignment alignment = IconAlignment.LeftOfText)
         {
-            if (!string.IsNullOrEmpty(icon) && TryGetCachedEditorIcon(icon, out var tex))
+            if (string.IsNullOrEmpty(icon) || !TryGetCachedEditorIcon(icon, out var tex))
+                return new GUIContent(label);
+            if (alignment == IconAlignment.LeftOfText)
                 return new GUIContent(label, tex);
-            return new GUIContent(label);
+            return new GUIContent(label, tex);
         }
 
         private static bool TryGetCachedEditorIcon(string icon, out Texture tex)
@@ -1489,8 +1504,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         {
             string key = "dibox:" + (e.AttributeSource?.Name ?? "?") + ":" + info.Message;
             foldouts.TryGetValue(key, out bool open);
-            EditorGUILayout.HelpBox(InspectorMemberResolver.ResolveString(target, info.Message)
-                + (open ? "\n\n" + InspectorMemberResolver.ResolveString(target, info.Details) : ""), ToMsgType(info.InfoMessageType));
+            FrameworkInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(target, info.Message)
+                + (open ? "\n\n" + InspectorMemberResolver.ResolveString(target, info.Details) : ""), info.InfoMessageType);
             var r = GUILayoutUtility.GetLastRect();
             if (Event.current.type == EventType.MouseDown && r.Contains(Event.current.mousePosition))
             {
@@ -1539,7 +1554,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             try { mi.Invoke(mi.IsStatic ? null : target, null); }
             catch (Exception ex)
             {
-                EditorGUILayout.HelpBox($"[OnInspectorGUI] {mi.Name}: {ex.InnerException?.Message ?? ex.Message}", MessageType.Error);
+                FrameworkInspectorTheme.DrawInfoBox($"[OnInspectorGUI] {mi.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error);
             }
         }
 
@@ -1744,6 +1759,16 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var fieldType = e.Field?.FieldType;
             bool explicitInline = mm.InlineProperty != null;
             if (prop.propertyType == SerializedPropertyType.Generic && prop.hasVisibleChildren && !prop.isArray
+                && TypeHidesReferencePicker(fieldType) && !HasCustomPropertyDrawer(fieldType))
+            {
+                DrawUnityHeaders(mm);
+                float prevLw = EditorGUIUtility.labelWidth;
+                if (mm.InlineProperty != null && mm.InlineProperty.LabelWidth > 0) EditorGUIUtility.labelWidth = mm.InlineProperty.LabelWidth;
+                DrawNestedObject(e, targets, foldouts, tabs, inline: explicitInline);
+                EditorGUIUtility.labelWidth = prevLw;
+                return;
+            }
+            if (prop.propertyType == SerializedPropertyType.Generic && prop.hasVisibleChildren && !prop.isArray
                 && !HasCustomPropertyDrawer(fieldType)
                 && (explicitInline || TypeHasEngineAttributes(fieldType)))
             {
@@ -1898,8 +1923,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var prop = e.Property;
             var obj = prop.objectReferenceValue;
 
-            // Object field per ObjectFieldMode.
-            bool showField = ie.ObjectFieldMode switch
+            // Object field per ObjectFieldMode; [HideReferenceObjectPicker] on type suppresses picker chrome.
+            var fieldType = e.Field?.FieldType;
+            bool hideRefPicker = TypeHidesReferencePicker(fieldType)
+                || (obj != null && TypeHidesReferencePicker(obj.GetType()));
+            bool showField = !hideRefPicker && ie.ObjectFieldMode switch
             {
                 InlineEditorObjectFieldModes.CompletelyHidden => false,
                 InlineEditorObjectFieldModes.Hidden => obj == null,
@@ -2083,6 +2111,9 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         // Used to auto-recurse attributed nested objects without requiring an explicit [InlineProperty].
         private const string EngineAttrNamespace = "FoundationPlatform.FrameworkInspector";
         private static readonly Dictionary<Type, bool> s_engineAttrTypes = new Dictionary<Type, bool>();
+
+        internal static bool TypeHidesReferencePicker(Type t)
+            => t != null && t.GetCustomAttribute<HideReferenceObjectPickerAttribute>() != null;
 
         internal static bool TypeHasEngineAttributes(Type t)
         {
@@ -2453,7 +2484,16 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
                 string label = GetLabelText(e, targets);
                 bool hideLabel = mm.HideLabel;
-                bool readOnly = e.Member is PropertyInfo pi2 && !pi2.CanWrite;
+                bool readOnly = mm.ReadOnly || e.Member is PropertyInfo pi2 && !pi2.CanWrite
+                    || mm.DictionaryDrawerSettings != null;
+
+                if (EngineDictionaryDrawer.IsDictionaryType(valueType) || value is IDictionary)
+                {
+                    var lbl = hideLabel ? GUIContent.none : TempContent(label);
+                    string foldKey = e.Member.Name + ":multi";
+                    EngineDictionaryDrawer.Draw(value, mm.DictionaryDrawerSettings, lbl, true, foldKey);
+                    return;
+                }
 
                 if (mm.DisplayAsString != null || readOnly)
                 {
@@ -2490,7 +2530,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
             else
             {
-                PocoInspector.DrawSingleMember(targets[0], e.Member);
+                PocoInspector.DrawSingleMember(targets[0], e.Member, e.Metadata);
             }
         }
 
@@ -2526,7 +2566,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             else label = InspectorMemberResolver.ResolveString(target, label);
 
             float height = ButtonHeight(e.Button);
-            var content = MakeButtonContent(label, e.Button.Icon);
+            var content = MakeButtonContent(label, e.Button.Icon, e.Button.IconAlignment);
             var ps = e.ButtonMethod.GetParameters();
 
             if (ps.Length == 0)
@@ -2554,20 +2594,80 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
+        private static GUIStyle ResolveButtonGuiStyle(ButtonAttribute b) => b.Style switch
+        {
+            ButtonStyle.Box => FrameworkInspectorTheme.ButtonBox,
+            ButtonStyle.FoldoutButton => FrameworkInspectorTheme.ButtonFoldout,
+            _ => FrameworkInspectorTheme.CompactButton,
+        };
+
         private static bool DrawAlignedButton(ButtonAttribute b, GUIContent content, float height)
         {
-            if (b.Stretch && b.ButtonAlignment == ButtonAlignment.Stretch)
-                return GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.Height(height));
+            if (b.Style == ButtonStyle.Box)
+            {
+                using (new EditorGUILayout.VerticalScope(FrameworkInspectorTheme.ButtonStyleFor(ButtonStyle.Box)))
+                    return DrawIconButton(b, content, height, true);
+            }
 
-            bool clicked;
+            if (b.Stretch && b.ButtonAlignment == ButtonAlignment.Stretch)
+                return DrawIconButton(b, content, height, true);
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (b.ButtonAlignment != ButtonAlignment.Left) GUILayout.FlexibleSpace();
-                clicked = GUILayout.Button(content, FrameworkInspectorTheme.CompactButton, GUILayout.Height(height), GUILayout.ExpandWidth(false));
+                bool clicked = DrawIconButton(b, content, height, false);
                 if (b.ButtonAlignment != ButtonAlignment.Right) GUILayout.FlexibleSpace();
+                return clicked;
             }
+        }
+
+        private static bool DrawIconButton(ButtonAttribute b, GUIContent content, float height, bool expandWidth)
+        {
+            var style = ResolveButtonGuiStyle(b);
+            var opts = expandWidth
+                ? new[] { GUILayout.Height(height), GUILayout.ExpandWidth(true) }
+                : new GUILayoutOption[] { GUILayout.Height(height) };
+
+            if (content.image == null || b.IconAlignment == IconAlignment.LeftOfText)
+                return GUILayout.Button(content, style, opts);
+
+            float width = expandWidth ? EditorGUIUtility.currentViewWidth - 40f : Mathf.Max(80f, style.CalcSize(content).x + 24f);
+            var rect = GUILayoutUtility.GetRect(width, height, style, opts);
+            bool clicked = GUI.Button(rect, GUIContent.none, style);
+            PaintButtonIconLabel(rect, content.text, content.image, b.IconAlignment, style);
             return clicked;
         }
+
+        private static void PaintButtonIconLabel(Rect rect, string text, Texture icon, IconAlignment align, GUIStyle style)
+        {
+            const float iconSize = 16f;
+            const float pad = 4f;
+            var iconRect = new Rect(rect.x + pad, rect.y + (rect.height - iconSize) * 0.5f, iconSize, iconSize);
+            var textStyle = new GUIStyle(style) { alignment = TextAnchor.MiddleCenter };
+            switch (align)
+            {
+                case IconAlignment.RightOfText:
+                {
+                    var textSize = textStyle.CalcSize(new GUIContent(text));
+                    float total = textSize.x + pad + iconSize;
+                    float start = rect.x + (rect.width - total) * 0.5f;
+                    GUI.Label(new Rect(start, rect.y, textSize.x, rect.height), text, textStyle);
+                    GUI.DrawTexture(new Rect(start + textSize.x + pad, iconRect.y, iconSize, iconSize), icon);
+                    break;
+                }
+                case IconAlignment.LeftEdge:
+                    GUI.DrawTexture(iconRect, icon);
+                    GUI.Label(new Rect(rect.x + pad + iconSize + pad, rect.y, rect.width - iconSize - pad * 3f, rect.height), text, textStyle);
+                    break;
+                case IconAlignment.RightEdge:
+                    GUI.Label(new Rect(rect.x + pad, rect.y, rect.width - iconSize - pad * 3f, rect.height), text, textStyle);
+                    GUI.DrawTexture(new Rect(rect.xMax - pad - iconSize, iconRect.y, iconSize, iconSize), icon);
+                    break;
+            }
+        }
+
+        internal static bool DrawAlignedButtonPublic(ButtonAttribute b, GUIContent content, float height)
+            => DrawAlignedButton(b, content, height);
 
         private static string ButtonKey(InspectorEntry e, object target)
             => (target?.GetHashCode() ?? 0) + ":" + e.ButtonMethod.DeclaringType?.FullName + "." + e.ButtonMethod.Name;
@@ -2711,7 +2811,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 string msg = mm.Required.ErrorMessage != null
                     ? InspectorMemberResolver.ResolveString(target, mm.Required.ErrorMessage)
                     : $"{GetLabelText(e, targets) ?? e.Property.displayName} is required.";
-                EditorGUILayout.HelpBox(msg, ToMsgType(mm.Required.MessageType));
+                FrameworkInspectorTheme.DrawValidationBox(msg, mm.Required.MessageType);
             }
 
             if (mm.ValidateInputs != null)
@@ -2724,7 +2824,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                         string msg = message ?? (v.DefaultMessage != null
                             ? InspectorMemberResolver.ResolveString(target, v.DefaultMessage)
                             : "Invalid value.");
-                        EditorGUILayout.HelpBox(msg, ToMsgType(msgType));
+                        FrameworkInspectorTheme.DrawValidationBox(msg, msgType);
                     }
                 }
             }
@@ -3054,6 +3154,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public DrawWithUnityAttribute DrawWithUnity;
         public TableListAttribute TableList;
         public ListDrawerSettingsAttribute ListDrawerSettings;
+        public DictionaryDrawerSettingsAttribute DictionaryDrawerSettings;
         public SearchableAttribute Searchable;
         public ValueDropdownAttribute ValueDropdown;
         public AssetSelectorAttribute AssetSelector;
