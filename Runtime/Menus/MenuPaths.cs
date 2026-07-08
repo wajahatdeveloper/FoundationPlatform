@@ -178,6 +178,7 @@ namespace FoundationPlatform.Utilities.Menus
             public const string ItemIkPreview    = Window + "Item/Equipment IK Preview...";
             public const string DebugXConsole    = Window + "Debug/DebugX Console...";
             public const string EventBus         = Window + "EventBus/Event Bus...";
+            public const string TweenDebugger    = Window + "TweenX/Tween Debugger...";
         }
     }
 }

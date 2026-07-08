@@ -40,6 +40,62 @@ public static class MathX
         ? 0.5f * (1 - Mathf.Sqrt(1 - (2 * t) * (2 * t)))
         : 0.5f * (Mathf.Sqrt(1 - (-2 * t + 2) * (-2 * t + 2)) + 1);
 
+    // Back — slight overshoot. c1/c3 are the standard easings.net constants.
+    private const float BackC1 = 1.70158f;
+    private const float BackC2 = BackC1 * 1.525f;
+    private const float BackC3 = BackC1 + 1f;
+
+    public static float EaseInBack(float t) => BackC3 * t * t * t - BackC1 * t * t;
+    public static float EaseOutBack(float t) => 1 + BackC3 * (--t) * t * t + BackC1 * t * t;
+
+    public static float EaseInOutBack(float t) => t < 0.5f
+        ? (2 * t) * (2 * t) * ((BackC2 + 1) * 2 * t - BackC2) / 2
+        : ((2 * t - 2) * (2 * t - 2) * ((BackC2 + 1) * (2 * t - 2) + BackC2) + 2) / 2;
+
+    // Elastic — damped spring overshoot.
+    public static float EaseInElastic(float t)
+    {
+        if (t == 0) return 0;
+        if (t == 1) return 1;
+        const float c4 = (2 * Mathf.PI) / 3f;
+        return -Mathf.Pow(2, 10 * t - 10) * Mathf.Sin((t * 10 - 10.75f) * c4);
+    }
+
+    public static float EaseOutElastic(float t)
+    {
+        if (t == 0) return 0;
+        if (t == 1) return 1;
+        const float c4 = (2 * Mathf.PI) / 3f;
+        return Mathf.Pow(2, -10 * t) * Mathf.Sin((t * 10 - 0.75f) * c4) + 1;
+    }
+
+    public static float EaseInOutElastic(float t)
+    {
+        if (t == 0) return 0;
+        if (t == 1) return 1;
+        const float c5 = (2 * Mathf.PI) / 4.5f;
+        return t < 0.5f
+            ? -(Mathf.Pow(2, 20 * t - 10) * Mathf.Sin((20 * t - 11.125f) * c5)) / 2
+            : (Mathf.Pow(2, -20 * t + 10) * Mathf.Sin((20 * t - 11.125f) * c5)) / 2 + 1;
+    }
+
+    // Bounce — decaying rebound. (Distinct from the Berp-style Bounce(x) oscillator below.)
+    public static float EaseOutBounce(float t)
+    {
+        const float n1 = 7.5625f;
+        const float d1 = 2.75f;
+        if (t < 1f / d1) return n1 * t * t;
+        if (t < 2f / d1) return n1 * (t -= 1.5f / d1) * t + 0.75f;
+        if (t < 2.5f / d1) return n1 * (t -= 2.25f / d1) * t + 0.9375f;
+        return n1 * (t -= 2.625f / d1) * t + 0.984375f;
+    }
+
+    public static float EaseInBounce(float t) => 1 - EaseOutBounce(1 - t);
+
+    public static float EaseInOutBounce(float t) => t < 0.5f
+        ? (1 - EaseOutBounce(1 - 2 * t)) / 2
+        : (1 + EaseOutBounce(2 * t - 1)) / 2;
+
     #endregion
 
 
