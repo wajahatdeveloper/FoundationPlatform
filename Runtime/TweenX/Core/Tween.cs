@@ -59,9 +59,10 @@ namespace FoundationPlatform.TweenX
 
         /// <summary>
         /// Advance the tween by <paramref name="dt"/> seconds (already clock- and scale-resolved).
-        /// Returns false when the tween has finished and should be recycled.
+        /// Returns false when the tween has finished and should be recycled. Virtual so
+        /// <c>Sequence</c> can drive its own composite timeline instead.
         /// </summary>
-        internal bool Step(float dt)
+        internal virtual bool Step(float dt)
         {
             if (!IsAlive) return false;
             if (Paused) return true;
@@ -114,6 +115,18 @@ namespace FoundationPlatform.TweenX
 
         /// <summary>Ease/curve lookup shared by all typed tweens.</summary>
         internal float EvaluateEase(float t) => Curve != null ? Curve.Evaluate(t) : EaseEvaluator.Evaluate(Ease, t);
+
+        /// <summary>
+        /// Apply this tween's value at an absolute local time (no loop/callback bookkeeping). Used by
+        /// <c>Sequence</c> to scrub its children off a shared playhead. Captures start values on first use.
+        /// </summary>
+        internal void SampleAt(float localTime)
+        {
+            if (!Started) { ResolveStartValues(); Started = true; }
+            Elapsed = localTime;
+            float linT = Duration <= 0f ? 1f : Mathf.Clamp01(localTime / Duration);
+            ApplyEased(EvaluateEase(linT));
+        }
 
         // ---- Typed hooks implemented by Tween<T> ----
         internal abstract void ResolveStartValues();

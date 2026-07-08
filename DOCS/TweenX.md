@@ -3,8 +3,8 @@
 A first-party tween/animation engine for HOMAM. DOTween-style ergonomics, no third-party
 dependency. Lives in `FoundationPlatform` (Runtime/TweenX + Editor/TweenX) alongside `CoroutineX`.
 
-> **Status:** Phase 1 (core + fluent API + designer component + scene debugging). Sequences,
-> paths, juice primitives (Phase 2) and the FEEL-style feedback player (Phase 3) build on this.
+> **Status:** All three phases landed — Phase 1 (core + fluent API + designer component + scene
+> debugging), Phase 2 (sequences, path tweens, juice primitives), Phase 3 (FEEL-style feedback player).
 
 ---
 
@@ -120,10 +120,56 @@ a linked GameObject is destroyed/disabled.
 
 ---
 
-## Roadmap
+## Sequences (Phase 2)
 
-- **Phase 2:** `Sequence` (Append/Join/Insert/callbacks), path tweens (Linear/CatmullRom),
-  shake/punch/blink/flash primitives.
-- **Phase 3:** `FeedbackPlayer` — MMFeedbacks-style composable feedback list (tween/shake/flash/
-  punch/audio/VFX/camera-shake/time-freeze) played on one trigger, data-driven `[SerializeReference]`
-  registry (types auto-discovered via `TypeCache`).
+```csharp
+Sequence.Create()
+    .Append(transform.TweenMove(a, 1f).SetEase(Ease.OutQuad))
+    .Join(transform.TweenScale(1.5f, 1f))   // parallel with the move
+    .AppendInterval(0.25f)
+    .AppendCallback(() => Fire())
+    .SetLoops(-1)
+    .Play();
+```
+
+`Append` / `Join` / `Insert(atTime, …)` / `AppendInterval` / `AppendCallback` / `InsertCallback`.
+Child tweens are adopted onto the sequence's playhead — their own delay/loops/clock are ignored
+(use `AppendInterval` and the sequence's `SetLoops`/`SetClock`). Sequence loops are Restart-only;
+nesting sequences isn't supported.
+
+## Path tweens (Phase 2)
+
+```csharp
+transform.TweenPath(new[]{ p1, p2, p3 }, 2f, PathType.CatmullRom);
+```
+Current position is the implicit start point. `PathType.Linear` or `CatmullRom`; `local: true` for
+local-space.
+
+## Juice (Phase 2)
+
+```csharp
+transform.TweenPunchScale(Vector3.one * 0.2f, 0.3f);   // squash-punch, returns to origin
+transform.TweenShakePosition(0.3f, 0.5f);              // decaying jitter (pass seed for reproducible)
+image.TweenFlash(Color.red, 0.2f, flashes: 2);         // color pulse
+canvasGroup.TweenBlink(0.2f, 0.4f, blinks: 3);         // alpha pulse
+```
+Punch/shake resolve exactly back to the captured origin. Shake oscillation is a pure function of
+time (no RNG state) → with a fixed seed it's reproducible, deterministic-clock included.
+
+## FEEL feedback player (Phase 3)
+
+Add **FoundationPlatform ▸ Feedback Player**, then build a burst of composable feedbacks (no code):
+
+- Built-ins: Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake,
+  TimeFreeze (hit-stop), Event (UnityEvent). Each has an `Active` toggle and a `Delay`.
+- The **Add Feedback ▾** dropdown auto-lists every concrete `Feedback` subclass (TypeCache) — writing
+  a new one (`[Serializable] class FeedbackX : Feedback { protected override void Execute(...) }`) makes
+  it appear with no registration.
+- `Play()` fires all active feedbacks together (each respecting its delay); `Stop()` cancels the burst.
+  Trigger from code, a UnityEvent, or `Play On Enable`.
+
+```csharp
+GetComponent<FeedbackPlayer>().Play();   // e.g. on hit: shake + flash + punch + hit-stop + sfx
+```
+
+Feedbacks are built entirely on the tween core, so they inherit its clocks, pooling, and debugging.

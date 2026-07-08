@@ -104,12 +104,45 @@ namespace FoundationPlatform.TweenX
             t.Clock = clock;
             t.TargetObject = target;
             t.HasTarget = target != null;
-            t.IsAlive = true;
+            Register(t);
+            return t;
+        }
 
+        /// <summary>Assign an id and add a bare tween (or sequence/path/juice tween) to the active set.</summary>
+        internal static void Register(Tween t)
+        {
+            EnsureRunner();
+            t.IsAlive = true;
             t.Id = ++_idCounter;
             _byId[t.Id] = t;
             _active.Add(t);
+        }
+
+        /// <summary>
+        /// Remove a tween from the active set without recycling it, handing ownership to the caller
+        /// (used by <c>Sequence</c> to adopt already-created child tweens). Returns null if stale.
+        /// </summary>
+        internal static Tween Adopt(in TweenHandle h)
+        {
+            var t = Resolve(h);
+            if (t == null) return null;
+            int idx = _active.IndexOf(t);
+            if (idx >= 0)
+            {
+                int last = _active.Count - 1;
+                _active[idx] = _active[last];
+                _active.RemoveAt(last);
+            }
+            _byId.Remove(t.Id);   // handle no longer resolves; the sequence controls it now
             return t;
+        }
+
+        /// <summary>Recycle a tween the caller owned outside the active set (a sequence's children).</summary>
+        internal static void RecycleDetached(Tween t)
+        {
+            if (t == null) return;
+            t.IsAlive = false;
+            Return(t);
         }
 
         /// <summary>Create the runner on demand (e.g. tweens started before <see cref="Bootstrap"/> in edit-mode preview).</summary>
@@ -131,6 +164,17 @@ namespace FoundationPlatform.TweenX
                 if (stack.Count > 0) return stack.Pop();
             }
             return new Tween<T>();
+        }
+
+        /// <summary>Rent a pooled non-generic tween subtype (Sequence / PathTween / JuiceTween).</summary>
+        internal static T RentPooled<T>() where T : Tween, new()
+        {
+            if (_pools.TryGetValue(typeof(T), out var poolObj))
+            {
+                var stack = (Stack<T>)poolObj;
+                if (stack.Count > 0) return stack.Pop();
+            }
+            return new T();
         }
 
         private static void Return(Tween t)
