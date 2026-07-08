@@ -63,7 +63,11 @@ namespace HierarchyX {
             isFirstVisible = Event.current.type != lastEventType;
             lastEventType = Event.current.type;
 
+#if UNITY_6000_2_OR_NEWER
+            var go = EditorUtility.EntityIdToObject(id) as GameObject;
+#else
             var go = EditorUtility.InstanceIDToObject(id) as GameObject;
+#endif
 
             try {
                 DoSelection(rect, go, s);

@@ -37,6 +37,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 FrameworkInspectorRenderer.Draw(this, serializedObject, targets, _foldouts, _tabs);
             }
+            catch (ExitGUIException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Debug.LogError($"[FoundationPlatform.FrameworkInspector] inspector draw for '{target?.GetType().Name}' failed: {ex}");
@@ -978,22 +982,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 }
                 case GroupKind.Foldout:
                 {
-                    // Plain foldout matching Unity's native array/struct foldout look (no dark header
-                    // bar, no surrounding box — a box border overlaps the arrow and reads as broken).
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
-                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
-                    expanded = EditorGUILayout.Foldout(expanded, InspectorMemberResolver.ResolveString(targets[0], g.Name), true);
-                    var rect = GUILayoutUtility.GetLastRect();
-                    if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
-                    {
-                        expanded = !expanded;
-                        Event.current.Use();
-                    }
+                    expanded = FrameworkInspectorTheme.SectionFoldout(expanded,
+                        InspectorMemberResolver.ResolveString(targets[0], g.Name));
                     foldouts[g.Path] = expanded;
                     if (expanded)
                     {
-                        using (new EditorGUI.IndentLevelScope())
-                            RenderChildren(g, targets, foldouts, tabs);
+                        FrameworkInspectorTheme.BeginSectionFoldoutBody();
+                        RenderChildren(g, targets, foldouts, tabs);
+                        FrameworkInspectorTheme.EndSectionFoldoutBody();
                     }
                     break;
                 }
@@ -2096,6 +2093,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 AddReflectedEntries(nested, nestedMeta, nestedTargets, ref seq);
                 RenderScope(nested, nestedTargets, foldouts, tabs);
                 ReleasePooledList(nested);
+            }
+            catch (ExitGUIException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

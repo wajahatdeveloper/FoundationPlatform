@@ -23,6 +23,16 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public static bool Foldout(bool expanded, GUIContent label)
             => FrameworkInspectorTheme.Foldout(expanded, label);
 
+        public static bool SectionFoldout(bool expanded, string label)
+            => FrameworkInspectorTheme.SectionFoldout(expanded, label);
+
+        public static bool SectionFoldout(bool expanded, GUIContent label)
+            => FrameworkInspectorTheme.SectionFoldout(expanded, label);
+
+        public static void BeginSectionFoldoutBody() => FrameworkInspectorTheme.BeginSectionFoldoutBody();
+
+        public static void EndSectionFoldoutBody() => FrameworkInspectorTheme.EndSectionFoldoutBody();
+
         public static bool FoldoutInSection(bool expanded, string label)
             => FrameworkInspectorTheme.FoldoutInSection(expanded, label);
 

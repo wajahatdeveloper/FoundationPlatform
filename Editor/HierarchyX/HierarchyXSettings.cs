@@ -71,6 +71,15 @@ namespace HierarchyX {
         [Tooltip("Let registered IHierarchyRowDecorators paint per-row tints and left-edge accent spines (e.g. character-rig membership). Turn off to skip that pass entirely.")]
         public bool rowDecorators = true;
 
+        [Tooltip("Dock a collapsible setup/status panel to the bottom of the Hierarchy window. Sections are contributed by IHierarchyPanelSection plugins (e.g. Scene Setup).")]
+        public bool panelEnabled = true;
+        [Tooltip("Height of the docked panel in pixels when expanded.")]
+        public float panelHeight = 200f;
+        [Tooltip("Whether the docked panel is currently collapsed to its header bar.")]
+        public bool panelCollapsed = false;
+        [Tooltip("Section ids that are currently collapsed within the panel (state persistence).")]
+        public List<string> panelCollapsedSections = new List<string>();
+
         public List<MiniLabelType> miniLabels = new List<MiniLabelType> { MiniLabelType.Layer, MiniLabelType.Tag };
         [Tooltip("Use an 8px font instead of 9px for narrow hierarchies.")]
         public bool smallerFont = true;

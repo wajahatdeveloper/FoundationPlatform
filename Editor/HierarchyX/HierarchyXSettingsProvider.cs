@@ -73,6 +73,20 @@ namespace HierarchyX {
             EditorGUILayout.PropertyField(serialized.FindProperty("rowDecorators"), new GUIContent("Row Decorators"));
 
             Space();
+            EditorGUILayout.LabelField("Docked Setup Panel", EditorStyles.boldLabel);
+            var panelEnabled = serialized.FindProperty("panelEnabled");
+            EditorGUILayout.PropertyField(panelEnabled, new GUIContent("Enable Panel"));
+            using (new EditorGUI.DisabledScope(!panelEnabled.boolValue)) {
+                EditorGUILayout.PropertyField(serialized.FindProperty("panelCollapsed"), new GUIContent("Start Collapsed"));
+                var height = serialized.FindProperty("panelHeight");
+                height.floatValue = EditorGUILayout.Slider("Expanded Height", height.floatValue, 80f, 600f);
+            }
+            if (!HierarchyPanelHost.DockingSupported)
+                EditorGUILayout.HelpBox(
+                    "The docked footer is unavailable on this Unity version. Use " + HierarchyPanelWindow.MenuPath + " for the companion window.",
+                    MessageType.Warning);
+
+            Space();
             EditorGUILayout.LabelField("Mini Labels", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("miniLabels"), new GUIContent("Labels"), true);
             EditorGUILayout.PropertyField(serialized.FindProperty("smallerFont"), new GUIContent("Smaller Font"));

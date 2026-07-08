@@ -26,6 +26,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static GUIStyle s_menuRow;
         private static GUIStyle s_menuRowSelected;
 
+        private static GUIStyle s_sectionFoldoutTitle;
         private static GUIStyle s_buttonBox;
         private static GUIStyle s_buttonFoldout;
 
@@ -47,6 +48,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             s_tableCell = null;
             s_menuRow = null;
             s_menuRowSelected = null;
+            s_sectionFoldoutTitle = null;
             s_buttonBox = null;
             s_buttonFoldout = null;
         }
@@ -244,6 +246,46 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
+        public static Color FoldoutHeaderBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.04f)
+                    : new Color(0f, 0f, 0f, 0.04f);
+            }
+        }
+
+        public static Color FoldoutHeaderHoverBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.08f)
+                    : new Color(0f, 0f, 0f, 0.06f);
+            }
+        }
+
+        public static GUIStyle SectionFoldoutTitle
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_sectionFoldoutTitle == null)
+                {
+                    s_sectionFoldoutTitle = new GUIStyle(EditorStyles.boldLabel)
+                    {
+                        fontSize = 11,
+                        alignment = TextAnchor.MiddleLeft,
+                        clipping = TextClipping.Clip,
+                    };
+                }
+                return s_sectionFoldoutTitle;
+            }
+        }
+
         public static GUIStyle CompactButton => EditorStyles.miniButton;
 
         public static GUIStyle ButtonBox
@@ -391,19 +433,61 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             => EditorGUILayout.Foldout(expanded, label, true, EditorStyles.foldoutHeader);
 
         /// <summary>
+        /// Full-width section header with subtle chrome — used by <c>[FoldoutGroup]</c>.
+        /// </summary>
+        public static bool SectionFoldout(bool expanded, string label)
+            => SectionFoldout(expanded, new GUIContent(label));
+
+        public static bool SectionFoldout(bool expanded, GUIContent label)
+        {
+            const float headerH = 22f;
+            EditorGUILayout.Space(SectionSpacing);
+            var rect = EditorGUILayout.GetControlRect(false, headerH);
+
+            bool hover = rect.Contains(Event.current.mousePosition);
+            EditorGUI.DrawRect(rect, hover ? FoldoutHeaderHoverBackground : FoldoutHeaderBackground);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), SectionRuleColor);
+
+            var foldRect = new Rect(rect.x + 4f, rect.y + (headerH - EditorGUIUtility.singleLineHeight) * 0.5f, 14f, EditorGUIUtility.singleLineHeight);
+            expanded = EditorGUI.Foldout(foldRect, expanded, GUIContent.none, true, EditorStyles.foldout);
+
+            float labelX = foldRect.xMax + 2f;
+            GUI.Label(new Rect(labelX, rect.y, rect.xMax - labelX - 4f, rect.height), label, SectionFoldoutTitle);
+
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
+            {
+                expanded = !expanded;
+                GUI.changed = true;
+                Event.current.Use();
+            }
+
+            return expanded;
+        }
+
+        public static void BeginSectionFoldoutBody()
+        {
+            EditorGUILayout.Space(SectionSpacing * 0.5f);
+            EditorGUI.indentLevel++;
+        }
+
+        public static void EndSectionFoldoutBody()
+        {
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space(SectionSpacing);
+        }
+
+        /// <summary>
         /// Plain foldout for use inside <see cref="EditorStyles.helpBox"/> sections.
         /// <see cref="EditorStyles.foldoutHeader"/> overlaps box borders; use this instead.
         /// </summary>
         public static bool FoldoutInSection(bool expanded, string label)
         {
-            EditorGUILayout.Space(SectionSpacing * 0.5f);
-            return EditorGUILayout.Foldout(expanded, label, true);
+            return SectionFoldout(expanded, label);
         }
 
         public static bool FoldoutInSection(bool expanded, GUIContent label)
         {
-            EditorGUILayout.Space(SectionSpacing * 0.5f);
-            return EditorGUILayout.Foldout(expanded, label, true);
+            return SectionFoldout(expanded, label);
         }
 
         public static void DrawTitle(string title) => DrawTitle(title, null);

@@ -1,0 +1,265 @@
+using System;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace HierarchyX {
+
+    /// <summary>
+    /// Docks a resizable / collapsible setup panel to the bottom of Unity's built-in Hierarchy
+    /// window. Sections are contributed by plugins via <see cref="IHierarchyPanelSection"/> and
+    /// rendered by <see cref="HierarchyPanelWidgets.DrawSections"/>.
+    ///
+    /// Mechanism: reflect the internal <c>UnityEditor.SceneHierarchyWindow</c> type, then append a
+    /// single <see cref="IMGUIContainer"/> footer to its public <c>rootVisualElement</c>. This is the
+    /// ONE place in HierarchyX that touches internal editor structure — deliberately quarantined so
+    /// the rest of the package stays on public APIs. If the type can't be resolved (unsupported
+    /// Unity), the docked footer silently no-ops and the same sections remain reachable through the
+    /// fallback <see cref="HierarchyPanelWindow"/> (menu + always available).
+    /// </summary>
+    [InitializeOnLoad]
+    public static class HierarchyPanelHost {
+
+        internal const string FooterName = "HierarchyXPanelFooter";
+        internal const float MinHeight = 80f;
+        internal const float MaxHeight = 600f;
+        internal const float CollapsedHeight = 20f;
+        private const float ResizeHandleHeight = 4f;
+        private const double PollInterval = 0.4;
+
+        private static readonly Type SceneHierarchyWindowType =
+            typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+
+        private static double nextPoll;
+        private static bool warnedUnsupported;
+        private static Vector2 scroll;
+
+        static HierarchyPanelHost() {
+            EditorApplication.update += Poll;
+            EditorApplication.hierarchyChanged += RepaintAll;
+            Selection.selectionChanged += RepaintAll;
+            EditorApplication.playModeStateChanged += _ => RepaintAll();
+            HierarchyXPanelRegistry.Changed += RepaintAll;
+        }
+
+        /// <summary>True when the docked footer can be injected on this Unity version.</summary>
+        public static bool DockingSupported => SceneHierarchyWindowType != null;
+
+        private static void Poll() {
+            if (EditorApplication.timeSinceStartup < nextPoll)
+                return;
+            nextPoll = EditorApplication.timeSinceStartup + PollInterval;
+
+            if (SceneHierarchyWindowType == null) {
+                if (!warnedUnsupported) {
+                    warnedUnsupported = true;
+                    Debug.LogWarning(
+                        "HierarchyX: could not resolve SceneHierarchyWindow; the docked setup panel is unavailable on this Unity version. " +
+                        "Use " + HierarchyPanelWindow.MenuPath + " for the companion window instead.");
+                }
+                return;
+            }
+
+            var windows = Resources.FindObjectsOfTypeAll(SceneHierarchyWindowType);
+            for (var i = 0; i < windows.Length; i++)
+                Sync(windows[i] as EditorWindow);
+        }
+
+        private static void Sync(EditorWindow window) {
+            if (window == null)
+                return;
+            var root = window.rootVisualElement;
+            if (root == null)
+                return;
+
+            var footer = root.Q<IMGUIContainer>(FooterName);
+            var settings = HierarchyXSettings.Instance;
+
+            if (!settings.panelEnabled) {
+                if (footer != null) {
+                    ClearReservation(root, footer);
+                    footer.RemoveFromHierarchy();
+                }
+                return;
+            }
+
+            if (footer == null) {
+                // The hierarchy's content child fills the window (absolute), so a flex sibling won't
+                // reserve space — pin the footer absolute to the bottom and carve room out of the
+                // content child (ReserveSpace) instead. A solid background stops the tree bleeding
+                // through where the footer's own IMGUI doesn't paint.
+                footer = new IMGUIContainer { name = FooterName };
+                footer.style.position = Position.Absolute;
+                footer.style.left = 0f;
+                footer.style.right = 0f;
+                footer.style.bottom = 0f;
+                footer.style.borderTopWidth = 1f;
+                footer.style.borderTopColor = new Color(0f, 0f, 0f, 0.5f);
+                footer.style.backgroundColor = EditorGUIUtility.isProSkin
+                    ? new Color(0.22f, 0.22f, 0.22f)
+                    : new Color(0.78f, 0.78f, 0.78f);
+                var captured = footer;
+                footer.onGUIHandler = () => DrawFooter(captured);
+                root.Add(footer);
+            }
+
+            var h = settings.panelCollapsed
+                ? CollapsedHeight
+                : Mathf.Clamp(settings.panelHeight, MinHeight, MaxHeight);
+            footer.style.height = h;
+            ReserveSpace(root, footer, h);
+        }
+
+        /// <summary>
+        /// The Hierarchy's main content element (the biggest non-footer child). We shrink it to leave
+        /// room for the docked footer: absolute-positioned content moves via <c>bottom</c>, flow
+        /// content via <c>marginBottom</c>. Re-applied every poll so it self-heals after re-layout.
+        /// </summary>
+        private static VisualElement FindContent(VisualElement root, VisualElement footer) {
+            VisualElement content = null;
+            var best = -1f;
+            foreach (var child in root.Children()) {
+                if (child == footer)
+                    continue;
+                var ch = child.layout.height;
+                if (ch > best) {
+                    best = ch;
+                    content = child;
+                }
+            }
+            return content;
+        }
+
+        private static void ReserveSpace(VisualElement root, VisualElement footer, float h) {
+            var content = FindContent(root, footer);
+            if (content == null)
+                return;
+            if (content.resolvedStyle.position == Position.Absolute)
+                content.style.bottom = h;
+            else
+                content.style.marginBottom = h;
+        }
+
+        private static void ClearReservation(VisualElement root, VisualElement footer) {
+            var content = FindContent(root, footer);
+            if (content == null)
+                return;
+            content.style.bottom = StyleKeyword.Null;
+            content.style.marginBottom = StyleKeyword.Null;
+        }
+
+        private const float HeaderHeight = 20f;
+        private const float StatusBarHeight = 20f;
+
+        private static void DrawFooter(IMGUIContainer footer) {
+            var settings = HierarchyXSettings.Instance;
+            var w = footer.contentRect.width;
+            var h = footer.contentRect.height;
+            var collapsed = settings.panelCollapsed;
+
+            if (collapsed) {
+                // Single glanceable strip: expand arrow + chips.
+                GUILayout.BeginArea(new Rect(0f, 0f, w, CollapsedHeight));
+                GUILayout.BeginHorizontal(EditorStyles.toolbar);
+                if (GUILayout.Button("▸", EditorStyles.toolbarButton, GUILayout.Width(22f)))
+                    SetCollapsed(footer, settings, false);
+                HierarchyPanelWidgets.DrawStatusChips();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                GUILayout.EndArea();
+                return;
+            }
+
+            DrawResizeHandle(footer, settings, new Rect(0f, 0f, w, ResizeHandleHeight));
+            var y = ResizeHandleHeight;
+
+            GUILayout.BeginArea(new Rect(0f, y, w, HeaderHeight));
+            DrawHeaderBar(settings, footer);
+            GUILayout.EndArea();
+            y += HeaderHeight;
+
+            var bodyHeight = h - y - StatusBarHeight;
+            if (bodyHeight > 1f) {
+                GUILayout.BeginArea(new Rect(0f, y, w, bodyHeight));
+                HierarchyPanelWidgets.DrawSections(ref scroll);
+                GUILayout.EndArea();
+            }
+
+            GUILayout.BeginArea(new Rect(0f, h - StatusBarHeight, w, StatusBarHeight));
+            HierarchyPanelWidgets.DrawStatusBar();
+            GUILayout.EndArea();
+        }
+
+        private static void SetCollapsed(IMGUIContainer footer, HierarchyXSettings settings, bool collapsed) {
+            settings.panelCollapsed = collapsed;
+            settings.Save();
+            var h = collapsed ? CollapsedHeight : Mathf.Clamp(settings.panelHeight, MinHeight, MaxHeight);
+            footer.style.height = h;
+            if (footer.parent != null)
+                ReserveSpace(footer.parent, footer, h);
+            footer.MarkDirtyRepaint();
+        }
+
+        private static void DrawResizeHandle(IMGUIContainer footer, HierarchyXSettings settings, Rect handleRect) {
+            EditorGUI.DrawRect(handleRect, new Color(1f, 1f, 1f, 0.06f));
+            EditorGUIUtility.AddCursorRect(handleRect, MouseCursor.ResizeVertical);
+
+            var id = GUIUtility.GetControlID(FocusType.Passive);
+            var e = Event.current;
+            switch (e.GetTypeForControl(id)) {
+                case EventType.MouseDown:
+                    if (handleRect.Contains(e.mousePosition)) {
+                        GUIUtility.hotControl = id;
+                        e.Use();
+                    }
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == id) {
+                        // Dragging up (negative delta) grows the panel.
+                        settings.panelHeight = Mathf.Clamp(settings.panelHeight - e.delta.y, MinHeight, MaxHeight);
+                        footer.style.height = settings.panelHeight;
+                        if (footer.parent != null)
+                            ReserveSpace(footer.parent, footer, settings.panelHeight);
+                        footer.MarkDirtyRepaint();
+                        e.Use();
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == id) {
+                        GUIUtility.hotControl = 0;
+                        settings.Save();
+                        e.Use();
+                    }
+                    break;
+            }
+        }
+
+        private static void DrawHeaderBar(HierarchyXSettings settings, IMGUIContainer footer) {
+            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+
+            if (GUILayout.Button(new GUIContent("▾", "Collapse"), EditorStyles.toolbarButton, GUILayout.Width(22f)))
+                SetCollapsed(footer, settings, true);
+
+            GUILayout.FlexibleSpace();
+
+            HierarchyPanelWidgets.DrawToolbarActions();
+            if (GUILayout.Button(new GUIContent("⛶", "Open as window"), EditorStyles.toolbarButton, GUILayout.Width(22f)))
+                HierarchyPanelWindow.Open();
+            if (GUILayout.Button(new GUIContent("⚙", "Settings"), EditorStyles.toolbarButton, GUILayout.Width(22f)))
+                SettingsService.OpenProjectSettings("Project/HierarchyX");
+
+            GUILayout.EndHorizontal();
+        }
+
+        private static void RepaintAll() {
+            if (SceneHierarchyWindowType == null)
+                return;
+            var windows = Resources.FindObjectsOfTypeAll(SceneHierarchyWindowType);
+            for (var i = 0; i < windows.Length; i++) {
+                var window = windows[i] as EditorWindow;
+                var footer = window != null ? window.rootVisualElement?.Q<IMGUIContainer>(FooterName) : null;
+                footer?.MarkDirtyRepaint();
+            }
+        }
+    }
+}

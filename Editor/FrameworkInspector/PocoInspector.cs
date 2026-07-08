@@ -120,27 +120,29 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (IsVisible(s.Members[i].Info, target)) { anyVisible = true; break; }
                 if (!anyVisible) continue; // no visible members → skip header entirely
 
-                FrameworkInspectorTheme.BeginSection();
                 string title = LastSegment(s.GroupPath);
                 bool expanded = true;
                 if (s.Group == PocoGroupKind.Foldout)
                 {
-                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
                     string key = "grp:" + s.GroupPath;
                     if (!s_nestedFoldouts.TryGetValue(key, out expanded)) expanded = s.GroupExpandedDefault;
-                    expanded = EditorGUILayout.Foldout(expanded, title, true);
+                    expanded = FrameworkInspectorTheme.SectionFoldout(expanded, title);
                     s_nestedFoldouts[key] = expanded;
-                }
-                else
-                {
-                    EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
+                    if (expanded)
+                    {
+                        FrameworkInspectorTheme.BeginSectionFoldoutBody();
+                        for (int i = 0; i < s.Members.Count; i++)
+                            if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
+                        FrameworkInspectorTheme.EndSectionFoldoutBody();
+                    }
+                    continue;
                 }
 
-                if (expanded)
-                {
-                    for (int i = 0; i < s.Members.Count; i++)
-                        if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
-                }
+                FrameworkInspectorTheme.BeginSection();
+                EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
+
+                for (int i = 0; i < s.Members.Count; i++)
+                    if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
                 FrameworkInspectorTheme.EndSection();
             }
         }
