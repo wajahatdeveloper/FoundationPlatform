@@ -86,6 +86,7 @@ namespace FoundationPlatform.Utilities.Menus
             public const string RolloutWarningFirst  = Root + "Rollout Mode: Warning First";
             public const string RolloutStrict        = Root + "Rollout Mode: Strict";
             public const string ValidatePlayableScene = Root + "Validate Playable Scene";
+            public const string ValidateDomainEntities = Root + "Validate Domain Entities";
         }
 
         /// <summary>Tools/GameEngineCore/Input/* — input provision authoring.</summary>
