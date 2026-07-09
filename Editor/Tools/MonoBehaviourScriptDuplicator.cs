@@ -141,98 +141,17 @@ public static class MonoBehaviourScriptDuplicator
 		var sourceTypeName = session.SourceType.Name;
 		var newClassName = context.ClassName.Trim();
 
-		var classPattern = new Regex(@"\bclass\s+" + Regex.Escape(sourceTypeName) + @"\b");
-		if (!classPattern.IsMatch(sourceText))
-		{
-			throw new InvalidOperationException(
-				$"Could not find 'class {sourceTypeName}' in '{session.SourceScriptPath}'.");
-		}
-
-		var result = classPattern.Replace(sourceText, "class " + newClassName, 1);
+		// Code-aware rename is shared with any other generator via CodeAwareRename.
+		var result = CodeAwareRename.RenameClass(sourceText, sourceTypeName, newClassName);
 
 		var targetNamespace = (context.Namespace ?? string.Empty).Trim();
 		var sourceNamespace = session.SourceNamespace ?? string.Empty;
 		if (!string.Equals(targetNamespace, sourceNamespace, StringComparison.Ordinal))
 		{
-			result = ApplyNamespaceChange(result, sourceNamespace, targetNamespace);
+			result = CodeAwareRename.ApplyNamespaceChange(result, sourceNamespace, targetNamespace);
 		}
 
 		return result;
-	}
-
-	private static string ApplyNamespaceChange(string sourceText, string sourceNamespace, string targetNamespace)
-	{
-		if (!string.IsNullOrEmpty(sourceNamespace))
-		{
-			var namespacePattern = new Regex(@"\bnamespace\s+" + Regex.Escape(sourceNamespace) + @"\b");
-			if (!namespacePattern.IsMatch(sourceText))
-			{
-				throw new InvalidOperationException(
-					$"Could not find namespace '{sourceNamespace}' in source script.");
-			}
-
-			if (string.IsNullOrEmpty(targetNamespace))
-			{
-				throw new InvalidOperationException(
-					"Removing a namespace from a duplicated script is not supported. Leave the namespace unchanged or set a new valid namespace.");
-			}
-
-			return namespacePattern.Replace(sourceText, "namespace " + targetNamespace, 1);
-		}
-
-		if (string.IsNullOrEmpty(targetNamespace))
-		{
-			return sourceText;
-		}
-
-		var lines = sourceText.Replace("\r\n", "\n").Split('\n');
-		var header = new StringBuilder();
-		var body = new StringBuilder();
-		var inHeader = true;
-		for (var i = 0; i < lines.Length; i++)
-		{
-			var line = lines[i];
-			var trimmed = line.TrimStart();
-			if (inHeader && (string.IsNullOrWhiteSpace(line) || trimmed.StartsWith("using ", StringComparison.Ordinal)))
-			{
-				header.AppendLine(line);
-				continue;
-			}
-
-			inHeader = false;
-			body.AppendLine(line);
-		}
-
-		var wrapped = new StringBuilder();
-		if (header.Length > 0)
-		{
-			wrapped.Append(header.ToString().TrimEnd('\n', '\r'));
-			wrapped.AppendLine();
-		}
-
-		wrapped.AppendLine("namespace " + targetNamespace);
-		wrapped.AppendLine("{");
-		var bodyLines = body.ToString().Replace("\r\n", "\n").Split('\n');
-		for (var i = 0; i < bodyLines.Length; i++)
-		{
-			var line = bodyLines[i];
-			if (string.IsNullOrEmpty(line) && i == bodyLines.Length - 1)
-			{
-				continue;
-			}
-
-			if (line.Length == 0)
-			{
-				wrapped.AppendLine();
-			}
-			else
-			{
-				wrapped.AppendLine("\t" + line);
-			}
-		}
-
-		wrapped.AppendLine("}");
-		return wrapped.ToString();
 	}
 
 	private static string ValidateDuplication(DuplicationSession session, ScriptGeneratorWindow.GenerationContext context)

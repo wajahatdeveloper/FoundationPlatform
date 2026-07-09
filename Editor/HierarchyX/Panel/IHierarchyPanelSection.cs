@@ -40,11 +40,26 @@ namespace HierarchyX {
         public string glyph;
         public string tooltip;
         public System.Action onClick;
+        /// <summary>
+        /// Optional Unity built-in icon name (resolved via <c>EditorGUIUtility.IconContent</c>, e.g.
+        /// "Refresh"). When set and non-empty, the toolbar renders this icon instead of
+        /// <see cref="glyph"/> — text glyphs render inconsistently across editor fonts, so prefer a
+        /// built-in icon for common actions.
+        /// </summary>
+        public string iconName;
 
         public PanelAction(string glyph, string tooltip, System.Action onClick) {
             this.glyph = glyph;
             this.tooltip = tooltip;
             this.onClick = onClick;
+            this.iconName = null;
+        }
+
+        public PanelAction(string glyph, string tooltip, System.Action onClick, string iconName) {
+            this.glyph = glyph;
+            this.tooltip = tooltip;
+            this.onClick = onClick;
+            this.iconName = iconName;
         }
     }
 

@@ -183,7 +183,13 @@ namespace HierarchyX {
                 if (actions == null)
                     continue;
                 foreach (var action in actions) {
-                    if (GUILayout.Button(new GUIContent(action.glyph, action.tooltip), EditorStyles.toolbarButton, GUILayout.Width(24f))
+                    GUIContent content;
+                    if (!string.IsNullOrEmpty(action.iconName)) {
+                        content = new GUIContent(EditorGUIUtility.IconContent(action.iconName)) { tooltip = action.tooltip };
+                    } else {
+                        content = new GUIContent(action.glyph, action.tooltip);
+                    }
+                    if (GUILayout.Button(content, EditorStyles.toolbarButton, GUILayout.Width(24f))
                         && action.onClick != null)
                         action.onClick();
                 }

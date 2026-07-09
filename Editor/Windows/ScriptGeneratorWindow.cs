@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
@@ -78,6 +79,65 @@ public class ScriptGeneratorWindow : EditorWindow
 		_previewText = _buildCode != null ? _buildCode(CurrentContext()) : "";
 	}
 
+	private static string[] _namespacesCache;
+
+	/// <summary>All distinct non-empty namespaces in the loaded assemblies (built once, cached).</summary>
+	private static string[] GetProjectNamespaces()
+	{
+		if (_namespacesCache != null)
+			return _namespacesCache;
+
+		var set = new SortedSet<string>(StringComparer.Ordinal);
+		foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+		{
+			Type[] types;
+			try { types = asm.GetTypes(); }
+			catch { continue; }
+			foreach (var t in types)
+			{
+				if (!string.IsNullOrEmpty(t.Namespace))
+					set.Add(t.Namespace);
+			}
+		}
+
+		_namespacesCache = new string[set.Count];
+		set.CopyTo(_namespacesCache);
+		return _namespacesCache;
+	}
+
+	/// <summary>Dropdown of project namespaces, filtered by whatever is already typed in the field.</summary>
+	private void ShowNamespaceDropdown()
+	{
+		var all = GetProjectNamespaces();
+		var filter = (_namespace ?? string.Empty).Trim();
+		var menu = new GenericMenu();
+		var shown = 0;
+
+		for (var i = 0; i < all.Length; i++)
+		{
+			var ns = all[i];
+			if (filter.Length > 0 && ns.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+				continue;
+
+			var captured = ns;
+			// GenericMenu treats '/' as a submenu separator; namespaces use '.', so no escaping needed.
+			menu.AddItem(new GUIContent(ns), false, () =>
+			{
+				_namespace = captured;
+				RefreshPreview();
+				Repaint();
+			});
+
+			if (++shown >= 200) // cap the menu; keep typing to narrow further
+				break;
+		}
+
+		if (shown == 0)
+			menu.AddDisabledItem(new GUIContent(filter.Length > 0 ? "No namespaces match '" + filter + "'" : "No namespaces found"));
+
+		menu.ShowAsContext();
+	}
+
 	private GenerationContext CurrentContext()
 	{
 		return new GenerationContext(_folder, _fileName, _className, _namespace);
@@ -105,7 +165,12 @@ public class ScriptGeneratorWindow : EditorWindow
 		if (!string.IsNullOrEmpty(_fileName) && !_fileName.EndsWith(".cs"))
 			_fileName += ".cs";
 		_className = EditorGUILayout.TextField("Class Name", _className);
+
+		EditorGUILayout.BeginHorizontal();
 		_namespace = EditorGUILayout.TextField("Namespace", _namespace);
+		if (GUILayout.Button(new GUIContent("▾", "Pick from existing project namespaces"), GUILayout.Width(22)))
+			ShowNamespaceDropdown();
+		EditorGUILayout.EndHorizontal();
 
 		EditorGUILayout.EndVertical();
 
