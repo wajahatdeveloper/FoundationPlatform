@@ -45,6 +45,17 @@ namespace FoundationPlatform.Editor.Utilities
                 messageType);
         }
 
+        /// <summary>Draws a single validation issue row for shared scene/package validation UIs.</summary>
+        public static void DrawValidationIssue(string source, string message, MessageType severity)
+        {
+            if (string.IsNullOrWhiteSpace(source))
+                throw new InvalidOperationException("[AuthoringUX:ERROR] Validation issue source must be non-empty.");
+            if (string.IsNullOrWhiteSpace(message))
+                throw new InvalidOperationException("[AuthoringUX:ERROR] Validation issue message must be non-empty.");
+
+            EditorGUILayout.HelpBox($"[{source}] {message}", severity);
+        }
+
         public static int DrawActionStrip(string[] labels, bool[] enabled)
         {
             if (labels == null || enabled == null)

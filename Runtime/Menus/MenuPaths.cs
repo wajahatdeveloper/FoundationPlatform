@@ -99,12 +99,22 @@ namespace FoundationPlatform.Utilities.Menus
             public const string Integration              = Root + "Input Integration";
         }
 
+        /// <summary>Window/UIWidgets/* — shared widget browser.</summary>
+        public static class UIWidgets
+        {
+            private const string WindowRoot = Window + "UIWidgets/";
+            public const string WidgetsWindow = WindowRoot + "UI Widgets...";
+            public const string GameObjectOpen = GameObject + "UIWidgets/Open UI Widgets Window...";
+        }
+
         /// <summary>Tools/GameEngineCore/* — misc GameEngineCore tools.</summary>
         public static class GameEngineCore
         {
             private const string Root = Tools + "GameEngineCore/";
             public const string GameActionMatrix = Root + "Game Action Matrix";
             public const string RebuildGeneratedCatalogs = Root + "Rebuild/Rebuild All Generated Catalogs";
+            public const string RefreshCurrencyDatabases = Root + "Refresh/Currency Databases";
+            public const string RuleExplorer = Root + "GameAction/Rule Explorer";
         }
 
         /// <summary>Tools/Packages/* — package integration tooling (was Tools/Core).</summary>
