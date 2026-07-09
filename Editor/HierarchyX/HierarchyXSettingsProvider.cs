@@ -19,7 +19,8 @@ namespace HierarchyX {
                 label = "HierarchyX",
                 guiHandler = OnGUI,
                 keywords = new HashSet<string> {
-                    "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection"
+                    "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection",
+                    "badge", "chip", "decorator", "domain", "placement"
                 }
             };
         }
@@ -71,6 +72,19 @@ namespace HierarchyX {
                 layerColorsList.DoLayoutList();
             }
             EditorGUILayout.PropertyField(serialized.FindProperty("rowDecorators"), new GUIContent("Row Decorators"));
+
+            Space();
+            EditorGUILayout.LabelField("Row Badges", EditorStyles.boldLabel);
+            var rowBadges = serialized.FindProperty("rowBadges");
+            EditorGUILayout.PropertyField(rowBadges, new GUIContent("Enable Chips"));
+            using (new EditorGUI.DisabledScope(!rowBadges.boolValue)) {
+                EditorGUILayout.PropertyField(serialized.FindProperty("badgePlacement"), new GUIContent("Placement"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("badgePadding"), new GUIContent("Padding"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("badgeSpacing"), new GUIContent("Spacing"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("badgeBackgroundOpacity"), new GUIContent("Background Opacity"));
+            }
+            if (rowBadges.boolValue && !serialized.FindProperty("rowDecorators").boolValue)
+                EditorGUILayout.HelpBox("Chips are supplied by row decorators — enable Row Decorators above for chips to appear.", MessageType.Info);
 
             Space();
             EditorGUILayout.LabelField("Docked Setup Panel", EditorStyles.boldLabel);

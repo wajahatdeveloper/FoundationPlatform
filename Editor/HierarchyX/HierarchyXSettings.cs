@@ -20,6 +20,14 @@ namespace HierarchyX {
         SortingLayer = 2,
     }
 
+    /// <summary>Where a decorator-supplied row chip sits relative to the tag/layer mini labels.</summary>
+    public enum BadgePlacement {
+        /// <summary>Left of the mini labels — the chip reads first.</summary>
+        BeforeMiniLabels = 0,
+        /// <summary>Right of the mini labels — the chip is the row's rightmost element.</summary>
+        AfterMiniLabels = 1,
+    }
+
     /// <summary>Per-layer row color entry.</summary>
     [Serializable]
     public struct LayerColor {
@@ -70,6 +78,17 @@ namespace HierarchyX {
 
         [Tooltip("Let registered IHierarchyRowDecorators paint per-row tints and left-edge accent spines (e.g. character-rig membership). Turn off to skip that pass entirely.")]
         public bool rowDecorators = true;
+
+        [Tooltip("Draw decorator-supplied right-side text chips (e.g. a \"DOMAIN\" tag). Turn off to hide chips while keeping spines and tints.")]
+        public bool rowBadges = true;
+        [Tooltip("Where a chip sits relative to the tag/layer mini labels.")]
+        public BadgePlacement badgePlacement = BadgePlacement.BeforeMiniLabels;
+        [Range(0f, 16f)] [Tooltip("Symmetric left/right padding inside a chip, in pixels.")]
+        public float badgePadding = 6f;
+        [Range(0f, 16f)] [Tooltip("Gap between a chip and the neighbouring mini labels, in pixels.")]
+        public float badgeSpacing = 4f;
+        [Range(0f, 1f)] [Tooltip("Opacity of a chip's fill background.")]
+        public float badgeBackgroundOpacity = 0.18f;
 
         [Tooltip("Dock a collapsible setup/status panel to the bottom of the Hierarchy window. Sections are contributed by IHierarchyPanelSection plugins (e.g. Scene Setup).")]
         public bool panelEnabled = true;
@@ -144,6 +163,9 @@ namespace HierarchyX {
         private void OnValidate() {
             lineThickness = Mathf.Clamp(lineThickness, 0, MaxLineThickness);
             if (rightMargin < 0) rightMargin = 0;
+            badgePadding = Mathf.Clamp(badgePadding, 0f, 16f);
+            badgeSpacing = Mathf.Clamp(badgeSpacing, 0f, 16f);
+            badgeBackgroundOpacity = Mathf.Clamp01(badgeBackgroundOpacity);
         }
 
         /// <summary>Serialize the current settings to a standalone JSON file.</summary>

@@ -83,7 +83,7 @@ namespace HierarchyX {
 
                 ColorSort(rect, go, s);
                 DrawTree(rect, go, s);
-                DrawMiniLabels(rect, go, s);
+                DrawBadgeAndMiniLabels(rect, go, s, hasDeco ? rowDeco : default);
                 DrawRowAccent(rect, hasDeco ? rowDeco : default);
                 DrawSeparator(rect, s);
             } catch (Exception e) {
@@ -259,9 +259,30 @@ namespace HierarchyX {
             }
         }
 
-        private static void DrawMiniLabels(Rect rect, GameObject go, HierarchyXSettings s) {
-            if (providers.Count == 0)
+        // Places the decorator chip and the tag/layer mini labels on the right of the row, ordered by
+        // the user's BadgePlacement setting so neither overlaps the other.
+        private static void DrawBadgeAndMiniLabels(Rect rect, GameObject go, HierarchyXSettings s, HierarchyRowDecoration deco) {
+            var hasBadge = s.rowBadges && deco.HasBadge;
+
+            if (hasBadge && s.badgePlacement == BadgePlacement.AfterMiniLabels) {
+                // Chip is the rightmost element; mini labels sit to its left.
+                var chipWidth = BadgeChipWidth(deco, s);
+                DrawMiniLabels(rect, go, s, chipWidth + s.badgeSpacing);
+                DrawRowBadge(rect, deco, s, 0f);
                 return;
+            }
+
+            // Default: mini labels rightmost, chip just to their left ("before" them).
+            var miniWidth = DrawMiniLabels(rect, go, s, 0f);
+            if (hasBadge)
+                DrawRowBadge(rect, deco, s, miniWidth);
+        }
+
+        // Returns the horizontal width the labels consumed on the right, so a right-side element
+        // (e.g. the row badge) can sit just to their left without overlapping.
+        private static float DrawMiniLabels(Rect rect, GameObject go, HierarchyXSettings s, float rightInset) {
+            if (providers.Count == 0)
+                return 0f;
 
             var style = HierarchyXStyles.MiniLabelStyle;
             style.fontSize = s.smallerFont ? 8 : 9;
@@ -269,7 +290,7 @@ namespace HierarchyX {
             for (var i = 0; i < providers.Count; i++)
                 providers[i].Fill(go, s);
 
-            rect.xMax = EditorGUIUtility.currentViewWidth - s.rightMargin;
+            rect.xMax = EditorGUIUtility.currentViewWidth - s.rightMargin - rightInset;
 
             // Two providers with values stack vertically; a single one can center.
             if (providers.Count >= 2) {
@@ -283,21 +304,22 @@ namespace HierarchyX {
                     var bottom = rect;
                     top.yMax = rect.yMin + rect.height / 2f;
                     bottom.yMin = rect.yMin + rect.height / 2f;
-                    if (aHas) DrawOne(a, top, style, go);
-                    if (bHas) DrawOne(b, bottom, style, go);
-                    return;
+                    var w = 0f;
+                    if (aHas) w = Mathf.Max(w, DrawOne(a, top, style, go));
+                    if (bHas) w = Mathf.Max(w, DrawOne(b, bottom, style, go));
+                    return w;
                 }
-                if (bHas) { DrawOne(b, rect, style, go); return; }
-                if (aHas) { DrawOne(a, rect, style, go); return; }
-                return;
+                if (bHas) return DrawOne(b, rect, style, go);
+                if (aHas) return DrawOne(a, rect, style, go);
+                return 0f;
             }
 
             var single = providers[0];
-            if (single.HasValue)
-                DrawOne(single, rect, style, go);
+            return single.HasValue ? DrawOne(single, rect, style, go) : 0f;
         }
 
-        private static void DrawOne(MiniLabel label, Rect rect, GUIStyle style, GameObject go) {
+        // Draws one mini-label right-aligned in rect; returns its width.
+        private static float DrawOne(MiniLabel label, Rect rect, GUIStyle style, GameObject go) {
             var width = label.Measure(style);
             rect.xMin = rect.xMax - width;
 
@@ -310,6 +332,70 @@ namespace HierarchyX {
                 EditorApplication.RepaintHierarchyWindow();
 
             GUI.color = prev;
+            return width;
+        }
+
+        #endregion
+
+        #region Row Badge
+
+        private static GUIStyle badgeStyle;
+
+        private static GUIStyle BadgeStyle {
+            get {
+                if (badgeStyle == null) {
+                    badgeStyle = new GUIStyle(EditorStyles.miniLabel) {
+                        alignment = TextAnchor.MiddleCenter,
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(0, 0, 0, 0),
+                    };
+                }
+                return badgeStyle;
+            }
+        }
+
+        // Chip width = centered text + symmetric padding (settings-driven), independent of placement.
+        private static float BadgeChipWidth(HierarchyRowDecoration deco, HierarchyXSettings s) {
+            var style = BadgeStyle;
+            style.fontSize = s.smallerFont ? 8 : 9;
+            var textWidth = Mathf.Ceil(style.CalcSize(new GUIContent(deco.badgeText)).x);
+            return textWidth + s.badgePadding * 2f;
+        }
+
+        // Decorator-supplied chip (e.g. a "DOMAIN" category tag). <paramref name="rightInset"/> is the width
+        // already occupied to its right (mini labels when placed "before" them; 0 when it is rightmost).
+        // Text is centered with symmetric padding; fill opacity and gaps come from settings.
+        private static void DrawRowBadge(Rect rect, HierarchyRowDecoration deco, HierarchyXSettings s, float rightInset) {
+            if (!deco.HasBadge)
+                return;
+
+            var style = BadgeStyle;
+            style.fontSize = s.smallerFont ? 8 : 9;
+
+            var content = new GUIContent(deco.badgeText, deco.tooltip);
+            var chipWidth = BadgeChipWidth(deco, s);
+
+            var gap = rightInset > 0f ? s.badgeSpacing : 0f;
+            var chip = new Rect(
+                EditorGUIUtility.currentViewWidth - s.rightMargin - rightInset - gap - chipWidth,
+                rect.yMin + 1f,
+                chipWidth,
+                Mathf.Max(0f, rect.height - 2f));
+
+            var color = deco.badgeColor.a > AlphaThreshold ? deco.badgeColor : new Color(0.20f, 0.75f, 0.72f, 1f);
+
+            if (isRepaint) {
+                var fill = color; fill.a = s.badgeBackgroundOpacity;
+                EditorGUI.DrawRect(chip, fill);
+
+                var prev = GUI.color;
+                GUI.color = color;
+                GUI.Label(chip, content, style);
+                GUI.color = prev;
+            } else {
+                // Keep the tooltip hot-zone alive on non-repaint events.
+                GUI.Label(chip, new GUIContent(string.Empty, deco.tooltip));
+            }
         }
 
         #endregion

@@ -23,8 +23,14 @@ namespace HierarchyX {
         /// <summary>Tooltip surfaced over the accent spine on hover.</summary>
         public string tooltip;
 
+        /// <summary>Short right-aligned chip text (e.g. a category tag). Null/empty = no chip.</summary>
+        public string badgeText;
+        /// <summary>Chip text + fill color. Alpha &lt;= 0 falls back to a neutral chip color.</summary>
+        public Color badgeColor;
+
         public bool HasTint { get { return rowTint.a > 0.001f; } }
         public bool HasAccent { get { return accent.a > 0.001f; } }
+        public bool HasBadge { get { return !string.IsNullOrEmpty(badgeText); } }
     }
 
     /// <summary>
