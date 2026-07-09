@@ -71,7 +71,7 @@ MonoBehaviour:
   authoringChecklist:
   - Step: Author AnimationSet assets under Assets/Data/Domains/Characters for character
       presentation.
-  - Step: "Use Tools \u2192 FoundationPlatform \u2192 Refresh \u2192 Currency Databases
+  - Step: "Use Tools \u2192 FoundationPlatform \u2192 Refresh \u2192 Currency Registrys
       when Economy catalogs change."
   - Step: Wire EventBus subscriptions through stored delegates per FoundationPlatform
       messaging docs.
@@ -82,7 +82,7 @@ MonoBehaviour:
   prefabFolderPath: 
   validateMenuPaths: []
   packageToolMenuPaths:
-  - Tools/FoundationPlatform/Refresh/Currency Databases
+  - Tools/FoundationPlatform/Refresh/Currency Registries
   toolsMenuPrefix: FoundationPlatform
   setupInstructions: "SCENE SETUP:\n\u2022 EventBus/Service layer initialization\n\nASSETS
     SETUP:\n\u2022 AnimationSet assets under character domains folder\n\nINSPECTOR

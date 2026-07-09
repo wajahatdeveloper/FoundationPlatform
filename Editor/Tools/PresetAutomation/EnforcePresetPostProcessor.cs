@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 using UnityEditor.Experimental;
 using UnityEditor.Presets;
@@ -11,38 +12,44 @@ using UnityEngine;
 
 namespace FoundationPlatform.Editor.Utilities.PresetAutomation
 {
-	/// <summary>
-	/// Applies Presets automatically to Assets in the folder tree and manages dependencies.
-	/// Enhanced with settings-driven filtering, batching, caching, error handling, and diagnostics.
-	/// </summary>
-	public class EnforcePresetPostProcessor : AssetPostprocessor
+	[InitializeOnLoad]
+	internal static class EnforcePresetPreprocessPluginRegistration
 	{
-		private static readonly Dictionary<string, DateTime> s_lastFolderTouch = new Dictionary<string, DateTime>();
-		private static readonly HashSet<string> s_pendingDependencyFolders = new HashSet<string>();
-		private static double s_lastBatchInvocationEditorTime;
-
-		void OnPreprocessAsset()
+		static EnforcePresetPreprocessPluginRegistration()
 		{
-			// Do not create assets during import; only try to load existing settings.
+			AssetImportPluginRegistry.RegisterPreprocess(new EnforcePresetPreprocessPlugin());
+		}
+	}
+
+	internal sealed class EnforcePresetPreprocessPlugin : IAssetPreprocessPlugin
+	{
+		public bool CanPreprocess(string assetPath)
+		{
+			if (string.IsNullOrEmpty(assetPath))
+				return false;
+			if (!assetPath.StartsWith("Assets/", StringComparison.Ordinal))
+				return false;
+
 			var settings = PresetAutomationSettings.FindOrCreateSettingsAsset(createIfMissing: false);
 			if (settings == null || !settings.enabled)
-			{
+				return false;
+
+			return PresetAutomationUtilities.IsPathEligible(assetPath, settings);
+		}
+
+		public void OnPreprocess(string assetPath, AssetPostprocessor host)
+		{
+			var settings = PresetAutomationSettings.FindOrCreateSettingsAsset(createIfMissing: false);
+			if (settings == null || !settings.enabled)
 				return;
-			}
 
 			try
 			{
-				if (!assetPath.StartsWith("Assets/", StringComparison.Ordinal))
-					return;
-
-				// Extension and folder filters
-				if (!PresetAutomationUtilities.IsPathEligible(assetPath, settings))
-					return;
-
 				var folder = Path.GetDirectoryName(assetPath);
-				if (string.IsNullOrEmpty(folder)) return;
+				if (string.IsNullOrEmpty(folder))
+					return;
 
-				ApplyPresetsFromFolderRecursively(folder, settings);
+				ApplyPresetsFromFolderRecursively(folder, settings, host);
 			}
 			catch (Exception ex)
 			{
@@ -50,15 +57,13 @@ namespace FoundationPlatform.Editor.Utilities.PresetAutomation
 			}
 		}
 
-		private void ApplyPresetsFromFolderRecursively(string folder, PresetAutomationSettings settings)
+		private void ApplyPresetsFromFolderRecursively(string folder, PresetAutomationSettings settings, AssetPostprocessor host)
 		{
-			// Apply from parent to child so closer presets win
 			var parentFolder = Path.GetDirectoryName(folder);
 			if (!string.IsNullOrEmpty(parentFolder))
-				ApplyPresetsFromFolderRecursively(parentFolder, settings);
+				ApplyPresetsFromFolderRecursively(parentFolder, settings, host);
 
-			// Dependency on folder key for change in contents
-			context.DependsOnCustomDependency($"{PresetAutomationConstants.DependencyKeyPrefix}{folder}");
+			host.context.DependsOnCustomDependency($"{PresetAutomationConstants.DependencyKeyPrefix}{folder}");
 
 			IEnumerable<string> presetPaths;
 			try
@@ -71,8 +76,6 @@ namespace FoundationPlatform.Editor.Utilities.PresetAutomation
 				return;
 			}
 
-			// Optional: apply ordering via folder priority (higher number wins, applied later)
-			// Materialize once to avoid repeated deferred enumeration/sorting in the loop below.
 			var orderedPresetPaths = PresetAutomationUtilities.OrderByFolderPriority(presetPaths, folder, settings).ToList();
 			int orderedCount = orderedPresetPaths.Count;
 
@@ -106,28 +109,29 @@ namespace FoundationPlatform.Editor.Utilities.PresetAutomation
 						{
 							EditorUtility.DisplayProgressBar("Applying Presets", preset.name, (float)index / Mathf.Max(1, orderedCount));
 						}
-						applied = preset.ApplyTo(assetImporter);
+						applied = preset.ApplyTo(host.assetImporter);
 					}
 
 					if (preset == null || applied)
 					{
-						context.DependsOnArtifact(presetPath);
+						host.context.DependsOnArtifact(presetPath);
 					}
 
 					if (settings.logLevel >= PresetAutomationSettings.LogLevel.Info)
 					{
-						PresetAutomationLogger.LogInfo($"{(settings.dryRun ? "[DryRun] would apply" : (applied ? "Applied" : "Not applicable"))} preset {preset.name} to {assetPath}");
+						PresetAutomationLogger.LogInfo($"{(settings.dryRun ? "[DryRun] would apply" : (applied ? "Applied" : "Not applicable"))} preset {preset.name} to {host.assetPath}");
 					}
 				}
 				catch (Exception ex)
 				{
-					PresetAutomationLogger.LogError($"Error applying preset from {presetPath} to {assetPath}: {ex}");
+					PresetAutomationLogger.LogError($"Error applying preset from {presetPath} to {host.assetPath}: {ex}");
 				}
 				finally
 				{
 					index++;
 				}
 			}
+
 			if (settings.showProgressBars)
 			{
 				EditorUtility.ClearProgressBar();
@@ -136,8 +140,7 @@ namespace FoundationPlatform.Editor.Utilities.PresetAutomation
 	}
 
 	/// <summary>
-	/// Initializes and updates folder dependency hashes when presets change.
-	/// Adds debounced batching and diagnostics.
+	/// Folder dependency hashes when presets change.
 	/// </summary>
 	public class UpdateFolderPresetDependency : AssetsModifiedProcessor
 	{

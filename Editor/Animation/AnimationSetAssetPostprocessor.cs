@@ -1,32 +1,49 @@
 #if UNITY_EDITOR
 using FoundationPlatform.Animation;
+using FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 
 namespace FoundationPlatform.Editor.Animation
 {
-	internal sealed class AnimationSetAssetPostprocessor : AssetPostprocessor
+	[InitializeOnLoad]
+	internal static class AnimationSetImportPluginRegistration
 	{
-		private static bool _scheduled;
+		static AnimationSetImportPluginRegistration()
+		{
+			AssetImportPluginRegistry.RegisterBatch(new AnimationSetImportPlugin());
+		}
+	}
 
-		private static void OnPostprocessAllAssets(
+	internal sealed class AnimationSetImportPlugin : IAssetImportBatchPlugin
+	{
+		private const string SchedulerKey = "animation-set-rebuild";
+
+		public int Order => AssetImportPluginOrders.AnimationSet;
+
+		public bool ShouldRun(
 			string[] importedAssets,
 			string[] deletedAssets,
 			string[] movedAssets,
 			string[] movedFromAssetPaths)
 		{
-			var needsRebuild = false;
-			for (var i = 0; i < importedAssets.Length; i++)
+			if (importedAssets == null || importedAssets.Length == 0)
+				return false;
+
+			for (int i = 0; i < importedAssets.Length; i++)
 			{
 				if (IsAnimationSetOrBlendProfilePath(importedAssets[i]))
-				{
-					needsRebuild = true;
-					break;
-				}
+					return true;
 			}
 
-			if (!needsRebuild)
-				return;
+			return false;
+		}
 
+		public void Run(
+			string[] importedAssets,
+			string[] deletedAssets,
+			string[] movedAssets,
+			string[] movedFromAssetPaths)
+		{
 			ScheduleRebuild();
 		}
 
@@ -42,16 +59,11 @@ namespace FoundationPlatform.Editor.Animation
 
 		private static void ScheduleRebuild()
 		{
-			if (_scheduled)
-				return;
-
-			_scheduled = true;
-			EditorApplication.delayCall += RunScheduledRebuild;
+			DeferredEditorScheduler.ScheduleOnce(SchedulerKey, RunScheduledRebuild);
 		}
 
 		private static void RunScheduledRebuild()
 		{
-			_scheduled = false;
 			if (EditorApplication.isCompiling || EditorApplication.isUpdating)
 			{
 				ScheduleRebuild();

@@ -52,7 +52,7 @@ namespace FoundationPlatform.Utilities.Menus
             public const string GenerateCommanderBrain    = Root + "Generate Default Commander Brain";
             public const string GenerateDecisionSet       = Root + "Generate Default Decision Set";
             public const string GenerateBuiltInBehaviors  = Root + "Generate Built-in Behavior Assets";
-            public const string GenerateBlackboardDatabase = Root + "Generate Blackboard Database";
+            public const string GenerateBlackboardRegistry = Root + "Generate Blackboard Registry";
             public const string SetupPawnOnSelection      = Root + "Setup AI Pawn on Selection";
 
             private const string WindowRoot = Window + "AI/";
@@ -112,8 +112,8 @@ namespace FoundationPlatform.Utilities.Menus
         {
             private const string Root = Tools + "GameEngineCore/";
             public const string GameActionMatrix = Root + "Game Action Matrix";
-            public const string RebuildGeneratedCatalogs = Root + "Rebuild/Rebuild All Generated Catalogs";
-            public const string RefreshCurrencyDatabases = Root + "Refresh/Currency Databases";
+            public const string RebuildGeneratedRegistries = Root + "Rebuild/Rebuild All Generated Registries";
+            public const string RefreshCurrencyRegistries = Root + "Refresh/Currency Registries";
             public const string RuleExplorer = Root + "GameAction/Rule Explorer";
         }
 

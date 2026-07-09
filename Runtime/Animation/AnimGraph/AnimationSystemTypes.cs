@@ -9,8 +9,6 @@ namespace FoundationPlatform.Animation
 	public enum AnimationMask
 	{
 		FullBody = 0,
-		[System.Obsolete("Use AnimationMask.FullBody instead.")]
-		Null = 0,
 		Arm,
 		UpperBody,
 		RightHand,

@@ -1,46 +1,70 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 
 namespace FoundationPlatform.Editor.Utilities.Validation.UI
 {
-    internal sealed class UIValidationPostprocessor : AssetPostprocessor
+    [InitializeOnLoad]
+    internal static class UIValidationImportPluginRegistration
+    {
+        static UIValidationImportPluginRegistration()
+        {
+            AssetImportPluginRegistry.RegisterBatch(new UIValidationImportPlugin());
+        }
+    }
+
+    internal sealed class UIValidationImportPlugin : IAssetImportBatchPlugin
     {
         private const double DebounceSeconds = 0.2;
+        private const string SchedulerKey = "ui-validation-import";
 
         private static readonly HashSet<string> PendingPaths = new(StringComparer.OrdinalIgnoreCase);
-        private static double _lastEnqueueTime;
-        private static bool _debounceTickSubscribed;
 
-        private static void OnPostprocessAllAssets(
+        public int Order => AssetImportPluginOrders.UIValidation;
+
+        public bool ShouldRun(
             string[] importedAssets,
             string[] deletedAssets,
-            string[] movedToAssets,
-            string[] movedFromAssets)
+            string[] movedAssets,
+            string[] movedFromAssetPaths)
+        {
+            return HasValidationPath(importedAssets) || HasValidationPath(movedAssets);
+        }
+
+        public void Run(
+            string[] importedAssets,
+            string[] deletedAssets,
+            string[] movedAssets,
+            string[] movedFromAssetPaths)
         {
             Enqueue(importedAssets);
-            Enqueue(movedToAssets);
+            Enqueue(movedAssets);
 
             if (PendingPaths.Count == 0)
                 return;
 
-            _lastEnqueueTime = EditorApplication.timeSinceStartup;
-            if (_debounceTickSubscribed)
-                return;
-
-            _debounceTickSubscribed = true;
-            EditorApplication.update += DebouncedValidationTick;
+            DeferredEditorScheduler.ScheduleDebounced(SchedulerKey, DebounceSeconds, RunPendingValidation);
         }
 
-        private static void DebouncedValidationTick()
+        private static bool HasValidationPath(string[] paths)
         {
-            if (EditorApplication.timeSinceStartup - _lastEnqueueTime < DebounceSeconds)
-                return;
+            if (paths == null || paths.Length == 0)
+                return false;
 
-            EditorApplication.update -= DebouncedValidationTick;
-            _debounceTickSubscribed = false;
-            RunPendingValidation();
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string path = paths[i];
+                if (string.IsNullOrEmpty(path))
+                    continue;
+
+                string normalized = path.Replace('\\', '/');
+                if (UIValidationConventions.TriggersIncrementalValidation(normalized))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void Enqueue(string[] paths)
@@ -80,12 +104,7 @@ namespace FoundationPlatform.Editor.Utilities.Validation.UI
             if (PendingPaths.Count == 0)
                 return;
 
-            _lastEnqueueTime = EditorApplication.timeSinceStartup;
-            if (_debounceTickSubscribed)
-                return;
-
-            _debounceTickSubscribed = true;
-            EditorApplication.update += DebouncedValidationTick;
+            DeferredEditorScheduler.ScheduleDebounced(SchedulerKey, DebounceSeconds, RunPendingValidation);
         }
     }
 }
