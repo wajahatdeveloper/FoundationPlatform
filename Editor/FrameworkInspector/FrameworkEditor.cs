@@ -1636,7 +1636,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 var asList = mm.AssetSelector;
                 var occ = mm.OnCollectionChanged;
                 var elemType = GetElementType(e.Field?.FieldType);
+                // Object-reference element types (ScriptableObject/Component/etc.) get an object field
+                // per row, NOT inline recursion — recursing an object-ref property yields no children
+                // (they live on a different serializedObject) and renders blank rows.
                 bool engineElems = elemType != null && !HasCustomPropertyDrawer(elemType)
+                    && !typeof(UnityEngine.Object).IsAssignableFrom(elemType)
                     && (mm.InlineProperty != null || TypeHasEngineAttributes(elemType));
 
                 if (lds != null || searchable != null || occ != null || engineElems

@@ -42,6 +42,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var target = targets[0];
             bool readOnly = lds != null && lds.IsReadOnly;
             bool engineElems = elemType != null && !FrameworkInspectorRenderer.HasCustomPropertyDrawer(elemType)
+                && !typeof(UnityEngine.Object).IsAssignableFrom(elemType)
                 && (elemType.GetCustomAttribute<InlinePropertyAttribute>() != null
                     || FrameworkInspectorRenderer.TypeHasEngineAttributes(elemType));
 
