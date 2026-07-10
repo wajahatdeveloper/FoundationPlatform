@@ -29,6 +29,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            // Missing script: the engine can't draw a null target — hand over to the fixer.
+            if (target == null && InspectorXSettings.instance.missingScriptFixer)
+            {
+                MissingScriptFixer.OnGUI(serializedObject);
+                serializedObject.ApplyModifiedProperties();
+                return;
+            }
             // Last-resort net: the GUI.Scope conversions inside FrameworkInspectorRenderer keep the
             // layout stack balanced per-element, but this still catches non-GUI failures (metadata
             // building, tree cloning, etc.) so one broken type degrades to the default inspector
@@ -1747,6 +1754,16 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     DrawSceneObjectField(e, targets);
                     return;
                 }
+
+                // Plain object reference without a custom PropertyDrawer → enhanced field
+                // (pencil / drag-out / right-click selector, all settings-gated).
+                var refFieldType = e.Field?.FieldType;
+                if (refFieldType != null && !HasCustomPropertyDrawer(refFieldType))
+                {
+                    DrawUnityHeaders(mm);
+                    DrawObjectField(e, targets, allowScene: true);
+                    return;
+                }
             }
 
             // Nested serializable object — recurse through the engine (property-tree style) when it
@@ -1797,6 +1814,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
             if (label != null) EditorGUILayout.PropertyField(prop, label, true);
             else EditorGUILayout.PropertyField(prop, true);
+            // UnityEvent fields accept dropped GameObjects/Components as new persistent listeners.
+            var defaultFieldType = e.Field?.FieldType;
+            if (defaultFieldType != null && typeof(UnityEngine.Events.UnityEventBase).IsAssignableFrom(defaultFieldType))
+                UnityEventDropTarget.Handle(GUILayoutUtility.GetLastRect(), prop);
             if (EditorGUI.EndChangeCheck())
             {
                 ApplyNumericConstraints(e, targets);
@@ -1870,7 +1891,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
-            var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, allowScene);
+            var rect = EditorGUILayout.GetControlRect();
+            var obj = ObjectFieldX.Draw(rect, lbl, prop.objectReferenceValue, t, allowScene, prop);
             if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, targets); }
         }
 
@@ -1881,7 +1903,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
             EditorGUI.BeginChangeCheck();
-            var obj = EditorGUILayout.ObjectField(lbl, prop.objectReferenceValue, t, true);
+            var rect = EditorGUILayout.GetControlRect();
+            var obj = ObjectFieldX.Draw(rect, lbl, prop.objectReferenceValue, t, true, prop);
             if (EditorGUI.EndChangeCheck())
             {
                 if (obj != null && EditorUtility.IsPersistent(obj))
