@@ -128,6 +128,7 @@ namespace EditorEnhancerX {
             if (EditorGUI.EndChangeCheck()) {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorEnhancerXSettings.instance.SaveNow();
+                TimescaleToolbar.Sync();
             }
 
             Space();
