@@ -33,6 +33,9 @@ namespace ProjectWindowX {
             var menu = new GenericMenu();
             var folder = CreateAssetActions.TargetFolder(ctx);
 
+            menu.AddItem(new GUIContent("Folder"), false, () => CreateAssetActions.CreateFolder(folder));
+            menu.AddSeparator("");
+
             menu.AddItem(new GUIContent("Script/MonoBehaviour"), false, () => CreateAssetActions.CreateScript(folder, ScriptTemplates.MonoBehaviour, "NewBehaviour"));
             menu.AddItem(new GUIContent("Script/Class"), false, () => CreateAssetActions.CreateScript(folder, ScriptTemplates.PlainClass, "NewClass"));
             menu.AddItem(new GUIContent("Script/Interface"), false, () => CreateAssetActions.CreateScript(folder, ScriptTemplates.Interface, "INewInterface"));
@@ -41,10 +44,10 @@ namespace ProjectWindowX {
             menu.AddItem(new GUIContent("Script/ScriptableObject"), false, () => CreateAssetActions.CreateScript(folder, ScriptTemplates.ScriptableObject, "NewScriptableObject"));
             menu.AddItem(new GUIContent("Script/Editor Script"), false, () => CreateAssetActions.CreateScript(folder, ScriptTemplates.EditorScript, "NewEditorScript"));
             menu.AddItem(new GUIContent("Script/Assembly Definition"), false, () => CreateAssetActions.CreateAsmdef(folder));
+            menu.AddSeparator("");
 
             menu.AddItem(new GUIContent("Material"), false, () => CreateAssetActions.CreateMaterial(folder));
             menu.AddItem(new GUIContent("Shader (Unlit)"), false, () => CreateAssetActions.CreateScriptWithExtension(folder, ScriptTemplates.UnlitShader, "NewShader", ".shader"));
-            menu.AddItem(new GUIContent("Folder"), false, () => CreateAssetActions.CreateFolder(folder));
             menu.AddItem(new GUIContent("Animation Clip"), false, () => CreateAssetActions.CreateAnimationClip(folder));
             menu.AddItem(new GUIContent("Animator Controller"), false, () => CreateAssetActions.CreateAnimatorController(folder));
 

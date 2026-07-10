@@ -167,6 +167,65 @@ namespace HierarchyX {
             return default;
         }
 
+        // Approximate the editor skin's hierarchy row bases so an opaque backing can be
+        // composited under a pass (e.g. the Best Icon backing that erases Unity's default icon).
+        private static readonly Color ProPlain = new Color(0.219f, 0.219f, 0.219f);
+        private static readonly Color LightPlain = new Color(0.784f, 0.784f, 0.784f);
+        private static readonly Color ProSelFocused = new Color(0.172f, 0.364f, 0.529f);
+        private static readonly Color ProSelUnfocused = new Color(0.3f, 0.3f, 0.3f);
+        private static readonly Color LightSelFocused = new Color(0.227f, 0.447f, 0.690f);
+        private static readonly Color LightSelUnfocused = new Color(0.68f, 0.68f, 0.68f);
+
+        /// <summary>
+        /// Opaque color a row currently paints to, reproducing Unity's base (plain /
+        /// selected-focused / selected-unfocused) then compositing the same tint layers
+        /// <see cref="ColorSort"/> lays down, in the same order. Lets a pass paint a backing
+        /// that is invisible against the row on every state.
+        /// </summary>
+        internal static Color ComposeRowBackground(GameObject go, Rect rect, HierarchyXSettings s) {
+            var pro = EditorGUIUtility.isProSkin;
+            var selected = go && Selection.Contains(go);
+            var focused = EditorWindow.focusedWindow != null
+                          && EditorWindow.focusedWindow.GetType().Name == "SceneHierarchyWindow";
+
+            Color bg;
+            if (selected)
+                bg = pro ? (focused ? ProSelFocused : ProSelUnfocused)
+                         : (focused ? LightSelFocused : LightSelUnfocused);
+            else
+                bg = pro ? ProPlain : LightPlain;
+
+            if (!s.rowColors) {
+                bg.a = 1f;
+                return bg;
+            }
+
+            // Same order as ColorSort: decorator tint, per-layer custom tint, odd/even row tint.
+            if (rowDeco.HasTint)
+                bg = BlendOver(bg, rowDeco.rowTint);
+
+            var custom = GetRowCustomTint(go, s);
+            if (custom.color.a > AlphaThreshold)
+                bg = BlendOver(bg, custom.color);
+
+            var rowTint = GetRowTint(rect, s);
+            if (rowTint.a > AlphaThreshold)
+                bg = BlendOver(bg, rowTint);
+
+            bg.a = 1f;
+            return bg;
+        }
+
+        // Straight source-over composite of src onto opaque dst.
+        private static Color BlendOver(Color dst, Color src) {
+            var a = src.a;
+            return new Color(
+                src.r * a + dst.r * (1f - a),
+                src.g * a + dst.g * (1f - a),
+                src.b * a + dst.b * (1f - a),
+                1f);
+        }
+
         private static void DrawGradient(Rect rect, Color color, bool leftToRight) {
             var prev = GUI.color;
             GUI.color = color;

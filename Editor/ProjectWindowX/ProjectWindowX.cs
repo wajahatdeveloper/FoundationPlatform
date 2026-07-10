@@ -24,6 +24,20 @@ namespace ProjectWindowX {
         static ProjectWindowX() {
             EditorApplication.projectWindowItemOnGUI += OnItemGUI;
             EditorApplication.projectChanged += rows.Clear;
+            EditorApplication.update += RepaintWhileHovered;
+        }
+
+        // The Project window does not repaint on mouse-move, so hover-driven UI
+        // (the "+" button) reads a stale Event.current.mousePosition and flickers /
+        // sticks to the last-repainted row. Force a repaint while the pointer is
+        // over the Project browser so hover state tracks the cursor live.
+        private static void RepaintWhileHovered() {
+            if (!ProjectWindowXSettings.instance.contextActions)
+                return;
+
+            var w = EditorWindow.mouseOverWindow;
+            if (w != null && w.GetType().Name == "ProjectBrowser")
+                w.Repaint();
         }
 
         private static RowContext Get(string guid) {
