@@ -196,7 +196,8 @@ namespace HierarchyX {
                 GUILayout.BeginHorizontal(EditorStyles.toolbar);
                 if (GUILayout.Button("▸", EditorStyles.toolbarButton, GUILayout.Width(22f)))
                     SetCollapsed(footer, settings, false);
-                HierarchyPanelWidgets.DrawStatusChips();
+                if (settings.panelStatusChips)
+                    HierarchyPanelWidgets.DrawStatusChips();
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 GUILayout.EndArea();
@@ -211,16 +212,19 @@ namespace HierarchyX {
             GUILayout.EndArea();
             y += HeaderHeight;
 
-            var bodyHeight = h - y - StatusBarHeight;
+            var statusBar = settings.panelStatusChips ? StatusBarHeight : 0f;
+            var bodyHeight = h - y - statusBar;
             if (bodyHeight > 1f) {
                 GUILayout.BeginArea(new Rect(0f, y, w, bodyHeight));
                 HierarchyPanelWidgets.DrawSections(ref scroll);
                 GUILayout.EndArea();
             }
 
-            GUILayout.BeginArea(new Rect(0f, h - StatusBarHeight, w, StatusBarHeight));
-            HierarchyPanelWidgets.DrawStatusBar();
-            GUILayout.EndArea();
+            if (settings.panelStatusChips) {
+                GUILayout.BeginArea(new Rect(0f, h - StatusBarHeight, w, StatusBarHeight));
+                HierarchyPanelWidgets.DrawStatusBar();
+                GUILayout.EndArea();
+            }
         }
 
         private static void SetCollapsed(IMGUIContainer footer, HierarchyXSettings settings, bool collapsed) {

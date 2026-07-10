@@ -101,6 +101,8 @@ namespace HierarchyX {
         public float panelHeight = 200f;
         [Tooltip("Whether the docked panel is currently collapsed to its header bar.")]
         public bool panelCollapsed = false;
+        [Tooltip("Show the aggregated section status chips in the panel status bar / collapsed strip.")]
+        public bool panelStatusChips = false;
         [Tooltip("Section ids that are currently collapsed within the panel (state persistence).")]
         public List<string> panelCollapsedSections = new List<string>();
 
