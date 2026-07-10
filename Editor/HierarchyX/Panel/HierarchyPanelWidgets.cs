@@ -17,6 +17,14 @@ namespace HierarchyX {
         private static GUIStyle titleStyle;
         private static GUIStyle emptyStyle;
 
+        /// <summary>
+        /// Section id an out-of-context tool asked to reveal (see
+        /// <see cref="HierarchyPanelHost.RevealSection"/>). Consumed once by <see cref="DrawSections"/>:
+        /// on the next Repaint it scrolls that section into view and clears the request. Shared by the
+        /// docked footer and the fallback window so whichever surface repaints first honors it.
+        /// </summary>
+        public static string PendingRevealId;
+
         public static Color StatusColor(PanelChipStatus status) {
             switch (status) {
                 case PanelChipStatus.Ok:      return new Color(0.35f, 0.72f, 0.40f);
@@ -112,6 +120,13 @@ namespace HierarchyX {
                         settings.Save();
                         expanded = newExpanded;
                     }
+                }
+
+                // Honor a pending reveal request: scroll this section's header to the top once.
+                if (!string.IsNullOrEmpty(PendingRevealId) && section.Id == PendingRevealId
+                    && Event.current.type == EventType.Repaint) {
+                    scroll.y = single ? 0f : Mathf.Max(0f, GUILayoutUtility.GetLastRect().y);
+                    PendingRevealId = null;
                 }
 
                 if (expanded) {

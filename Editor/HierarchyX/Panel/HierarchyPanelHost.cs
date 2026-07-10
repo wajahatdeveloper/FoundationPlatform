@@ -45,6 +45,39 @@ namespace HierarchyX {
         /// <summary>True when the docked footer can be injected on this Unity version.</summary>
         public static bool DockingSupported => SceneHierarchyWindowType != null;
 
+        /// <summary>
+        /// Reveal a panel section by id: enable the panel, un-collapse it, expand the target section,
+        /// bring the hosting surface forward, and request a scroll so the section is in view. This is the
+        /// hand-off entry point for out-of-context tools (e.g. the Central Authoring Window) that want to
+        /// send the user to the canonical in-context home of a feature instead of duplicating it.
+        /// When the docked footer is unsupported, falls back to the companion window.
+        /// </summary>
+        public static void RevealSection(string sectionId) {
+            if (string.IsNullOrEmpty(sectionId))
+                return;
+
+            var settings = HierarchyXSettings.Instance;
+            var changed = false;
+            if (!settings.panelEnabled) { settings.panelEnabled = true; changed = true; }
+            if (settings.panelCollapsed) { settings.panelCollapsed = false; changed = true; }
+            if (settings.panelCollapsedSections.Remove(sectionId)) changed = true;
+            if (changed) settings.Save();
+
+            HierarchyPanelWidgets.PendingRevealId = sectionId;
+
+            if (DockingSupported) {
+                var windows = Resources.FindObjectsOfTypeAll(SceneHierarchyWindowType);
+                var target = windows.Length > 0 ? windows[0] as EditorWindow : null;
+                if (target != null) {
+                    target.Focus();
+                    Sync(target); // re-apply footer height now the panel is enabled/expanded
+                }
+                RepaintAll();
+            } else {
+                HierarchyPanelWindow.Open();
+            }
+        }
+
         private static void Poll() {
             if (EditorApplication.timeSinceStartup < nextPoll)
                 return;
