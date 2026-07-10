@@ -20,7 +20,8 @@ namespace HierarchyX {
                 guiHandler = OnGUI,
                 keywords = new HashSet<string> {
                     "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection",
-                    "badge", "chip", "decorator", "domain", "placement"
+                    "badge", "chip", "decorator", "domain", "placement",
+                    "focus", "double-click", "2d", "frame", "recttransform"
                 }
             };
         }
@@ -46,6 +47,20 @@ namespace HierarchyX {
             Space();
             EditorGUILayout.LabelField("Enhanced Selection", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("enhancedSelection"), new GUIContent("Right-drag Select"));
+
+            Space();
+            EditorGUILayout.LabelField("Double-Click Focus", EditorStyles.boldLabel);
+            var focusOnDoubleClick = serialized.FindProperty("focusOnDoubleClick");
+            EditorGUILayout.PropertyField(focusOnDoubleClick, new GUIContent("Focus On Double-Click"));
+            using (new EditorGUI.DisabledScope(!focusOnDoubleClick.boolValue)) {
+                EditorGUILayout.PropertyField(serialized.FindProperty("autoToggle2DMode"), new GUIContent("Auto 2D Mode"));
+            }
+            if (focusOnDoubleClick.boolValue)
+                EditorGUILayout.HelpBox(
+                    serialized.FindProperty("autoToggle2DMode").boolValue
+                        ? "Double-clicking a UI (RectTransform) object frames it with Scene View 2D mode on; a normal Transform frames with 2D mode off."
+                        : "Double-clicking frames the object in the Scene View without changing 2D mode.",
+                    MessageType.Info);
 
             Space();
             EditorGUILayout.LabelField("Tree Lines", EditorStyles.boldLabel);

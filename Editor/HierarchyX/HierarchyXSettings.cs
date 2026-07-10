@@ -59,6 +59,11 @@ namespace HierarchyX {
         [Tooltip("Select GameObjects by dragging over their rows with the right mouse button.")]
         public bool enhancedSelection = true;
 
+        [Tooltip("Double-clicking a hierarchy row selects the object and frames it in the Scene View.")]
+        public bool focusOnDoubleClick = false;
+        [Tooltip("Match Scene View 2D mode to the object type when focusing: enable 2D for RectTransform (UI) objects, disable it for normal Transforms. Requires 'Focus On Double Click'.")]
+        public bool autoToggle2DMode = true;
+
         public bool drawTree = true;
         [Range(0f, 1f)] public float treeOpacity = 0.8f;
         [Range(0f, 1f)] [Tooltip("Length of the extra stem drawn for leaf objects (no children).")]

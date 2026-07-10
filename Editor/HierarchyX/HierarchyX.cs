@@ -70,6 +70,7 @@ namespace HierarchyX {
 #endif
 
             try {
+                DoDoubleClickFocus(rect, go, s);
                 DoSelection(rect, go, s);
 
                 if (!go)
@@ -431,6 +432,51 @@ namespace HierarchyX {
             rect.yMin -= s.lineThickness / 2f;
             rect.height = s.lineThickness;
             EditorGUI.DrawRect(rect, s.lineColor);
+        }
+
+        #endregion
+
+        #region Double-Click Focus
+
+        // Left double-click on a row selects the object and frames it in the Scene View. When
+        // autoToggle2DMode is on, the Scene View's 2D mode is matched to the object type
+        // (2D for RectTransform/UI, 3D for a normal Transform) before framing — mirroring the
+        // UIWidgets "2D Focus" feature so UI objects frame flat and world objects frame in 3D.
+        private static void DoDoubleClickFocus(Rect rect, GameObject go, HierarchyXSettings s) {
+            if (!s.focusOnDoubleClick || !go)
+                return;
+
+            var e = Event.current;
+            if (e.type != EventType.MouseDown || e.button != 0 || e.clickCount != 2)
+                return;
+
+            var hit = rect;
+            hit.xMin = 0f;
+            hit.xMax = EditorGUIUtility.currentViewWidth;
+            if (!hit.Contains(e.mousePosition))
+                return;
+
+            FocusObject(go, s);
+            e.Use();
+        }
+
+        private static void FocusObject(GameObject go, HierarchyXSettings s) {
+            Selection.activeGameObject = go;
+
+            var sceneView = SceneView.lastActiveSceneView;
+            if (!sceneView && SceneView.sceneViews.Count > 0)
+                sceneView = SceneView.sceneViews[0] as SceneView;
+            if (!sceneView)
+                return;
+
+            if (s.autoToggle2DMode) {
+                var isRect = go.transform is RectTransform;
+                if (sceneView.in2DMode != isRect)
+                    sceneView.in2DMode = isRect;
+            }
+
+            sceneView.FrameSelected();
+            sceneView.Focus();
         }
 
         #endregion
