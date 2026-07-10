@@ -7,6 +7,7 @@ namespace HierarchyX {
 
         private static GUIStyle miniLabel;
         private static GUIStyle transparentButton;
+        private static GUIStyle header;
         private static Texture2D gradient;
 
         public static readonly Color prefabColor = new Color(0.3f, 0.5f, 0.83f, 1f);
@@ -24,6 +25,22 @@ namespace HierarchyX {
                     };
                 }
                 return miniLabel;
+            }
+        }
+
+        /// <summary>Bold, centered label for full-width hierarchy header bars.</summary>
+        public static GUIStyle HeaderStyle {
+            get {
+                if (header == null) {
+                    header = new GUIStyle(EditorStyles.boldLabel) {
+                        alignment = TextAnchor.MiddleCenter,
+                        richText = false,
+                    };
+                    header.normal.textColor = EditorGUIUtility.isProSkin
+                        ? new Color(0.85f, 0.85f, 0.85f, 1f)
+                        : new Color(0.1f, 0.1f, 0.1f, 1f);
+                }
+                return header;
             }
         }
 

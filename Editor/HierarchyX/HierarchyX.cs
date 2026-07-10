@@ -77,16 +77,28 @@ namespace HierarchyX {
                     return;
 
                 RebuildProvidersIfNeeded(s);
+                HierarchyXDropCopy.Handle(rect, go, s);
 
                 var hasDeco = s.rowDecorators && HierarchyXRegistry.HasAny && HierarchyXRegistry.TryGet(go, out rowDeco);
                 if (!hasDeco)
                     rowDeco = default;
 
                 ColorSort(rect, go, s);
+
+                if (HierarchyXHeaders.TryDraw(rect, go, s)) {
+                    DrawSeparator(rect, s);
+                    HierarchyXHoverHighlight.Track(rect, go, s);
+                    return;
+                }
+
                 DrawTree(rect, go, s);
-                DrawBadgeAndMiniLabels(rect, go, s, hasDeco ? rowDeco : default);
+                HierarchyXBestIcon.Draw(rect, go, s);
+                var extraInset = HierarchyXMissingScript.Draw(rect, go, s, 0f);
+                DrawBadgeAndMiniLabels(rect, go, s, hasDeco ? rowDeco : default, extraInset);
+                HierarchyXRowControls.Draw(rect, go, s);
                 DrawRowAccent(rect, hasDeco ? rowDeco : default);
                 DrawSeparator(rect, s);
+                HierarchyXHoverHighlight.Track(rect, go, s);
             } catch (Exception e) {
                 Debug.LogError("HierarchyX draw error\n" + e);
             }
@@ -261,22 +273,23 @@ namespace HierarchyX {
         }
 
         // Places the decorator chip and the tag/layer mini labels on the right of the row, ordered by
-        // the user's BadgePlacement setting so neither overlaps the other.
-        private static void DrawBadgeAndMiniLabels(Rect rect, GameObject go, HierarchyXSettings s, HierarchyRowDecoration deco) {
+        // the user's BadgePlacement setting so neither overlaps the other. <paramref name="extraRightInset"/>
+        // is width already consumed at the right edge by other passes (e.g. the missing-script badge).
+        private static void DrawBadgeAndMiniLabels(Rect rect, GameObject go, HierarchyXSettings s, HierarchyRowDecoration deco, float extraRightInset) {
             var hasBadge = s.rowBadges && deco.HasBadge;
 
             if (hasBadge && s.badgePlacement == BadgePlacement.AfterMiniLabels) {
                 // Chip is the rightmost element; mini labels sit to its left.
                 var chipWidth = BadgeChipWidth(deco, s);
-                DrawMiniLabels(rect, go, s, chipWidth + s.badgeSpacing);
-                DrawRowBadge(rect, deco, s, 0f);
+                DrawMiniLabels(rect, go, s, extraRightInset + chipWidth + s.badgeSpacing);
+                DrawRowBadge(rect, deco, s, extraRightInset);
                 return;
             }
 
             // Default: mini labels rightmost, chip just to their left ("before" them).
-            var miniWidth = DrawMiniLabels(rect, go, s, 0f);
+            var miniWidth = DrawMiniLabels(rect, go, s, extraRightInset);
             if (hasBadge)
-                DrawRowBadge(rect, deco, s, miniWidth);
+                DrawRowBadge(rect, deco, s, extraRightInset + miniWidth);
         }
 
         // Returns the horizontal width the labels consumed on the right, so a right-side element

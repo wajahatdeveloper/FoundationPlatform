@@ -116,6 +116,32 @@ namespace HierarchyX {
                     MessageType.Warning);
 
             Space();
+            EditorGUILayout.LabelField("Rows", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("bestIcons"), new GUIContent("Best Component Icons"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("missingScriptIndicator"), new GUIContent("Missing Script Badge"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("rowActiveToggle"), new GUIContent("Active Toggle (Hover)"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("soloButtons"), new GUIContent("Vis/Pick Toggles (Hover)"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("dropCopyComponent"), new GUIContent("Ctrl-Drop Copies Component"));
+
+            Space();
+            EditorGUILayout.LabelField("Headers", EditorStyles.boldLabel);
+            var headers = serialized.FindProperty("headersEnabled");
+            EditorGUILayout.PropertyField(headers, new GUIContent("Enable Headers"));
+            using (new EditorGUI.DisabledScope(!headers.boolValue)) {
+                EditorGUILayout.PropertyField(serialized.FindProperty("headerPrefix"), new GUIContent("Name Prefix"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("headerColor"), new GUIContent("Bar Color"));
+            }
+            if (headers.boolValue)
+                EditorGUILayout.HelpBox("Create one via GameObject ▸ HierarchyX Header. Header objects are tagged EditorOnly and stripped from builds.", MessageType.None);
+
+            Space();
+            EditorGUILayout.LabelField("Scene View", EditorStyles.boldLabel);
+            var hover = serialized.FindProperty("hoverHighlight");
+            EditorGUILayout.PropertyField(hover, new GUIContent("Highlight Hovered Row"));
+            using (new EditorGUI.DisabledScope(!hover.boolValue))
+                EditorGUILayout.PropertyField(serialized.FindProperty("hoverHighlightColor"), new GUIContent("Outline Color"));
+
+            Space();
             EditorGUILayout.LabelField("Mini Labels", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("miniLabels"), new GUIContent("Labels"), true);
             EditorGUILayout.PropertyField(serialized.FindProperty("smallerFont"), new GUIContent("Smaller Font"));

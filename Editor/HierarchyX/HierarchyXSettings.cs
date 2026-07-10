@@ -104,6 +104,28 @@ namespace HierarchyX {
         [Tooltip("Section ids that are currently collapsed within the panel (state persistence).")]
         public List<string> panelCollapsedSections = new List<string>();
 
+        [Tooltip("Replace the generic GameObject icon with the icon of the row's most distinctive component. Prefab roots keep the prefab icon.")]
+        public bool bestIcons = true;
+        [Tooltip("Show a red error badge on rows with missing (null) scripts.")]
+        public bool missingScriptIndicator = true;
+        [Tooltip("Hover-only active checkbox on the right edge of each row.")]
+        public bool rowActiveToggle = true;
+        [Tooltip("Hover-only visibility/pickability toggles on the right edge. Right-click = solo.")]
+        public bool soloButtons = true;
+
+        [Tooltip("Render GameObjects whose name starts with the header prefix as full-width section header bars.")]
+        public bool headersEnabled = true;
+        [Tooltip("Name prefix marking a GameObject as a hierarchy header.")]
+        public string headerPrefix = "---";
+        public Color headerColor = new Color(0.16f, 0.16f, 0.16f, 0.95f);
+
+        [Tooltip("Outline the GameObject hovered in the Hierarchy in the Scene View.")]
+        public bool hoverHighlight = false;
+        public Color hoverHighlightColor = new Color(1f, 0.6f, 0f, 1f);
+
+        [Tooltip("Ctrl-drag a Component onto a row to paste a copy of it onto that GameObject.")]
+        public bool dropCopyComponent = true;
+
         public List<MiniLabelType> miniLabels = new List<MiniLabelType> { MiniLabelType.Layer, MiniLabelType.Tag };
         [Tooltip("Use an 8px font instead of 9px for narrow hierarchies.")]
         public bool smallerFont = true;
@@ -151,6 +173,7 @@ namespace HierarchyX {
             oddRowColor = pro ? new Color(0f, 0f, 0f, 0.1f) : new Color(1f, 1f, 1f, 0.2f);
             evenRowColor = new Color(0f, 0f, 0f, 0f);
             lineColor = new Color(0f, 0f, 0f, 0.2f);
+            headerColor = pro ? new Color(0.16f, 0.16f, 0.16f, 0.95f) : new Color(0.65f, 0.65f, 0.65f, 0.95f);
             if (perLayerColors == null || perLayerColors.Count == 0)
                 perLayerColors = new List<LayerColor> {
                     new LayerColor(5, new Color(0f, 0f, 1f, 0.3f)) // UI layer, subtle blue
