@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
     {
         public const float RowHeight = 18f;
         public const float SectionSpacing = 4f;
+        /// <summary>Compact lead space before any header (foldout/title/box/Unity header).</summary>
+        public const float HeaderSpacing = 2f;
         public const float CompactButtonHeight = 20f;
         public const float DefaultLabelWidth = 0f;
 
@@ -27,6 +30,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         private static GUIStyle s_menuRowSelected;
 
         private static GUIStyle s_sectionFoldoutTitle;
+        private static GUIStyle s_flatFoldout;
+        private static GUIStyle s_tagChipText;
+        private static GUIStyle s_tagChipRemove;
+        private static GUIStyle s_headerButton;
         private static GUIStyle s_buttonBox;
         private static GUIStyle s_buttonFoldout;
 
@@ -49,6 +56,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             s_menuRow = null;
             s_menuRowSelected = null;
             s_sectionFoldoutTitle = null;
+            s_flatFoldout = null;
+            s_tagChipText = null;
+            s_tagChipRemove = null;
+            s_headerButton = null;
             s_buttonBox = null;
             s_buttonFoldout = null;
         }
@@ -84,6 +95,36 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     : new Color(0f, 0f, 0f, 0.18f);
             }
         }
+
+        /// <summary>Fill behind a tag/chip pill.</summary>
+        public static Color TagChipBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.08f)
+                    : new Color(0f, 0f, 0f, 0.10f);
+            }
+        }
+
+        /// <summary>1px border around a tag/chip pill and color swatches.</summary>
+        public static Color TagChipOutline
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.14f)
+                    : new Color(0f, 0f, 0f, 0.22f);
+            }
+        }
+
+        /// <summary>Accent stripe/swatch color when a tag has no metadata color.</summary>
+        public static Color TagChipAccentFallback => new Color(0.5f, 0.5f, 0.5f, 1f);
+
+        /// <summary>Accent for an unknown / out-of-scope tag (amber).</summary>
+        public static Color TagWarningAccent => new Color(0.9f, 0.6f, 0.1f, 1f);
 
         public static Color MenuSelectionBackground
         {
@@ -268,7 +309,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        public static GUIStyle SectionFoldoutTitle
+        /// <summary>
+        /// Canonical flat header label — bold 12pt, left-aligned, clipped.
+        /// Used by every section header (foldout, box, list, nested struct) for a single look.
+        /// </summary>
+        public static GUIStyle FlatHeaderLabel
         {
             get
             {
@@ -277,7 +322,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 {
                     s_sectionFoldoutTitle = new GUIStyle(EditorStyles.boldLabel)
                     {
-                        fontSize = 11,
+                        fontSize = 12,
                         alignment = TextAnchor.MiddleLeft,
                         clipping = TextClipping.Clip,
                     };
@@ -286,7 +331,86 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
+        /// <summary>Back-compat alias — routes to <see cref="FlatHeaderLabel"/>.</summary>
+        public static GUIStyle SectionFoldoutTitle => FlatHeaderLabel;
+
+        /// <summary>
+        /// Layout-based flat foldout style (bold 12pt) for <c>EditorGUILayout/EditorGUI.Foldout</c>
+        /// calls (list headers, nested structs) so their arrow + label match the group foldout.
+        /// </summary>
+        public static GUIStyle FlatFoldoutStyle
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_flatFoldout == null)
+                {
+                    s_flatFoldout = new GUIStyle(EditorStyles.foldout)
+                    {
+                        fontStyle = FontStyle.Bold,
+                        fontSize = 12,
+                    };
+                }
+                return s_flatFoldout;
+            }
+        }
+
         public static GUIStyle CompactButton => EditorStyles.miniButton;
+
+        /// <summary>Text style inside a tag/chip pill.</summary>
+        public static GUIStyle TagChipText
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_tagChipText == null)
+                    s_tagChipText = new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        fontSize = 10,
+                        alignment = TextAnchor.MiddleLeft,
+                        padding = new RectOffset(4, 0, 0, 0),
+                    };
+                return s_tagChipText;
+            }
+        }
+
+        /// <summary>Small "×" remove button inside a tag/chip pill.</summary>
+        public static GUIStyle TagChipRemoveButton
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_tagChipRemove == null)
+                    s_tagChipRemove = new GUIStyle(EditorStyles.miniButton)
+                    {
+                        fixedWidth = 16,
+                        fixedHeight = 16,
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(2, 0, 0, 0),
+                        fontSize = 11,
+                        alignment = TextAnchor.MiddleCenter,
+                    };
+                return s_tagChipRemove;
+            }
+        }
+
+        /// <summary>Square icon button (e.g. "+") for section header rows.</summary>
+        public static GUIStyle HeaderButton
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_headerButton == null)
+                    s_headerButton = new GUIStyle(EditorStyles.miniButton)
+                    {
+                        fixedWidth = 20,
+                        fixedHeight = 16,
+                        fontSize = 14,
+                        padding = new RectOffset(0, 0, -2, 0),
+                    };
+                return s_headerButton;
+            }
+        }
 
         public static GUIStyle ButtonBox
         {
@@ -433,47 +557,94 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             => EditorGUILayout.Foldout(expanded, label, true, EditorStyles.foldoutHeader);
 
         /// <summary>
-        /// Full-width section header with subtle chrome — used by <c>[FoldoutGroup]</c>.
+        /// Flat section header — used by <c>[FoldoutGroup]</c>. Renders through the same
+        /// <see cref="FlatFoldoutStyle"/> as list/nested foldouts so the arrow + label land at
+        /// the identical x for a given indent level. A single subtle bottom rule at top-level
+        /// depth separates top sections; nested foldouts stay chrome-free.
         /// </summary>
         public static bool SectionFoldout(bool expanded, string label)
             => SectionFoldout(expanded, new GUIContent(label));
 
         public static bool SectionFoldout(bool expanded, GUIContent label)
         {
-            const float headerH = 22f;
-            EditorGUILayout.Space(SectionSpacing);
-            var rect = EditorGUILayout.GetControlRect(false, headerH);
+            EditorGUILayout.Space(HeaderSpacing);
+            var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
 
-            bool hover = rect.Contains(Event.current.mousePosition);
-            EditorGUI.DrawRect(rect, hover ? FoldoutHeaderHoverBackground : FoldoutHeaderBackground);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), SectionRuleColor);
+            if (EditorGUI.indentLevel <= 0)
+                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), SectionRuleColor);
 
-            var foldRect = new Rect(rect.x + 4f, rect.y + (headerH - EditorGUIUtility.singleLineHeight) * 0.5f, 14f, EditorGUIUtility.singleLineHeight);
-            expanded = EditorGUI.Foldout(foldRect, expanded, GUIContent.none, true, EditorStyles.foldout);
-
-            float labelX = foldRect.xMax + 2f;
-            GUI.Label(new Rect(labelX, rect.y, rect.xMax - labelX - 4f, rect.height), label, SectionFoldoutTitle);
-
-            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
-            {
-                expanded = !expanded;
-                GUI.changed = true;
-                Event.current.Use();
-            }
-
-            return expanded;
+            return EditorGUI.Foldout(rect, expanded, label, true, FlatFoldoutStyle);
         }
 
         public static void BeginSectionFoldoutBody()
         {
-            EditorGUILayout.Space(SectionSpacing * 0.5f);
+            EditorGUILayout.Space(HeaderSpacing);
             EditorGUI.indentLevel++;
         }
 
         public static void EndSectionFoldoutBody()
         {
             EditorGUI.indentLevel--;
-            EditorGUILayout.Space(SectionSpacing);
+            EditorGUILayout.Space(HeaderSpacing);
+        }
+
+        /// <summary>
+        /// Rect-based flat section header for hand-laid drawers (that compute their own rects in
+        /// GetPropertyHeight). Draws a flat foldout (arrow + bold label) through <see cref="FlatFoldoutStyle"/>
+        /// — matching layout foldouts — and reserves <paramref name="trailingButtons"/> square slots on the
+        /// right for caller-drawn buttons. No dark strip. <paramref name="trailingRects"/> is right-to-left:
+        /// index 0 is the rightmost button.
+        /// </summary>
+        public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
+            out Rect[] trailingRects, float buttonSize = 20f)
+        {
+            const float gap = 2f;
+            const float buttonHeight = 16f;
+            trailingRects = trailingButtons > 0 ? new Rect[trailingButtons] : Array.Empty<Rect>();
+
+            float by = rect.y + (rect.height - buttonHeight) * 0.5f;
+            float x = rect.xMax;
+            for (int i = 0; i < trailingButtons; i++)
+            {
+                x -= buttonSize;
+                trailingRects[i] = new Rect(x, by, buttonSize, buttonHeight);
+                x -= gap;
+            }
+
+            float foldWidth = Mathf.Max(0f, x - rect.x - gap);
+            var foldRect = new Rect(rect.x, rect.y, foldWidth, rect.height);
+            return EditorGUI.Foldout(foldRect, expanded, label, true, FlatFoldoutStyle);
+        }
+
+        /// <summary>
+        /// Themed tag/chip pill: <see cref="TagChipBackground"/> fill, accent stripe, <see cref="TagChipOutline"/>
+        /// border, and an optional "×" remove button. Skin-aware; no baked colors.
+        /// </summary>
+        public static void DrawTagPill(Rect rect, GUIContent content, Color accent, Action onRemove)
+        {
+            EditorGUI.DrawRect(rect, TagChipBackground);
+            EditorGUI.DrawRect(new Rect(rect.x + 1, rect.y + 1, 4, rect.height - 2), accent);
+
+            float labelWidth = onRemove != null ? rect.width - 24 : rect.width - 6;
+            GUI.Label(new Rect(rect.x + 6, rect.y, labelWidth, rect.height), content, TagChipText);
+
+            if (onRemove != null)
+            {
+                var removeRect = new Rect(rect.xMax - 18, rect.y + 2, 16, 16);
+                if (GUI.Button(removeRect, "×", TagChipRemoveButton))
+                    onRemove.Invoke();
+            }
+
+            DrawRectOutline(rect, TagChipOutline);
+        }
+
+        /// <summary>Draw a 1px outline around a rect (replaces Handles.DrawSolidRectangleWithOutline).</summary>
+        public static void DrawRectOutline(Rect rect, Color color)
+        {
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), color);
+            EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), color);
         }
 
         /// <summary>
@@ -495,8 +666,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
         public static void DrawTitle(string title, string subtitle, TextAlignment textAlignment = TextAlignment.Left,
             bool horizontalLine = true, bool boldLabel = true)
         {
-            EditorGUILayout.Space(2f);
-            var rect = EditorGUILayout.GetControlRect(false, 20f);
+            EditorGUILayout.Space(HeaderSpacing);
+            var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             var ts = boldLabel ? SectionTitle : EditorStyles.label;
             ts.alignment = textAlignment == TextAlignment.Center ? TextAnchor.MiddleCenter
                 : textAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;

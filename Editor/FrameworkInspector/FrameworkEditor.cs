@@ -402,7 +402,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                                if (b.CenterLabel) n.Box.CenterLabel = true;
                                if (b.LabelText != null) n.Box.LabelText = b.LabelText;
                             }
-                        });
+                        }, GroupKind.Box);
                         break;
                     case FoldoutGroupAttribute f:
                         path = f.GroupID;
@@ -412,7 +412,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                             if (f.Order != 0f) n.Order = f.Order;
                             if (f.HasDefinedExpanded) n.DefaultExpanded = f.Expanded;
                             if (n.FoldoutAttr == null) n.FoldoutAttr = f;
-                        });
+                        }, GroupKind.Foldout);
                         break;
                     case TitleGroupAttribute t:
                         path = t.GroupID;
@@ -481,10 +481,10 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return containerPath;
         }
 
-        private static void RegisterTemplate(GroupNode root, string path, ref int seq, Action<GroupNode> configure)
+        private static void RegisterTemplate(GroupNode root, string path, ref int seq, Action<GroupNode> configure, GroupKind? intermediateKind = null)
         {
             if (string.IsNullOrEmpty(path)) return;
-            var node = GetNode(root, path, seq++);
+            var node = GetNode(root, path, seq++, intermediateKind);
             configure(node);
             node.KindResolved = true;
         }
@@ -775,7 +775,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                                 if (b.CenterLabel) n.Box.CenterLabel = true;
                                 if (b.LabelText != null) n.Box.LabelText = b.LabelText;
                             }
-                        });
+                        }, GroupKind.Box);
                         break;
                     case FoldoutGroupAttribute f:
                         path = f.GroupID;
@@ -785,7 +785,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                             if (f.Order != 0f) n.Order = f.Order;
                             if (f.HasDefinedExpanded) n.DefaultExpanded = f.Expanded;
                             if (n.FoldoutAttr == null) n.FoldoutAttr = f;
-                        });
+                        }, GroupKind.Foldout);
                         break;
                     case TitleGroupAttribute t:
                         path = t.GroupID;
@@ -863,15 +863,15 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             return GetNode(root, containerPath, e.Sequence);
         }
 
-        private static void Register(GroupNode root, string path, InspectorEntry e, Action<GroupNode> configure)
+        private static void Register(GroupNode root, string path, InspectorEntry e, Action<GroupNode> configure, GroupKind? intermediateKind = null)
         {
             if (string.IsNullOrEmpty(path)) return;
-            var node = GetNode(root, path, e.Sequence);
+            var node = GetNode(root, path, e.Sequence, intermediateKind);
             configure(node);
             node.KindResolved = true;
         }
 
-        private static GroupNode GetNode(GroupNode root, string path, int sequence)
+        private static GroupNode GetNode(GroupNode root, string path, int sequence, GroupKind? intermediateKind = null)
         {
             var segments = path.Split('/');
             var current = root;
@@ -879,17 +879,25 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             for (int i = 0; i < segments.Length; i++)
             {
                 acc = i == 0 ? segments[i] : acc + "/" + segments[i];
+                bool isLeaf = i == segments.Length - 1;
                 if (!current.SubGroups.TryGetValue(segments[i], out var child))
                 {
                     child = new GroupNode
                     {
                         Path = acc,
                         Name = segments[i],
-                        // Intermediate default: first segment reads as a box, deeper as transparent vertical.
-                        Kind = i == 0 ? GroupKind.Box : GroupKind.Vertical,
+                        // Implicit intermediate: inherit the registering family's kind when known
+                        // (so a nested foldout path builds nested foldouts, not a phantom box that the
+                        // inner foldout arrow overlaps). Fallback: first segment box, deeper transparent.
+                        Kind = intermediateKind ?? (i == 0 ? GroupKind.Box : GroupKind.Vertical),
                     };
                     current.SubGroups[segments[i]] = child;
                     current.Children.Add(child);
+                }
+                else if (!isLeaf && intermediateKind.HasValue && !child.KindResolved)
+                {
+                    // Upgrade an implicit intermediate created earlier (e.g. default Box) to this path's family.
+                    child.Kind = intermediateKind.Value;
                 }
                 if (sequence < child.Sequence) child.Sequence = sequence;
                 current = child;
@@ -947,6 +955,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 case GroupKind.Box:
                 {
+                    EditorGUILayout.Space(FrameworkInspectorTheme.HeaderSpacing);
                     // VerticalScope guarantees EndVertical fires even if a reflection call inside
                     // RenderChildren throws, so a single bad member can't corrupt the layout stack.
                     using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -961,7 +970,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                                 {
                                     EditorGUILayout.LabelField(label, FrameworkInspectorTheme.CenteredSectionTitle);
                                 }
-                                else EditorGUILayout.LabelField(label, FrameworkInspectorTheme.SectionTitle);
+                                else EditorGUILayout.LabelField(label, FrameworkInspectorTheme.FlatHeaderLabel);
                             }
                         }
                         RenderChildren(g, targets, foldouts, tabs);
@@ -973,7 +982,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     var t = g.TitleAttr;
                     string title = InspectorMemberResolver.ResolveString(targets[0], g.Name);
                     string subtitle = t != null ? InspectorMemberResolver.ResolveString(targets[0], t.Subtitle) : null;
-                    EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing);
+                    EditorGUILayout.Space(FrameworkInspectorTheme.HeaderSpacing);
                     FrameworkInspectorTheme.DrawTitle(title, subtitle,
                         ToTextAlignment(t?.Alignment ?? TitleAlignments.Left),
                         t == null || t.HorizontalLine,
@@ -1584,8 +1593,8 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (mm?.Headers == null) return;
             foreach (var h in mm.Headers)
             {
-                EditorGUILayout.Space(4);
-                EditorGUILayout.LabelField(h.header, EditorStyles.boldLabel);
+                EditorGUILayout.Space(FrameworkInspectorTheme.HeaderSpacing);
+                EditorGUILayout.LabelField(h.header, FrameworkInspectorTheme.FlatHeaderLabel);
             }
         }
 
@@ -2097,7 +2106,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             {
                 // Collapsible foldout header; skip the body when collapsed.
                 e.Property.isExpanded = EditorGUILayout.Foldout(e.Property.isExpanded,
-                    lbl ?? TempContent(e.Property.displayName), true);
+                    lbl ?? TempContent(e.Property.displayName), true, FrameworkInspectorTheme.FlatFoldoutStyle);
                 var rect = GUILayoutUtility.GetLastRect();
                 if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
                 {

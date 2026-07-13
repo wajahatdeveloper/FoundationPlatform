@@ -62,10 +62,11 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 string headerText = $"{label.text} ({prop.arraySize})";
                 if (showFoldout)
                 {
-                    prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true);
+                    prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true,
+                        FrameworkInspectorTheme.FlatFoldoutStyle);
                     expanded = prop.isExpanded;
                 }
-                else EditorGUILayout.LabelField(headerText, EditorStyles.boldLabel);
+                else EditorGUILayout.LabelField(headerText, FrameworkInspectorTheme.FlatHeaderLabel);
 
                 GUILayout.FlexibleSpace();
 

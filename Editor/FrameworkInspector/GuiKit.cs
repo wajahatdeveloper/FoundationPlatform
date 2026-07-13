@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
@@ -53,6 +54,35 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         public static int Toolbar(int selected, string[] labels)
             => FrameworkInspectorTheme.Toolbar(selected, labels);
+
+        /// <summary>Themed tag/chip pill with optional "×" remove button. See <see cref="FrameworkInspectorTheme.DrawTagPill"/>.</summary>
+        public static void TagPill(Rect rect, GUIContent content, Color accent, Action onRemove = null)
+            => FrameworkInspectorTheme.DrawTagPill(rect, content, accent, onRemove);
+
+        /// <summary>Fallback accent for a tag/chip with no metadata color.</summary>
+        public static Color TagAccentFallback => FrameworkInspectorTheme.TagChipAccentFallback;
+
+        /// <summary>Amber accent for an unknown / out-of-scope tag.</summary>
+        public static Color TagWarningAccent => FrameworkInspectorTheme.TagWarningAccent;
+
+        /// <summary>1px border color for chips / color swatches.</summary>
+        public static Color ChipOutline => FrameworkInspectorTheme.TagChipOutline;
+
+        /// <summary>Square header button style (e.g. "+").</summary>
+        public static GUIStyle HeaderButton => FrameworkInspectorTheme.HeaderButton;
+
+        /// <summary>Draw a 1px outline around a rect.</summary>
+        public static void RectOutline(Rect rect, Color color)
+            => FrameworkInspectorTheme.DrawRectOutline(rect, color);
+
+        /// <summary>
+        /// Rect-based flat section header (arrow + bold label) reserving <paramref name="trailingButtons"/>
+        /// right-side button slots. <paramref name="trailingRects"/> index 0 is rightmost.
+        /// See <see cref="FrameworkInspectorTheme.SectionHeaderRow"/>.
+        /// </summary>
+        public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
+            out Rect[] trailingRects, float buttonSize = 20f)
+            => FrameworkInspectorTheme.SectionHeaderRow(rect, label, expanded, trailingButtons, out trailingRects, buttonSize);
     }
 }
 #endif

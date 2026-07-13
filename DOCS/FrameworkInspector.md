@@ -69,6 +69,7 @@ Menu: **Tools → HOMAM → Framework Inspector Demo**. Exercises the attribute 
 4. **Nested payloads in lists** need `FrameworkReflectedDrawer` unless a bespoke `PropertyDrawer` already exists (e.g. `AttackEntry`, `ConsiderationPayload`).
 5. **Do not hand-edit generated code** — change sources and regenerate per project conventions.
 6. **Cache busting**: context menu *Force Rebuild Framework Inspector Cache* on components if metadata looks stale.
+7. **Foldouts / headers**: use the canonical flat widgets — `FrameworkInspectorTheme.SectionFoldout` (full-width, click-anywhere group header), or `EditorGUILayout/EditorGUI.Foldout(..., FrameworkInspectorTheme.FlatFoldoutStyle)` for layout foldouts (lists, nested structs). Header labels use `FrameworkInspectorTheme.FlatHeaderLabel` (bold 12pt); lead space before any header is `FrameworkInspectorTheme.HeaderSpacing`. Do **not** reintroduce bespoke `EditorStyles.foldoutHeader` bars or ad-hoc `Space(4)` — it breaks the flat/compact consistency.
 
 ## Key types
 

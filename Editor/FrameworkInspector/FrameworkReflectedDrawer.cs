@@ -65,7 +65,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             if (!headerless)
             {
                 var header = new Rect(position.x, position.y, position.width, Line);
-                property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true);
+                property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true, FrameworkInspectorTheme.FlatFoldoutStyle);
                 if (!property.isExpanded) return;
                 y = header.yMax;
                 EditorGUI.indentLevel = indent + 1; // children indented under the header
