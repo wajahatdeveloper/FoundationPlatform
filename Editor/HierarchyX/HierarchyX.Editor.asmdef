@@ -1,5 +1,6 @@
 {
     "name": "HierarchyX.Editor",
+    "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [

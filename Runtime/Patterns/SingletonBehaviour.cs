@@ -14,6 +14,14 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     public static T Instance => GetInstance(typeof(T));
 
     /// <summary>
+    /// Quiet resolve — no error log when absent. Use for optional callers
+    /// (player-loop probes, non-deterministic fallbacks, editor/pre-init).
+    /// Prefer <see cref="HasInstance"/> when you only need a registered slot check
+    /// and must avoid a scene search.
+    /// </summary>
+    public static bool TryGetInstance(out T instance) => TryGetInstance(typeof(T), out instance);
+
+    /// <summary>
     /// Resolves the singleton for a specific concrete type. Subclasses that share
     /// this base should shadow <c>Instance</c> with <c>public static new TSelf Instance</c>
     /// forwarding here with their own type, so the accessor targets their slot
@@ -23,21 +31,27 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     {
         if (isQuitting) return null;
 
-        if (!instances.TryGetValue(type, out T instance) || instance == null)
-        {
-            instance = UnityEngine.Object.FindFirstObjectByType(type) as T;
+        if (TryGetInstance(type, out T instance))
+            return instance;
 
-            if (instance == null)
-            {
-                DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
-            }
-            else
-            {
-                instances[type] = instance;
-            }
-        }
+        DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
+        return null;
+    }
 
-        return instance;
+    protected static bool TryGetInstance(Type type, out T instance)
+    {
+        instance = null;
+        if (isQuitting) return false;
+
+        if (instances.TryGetValue(type, out instance) && instance != null)
+            return true;
+
+        instance = UnityEngine.Object.FindFirstObjectByType(type) as T;
+        if (instance == null)
+            return false;
+
+        instances[type] = instance;
+        return true;
     }
 
     /// <summary>
@@ -85,6 +99,14 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
     public static T Instance => GetInstance(typeof(T));
 
     /// <summary>
+    /// Quiet resolve — no error log when absent. Use for optional callers
+    /// (player-loop probes, non-deterministic fallbacks, editor/pre-init).
+    /// Prefer <see cref="HasInstance"/> when you only need a registered slot check
+    /// and must avoid a scene search.
+    /// </summary>
+    public static bool TryGetInstance(out T instance) => TryGetInstance(typeof(T), out instance);
+
+    /// <summary>
     /// Resolves the singleton for a specific concrete type. Subclasses that share
     /// this base should shadow <c>Instance</c> with <c>public static new TSelf Instance</c>
     /// forwarding here with their own type.
@@ -93,21 +115,27 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
     {
         if (isQuitting) return null;
 
-        if (!instances.TryGetValue(type, out T instance) || instance == null)
-        {
-            instance = UnityEngine.Object.FindFirstObjectByType(type) as T;
+        if (TryGetInstance(type, out T instance))
+            return instance;
 
-            if (instance == null)
-            {
-                DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
-            }
-            else
-            {
-                instances[type] = instance;
-            }
-        }
+        DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
+        return null;
+    }
 
-        return instance;
+    protected static bool TryGetInstance(Type type, out T instance)
+    {
+        instance = null;
+        if (isQuitting) return false;
+
+        if (instances.TryGetValue(type, out instance) && instance != null)
+            return true;
+
+        instance = UnityEngine.Object.FindFirstObjectByType(type) as T;
+        if (instance == null)
+            return false;
+
+        instances[type] = instance;
+        return true;
     }
 
     /// <summary>

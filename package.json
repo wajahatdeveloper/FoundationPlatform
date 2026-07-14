@@ -1,22 +1,30 @@
 {
-  "name": "com.homam.foundationplatform",
+  "name": "com.aethernexus.foundationplatform",
   "version": "1.0.0",
   "displayName": "Foundation Platform",
-  "description": "Core foundation layer for the HOMAM project: attributes, messaging/event bus, patterns, extensions, gizmos, identity, coroutines, DebugX console, framework inspector, and shared editor tooling. Leaf dependency for all gameplay frameworks.",
+  "description": "Stop rebuilding project plumbing. Free AetherNexus foundation for Unity 6: EventBus, DebugX console logging, owned CoroutineX, TweenX/Feedback (no DOTween), Identity/patterns, Framework Inspector, and shared editor utilities — no GameEngineCore required.\n\nRequires Unity 6000.3.10f1+. URP recommended. Depends on Input System and uGUI.\n\nEmbeds Cysharp UniTask 2.5.11 (MIT) under Runtime/ThirdParty/UniTask and Editor/ThirdParty/UniTask. Asset uses UniTask under the MIT license; see Third-Party Notices.txt in the package for details.\n\nOptional leaf for GameEngineCore and other AetherNexus packages — sold separately.",
   "unity": "6000.3",
+  "unityRelease": "10f1",
   "keywords": [
     "eventbus",
     "logging",
     "coroutine",
     "foundation",
-    "core"
+    "core",
+    "aethernexus"
   ],
   "author": {
-    "name": "HOMAM"
+    "name": "AetherNexus"
   },
   "dependencies": {
-    "com.cysharp.unitask": "2.3.3",
     "com.unity.inputsystem": "1.18.0",
     "com.unity.ugui": "2.0.0"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "EventBus + CoroutineX",
+      "description": "Play Mode demo: owned CoroutineX ladder publishes SamplePingEvent; EventBus subscriber logs via DebugX. Requires Input System (Active Input Handling). Domain Reload should stay enabled.",
+      "path": "Samples~/EventBusCoroutineDemo"
+    }
+  ]
 }

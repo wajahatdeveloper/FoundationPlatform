@@ -1,5 +1,6 @@
 {
     "name": "ProjectWindowX.Editor",
+    "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [

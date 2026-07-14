@@ -1,6 +1,6 @@
 {
     "name": "FoundationPlatform.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [
         "FoundationPlatform.Runtime"
     ],

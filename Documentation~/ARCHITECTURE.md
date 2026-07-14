@@ -1,51 +1,52 @@
-# FoundationPlatform Architecture
+# Foundation Platform — Architecture
 
-**Path:** `Packages/com.homam.foundationplatform/`
-**294 files:** 190 runtime (`Runtime/`), 104 editor (`Editor/`)
+Package id: `com.aethernexus.foundationplatform` (`Packages/com.aethernexus.foundationplatform/`).
 
-Base platform layer used by all other HOMAM frameworks. No dependencies on other HOMAM packages — everything else depends on this, not the reverse. Provides: pub/sub event bus, structured logging (DebugX), coroutine lifecycle (CoroutineX), singleton/reactive/fragment-data patterns, animation data packaging, gizmo drawing, ~180 extension methods, and editor authoring tooling (Framework Inspector, UI Validation, Preset Automation).
+Base platform layer for the AetherNexus ecosystem. No dependencies on other AetherNexus gameplay packages — they depend on this package, not the reverse. Provides: EventBus, DebugX, CoroutineX, TweenX, patterns, animation data packaging, gizmos, extensions, and editor authoring tooling (Framework Inspector, UI Validation, Preset Automation).
+
+See also: [index.md](index.md) · [TweenX](../DOCS/TweenX.md) · [Framework Inspector](../DOCS/FrameworkInspector.md)
 
 ---
 
 ## Namespace map
 
+Most types live under `AetherNexus.FoundationPlatform.*`. Several core messaging / coroutine APIs are **global** (no namespace) for ergonomic call sites.
+
 | Namespace | Folder | Notes |
 |---|---|---|
-| `FoundationPlatform` | scattered | root/misc types (`FragmentData`, etc.) |
-| `FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` subtree |
-| `FoundationPlatform.Attributes` | `Runtime/Attributes/` | `[Tag]`, `[Layer]`, `[TooltipIcon]`, `[RunFirst/Before/After/Last]` |
-| `FoundationPlatform.Behaviours` | `Runtime/Behaviours/` | small reusable MonoBehaviours |
-| `FoundationPlatform.DebugX` | `Runtime/DebugX/` | logging core + sinks |
-| `FoundationPlatform.FrameworkInspector` | `Runtime/FrameworkInspector/` | runtime-visible attributes only |
-| `FoundationPlatform.FrameworkInspector.Editor` | `Editor/FrameworkInspector/` | reflection-driven inspector engine (drawer, resolver, GUI kit) |
-| `FoundationPlatform.Gizmos` | `Runtime/Gizmos/`, `Editor/Gizmos/` | scene-view gizmo drawing |
-| `FoundationPlatform.Utilities.Menus` | `Runtime/Menus/` | `MenuPaths`, `MenuPriorities` — Runtime asm, so no `.Editor.` in the name |
-| `FoundationPlatform.Editor.Utilities` | `Editor/Utilities/`, `Editor/Drawers/`, `Editor/Windows/`, `Editor/AnimGraph/` | general editor helpers |
-| `FoundationPlatform.Editor.Utilities.Messaging` | `Editor/Messaging/EventBus/` | EventBus debug windows |
-| `FoundationPlatform.Editor.Utilities.PresetAutomation` | `Editor/Tools/PresetAutomation/` | asset preset enforcement |
-| `FoundationPlatform.Editor.Utilities.Debugging` | `Editor/Debugging/` | in-context entity debugger overlay |
-| `FoundationPlatform.Editor.Utilities.Tools` | `Editor/Tools/` | `Weaver` (package→folder), misc one-off editor tools |
-| `FoundationPlatform.Editor.Tools` | `Editor/Tools/PrefabLightmapGenerator/` | lightmap data baking |
-| `FoundationPlatform.Editor.Utilities.Validation.UI` | `Editor/Validation/UI/` | UI convention enforcement |
-| `DebugXLogging` / `.ConsoleView.Editor` | `Editor/DebugX/`, `Editor/Console/` | **stale** — Runtime DebugX moved to `FoundationPlatform.DebugX`, Editor console half wasn't. See Known Issues. |
-| *(none — global)* | `Editor/CoroutineX/`, `Editor/Identity/` | pre-existing, `#if UNITY_EDITOR`-wrapped |
+| *(global)* | `Runtime/Messaging/EventBus/`, `Runtime/CoroutineX/`, `Runtime/Identity/` (value type) | `EventBus`, `BaseGameEvent`, `Identity`, `CoroutineX`, tween extensions |
+| `AetherNexus.FoundationPlatform` | `Runtime/Patterns/` | root types such as `FragmentData` |
+| `AetherNexus.FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` |
+| `AetherNexus.FoundationPlatform.Attributes` | `Runtime/Attributes/` | `[Tag]`, `[Layer]`, `[TooltipIcon]`, run-order attributes |
+| `AetherNexus.FoundationPlatform.Behaviours` | `Runtime/Behaviours/` | small reusable MonoBehaviours |
+| `AetherNexus.FoundationPlatform.DebugX` | `Runtime/DebugX/`, `Editor/DebugX/` | logging API + editor menu items |
+| `AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor` | `Editor/Console/` | DebugX Console window |
+| `AetherNexus.FoundationPlatform.FrameworkInspector` | `Runtime/FrameworkInspector/` | runtime-visible attributes |
+| `AetherNexus.FoundationPlatform.FrameworkInspector.Editor` | `Editor/FrameworkInspector/` | inspector engine, `GuiKit` |
+| `AetherNexus.FoundationPlatform.Gizmos` | `Runtime/Gizmos/`, `Editor/Gizmos/` | scene-view gizmo drawing |
+| `AetherNexus.FoundationPlatform.TweenX` / `.TweenX.Feedbacks` / `.TweenX.EditorTools` | `Runtime/TweenX/`, `Editor/TweenX/` | tweens + Feedback player |
+| `AetherNexus.FoundationPlatform.Utilities.Menus` | `Runtime/Menus/` | `MenuPaths`, `MenuPriorities` |
+| `AetherNexus.FoundationPlatform.Editor.Utilities` (+ `.Messaging`, `.Debugging`, `.Tools`, `.Validation.UI`, …) | `Editor/Utilities/`, `Editor/Messaging/`, … | general editor helpers and windows |
+| `AetherNexus.FoundationPlatform.Editor.Tools` | `Editor/Tools/PrefabLightmapGenerator/` | lightmap baking |
 
-**Rule of thumb:** everything is `FoundationPlatform.*`, with `.Editor` inserted at the point the type becomes editor-only. Exception is the `DebugXLogging` leftover above.
+**Rule of thumb:** prefer `AetherNexus.FoundationPlatform.*`, with `.Editor` (or an `Editor` asm) where types are editor-only. Global APIs stay global by design.
 
 ---
 
 ## Assembly definitions
 
 ```
-FoundationPlatform.Runtime.asmdef   (Runtime/)
+UniTask                          (Runtime/ThirdParty/UniTask/)   — embedded
+FoundationPlatform.Runtime       (Runtime/)
   references: Unity.InputSystem, Unity.TextMeshPro, UniTask
 
-FoundationPlatform.Editor.asmdef    (Editor/)
+UniTask.Editor                   (Editor/ThirdParty/UniTask/)
+FoundationPlatform.Editor        (Editor/)
   references: FoundationPlatform.Runtime
   includePlatforms: [Editor]
 ```
 
-No `Tests/` asmdef yet.
+Optional editor asmdefs (EditorEnhancerX, HierarchyX, ProjectWindowX, StaleComponentGuard) require scripting define `HOMAM_GEC` and stay inactive for standalone installs.
 
 ---
 
@@ -62,7 +63,7 @@ EventBus.Publish(myEvent);
 
 - Events carry an `Identity` channel; `Publish()` routes to that channel's subscribers.
 - `[BroadcastGlobal]` — event delivered to all channels regardless of `Identity`.
-- `BeginDomainPublishGate()` / `EndDomainPublishGate()` — scoped gate; `DomainEvent`s only publish inside a gate (Commit phase of the action pipeline). Publishing a `DomainEvent` outside a gate is a bug, not a fallback case — it throws/asserts rather than silently no-op'ing.
+- `BeginDomainPublishGate()` / `EndDomainPublishGate()` — scoped gate; `DomainEvent`s only publish inside an open gate (typically during a committed action phase in higher-level AetherNexus products). Publishing a `DomainEvent` outside a gate fails loudly (assert/throw), not silently.
 - Subscribers invoked priority-sorted, higher first.
 
 | Type | Role |
@@ -139,7 +140,7 @@ State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
 All singletons handle application-quit via an `isQuitting` flag (don't recreate instances during teardown).
 
-`FragmentData` is used throughout gameplay frameworks for composition-over-inheritance SO config: `WeaponCombatFragment`, `ItemContainerDefinition`, `ShopOfferConfigData`, `AIBehaviorDefinition`, etc.
+`FragmentData` is the recommended pattern for ScriptableObject-or-inline config across AetherNexus gameplay packages.
 
 ---
 
@@ -203,24 +204,24 @@ Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenera
 
 | Tool | Location | Purpose |
 |---|---|---|
-| Framework Inspector | `Editor/FrameworkInspector/` | reflection-driven inspector engine (attribute-based groups, expression resolver, dropdowns, list drawer) |
+| Framework Inspector | `Editor/FrameworkInspector/` | Attribute-based inspector engine (groups, drawers, `GuiKit`) |
+| DebugX Console | `Editor/Console/` | Structured log console — **Window → DebugX Console...** |
+| Event Bus windows | `Editor/Messaging/EventBus/` | Debug hub — **Window → Event Bus...** |
+| Tween Debugger | `Editor/TweenX/` | Live tweens — **Window → TweenX → Tween Debugger** |
+| UI Validation | `Editor/Validation/UI/` | UI hierarchy/naming conventions (asset postprocessor) |
+| Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import |
+| Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
+| Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
+| Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities |
+| Prefab Lightmap Generator | `Editor/Tools/PrefabLightmapGenerator/` | Prefab lightmap baking |
 
 ### Framework Inspector IMGUI theme
 
-Inspector chrome (groups, buttons, tables, progress bars, menu selection) is centralized in `Editor/FrameworkInspector/FrameworkInspectorTheme.cs`. `GuiKit` is the public facade for non-inspector editor windows that need the same boxes/foldouts/titles.
+Inspector chrome is centralized in `FrameworkInspectorTheme.cs`. `GuiKit` is the public facade for non-inspector editor windows.
 
-- Default serialized fields still draw through `EditorGUILayout.PropertyField` (native inspector alignment).
-- `[FoldoutGroup]` keeps plain foldouts on nested objects to avoid arrow/box overlap.
-- Action buttons use compact toolbar styling (`EditorStyles.miniButton` via theme).
-- Visual regression harness: **Tools → HOMAM → Framework Inspector Demo** (UIToolkit shell + `IMGUIContainer`).
-
-| UI Validation | `Editor/Validation/UI/` | enforces UI hierarchy/naming conventions, runs as asset postprocessor |
-| Preset Automation | `Editor/Tools/PresetAutomation/` | enforces asset presets on import |
-| DebugX Console | `Editor/Console/` | see Logging section above |
-| Entity Debugger Overlay | `Editor/Debugging/` | selection-following SceneView overlay, unifies per-domain debug sections via `IEntityDebugSection` |
-| Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | scene navigation dropdown |
-| Weaver | `Editor/Tools/Weaver.cs` | package/folder extraction tool |
-| Prefab Lightmap Generator | `Editor/Tools/PrefabLightmapGenerator/` | lightmap data baking for prefabs |
+- Default fields still draw through `EditorGUILayout.PropertyField`.
+- Visual harness: **Tools → Diagnostics → Framework Inspector Demo**.
+- Full attribute matrix: [FrameworkInspector.md](../DOCS/FrameworkInspector.md).
 
 ---
 

@@ -78,7 +78,7 @@ MonoBehaviour:
   successSignal: Animation sets resolve in play mode and currency refresh completes
     without errors.
   exampleSceneAsset: {fileID: 0}
-  documentationPath: Assets/Frameworks/FoundationPlatform/ARCHITECTURE.md
+  documentationPath: Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md
   prefabFolderPath: 
   validateMenuPaths: []
   packageToolMenuPaths:

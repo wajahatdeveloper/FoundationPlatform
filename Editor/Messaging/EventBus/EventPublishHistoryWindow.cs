@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-#pragma warning disable CS0618 // legacy editor-tooling compatibility
 #pragma warning disable CS0414 // Serialized/inspector-driven error flags
 using System;
 using System.Collections.Generic;
@@ -142,14 +141,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				try
 				{
-					var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(buildTargetGroup);
+					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(
+						BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
 					var currentDefines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
 					
 					if (string.IsNullOrEmpty(currentDefines))
 					{
 						PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, "RULESYSTEM_PRESENT");
-						Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + buildTargetGroup);
+						Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + namedBuildTarget.TargetName);
 					}
 					else
 					{
@@ -158,11 +157,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 						{
 							defines.Add("RULESYSTEM_PRESENT");
 							PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, string.Join(";", defines));
-							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + buildTargetGroup);
+							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + namedBuildTarget.TargetName);
 						}
 						else
 						{
-							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define already exists in " + buildTargetGroup);
+							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define already exists in " + namedBuildTarget.TargetName);
 						}
 					}
 				}
@@ -176,8 +175,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				try
 				{
-					var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(buildTargetGroup);
+					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(
+						BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
 					var currentDefines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
 					
 					if (string.IsNullOrEmpty(currentDefines))

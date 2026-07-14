@@ -1,5 +1,6 @@
 {
     "name": "EditorEnhancerX.Editor",
+    "rootNamespace": "AetherNexus.FoundationPlatform.EditorEnhancerX",
     "references": [
         "FoundationPlatform.Runtime",
         "FoundationPlatform.Editor"

@@ -1,38 +1,46 @@
-# FrameworkInspector
+# Framework Inspector
 
-HOMAM's in-house inspector attribute engine (Odin-style surface, IMGUI renderer). Runtime attributes live in `Runtime/FrameworkInspector/FrameworkInspectorAttributes.cs`; editor implementation is under `Editor/FrameworkInspector/`.
+Attribute-driven inspector engine for AetherNexus (Odin-style surface, IMGUI renderer).
+
+- **Runtime attributes:** `AetherNexus.FoundationPlatform.FrameworkInspector` — `Runtime/FrameworkInspector/FrameworkInspectorAttributes.cs`
+- **Editor engine:** `AetherNexus.FoundationPlatform.FrameworkInspector.Editor` — `Editor/FrameworkInspector/`
+
+Related: [Architecture](../Documentation~/ARCHITECTURE.md) · Demo menu **Tools → Diagnostics → Framework Inspector Demo**
 
 ## Opt-in
 
 **Components / ScriptableObjects** — global fallback applies automatically via `FrameworkFallbackEditor`. For explicit control or append UI:
 
 ```csharp
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using UnityEditor;
+
 [CustomEditor(typeof(MyType))]
 public sealed class MyTypeEditor : FrameworkEditor
 {
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
-        // Optional summary using GuiKit (not raw HelpBox):
         GuiKit.InfoBox("Extra context.", InfoMessageType.Info);
     }
 }
 ```
 
-**Nested `[Serializable]` list elements** — register a 3-line drawer so `ShowIf` / `ReadOnly` / buttons work inside lists:
+**Nested `[Serializable]` list elements** — register a drawer so `ShowIf` / `ReadOnly` / buttons work inside lists:
 
 ```csharp
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using UnityEditor;
+
 [CustomPropertyDrawer(typeof(MyPayload))]
 internal sealed class MyPayloadDrawer : FrameworkReflectedDrawer { }
 ```
 
-See `FrameworkReflectedDrawers.cs` in each framework's Editor folder for registered payload types.
-
 **Editor windows** — use `GuiKit` / `FrameworkInspectorTheme` for boxes, titles, info callouts, and toolbars.
 
-## Visual regression harness
+## Visual demo
 
-Menu: **Tools → HOMAM → Framework Inspector Demo**. Exercises the attribute surface through `FrameworkInspectorDemoData`.
+**Tools → Diagnostics → Framework Inspector Demo** — exercises the attribute surface through an in-memory `FrameworkInspectorDemoData` object.
 
 ## Attribute support matrix
 
@@ -52,7 +60,7 @@ Menu: **Tools → HOMAM → Framework Inspector Demo**. Exercises the attribute 
 | `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Supported | |
 | `DisplayAsString`, `RequireComponentButton` | Supported | |
 
-### API-only (declared, not fully implemented)
+### Declared but not fully implemented (API-only)
 
 - `ValueDropdown`: `AppendNextDrawer`, `IsUniqueList`, `DisableListAddButtonBehaviour`, `HideChildProperties`, `ExpandAllMenuItems`
 - `AssetSelector`: `ExcludeExistingValuesInList`, `ExpandAllMenuItems`
@@ -63,20 +71,20 @@ Menu: **Tools → HOMAM → Framework Inspector Demo**. Exercises the attribute 
 
 ## Editor extension guidelines
 
-1. **Prefer attributes on runtime types** over custom IMGUI in editors.
-2. **Extend `FrameworkEditor`** and call `base.OnInspectorGUI()` first.
-3. **Append UI** with `GuiKit.Title`, `GuiKit.InfoBox`, `GuiKit.ValidationBox` — not `EditorGUILayout.HelpBox` / raw `EditorStyles.boldLabel`.
-4. **Nested payloads in lists** need `FrameworkReflectedDrawer` unless a bespoke `PropertyDrawer` already exists (e.g. `AttackEntry`, `ConsiderationPayload`).
-5. **Do not hand-edit generated code** — change sources and regenerate per project conventions.
-6. **Cache busting**: context menu *Force Rebuild Framework Inspector Cache* on components if metadata looks stale.
-7. **Foldouts / headers**: use the canonical flat widgets — `FrameworkInspectorTheme.SectionFoldout` (full-width, click-anywhere group header), or `EditorGUILayout/EditorGUI.Foldout(..., FrameworkInspectorTheme.FlatFoldoutStyle)` for layout foldouts (lists, nested structs). Header labels use `FrameworkInspectorTheme.FlatHeaderLabel` (bold 12pt); lead space before any header is `FrameworkInspectorTheme.HeaderSpacing`. Do **not** reintroduce bespoke `EditorStyles.foldoutHeader` bars or ad-hoc `Space(4)` — it breaks the flat/compact consistency.
+1. Prefer attributes on runtime types over custom IMGUI in editors.
+2. Extend `FrameworkEditor` and call `base.OnInspectorGUI()` first.
+3. Append UI with `GuiKit.Title`, `GuiKit.InfoBox`, `GuiKit.ValidationBox` — not raw `EditorGUILayout.HelpBox`.
+4. Nested payloads in lists need `FrameworkReflectedDrawer` unless a bespoke `PropertyDrawer` already exists.
+5. Do not hand-edit generated code — change sources and regenerate.
+6. Cache busting: context menu **Force Rebuild Framework Inspector Cache** if metadata looks stale.
+7. Foldouts / headers: use `FrameworkInspectorTheme.SectionFoldout` or `FlatFoldoutStyle` / `FlatHeaderLabel` — avoid bespoke `foldoutHeader` bars.
 
 ## Key types
 
 | Type | Role |
 |------|------|
 | `FrameworkEditor` | Base inspector |
-| `FrameworkFallbackEditor` | Global fallback for all `UnityEngine.Object` |
+| `FrameworkFallbackEditor` | Global fallback for `UnityEngine.Object` |
 | `FrameworkInspectorRenderer` | Attribute tree + field drawer engine |
 | `FrameworkInspectorTheme` | Skin-aware colors, styles, layout helpers |
 | `GuiKit` | Public facade for editor windows |

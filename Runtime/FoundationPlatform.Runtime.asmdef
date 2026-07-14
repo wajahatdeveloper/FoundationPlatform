@@ -1,6 +1,6 @@
 {
     "name": "FoundationPlatform.Runtime",
-    "rootNamespace": "",
+    "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [
         "Unity.InputSystem",
         "Unity.TextMeshPro",

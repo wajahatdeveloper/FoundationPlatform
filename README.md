@@ -1,66 +1,94 @@
 # Foundation Platform
 
-Core foundation layer for the HOMAM project. Leaf dependency for all gameplay frameworks — no dependencies on other HOMAM packages.
+Free Unity foundation layer for the **AetherNexus** toolkit (`com.aethernexus.foundationplatform`). Messaging, logging, coroutines, tweens, patterns, and editor tooling — with no dependency on GameEngineCore or other gameplay packages.
+
+**Publisher:** [AetherNexus](https://aethernexus.online) · **Support:** wajahatdeveloperqs@gmail.com  
+**Unity:** 6000.3.10f1+ · **URP** recommended · **License:** [MIT](LICENSE.md)  
+**Third-party:** Cysharp UniTask (MIT) — see [Third-Party Notices.txt](Third-Party%20Notices.txt)
 
 ## What's inside
 
-- **EventBus** — pub/sub messaging with channel routing (`Identity`), priority-sorted subscribers, domain-event publish gate
-- **DebugX** — structured, zero-alloc-path logging with channels, sinks (Editor console / Unity console / file / JSON), and an in-editor console window
-- **CoroutineX** — coroutine lifecycle with ownership transfer, `Stop`/`Reset`/`Rerun`, and async-awaitable wait points
-- **Patterns** — `SingletonBehaviour<T>`, `PersistentSingletonBehaviour<T>`, `Singleton<T>`, `FragmentData<TDefinition, TPayload>` (SO-or-inline config)
-- **Reactive types** — `Observable<T>`, `ObservableList<T>`, `MaybeMonad<T>`, `OptionalValue<T>` / `OptionalReference<T>`
-- **Identity** — string-backed entity/channel id (`Identity`, `IIdentity`, `IdentityComponent`)
-- **Animation** — `AnimationSet`, `LocomotionBlendProfile`, `PlayableGraphBridge` (Animancer-adjacent), animation-set editor tooling
-- **Gizmos** — performant scene-view gizmo drawing API
-- **Extensions** — ~180 extension methods (GameObject/Component, collections, math, physics, rendering, UI, storage)
-- **Editor tooling** — Framework Inspector (reflection-driven inspector engine), UI Validation, Preset Automation, DebugX Console window, Scene Switcher
+| Area | What you get |
+|------|----------------|
+| **EventBus** | Pub/sub with `Identity` channels and priority subscribers |
+| **DebugX** | Structured logging + in-Editor console |
+| **CoroutineX** | Owned coroutine lifecycle (`Stop` / `Reset` / `Rerun`) |
+| **TweenX** | Tweens + Feedback player (no DOTween required) |
+| **Patterns** | Singletons, `FragmentData`, reactive `Observable` types |
+| **Identity** | String-backed entity / channel ids |
+| **Animation** | `AnimationSet`, locomotion blend profiles, playable tooling |
+| **Extensions** | Broad GameObject / math / physics / UI helpers |
+| **Editor** | Framework Inspector, DebugX Console, Event Bus window, validation & utilities |
 
-See [Documentation~/ARCHITECTURE.md](Documentation~/ARCHITECTURE.md) for namespace map, class tables, and design rationale.
+Docs index: [Documentation~/index.md](Documentation~/index.md)
 
-## Install
+## Install (Asset Store UPM)
 
-Embedded package — already present at `Packages/com.homam.foundationplatform/` in this repo.
+1. Package Manager → **My Assets** → **Foundation Platform** → Download / Import.
+2. Project Settings → Player → **Active Input Handling** = Input System Package **or** Both (`com.unity.inputsystem`).
+3. Confirm **uGUI** is present (`com.unity.ugui` — included in typical URP templates).
+4. Optional: Package Manager → Samples → import **EventBus + CoroutineX**.
 
-Released standalone via [OpenUPM](https://openupm.com/) at `com.homam.foundationplatform`:
-
-```
-openupm add com.homam.foundationplatform
-```
-
-or add the scoped registry manually in `Packages/manifest.json` — see [openupm.com/docs/getting-started.html](https://openupm.com/docs/getting-started.html).
+**Do not** install Cysharp UniTask separately. This package embeds UniTask **2.5.11**; a second UniTask package collides on the `UniTask` assembly name.
 
 ## Dependencies
 
-- `com.cysharp.unitask` 2.3.3
-- `com.unity.inputsystem` 1.18.0
-- `com.unity.ugui` 2.0.0
+| Dependency | How provided |
+|------------|----------------|
+| UniTask 2.5.11 (MIT) | Embedded under `Runtime/ThirdParty/UniTask` and `Editor/ThirdParty/UniTask` |
+| `com.unity.inputsystem` | Declared in `package.json` |
+| `com.unity.ugui` | Declared in `package.json` |
 
 ## Quick usage
 
 ```csharp
-// Event bus
+using AetherNexus.FoundationPlatform.DebugX;
+
 EventBus.Subscribe<MyEvent>(OnMyEvent, priority: 0);
 EventBus.Publish(new MyEvent(...));
 
-// Logging (zero-alloc path)
-DebugX.Logger(LogChannels.AI).Info("threat found: {target}", targetId);
+DebugX.Logger(LogChannels.DevTools).Info("threat found: {target}", targetId);
 
-// Coroutine lifecycle
 var handle = CoroutineX.Run(MyRoutine(), owner: gameObject);
-await handle.WaitForComplete();
+yield return handle.WaitForComplete();
+
+transform.TweenMove(target, 1f).SetEase(Ease.OutBack);
 ```
+
+`EventBus`, `CoroutineX`, and tween extension methods are in the **global** namespace. Logging types live under `AetherNexus.FoundationPlatform.DebugX`.
 
 ## Assemblies
 
-| Assembly | Folder | Notes |
-|---|---|---|
-| `FoundationPlatform.Runtime` | `Runtime/` | references Unity.InputSystem, Unity.TextMeshPro, UniTask |
-| `FoundationPlatform.Editor` | `Editor/` | editor-only, references `FoundationPlatform.Runtime` |
+| Assembly | Role |
+|----------|------|
+| `UniTask` | Embedded Cysharp UniTask |
+| `FoundationPlatform.Runtime` | Runtime APIs |
+| `FoundationPlatform.Editor` | Editor tooling |
+| `UniTask.Editor` | UniTask Tracker window |
 
-## Status
+Optional editor assemblies (EditorEnhancerX, HierarchyX, ProjectWindowX, StaleComponentGuard) compile only when the scripting define `HOMAM_GEC` is present (used with GameEngineCore installs). They stay inactive for a standalone Foundation Platform project.
 
-Active development — no test suite yet, API may shift. See [CHANGELOG.md](CHANGELOG.md).
+## Package Integration Manifest
 
-## License
+`PackageIntegrationManifest.asset` registers this package with **GameEngineCore Central Authoring** when that product is installed. It is optional metadata for the wider AetherNexus hub — not required for EventBus, DebugX, CoroutineX, or TweenX.
 
-[MIT](LICENSE.md) — free to use and modify, keep the copyright notice, don't represent it as your own work.
+## Compatibility
+
+- **Unity** 6000.3.10f1+
+- **URP** recommended (Unity 6 default)
+- **Fast Enter Play Mode** (Domain Reload disabled): **not supported**. Keep Domain Reload enabled.
+- Verified clean import on an empty URP **6000.3.10f1** project
+
+## Samples
+
+Import **EventBus + CoroutineX** from Package Manager Samples. Details: [SAMPLES.md](SAMPLES.md)
+
+## Support
+
+- Website: [aethernexus.online](https://aethernexus.online)
+- Email: wajahatdeveloperqs@gmail.com
+- Changes: [CHANGELOG.md](CHANGELOG.md)
+
+## Version
+
+**1.0.0** — public API; breaking changes bump MAJOR.

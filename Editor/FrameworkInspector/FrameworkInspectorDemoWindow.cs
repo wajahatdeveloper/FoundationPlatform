@@ -11,8 +11,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Live parity harness for the <see cref="FrameworkEditor"/> engine. Menu:
-    /// <c>Tools/HOMAM/Framework Inspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
-    /// that exercises every supported <see cref="FoundationPlatform.FrameworkInspector"/> attribute, drawn through the
+    /// <c>Tools/Diagnostics/Framework Inspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
+    /// that exercises every supported Framework Inspector attribute, drawn through the
     /// in-house engine. Use it as the visual regression harness for the attribute surface.
     /// Editor-only asset — never ships.
     /// </summary>

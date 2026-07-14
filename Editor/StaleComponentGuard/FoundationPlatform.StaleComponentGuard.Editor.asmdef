@@ -1,5 +1,6 @@
 {
     "name": "FoundationPlatform.StaleComponentGuard.Editor",
+    "rootNamespace": "AetherNexus.FoundationPlatform.StaleComponentGuard.Editor",
     "references": [
         "HierarchyX.Editor",
         "FoundationPlatform.Editor",
