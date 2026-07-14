@@ -302,8 +302,26 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                     if (!failed && v != null) label = v.ToString();
                 }
             }
+            // SerializeReference polymorphic elements: fall back to the concrete type name
+            // (the actual step/verb) instead of Unity's generic "Element N" displayName.
+            if (label == null && elemProp.propertyType == SerializedPropertyType.ManagedReference)
+                label = ManagedReferenceTypeLabel(elemProp);
             if (label == null) label = elemProp.displayName;
             return showIndex ? $"{index}: {label}" : label;
+        }
+
+        // "UnityEngine.CoreModule GameplayAbilitySystem.ApplyEffectStep" -> "Apply Effect".
+        private static string ManagedReferenceTypeLabel(SerializedProperty elemProp)
+        {
+            string full = elemProp.managedReferenceFullTypename;
+            if (string.IsNullOrEmpty(full)) return null; // null/empty reference: leave as displayName ("None")
+            int space = full.LastIndexOf(' ');
+            string typeName = space >= 0 ? full.Substring(space + 1) : full;
+            int dot = typeName.LastIndexOf('.');
+            if (dot >= 0) typeName = typeName.Substring(dot + 1);
+            if (typeName.EndsWith("Step", StringComparison.Ordinal) && typeName.Length > 4)
+                typeName = typeName.Substring(0, typeName.Length - 4);
+            return ObjectNames.NicifyVariableName(typeName);
         }
 
         private static string ElementValueText(SerializedProperty elemProp)

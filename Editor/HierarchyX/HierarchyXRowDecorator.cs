@@ -85,6 +85,15 @@ namespace HierarchyX {
             }
         }
 
+        /// <summary>
+        /// Drop the per-row decoration cache and repaint. Call when a decorator's <i>result</i> can change
+        /// without a hierarchy-structure change (e.g. a background scan reclassified a row) — otherwise the
+        /// stale cached decoration would persist until the next <see cref="EditorApplication.hierarchyChanged"/>.
+        /// </summary>
+        public static void InvalidateCache() {
+            ClearCache();
+        }
+
         /// <summary>True if at least one decorator is present (cheap early-out for the draw path).</summary>
         public static bool HasAny {
             get {
