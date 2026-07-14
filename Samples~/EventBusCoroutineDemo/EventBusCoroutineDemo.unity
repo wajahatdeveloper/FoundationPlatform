@@ -379,7 +379,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1488224001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feb2f98d3b9c8ce4da882218c2dc71b2, type: 3}
+  m_Script: {fileID: 11500000, guid: c25de6c0f82129b4c91db3ee7e89ce5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AetherNexus.FoundationPlatform.Samples.EventBusCoroutineSample
   marker: {fileID: 0}

@@ -1,10 +1,12 @@
 using System.Collections;
 using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Messaging;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace AetherNexus.FoundationPlatform.Samples
 {
+    using CoroutineX = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX;
     using DebugX = AetherNexus.FoundationPlatform.DebugX.DebugX;
 
     /// <summary>

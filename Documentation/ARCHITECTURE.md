@@ -4,7 +4,7 @@ Package id: `com.aethernexus.foundationplatform` (`Packages/com.aethernexus.foun
 
 Base platform layer for the AetherNexus ecosystem. No dependencies on other AetherNexus gameplay packages — they depend on this package, not the reverse. Provides: EventBus, DebugX, CoroutineX, TweenX, patterns, animation data packaging, gizmos, extensions, and editor authoring tooling (Framework Inspector, UI Validation, Preset Automation).
 
-See also: [index.md](index.md) · [TweenX](../DOCS/TweenX.md) · [Framework Inspector](../DOCS/FrameworkInspector.md)
+See also: [index.md](index.md) · [TweenX](TweenX.md) · [Framework Inspector](FrameworkInspector.md)
 
 ---
 

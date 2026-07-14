@@ -5,7 +5,7 @@ Attribute-driven inspector engine for AetherNexus (Odin-style surface, IMGUI ren
 - **Runtime attributes:** `AetherNexus.FoundationPlatform.FrameworkInspector` — `Runtime/FrameworkInspector/FrameworkInspectorAttributes.cs`
 - **Editor engine:** `AetherNexus.FoundationPlatform.FrameworkInspector.Editor` — `Editor/FrameworkInspector/`
 
-Related: [Architecture](../Documentation~/ARCHITECTURE.md) · Demo menu **Tools → Diagnostics → Framework Inspector Demo**
+Related: [Architecture](ARCHITECTURE.md) · Demo menu **Tools → Diagnostics → Framework Inspector Demo**
 
 ## Opt-in
 

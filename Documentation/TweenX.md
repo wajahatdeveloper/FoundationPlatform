@@ -4,7 +4,7 @@ First-party tween and Feedback system in Foundation Platform. DOTween-style ergo
 
 Namespace: `AetherNexus.FoundationPlatform.TweenX` (Feedbacks under `.Feedbacks`). Extension methods such as `TweenMove` are **global** (no `using` required).
 
-Related: [Architecture](../Documentation~/ARCHITECTURE.md) · Debugger **Window → TweenX → Tween Debugger**
+Related: [Architecture](ARCHITECTURE.md) · Debugger **Window → TweenX → Tween Debugger**
 
 ## Quick start
 

@@ -6,8 +6,8 @@ User-facing guides for `com.aethernexus.foundationplatform`.
 |-----|----------|
 | [../README.md](../README.md) | Install, overview, quick start |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Systems, namespaces, assemblies |
-| [../DOCS/TweenX.md](../DOCS/TweenX.md) | Tweens and Feedback player |
-| [../DOCS/FrameworkInspector.md](../DOCS/FrameworkInspector.md) | Attribute inspector engine |
+| [TweenX.md](TweenX.md) | Tweens and Feedback player |
+| [FrameworkInspector.md](FrameworkInspector.md) | Attribute inspector engine |
 | [../SAMPLES.md](../SAMPLES.md) | Package Manager samples |
 | [../CHANGELOG.md](../CHANGELOG.md) | Version history |
 | [../LICENSE.md](../LICENSE.md) | MIT license |
