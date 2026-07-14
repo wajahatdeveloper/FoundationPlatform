@@ -51,7 +51,7 @@ public class AutoBinderToolWindow : EditorWindow
 	private string previewGeneratedCode = string.Empty;
 
 
-	[MenuItem(MenuPaths.WindowCore.AutoBinder, priority = 1104)]
+	[MenuItem(MenuPaths.WindowUtilities.AutoBinder, priority = MenuPriorities.WindowUtilities + 4)]
 	public static void Open()
 	{
 		GetWindow<AutoBinderToolWindow>("Auto Binder");

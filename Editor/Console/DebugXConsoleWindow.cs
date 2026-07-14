@@ -100,7 +100,7 @@ namespace FoundationPlatform.DebugX.ConsoleView.Editor
         private int _dragAnchor;
         private bool _dragMoved;
 
-        [MenuItem(MenuPaths.WindowDomain.DebugXConsole)]
+        [MenuItem(MenuPaths.WindowDebugX.DebugXConsole, priority = MenuPriorities.WindowDebugX)]
         public static void Open()
         {
             var w = GetWindow<DebugXConsoleWindow>();

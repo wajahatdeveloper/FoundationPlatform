@@ -19,7 +19,7 @@ namespace FoundationPlatform.TweenX.EditorTools
         private static readonly List<TweenManager.TweenInfo> _buffer = new(256);
         private Vector2 _scroll;
 
-        [MenuItem(MenuPaths.WindowDomain.TweenDebugger, priority = MenuPriorities.WindowDomain)]
+        [MenuItem(MenuPaths.WindowTweenX.TweenDebugger, priority = MenuPriorities.WindowTweenX)]
         public static void Open()
         {
             var win = GetWindow<TweenDebuggerWindow>("Tween Debugger");

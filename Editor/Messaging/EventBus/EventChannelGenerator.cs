@@ -15,7 +15,7 @@ namespace FoundationPlatform.Editor.Utilities.Messaging
         
         private Vector2 _scrollPosition;
         
-		[MenuItem(MenuPaths.WindowCore.CreateEventChannel, priority = 1503)]
+		[MenuItem(MenuPaths.WindowUtilities.CreateEventChannel, priority = MenuPriorities.WindowUtilities + 5)]
         public static void ShowWindow()
         {
             var window = GetWindow<EventChannelGenerator>("Event Channel Generator");

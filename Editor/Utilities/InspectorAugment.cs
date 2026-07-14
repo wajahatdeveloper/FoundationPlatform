@@ -2,6 +2,7 @@
 using System;
 using UnityEngine;
 using System.Linq;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using System.Collections.Generic;
 
@@ -19,7 +20,7 @@ static class InspectorAugment
     private static Dictionary<Component, HideFlags> OriginalHideFlags;
     private static bool _repaintSubscribed;
 
-    [MenuItem("CONTEXT/Component/Fold All Components", priority = 50)]
+    [MenuItem(MenuPaths.ContextComponent.FoldAllComponents, priority = 50)]
     public static void FoldAllComponents()
     {
         if (!Selection.activeGameObject)
@@ -37,13 +38,13 @@ static class InspectorAugment
         ActiveEditorTracker.sharedTracker.ForceRebuild();
     }
 
-    [MenuItem("CONTEXT/Component/Fold All Components", validate = true)]
+    [MenuItem(MenuPaths.ContextComponent.FoldAllComponents, validate = true)]
     private static bool FoldAllComponents_Validate()
     {
         return Selection.activeGameObject != null;
     }
 
-    [MenuItem("CONTEXT/Component/Expand All Components", priority = 51)]
+    [MenuItem(MenuPaths.ContextComponent.ExpandAllComponents, priority = 51)]
     public static void ExpandAllComponents()
     {
         if (!Selection.activeGameObject)
@@ -61,7 +62,7 @@ static class InspectorAugment
         ActiveEditorTracker.sharedTracker.ForceRebuild();
     }
 
-    [MenuItem("CONTEXT/Component/Expand All Components", validate = true)]
+    [MenuItem(MenuPaths.ContextComponent.ExpandAllComponents, validate = true)]
     private static bool ExpandAllComponents_Validate()
     {
         return Selection.activeGameObject != null;

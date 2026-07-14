@@ -4,30 +4,31 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using FoundationPlatform.Utilities.Menus;
 
 public static class ClipboardToScript
 {
-    [MenuItem("Assets/Create/From Clipboard/C# Script")]
+    [MenuItem(MenuPaths.AssetsCreate.CSharpScript)]
     static void CreateScript()
     {
         Show(FileType.CSharp);
     }
 
-    [MenuItem("Assets/Create/From Clipboard/Shader")]
+    [MenuItem(MenuPaths.AssetsCreate.Shader)]
     static void CreateShader()
     {
         Show(FileType.Shader);
     }
 
-    [MenuItem("Assets/Create/From Clipboard/Text File")]
+    [MenuItem(MenuPaths.AssetsCreate.TextFile)]
     static void CreateTextFile()
     {
         Show(FileType.TXT);
     }
 
-    [MenuItem("Assets/Create/From Clipboard/C# Script", true)]
-    [MenuItem("Assets/Create/From Clipboard/Shader", true)]
-    [MenuItem("Assets/Create/From Clipboard/Text File", true)]
+    [MenuItem(MenuPaths.AssetsCreate.CSharpScript, true)]
+    [MenuItem(MenuPaths.AssetsCreate.Shader, true)]
+    [MenuItem(MenuPaths.AssetsCreate.TextFile, true)]
     static bool ValidateCreate()
     {
         return true;

@@ -1,6 +1,9 @@
 {
     "name": "EditorEnhancerX.Editor",
-    "references": [],
+    "references": [
+        "FoundationPlatform.Runtime",
+        "FoundationPlatform.Editor"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"

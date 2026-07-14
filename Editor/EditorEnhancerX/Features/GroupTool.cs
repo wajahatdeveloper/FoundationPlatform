@@ -1,4 +1,5 @@
 using System.Linq;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,16 +23,16 @@ namespace EditorEnhancerX {
                 Ungroup);
         }
 
-        [MenuItem("GameObject/Group Selection", false, 0)]
+        [MenuItem(MenuPaths.EditorEnhancer.GroupSelection, false, 0)]
         private static void GroupMenu() => Group();
 
-        [MenuItem("GameObject/Group Selection", true)]
+        [MenuItem(MenuPaths.EditorEnhancer.GroupSelection, true)]
         private static bool GroupMenuValidate() => Selection.transforms.Length > 0;
 
-        [MenuItem("GameObject/Ungroup", false, 1)]
+        [MenuItem(MenuPaths.EditorEnhancer.Ungroup, false, 1)]
         private static void UngroupMenu() => Ungroup();
 
-        [MenuItem("GameObject/Ungroup", true)]
+        [MenuItem(MenuPaths.EditorEnhancer.Ungroup, true)]
         private static bool UngroupMenuValidate()
             => Selection.transforms.Any(t => t.childCount > 0);
 

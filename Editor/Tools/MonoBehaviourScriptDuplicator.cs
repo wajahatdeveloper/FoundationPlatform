@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
@@ -43,26 +44,26 @@ public static class MonoBehaviourScriptDuplicator
 		}
 	}
 
-	[MenuItem("CONTEXT/MonoBehaviour/Duplicate", false, MenuPriority)]
+	[MenuItem(MenuPaths.ScriptDuplicator.Duplicate, false, MenuPriority)]
 	private static void Duplicate(MenuCommand command)
 	{
 		OpenGeneratorWindow(command, replaceAfterGenerate: false);
 	}
 
-	[MenuItem("CONTEXT/MonoBehaviour/Duplicate and Replace", false, MenuPriority + 1)]
+	[MenuItem(MenuPaths.ScriptDuplicator.DuplicateAndReplace, false, MenuPriority + 1)]
 	private static void DuplicateAndReplace(MenuCommand command)
 	{
 		OpenGeneratorWindow(command, replaceAfterGenerate: true);
 	}
 
-	[MenuItem("CONTEXT/MonoBehaviour/Duplicate", true)]
-	[MenuItem("CONTEXT/MonoBehaviour/Duplicate and Replace", true)]
+	[MenuItem(MenuPaths.ScriptDuplicator.Duplicate, true)]
+	[MenuItem(MenuPaths.ScriptDuplicator.DuplicateAndReplace, true)]
 	private static bool ValidateMenu(MenuCommand command)
 	{
 		return TryCreateSession(command, replaceAfterGenerate: false, out _);
 	}
 
-	[MenuItem("CONTEXT/MonoBehaviour/Replace Script...", false, MenuPriority + 2)]
+	[MenuItem(MenuPaths.ScriptDuplicator.ReplaceScript, false, MenuPriority + 2)]
 	private static void ReplaceScript(MenuCommand command)
 	{
 		var behaviour = command.context as MonoBehaviour;
@@ -70,7 +71,7 @@ public static class MonoBehaviourScriptDuplicator
 		ScriptReplacerWindow.Show(behaviour);
 	}
 
-	[MenuItem("CONTEXT/MonoBehaviour/Replace Script...", true)]
+	[MenuItem(MenuPaths.ScriptDuplicator.ReplaceScript, true)]
 	private static bool ValidateReplaceScript(MenuCommand command)
 	{
 		return command.context is MonoBehaviour;

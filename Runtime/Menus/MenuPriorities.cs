@@ -12,25 +12,37 @@ namespace FoundationPlatform.Utilities.Menus
     /// </summary>
     public static class MenuPriorities
     {
-        // ---- Tools menu bands ----
-        public const int Rebuild    = 1000; // Tools/Rebuild/*
-        public const int ItemCreate = 1010; // Tools/Item/Create/*
-        public const int Gas        = 1100; // Tools/GAS/*
-        public const int Character  = 1120; // Tools/Character/*
-        public const int Ai         = 1140; // Tools/AI/*
-        public const int Linting    = 1200; // Tools/GameEngineCore/Linting/*
-        public const int Packages   = 1250; // Tools/Packages/*
-        public const int Debug      = 1300; // Tools/Debug/*
-        public const int Input      = 1350; // Tools/GameEngineCore/Input/*
-        public const int Utilities  = 1400; // Tools/Utilities/*
-        public const int Diagnostics = 1450; // Tools/Diagnostics/* (former Tools/HOMAM)
+        // ---- Tools/GameEngineCore/<Module>/* bands ----
+        public const int Gas         = 1100; // Tools/GameEngineCore/GAS/*
+        public const int Character   = 1120; // Tools/GameEngineCore/Character/*
+        public const int Ai          = 1140; // Tools/GameEngineCore/AI/*
+        public const int ItemCreate  = 1160; // Tools/GameEngineCore/Item/Create/*
+        public const int Economy     = 1180; // Tools/GameEngineCore/Economy/*
+        public const int PresetLibrary = 1190; // Tools/GameEngineCore/PresetLibrary/*
+        public const int Network     = 1195; // Tools/GameEngineCore/Network/*
+        public const int Validation  = 1200; // Tools/GameEngineCore/Validation/* (GEC-owned half of the former shared Linting)
+        public const int Packages    = 1250; // Tools/GameEngineCore/Packages/*
+        public const int Input       = 1350; // Tools/GameEngineCore/Input/*
         public const int GameEngineCore = 1500; // Tools/GameEngineCore/* (misc)
 
-        // ---- Window menu bands ----
-        public const int WindowHub     = 500;  // Window/Core/Central Authoring (primary hub)
-        public const int WindowCore    = 1100; // Window/Core/* diagnostic + creator windows
-        public const int WindowCreators = 1500; // Window/Core/Create * scaffolds
-        public const int WindowDomain  = 1000; // Window/<Domain>/* (Combat, Character, Item, GAS...)
+        // ---- Tools/<Category>/* bands (FoundationPlatform, unwrapped) ----
+        public const int Rebuild    = 1000; // Tools/Rebuild/*
+        public const int Linting    = 1200; // Tools/Linting/* (FoundationPlatform-owned half of the former shared Linting)
+        public const int Debug      = 1300; // Tools/Debug/*
+        public const int Utilities  = 1400; // Tools/Utilities/*
+        public const int Diagnostics = 1450; // Tools/Diagnostics/*
+
+        // ---- Window/GameEngineCore/<Module>/* and Window/GameEngineCore/* bands ----
+        public const int WindowHub  = 500;  // Window/GameEngineCore/Central Authoring... (primary hub)
+        public const int WindowCore = 1100; // Window/GameEngineCore/* diagnostic + creator windows
+        public const int WindowCreators = 1500; // Window/GameEngineCore/Create * scaffolds
+        public const int WindowGas  = 1120; // Window/GameEngineCore/GAS/*
+
+        // ---- Window/<Category>/* bands (FoundationPlatform, unwrapped) ----
+        public const int WindowUtilities = 1100; // Window/Utilities/*
+        public const int WindowDebugX    = 1150; // Window/DebugX Console... (bare leaf, single window)
+        public const int WindowEventBus  = 1160; // Window/Event Bus... (bare leaf, single window)
+        public const int WindowTweenX    = 1170; // Window/Tween Debugger... (bare leaf, single window)
 
         // ---- Context / GameObject menu bands ----
         public const int ContextComponent = 50;  // CONTEXT/Component/*, CONTEXT/MonoBehaviour/*

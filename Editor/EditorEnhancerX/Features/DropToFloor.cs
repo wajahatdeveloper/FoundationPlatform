@@ -1,3 +1,4 @@
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,10 +20,10 @@ namespace EditorEnhancerX {
                 Execute);
         }
 
-        [MenuItem("GameObject/Drop To Floor", false, 2)]
+        [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, false, 2)]
         private static void Menu() => Execute();
 
-        [MenuItem("GameObject/Drop To Floor", true)]
+        [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, true)]
         private static bool MenuValidate() => Selection.transforms.Length > 0;
 
         private static bool Execute() {

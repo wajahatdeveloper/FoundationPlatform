@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -127,7 +128,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             FrameworkInspectorTheme.InvalidateSkinCache();
         }
 
-        [MenuItem("CONTEXT/Component/Force Rebuild Framework Inspector Cache")]
+        [MenuItem(MenuPaths.ContextComponent.ForceRebuildInspectorCache)]
         private static void ForceRebuildCache(MenuCommand command)
         {
             ClearCache();

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -14,24 +15,24 @@ namespace FoundationPlatform.FrameworkInspector.Editor
     {
         // ---- Reorder ----------------------------------------------------------
 
-        [MenuItem("CONTEXT/Component/Move To Top", false, 510)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToTop, false, 510)]
         private static void MoveToTop(MenuCommand cmd)
         {
             var component = (Component)cmd.context;
             while (ComponentUtility.MoveComponentUp(component)) { }
         }
 
-        [MenuItem("CONTEXT/Component/Move To Top", true)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToTop, true)]
         private static bool MoveToTopValidate(MenuCommand cmd) => CanReorder(cmd);
 
-        [MenuItem("CONTEXT/Component/Move To Bottom", false, 511)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToBottom, false, 511)]
         private static void MoveToBottom(MenuCommand cmd)
         {
             var component = (Component)cmd.context;
             while (ComponentUtility.MoveComponentDown(component)) { }
         }
 
-        [MenuItem("CONTEXT/Component/Move To Bottom", true)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToBottom, true)]
         private static bool MoveToBottomValidate(MenuCommand cmd) => CanReorder(cmd);
 
         private static bool CanReorder(MenuCommand cmd)
@@ -39,13 +40,13 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---- JSON copy/paste --------------------------------------------------
 
-        [MenuItem("CONTEXT/Component/Copy Values As JSON", false, 520)]
+        [MenuItem(MenuPaths.ContextComponent.CopyValuesAsJson, false, 520)]
         private static void CopyJson(MenuCommand cmd)
         {
             EditorGUIUtility.systemCopyBuffer = EditorJsonUtility.ToJson(cmd.context, true);
         }
 
-        [MenuItem("CONTEXT/Component/Paste Values From JSON", false, 521)]
+        [MenuItem(MenuPaths.ContextComponent.PasteValuesFromJson, false, 521)]
         private static void PasteJson(MenuCommand cmd)
         {
             var json = EditorGUIUtility.systemCopyBuffer;
@@ -63,14 +64,14 @@ namespace FoundationPlatform.FrameworkInspector.Editor
             }
         }
 
-        [MenuItem("CONTEXT/Component/Paste Values From JSON", true)]
+        [MenuItem(MenuPaths.ContextComponent.PasteValuesFromJson, true)]
         private static bool PasteJsonValidate(MenuCommand cmd)
         {
             var json = EditorGUIUtility.systemCopyBuffer;
             return !string.IsNullOrEmpty(json) && json.TrimStart().StartsWith("{");
         }
 
-        [MenuItem("CONTEXT/Component/Save Values To JSON File...", false, 522)]
+        [MenuItem(MenuPaths.ContextComponent.SaveValuesToJsonFile, false, 522)]
         private static void SaveJsonFile(MenuCommand cmd)
         {
             var component = cmd.context;
@@ -79,7 +80,7 @@ namespace FoundationPlatform.FrameworkInspector.Editor
                 System.IO.File.WriteAllText(path, EditorJsonUtility.ToJson(component, true));
         }
 
-        [MenuItem("CONTEXT/Component/Load Values From JSON File...", false, 523)]
+        [MenuItem(MenuPaths.ContextComponent.LoadValuesFromJsonFile, false, 523)]
         private static void LoadJsonFile(MenuCommand cmd)
         {
             var path = EditorUtility.OpenFilePanel("Load Component JSON", "", "json");
@@ -99,22 +100,20 @@ namespace FoundationPlatform.FrameworkInspector.Editor
 
         // ---- Play-mode value saver ---------------------------------------------
 
-        private const string SaveOnExitMenu = "CONTEXT/Component/Save Values When Exiting Play Mode";
-
-        [MenuItem(SaveOnExitMenu, false, 530)]
+        [MenuItem(MenuPaths.ContextComponent.SaveValuesWhenExitingPlayMode, false, 530)]
         private static void ToggleSaveOnExit(MenuCommand cmd)
         {
             PlayModeValuesSaver.Toggle((Component)cmd.context);
         }
 
-        [MenuItem(SaveOnExitMenu, true)]
+        [MenuItem(MenuPaths.ContextComponent.SaveValuesWhenExitingPlayMode, true)]
         private static bool ToggleSaveOnExitValidate(MenuCommand cmd)
         {
             if (!InspectorXSettings.instance.saveComponentValuesInPlayMode)
                 return false;
             if (!(cmd.context is Component component) || EditorUtility.IsPersistent(component))
                 return false;
-            Menu.SetChecked(SaveOnExitMenu, PlayModeValuesSaver.IsWatched(component));
+            Menu.SetChecked(MenuPaths.ContextComponent.SaveValuesWhenExitingPlayMode, PlayModeValuesSaver.IsWatched(component));
             return true;
         }
     }

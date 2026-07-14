@@ -71,7 +71,11 @@ namespace FoundationPlatform.StaleComponentGuard.Editor
             var sceneGuid = AssetDatabase.AssetPathToGUID(finding.AssetPath);
             if (GoByFindingKey.TryGetValue(Key(sceneGuid, (ulong)finding.ComponentFileId), out var id))
             {
+#if UNITY_2023_1_OR_NEWER
+                var obj = EditorUtility.EntityIdToObject(id);
+#else
                 var obj = EditorUtility.InstanceIDToObject(id);
+#endif
                 if (obj != null)
                 {
                     Selection.activeObject = obj;

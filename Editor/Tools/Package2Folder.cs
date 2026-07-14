@@ -14,6 +14,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -133,14 +134,14 @@ namespace FoundationPlatform.Editor.Utilities.Tools
         // Unity Editor menus integration
         ///////////////////////////////////////////////////////////////
 
-        [MenuItem("Assets/Import Package/Here...", true, 10)]
+        [MenuItem(MenuPaths.AssetsImport.Here, true, 10)]
         private static bool IsImportToFolderCheck()
         {
             var selectedFolderPath = GetSelectedFolderPath();
             return !string.IsNullOrEmpty(selectedFolderPath);
         }
 
-        [MenuItem("Assets/Import Package/Here...", false, 10)]
+        [MenuItem(MenuPaths.AssetsImport.Here, false, 10)]
         private static void ImportPackageHereCommand()
         {
             var packagePath = EditorUtility.OpenFilePanel("Import package ...", "", "unitypackage");

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace FoundationPlatform.StaleComponentGuard.Editor
         private List<StaleFinding> _findings;
         private Vector2 _scroll;
 
-        [MenuItem("Tools/Foundation Platform/Stale Component Scanner")]
+        [MenuItem(MenuPaths.Linting.StaleComponentScanner, false, MenuPriorities.Linting + 5)]
         public static void Open()
         {
             var w = GetWindow<StaleComponentWindow>("Stale Components");

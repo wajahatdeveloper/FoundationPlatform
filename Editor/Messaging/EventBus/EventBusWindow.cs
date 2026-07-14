@@ -19,7 +19,7 @@ namespace FoundationPlatform.Editor.Utilities.Messaging
 		private ActiveSubscriptionsWindow _activeSubscriptionsWindow;
 		private SubscriptionHistoryWindow _subscriptionHistoryWindow;
 
-		[MenuItem(MenuPaths.WindowDomain.EventBus, false, 1102)]
+		[MenuItem(MenuPaths.WindowEventBus.EventBus, false, MenuPriorities.WindowEventBus)]
 		public static void OpenWindow()
 		{
 			var window = GetWindow<EventBusWindow>("Event Bus");
