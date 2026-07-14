@@ -8,6 +8,8 @@ using UnityEngine;
 /// Coroutines owner. Automatically added to game objects that are owners.<br/>
 /// Partially controls the behavior of Coroutines, such as stopping all associated Coroutines if the game object is disabled.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public sealed class CoroutineXOwner : MonoBehaviour
 {
     [SerializeReference]
@@ -37,4 +39,4 @@ public sealed class CoroutineXOwner : MonoBehaviour
         if (_Coroutines.Count == 0)
             Destroy(this);
     }
-}
+}}

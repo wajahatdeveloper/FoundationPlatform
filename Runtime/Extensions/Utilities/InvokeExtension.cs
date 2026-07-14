@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class InvokeExtension
 {
     public static void Invoke(this MonoBehaviour me, Action theDelegate, float time, bool realtime = false)
@@ -22,4 +24,4 @@ public static class InvokeExtension
 
         theDelegate();
     }
-}
+}}

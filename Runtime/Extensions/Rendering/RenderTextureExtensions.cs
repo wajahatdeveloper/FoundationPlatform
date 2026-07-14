@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RenderTextureExtensions
 {
     /// <summary>
@@ -86,4 +88,4 @@ public static class RenderTextureExtensions
 
         RenderTexture.active = oldRenderTexture;
     }
-}
+}}

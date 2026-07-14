@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Finds nearby units
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class TargetingExtensions
 {
     #region Constants
@@ -301,4 +303,4 @@ public static class TargetingExtensions
     // FindNearestUnit_ListRangeView
 
     #endregion
-}
+}}

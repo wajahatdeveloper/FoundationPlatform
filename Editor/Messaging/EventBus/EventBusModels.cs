@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.Messaging;
 using UnityEditor;
 using UnityEngine;
 
@@ -128,7 +129,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[HideInInspector]
 		public int WarnPercentSnapshot;
 		[HideInInspector]
-		public List<global::EventBus.SubscriberDetail> SubscriberDetails;
+		public List<EventBus.SubscriberDetail> SubscriberDetails;
 		[HideInInspector]
 		public HistorySortBy SortBy;
 		[HideInInspector]

@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace AetherNexus.FoundationPlatform
+{
 public class ObservableList<T> : IList<T>
 {
     private readonly List<T> _items = new List<T>();
@@ -63,6 +65,7 @@ public class ObservableList<T> : IList<T>
         _items.RemoveAt(index);
         ItemRemoved?.Invoke(itm);
     }
+}
 }
 
 

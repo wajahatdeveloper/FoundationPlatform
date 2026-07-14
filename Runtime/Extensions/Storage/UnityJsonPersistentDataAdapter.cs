@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 
 /// <summary>
 /// Unity JsonUtility-based persistent data adapter.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
+    
+using AetherNexus.FoundationPlatform.DebugX;
+    
 public class UnityJsonPersistentDataAdapter : IPersistentDataAdapter
 {
     [Serializable]
@@ -226,5 +230,6 @@ public class UnityJsonPersistentDataAdapter : IPersistentDataAdapter
             throw new InvalidOperationException(msg);
         }
     }
+}
 }
 

@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Pipes
 {
     /// <summary>
@@ -28,4 +30,4 @@ public static class Pipes
         function(argument);
         return argument;
     }
-}
+}}

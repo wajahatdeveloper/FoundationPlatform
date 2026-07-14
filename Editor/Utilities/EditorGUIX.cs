@@ -5,13 +5,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Editor.Tools.EditorGUIX_ImageStringConverter;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
+	
+using AetherNexus.FoundationPlatform.DebugX;
+	
 public static class EditorGUIX
 {
     
@@ -698,6 +702,7 @@ public static class EditorGUIX
 		private const string IconEyeCrossed =
 			"iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAilBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAggvAAAALXRSTlMABPkXHfHWyeremYBvMvTPd1lIQAy0r6SRhV5MIffBuytoOjYnEOPDtpSKRBNc009oAAABPklEQVQ4y7WS13LDIBBFF9R7r46KS1xz///3IgEztpUMbz5PK+2eiwTQ5/jemdp+eR/8b02fpRxXzQDrY7gPTcDBRdyzP9ox9KtxrPxw54Cn237ku3ihKjftCQC3my4Ng8YVE/Nr+J0DTm/Ih3DAOQF4x0hhOEBSiPIr60MLbkFFsigGyZceeCplHyvDfnVTDs8UvgdL6iT7SGR2YcEzFsuBFakoSLg6haOFC6MOPCdJBkVGkpwjoOA50G8HdkBKbER8/H+JQ4xJfaTMiCwIbsqPYf+shemBB2wJSKR/Y+KXO8A21EZdljovG6CZs8yUug2MwpfTHHABRy1uhjZE6pO5wsK5boOgrT0s1Cd642HhBbed6Z2TjSGM9m09TXW7j2iL6QB+qbnjDXA1NHc0j9ez13Cwk4J0lNGJ0cf4BX2sKFr3AYx/AAAAAElFTkSuQmCC";
 	
+}
 }
 #endif
 #pragma warning restore 618

@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public class PlayerPrefsX
 {
     private static int endianDiff1;
@@ -811,4 +813,4 @@ public class PlayerPrefsX
     {
         PlayerPrefs.DeleteAll();
     }
-}
+}}

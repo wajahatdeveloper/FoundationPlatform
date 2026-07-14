@@ -3,6 +3,8 @@ using System;
 using UnityEditor;
 using UnityEngine;
  
+namespace AetherNexus.FoundationPlatform.Editor.Dialogs
+{
 public class EditorInputDialog : EditorWindow
 {
     private string  description, inputText;
@@ -108,5 +110,6 @@ public class EditorInputDialog : EditorWindow
         window.ShowPopup();
     }
     #endregion Show()
+}
 }
 #endif

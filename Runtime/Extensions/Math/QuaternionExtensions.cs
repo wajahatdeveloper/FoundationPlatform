@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Essential Quaternion extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class QuaternionExtensions
 {
     #region Smooth Rotation
@@ -311,4 +313,5 @@ public static class QuaternionExtensions
     }
 
     #endregion
+}
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using AetherNexus.FoundationPlatform.Behaviours;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RandomX
 {
     public static void Shuffle<T>(this List<T> list, IRandomProvider rnd)
@@ -244,4 +246,5 @@ public static class RandomX
 
         return rnd.Range(0, 2) == 0;
     }
+}
 }

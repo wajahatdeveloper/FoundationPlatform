@@ -1,11 +1,14 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
-using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Tools
+{
+using AetherNexus.FoundationPlatform.DebugX;
+    
 public static class CameraScreenshot
 {
     private static readonly string screenshotsRoot =
@@ -85,5 +88,6 @@ public static class CameraScreenshot
     {
         Take();
     }
+}
 }
 #endif

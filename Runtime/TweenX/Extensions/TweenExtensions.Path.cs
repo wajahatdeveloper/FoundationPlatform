@@ -2,6 +2,8 @@ using AetherNexus.FoundationPlatform.TweenX;
 using UnityEngine;
 
 /// <summary>Fluent path-tween entry point on <see cref="Transform"/>. Global namespace.</summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class PathTweenExtensions
 {
     /// <summary>
@@ -16,4 +18,5 @@ public static class PathTweenExtensions
         TweenManager.Register(t);
         return t.AsHandle();
     }
+}
 }

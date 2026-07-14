@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform
+{
+    
 public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
 {
     // Keyed by concrete runtime type so subclasses that share the same closed
@@ -34,7 +37,7 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         if (TryGetInstance(type, out T instance))
             return instance;
 
-        DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
+        DebugX.DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
         return null;
     }
 
@@ -70,7 +73,7 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         }
         else if (!ReferenceEquals(existing, this))
         {
-            DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
+            DebugX.DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
             Destroy(gameObject);
         }
     }
@@ -118,7 +121,7 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
         if (TryGetInstance(type, out T instance))
             return instance;
 
-        DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
+        DebugX.DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.", type.Name);
         return null;
     }
 
@@ -155,7 +158,7 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
         }
         else if (!ReferenceEquals(existing, this))
         {
-            DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
+            DebugX.DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
             Destroy(gameObject);
         }
     }
@@ -199,4 +202,4 @@ public class Singleton<T> where T : new()
             return instance;
         }
     }
-}
+}}

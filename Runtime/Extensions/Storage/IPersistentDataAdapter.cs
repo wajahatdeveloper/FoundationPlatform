@@ -4,6 +4,8 @@ using System;
 /// Interface for persistent data storage adapters.
 /// Allows switching between different storage backends.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public interface IPersistentDataAdapter
 {
     /// <summary>
@@ -55,5 +57,6 @@ public interface IPersistentDataAdapter
     /// Called when application is quitting.
     /// </summary>
     void OnApplicationQuitting();
+}
 }
 

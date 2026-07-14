@@ -3,8 +3,10 @@ using AetherNexus.FoundationPlatform.Behaviours;
 using UnityEditor;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 [CustomEditor(typeof(InspectorSeparator))]
-public class InspectorSeparatorEditor : Editor
+public class InspectorSeparatorEditor : UnityEditor.Editor
 {
     private SerializedProperty _labelProperty;
     private bool _showLabelField;
@@ -45,5 +47,6 @@ public class InspectorSeparatorEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
     }
+}
 }
 #endif

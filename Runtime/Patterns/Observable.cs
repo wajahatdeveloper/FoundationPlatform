@@ -34,6 +34,8 @@ using UnityEngine;
 ///
 /// </summary>
 /// <typeparam name="T"></typeparam>
+namespace AetherNexus.FoundationPlatform
+{
 [Serializable]
 public class Observable<T>
 {
@@ -65,4 +67,4 @@ public class Observable<T>
             }
         }
     }
-}
+}}

@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
+namespace AetherNexus.FoundationPlatform.Editor.Tools
+{
 public static class ClipboardToScript
 {
     [MenuItem(MenuPaths.AssetsCreate.CSharpScript)]
@@ -161,5 +163,6 @@ public class CreateNewFileWithName : EditorWindow
         var cleaned = new string(name.Trim().Select(c => invalid.Contains(c) ? '_' : c).ToArray());
         return cleaned;
     }
+}
 }
 #endif

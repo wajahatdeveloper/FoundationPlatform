@@ -4,6 +4,8 @@ using System;
 /// Attribute to control EventBus behavior when an event is published with no subscribers.
 /// By default, EventBus logs a warning. Use [NoSubscriberBehavior(Ignore)] to suppress for specific events.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class NoSubscriberBehaviorAttribute : Attribute
 {
@@ -41,5 +43,6 @@ public enum NoSubscriberBehavior
 	/// Show an error if no subscribers are found (editor only, warning in runtime)
 	/// </summary>
 	Error = 2
+}
 }
 

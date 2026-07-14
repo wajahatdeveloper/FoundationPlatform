@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Vector4Extensions
 {
     /// <summary>
@@ -23,4 +25,4 @@ public static class Vector4Extensions
             Mathf.Pow(source.y, exponent),
             Mathf.Pow(source.z, exponent),
             Mathf.Pow(source.w, exponent));
-}
+}}

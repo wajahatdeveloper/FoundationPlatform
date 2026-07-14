@@ -1,6 +1,8 @@
 using UnityEngine;
 
 // ReSharper disable once InconsistentNaming
+namespace AetherNexus.FoundationPlatform.SupportTypes
+{
 public struct HSL
 {
     public float H;
@@ -63,4 +65,4 @@ public struct HSL
         if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
         return p;
     }
-}
+}}

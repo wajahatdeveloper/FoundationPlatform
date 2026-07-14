@@ -1,6 +1,8 @@
 using System;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public sealed class EventProvenance
 {
     public ulong EventId;
@@ -38,4 +40,5 @@ public abstract class BaseGameEvent : IIdentity
         Timestamp = DateTime.Now;
 #endif
     }
+}
 }

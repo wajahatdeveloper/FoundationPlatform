@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Texture2DExtensions
 {
     public static Texture2D Clone(this Texture2D @this)
@@ -521,4 +523,4 @@ public static class Texture2DExtensions
         var sin = Mathf.Sin(angle / 180.0f * Mathf.PI);
         return x * sin + y * cos;
     }
-}
+}}

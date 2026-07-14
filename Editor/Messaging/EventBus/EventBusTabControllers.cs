@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Messaging;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
@@ -40,7 +41,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		{
 			errorMessage = null;
 			// GetEventHistory() never returns null - it always returns a list (empty if no history)
-			var hist = global::EventBus.GetEventHistory();
+			var hist = EventBus.GetEventHistory();
 			
 			// Check if monitoring might not be enabled (empty list could mean no events OR monitoring disabled)
 			// We can't directly check monitoring state, but we can provide guidance when list is empty
@@ -197,7 +198,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			return result;
 		}
 
-		private void RebuildFullHistoryCache(List<global::EventBus.EventHistoryEntry> hist)
+		private void RebuildFullHistoryCache(List<EventBus.EventHistoryEntry> hist)
 		{
 			_fullHistoryCache = hist
 				.Select(e =>
@@ -261,7 +262,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 						Data = displayData,
 						MaxDepthSnapshot = _settings?.Depth?.MaxDepth ?? EventBusConstants.DEFAULT_MAX_DEPTH,
 						WarnPercentSnapshot = _settings?.Depth?.WarnPercent ?? EventBusConstants.DEFAULT_WARN_PERCENT,
-						SubscriberDetails = e.SubscriberDetails ?? new List<global::EventBus.SubscriberDetail>(),
+						SubscriberDetails = e.SubscriberDetails ?? new List<EventBus.SubscriberDetail>(),
 						SortBy = Toolbar.SortBy,
 						SortDesc = Toolbar.SortDesc,
 						#if RULESYSTEM_PRESENT
@@ -286,7 +287,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 						Data = displayData,
 						MaxDepthSnapshot = _settings?.Depth?.MaxDepth ?? EventBusConstants.DEFAULT_MAX_DEPTH,
 						WarnPercentSnapshot = _settings?.Depth?.WarnPercent ?? EventBusConstants.DEFAULT_WARN_PERCENT,
-						SubscriberDetails = e.SubscriberDetails ?? new List<global::EventBus.SubscriberDetail>(),
+						SubscriberDetails = e.SubscriberDetails ?? new List<EventBus.SubscriberDetail>(),
 						SortBy = Toolbar.SortBy,
 						SortDesc = Toolbar.SortDesc,
 						#if RULESYSTEM_PRESENT
@@ -347,7 +348,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				return cached;
 			}
 			var resolvedType = System.Type.GetType($"GameEngineCore.Rules.{typeName}, GameEngineCore");
-			var result = resolvedType != null && global::EventBus.IsRuleSystemClass(resolvedType);
+			var result = resolvedType != null && EventBus.IsRuleSystemClass(resolvedType);
 			_ruleSystemClassCache[typeName] = result;
 			return result;
 		}
@@ -400,7 +401,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public List<SubscriberRow> RebuildSubscribers(out string errorMessage)
 		{
 			errorMessage = null;
-			var info = global::EventBus.GetSubscriberDebugInfo();
+			var info = EventBus.GetSubscriberDebugInfo();
 			if (info == null)
 			{
 				errorMessage = "EventBus subscriber tracking is unavailable. Enable monitoring in Settings → Monitoring → Enable Event History. Ensure EventBus is properly initialized and try entering Play Mode.";
@@ -567,7 +568,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 		public List<SubscriptionRow> RebuildSubscriptions()
 		{
-			var subHist = global::EventBus.GetSubscriptionHistory();
+			var subHist = EventBus.GetSubscriptionHistory();
 			if (subHist == null)
 			{
 				return new List<SubscriptionRow>();
@@ -646,7 +647,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			return result;
 		}
 
-		private void RebuildFullSubscriptionsCache(List<global::EventBus.SubscriptionHistoryEntry> subHist)
+		private void RebuildFullSubscriptionsCache(List<EventBus.SubscriptionHistoryEntry> subHist)
 		{
 			_fullSubscriptionsCache = subHist
 				.Select(e =>

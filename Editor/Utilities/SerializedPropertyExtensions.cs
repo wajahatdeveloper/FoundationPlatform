@@ -7,6 +7,8 @@ using System.Reflection;
 using UnityEditor;
 using Object = UnityEngine.Object;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 	public static class SerializedPropertyExtensions
 	{
 		#region Collections Handling
@@ -305,4 +307,5 @@ using Object = UnityEngine.Object;
 
 		#endregion
 	}
+}
 #endif

@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using State = CoroutineX.State;
+using State = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX.State;
 
 /// <summary>
 /// Allows you to work with multiple Coroutines.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public class CoroutineXGroup
 {
     /// <summary>
@@ -303,4 +305,4 @@ public class CoroutineXGroup
         return this;
     }
     #endregion
-}
+}}

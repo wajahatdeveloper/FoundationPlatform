@@ -2,6 +2,8 @@ using System;
 /// <summary>
 /// Allows checking of null values on monads or nested chains of properties/functions
 /// </summary>
+namespace AetherNexus.FoundationPlatform.SupportTypes
+{
 public static class MaybeMonad
 {
     #region With
@@ -156,4 +158,4 @@ public static class MaybeMonad
     // IfNotNull
 
     #endregion
-}
+}}

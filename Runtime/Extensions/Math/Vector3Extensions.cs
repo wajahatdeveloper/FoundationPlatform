@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class VectorExtensions
 {
     /// <summary>
@@ -1696,4 +1698,4 @@ public static class VectorExtensions
         }
         return new Vector3(x, y, z);
     }
-}
+}}

@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>
 /// Most of these are speedups of builtin Lerps, as well as a bunch of extra lerp options
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class MathX
 {
     #region Ease
@@ -1006,4 +1008,4 @@ public static class MathX
     {
         return Math.Abs(x - other) < delta;
     }
-}
+}}

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using AetherNexus.FoundationPlatform.Editor.Utilities;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -10,6 +11,8 @@ using UnityEngine;
 	/// It allows to store simple textures as const strings right in script files.
 	/// I suggest to use tinypng.com before conversion! 
 	/// </summary>
+namespace AetherNexus.FoundationPlatform.Editor.Tools.EditorGUIX_ImageStringConverter
+{
 	public class ImageToStringConverterEditor : EditorWindow
 	{
 		[MenuItem(MenuPaths.Utilities.ImageToStringConverter, false, MenuPriorities.Utilities + 2)]
@@ -66,4 +69,5 @@ using UnityEngine;
 
 		}
 	}
+}
 #endif

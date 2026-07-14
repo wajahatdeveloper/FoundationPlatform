@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Messaging
+{
+	
+using AetherNexus.FoundationPlatform.DebugX;
+	
 public enum EventCategory
 {
 	Domain,    // DomainEvent - published by rules
@@ -1987,4 +1991,5 @@ public static class EventBus
 		_debugSignalEmitter = emitter;
 	}
 
+}
 }

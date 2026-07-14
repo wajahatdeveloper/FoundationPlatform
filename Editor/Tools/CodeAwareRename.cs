@@ -10,6 +10,8 @@ using System.Text.RegularExpressions;
 /// generates; it is NOT a full semantic rewrite (it will not rewrite constructor names, XML-doc refs,
 /// or references in other files).
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Editor.Tools
+{
 public static class CodeAwareRename
 {
 	/// <summary>Renames the first <c>class {oldClassName}</c> declaration to <c>class {newClassName}</c>. Throws if not found.</summary>
@@ -105,5 +107,6 @@ public static class CodeAwareRename
 		wrapped.AppendLine("}");
 		return wrapped.ToString();
 	}
+}
 }
 #endif

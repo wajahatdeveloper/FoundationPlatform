@@ -1,6 +1,8 @@
 /// <summary>
 /// Scope type for event debug signals, indicating the context level.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public enum EventDebugScopeType
 {
 	Global,   // System-wide scope
@@ -54,4 +56,5 @@ public readonly struct EventDebugScope
 		Type = type;
 		EntityIdentity = entityIdentity;
 	}
+}
 }

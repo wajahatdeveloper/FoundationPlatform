@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using AetherNexus.FoundationPlatform.Attributes;
 
+namespace AetherNexus.FoundationPlatform.Editor.Drawers
+{
 [CustomPropertyDrawer(typeof(TagAttribute))]
     public class TagDrawer : PropertyDrawer
     {
@@ -55,4 +57,5 @@ using AetherNexus.FoundationPlatform.Attributes;
         }
 
     }
+}
 #endif

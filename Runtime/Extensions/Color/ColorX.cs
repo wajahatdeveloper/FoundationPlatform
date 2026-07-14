@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Color helpers
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ColorX
 {
     public static readonly Color ReunoYellow = new Color32(255, 196, 0, 255);
@@ -400,4 +402,4 @@ public static class ColorX
 
         return Color.Lerp(originalColor, resultColor, lerpAmount);
     }
-}
+}}

@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using AetherNexus.FoundationPlatform.Attributes;
 
+namespace AetherNexus.FoundationPlatform.Editor.Drawers
+{
 [CustomPropertyDrawer(typeof(LayerAttribute))]
     public class LayerDrawer : PropertyDrawer
     {
@@ -56,4 +58,5 @@ using AetherNexus.FoundationPlatform.Attributes;
         }
 
     }
+}
 #endif

@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Tools.EditorGUIX_ImageStringConverter
+{
 	public static class ImageStringConverter
 	{
 		/// <summary>
@@ -14,3 +16,4 @@ using UnityEngine;
 			return texture;
 		}
 	}
+}

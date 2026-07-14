@@ -7,6 +7,8 @@ using UnityEngine;
 /// Allows you to wait for multiple objects (<see cref="CoroutineX"/>, <see cref="CustomYieldInstruction"/>, <see cref="IEnumerable"/>, <see cref="IEnumerator"/> and other..) at once.<br/>
 /// Don't use with <see cref="WaitForSecondsRealtime"/> object.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public class WaitForAll : CustomYieldInstruction
 {
     private readonly IEnumerable<IEnumerator> _instructions;
@@ -39,4 +41,4 @@ public class WaitForAll : CustomYieldInstruction
     /// </summary>
     /// <param name="instructions">Target instructions.</param>
     public WaitForAll(IEnumerable<IEnumerator> instructions) => _instructions = instructions;
-}
+}}

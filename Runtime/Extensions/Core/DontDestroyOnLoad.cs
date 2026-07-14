@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 [DisallowMultipleComponent]
 public class DontDestroyOnLoad : MonoBehaviour
 {
@@ -9,4 +11,4 @@ public class DontDestroyOnLoad : MonoBehaviour
 
         Debug.Log("The GameObject \"" + gameObject.name + "\" was set as DontDestroyOnLoad", this);
     }
-}
+}}

@@ -7,6 +7,8 @@ using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 using Vector4 = UnityEngine.Vector4;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class MathExtensions
 {
     public static bool ApproxZero(this float f) => Mathf.Approximately(0, f);
@@ -528,4 +530,4 @@ public static class MathExtensions
     {
         return (1 << layer);
     }
-}
+}}

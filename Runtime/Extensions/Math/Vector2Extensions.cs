@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Vector2Extensions
 {
     /// <summary>
@@ -637,4 +639,4 @@ public static class Vector2Extensions
     {
         return new Vector3Int((int)v.x, (int)v.y, 0);
     }
-}
+}}

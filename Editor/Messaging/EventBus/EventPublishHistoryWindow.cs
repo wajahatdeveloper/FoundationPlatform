@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Messaging;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
@@ -588,7 +589,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			try
 			{
 				// Use public API directly (no reflection needed)
-				global::EventBus.ConfigureMonitoring(
+				EventBus.ConfigureMonitoring(
 					model.Enabled,
 					depth.MaxDepth,
 					depth.StopOnExceeded,
@@ -598,16 +599,16 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				);
 				
 				// Apply subscription tracking
-				global::EventBus.EnableSubscriptionTracking(model.EnableSubscriptionTracking);
+				EventBus.EnableSubscriptionTracking(model.EnableSubscriptionTracking);
 				
 				// Apply max event history
-				global::EventBus.SetMaxHistoryEntries(model.MaxEventHistorySize);
+				EventBus.SetMaxHistoryEntries(model.MaxEventHistorySize);
 				
 				// Apply max subscription history
-				global::EventBus.SetMaxSubscriptionHistoryEntries(model.MaxSubscriptionHistorySize);
+				EventBus.SetMaxSubscriptionHistoryEntries(model.MaxSubscriptionHistorySize);
 				
 				// Apply logging level
-				global::EventBus.SetLoggingLevel(model.LoggingLevel);
+				EventBus.SetLoggingLevel(model.LoggingLevel);
 				
 				Debug.Log("[EventBus Hub] Monitoring configuration applied.");
 			}

@@ -6,13 +6,15 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using System.Collections.Generic;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 [InitializeOnLoad]
 static class InspectorAugment
 {
     static InspectorAugment()
     {
-        Editor.finishedDefaultHeaderGUI -= DrawInspectorSearchTool;
-        Editor.finishedDefaultHeaderGUI += DrawInspectorSearchTool;
+        UnityEditor.Editor.finishedDefaultHeaderGUI -= DrawInspectorSearchTool;
+        UnityEditor.Editor.finishedDefaultHeaderGUI += DrawInspectorSearchTool;
     }
 
     private static string Search;
@@ -68,7 +70,7 @@ static class InspectorAugment
         return Selection.activeGameObject != null;
     }
 
-    static void DrawInspectorSearchTool(Editor editor)
+    static void DrawInspectorSearchTool(UnityEditor.Editor editor)
     {
         if (editor == null || editor.target == null)
         {
@@ -169,5 +171,6 @@ static class InspectorAugment
         _repaintSubscribed = false;
         ActiveEditorTracker.sharedTracker.RebuildIfNecessary();
     }
+}
 }
 #endif

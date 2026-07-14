@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Essential Rigidbody extension methods for Unity physics development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RigidbodyExtensions
 {
     #region Force Application
@@ -583,4 +585,5 @@ public static class Rigidbody2DExtensions
     }
 
     #endregion
+}
 }

@@ -7,6 +7,8 @@ using System.Text;
 /// AOT-safe and GC-friendly for use during gameplay.
 /// ThreadStatic MD5 instance: one alloc per thread on first call, zero thereafter.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class DeterministicGuid
 {
     [ThreadStatic]
@@ -33,4 +35,5 @@ public static class DeterministicGuid
 
         return Guid.Empty;
     }
+}
 }

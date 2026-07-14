@@ -8,16 +8,8 @@ using Object = UnityEngine.Object;
 using UnityEditor;
 #endif
 
-/* *****************************************************************************
- * File:    UnityGoExtensions.cs
- * Author:  Philip Pierce - Friday, September 26, 2014
- * Description:
- *  Unity extensions on GameObjects
- *  
- * History:
- *  Friday, September 26, 2014 - Created
- * ****************************************************************************/
-
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 /// <summary>
 /// Unity extensions on GameObjects
 /// Contains Traverse structs (AncestorsEnumerable, DescendantsEnumerable, BeforeSelfEnumerable, AfterSelfEnumerable)
@@ -2216,4 +2208,4 @@ public static class GameObjectExtensions
     }
 
     #endregion
-}
+}}

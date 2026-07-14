@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Time helpers
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public class TimeX
 {
     /// <summary>
@@ -158,4 +160,4 @@ public class TimeX
     {
         return System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
     }
-}
+}}

@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Contains extension methods to load and save images from Base64 strings.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Base64ImageExtensions
 {
     /// <summary>
@@ -49,4 +51,4 @@ public static class Base64ImageExtensions
 
         return result;
     }
-}
+}}

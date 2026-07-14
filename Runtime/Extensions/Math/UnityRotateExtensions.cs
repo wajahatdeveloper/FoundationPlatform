@@ -3,16 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-/* *****************************************************************************
- * File:    UnityRotateExtensions.cs
- * Author:  Philip Pierce - Wednesday, October 29, 2014
- * Description:
- *  Extensions for rotating in Unity
- *  
- * History:
- *  Wednesday, October 29, 2014 - Created
- * ****************************************************************************/
-
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 /// <summary>
 /// Extensions for rotating in Unity
 /// </summary>
@@ -495,4 +487,4 @@ public static class UnityRotateExtensions
             quaternion.z * scalar,
             quaternion.w * scalar);
     }
-}
+}}

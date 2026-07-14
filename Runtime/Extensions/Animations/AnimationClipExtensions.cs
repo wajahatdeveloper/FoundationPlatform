@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class AnimationClipExtensions
 {
     /// <summary>
@@ -32,4 +34,4 @@ public static class AnimationClipExtensions
 
         clip.AddEvent(animationEvent);
     }
-}
+}}

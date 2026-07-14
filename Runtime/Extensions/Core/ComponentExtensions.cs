@@ -5,6 +5,8 @@ using UnityEngine;
 /// Unity-null-safe helpers for resolving components without using the null-coalescing operator,
 /// which uses reference identity and ignores Unity's fake-null lifetime.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ComponentExtensions
 {
     /// <summary>
@@ -77,4 +79,5 @@ public static class ComponentExtensions
 
         return go.GetComponentInChildren(type, includeInactive);
     }
+}
 }

@@ -4,6 +4,8 @@ using System;
 /// Attribute to specify the EventBus channel for an event type.
 /// When present, subscribers (e.g. RuleHandler) should subscribe on this channel instead of a handler-specific channel.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class EventChannelAttribute : Attribute
 {
@@ -16,4 +18,5 @@ public sealed class EventChannelAttribute : Attribute
 	{
 		ChannelName = channelName ?? string.Empty;
 	}
+}
 }

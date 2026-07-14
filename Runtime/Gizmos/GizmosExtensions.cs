@@ -1,6 +1,10 @@
-﻿using System;
+using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Gizmos
+{
+	using Gizmos = UnityEngine.Gizmos;
+	
 public static class GizmosExtensions {
    
 	/// <summary>
@@ -259,4 +263,5 @@ public static class GizmosExtensions {
         }
         #endregion
 
+}
 }

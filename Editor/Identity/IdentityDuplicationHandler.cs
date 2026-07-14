@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Identity;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -10,6 +11,8 @@ using UnityEngine;
 /// Tracks known instance IDs so we can identify exactly which component is the new duplicate
 /// rather than doing an after-the-fact scan that can pick the wrong "original".
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Editor.Identity
+{
 [InitializeOnLoad]
 public static class IdentityDuplicationHandler
 {
@@ -124,7 +127,7 @@ public class IdentityPrefabAssetPostprocessor : AssetPostprocessor
             .ToList();
         if (importedPrefabs.Count == 0) return;
 
-        var existingIdentities = new HashSet<Identity>();
+        var existingIdentities = new HashSet<Messaging.Identity>();
         var allPrefabGuids = AssetDatabase.FindAssets("t:Prefab");
         var importedSet = new HashSet<string>(importedPrefabs);
 
@@ -169,5 +172,6 @@ public class IdentityPrefabAssetPostprocessor : AssetPostprocessor
             }
         }
     }
+}
 }
 #endif

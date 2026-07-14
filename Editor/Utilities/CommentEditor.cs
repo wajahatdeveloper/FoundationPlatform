@@ -1,9 +1,12 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.Extensions;
 using UnityEngine;
 using UnityEditor;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 [CustomEditor(typeof(Comment))]
-public class CommentEditor : Editor
+public class CommentEditor : UnityEditor.Editor
 {
     private SerializedProperty messageProperty;
     private SerializedProperty typeProperty;
@@ -195,5 +198,6 @@ public class CommentEditor : Editor
         
         Handles.EndGUI();
     }
+}
 }
 #endif

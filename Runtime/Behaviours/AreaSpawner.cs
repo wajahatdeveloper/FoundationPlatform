@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Extensions;
 using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;

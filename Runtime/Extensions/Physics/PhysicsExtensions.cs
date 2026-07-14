@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Essential Physics extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class PhysicsExtensions
 {
     #region Raycast Utilities
@@ -498,4 +500,5 @@ public static class Physics2DExtensions
     }
 
     #endregion
+}
 }

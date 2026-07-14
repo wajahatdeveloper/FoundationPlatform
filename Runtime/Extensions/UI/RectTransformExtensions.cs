@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>
 /// Provides extension methods for rect transform components.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RectTransformExtensions
 {
     // RectTransform
@@ -1296,4 +1298,4 @@ public struct MinMax01
         this.min = new Vector2(Mathf.Clamp01(minx), Mathf.Clamp01(miny));
         this.max = new Vector2(Mathf.Clamp01(maxx), Mathf.Clamp01(maxy));
     }
-}
+}}

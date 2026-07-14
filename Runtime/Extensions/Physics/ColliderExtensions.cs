@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ColliderExtensions
 {
     public static Vector3 GetRandomPointInsideCollider(this BoxCollider boxCollider)
@@ -36,4 +38,4 @@ public static class ColliderExtensions
 
         return false;
     }
-}
+}}

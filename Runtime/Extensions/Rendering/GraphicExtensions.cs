@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class GraphicExtensions
 {
     /// <summary>
@@ -140,4 +142,4 @@ public static class GraphicExtensions
     /// <returns>Changed copy of the color.</returns>
     public static void SetColorGBA(this Graphic graphic, float g, float b, float a) =>
         graphic.color = graphic.color.WithGBA(g, b, a);
-}
+}}

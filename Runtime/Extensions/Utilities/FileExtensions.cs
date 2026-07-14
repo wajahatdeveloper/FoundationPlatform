@@ -1,15 +1,7 @@
 using System.IO;
 
-/* *****************************************************************************
- * File:    FileExtensions.cs
- * Author:  Philip Pierce - Friday, October 03, 2014
- * Description:
- *  File IO extensions
- *  
- * History:
- *  Friday, October 03, 2014 - Created
- * ****************************************************************************/
-
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 /// <summary>
 /// File IO extensions
 /// </summary>
@@ -32,4 +24,4 @@ public static class FileExtensions
     }
 
     #endregion
-}
+}}

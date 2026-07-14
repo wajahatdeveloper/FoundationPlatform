@@ -1,6 +1,11 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.CoroutineX;
 using UnityEditor;
 using UnityEngine;
+
+namespace AetherNexus.FoundationPlatform.Editor.CoroutineX
+{
+using State = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX.State;
 
 [CustomEditor(typeof(CoroutineXOwner))]
 public class CoroutineXOwnerEditor : UnityEditor.Editor
@@ -73,7 +78,7 @@ public class CoroutineXOwnerEditor : UnityEditor.Editor
 
         for (int i = 0; i < _coroutinesProperty.arraySize; i++)
         {
-            var coroutine = (CoroutineX)_coroutinesProperty.GetArrayElementAtIndex(i).managedReferenceValue;
+            var coroutine = (FoundationPlatform.CoroutineX.CoroutineX)_coroutinesProperty.GetArrayElementAtIndex(i).managedReferenceValue;
 
             GUILayout.BeginHorizontal();
             #region Index
@@ -94,10 +99,10 @@ public class CoroutineXOwnerEditor : UnityEditor.Editor
             oldColor = GUI.contentColor;
             GUI.contentColor = coroutine.CurrentState switch
             {
-                CoroutineX.State.Reseted => Color.gray,
-                CoroutineX.State.Running => Color.white,
-                CoroutineX.State.Stopped => Color.yellow,
-                CoroutineX.State.Completed => Color.green,
+                State.Reseted => Color.gray,
+                State.Running => Color.white,
+                State.Stopped => Color.yellow,
+                State.Completed => Color.green,
                 _ => Color.white
             };
 
@@ -118,5 +123,6 @@ public class CoroutineXOwnerEditor : UnityEditor.Editor
     }
 
 
+}
 }
 #endif

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class NavMeshExtensions
 {
     /// <summary>
@@ -96,4 +98,4 @@ public static class NavMeshExtensions
             pieceTraversedDistance -= pieceLength;
         }
     }
-}
+}}

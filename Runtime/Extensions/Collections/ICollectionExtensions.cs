@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ICollectionExtensions
 {
     /// <summary>
@@ -225,4 +227,4 @@ public static class ICollectionExtensions
 
         return false;
     }
-}
+}}

@@ -6,6 +6,10 @@ using UnityEngine;
 /// MonoBehaviour that holds an Identity (string-only) and implements IIdentity.
 /// Use AssignIdentity(id) for runtime; GenerateDesignTimeId() for editor/prefabs.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Identity
+{
+using AetherNexus.FoundationPlatform.Messaging;
+	
 [DisallowMultipleComponent]
 public class IdentityComponent : MonoBehaviour, IIdentity
 {
@@ -61,4 +65,5 @@ public class IdentityComponent : MonoBehaviour, IIdentity
 		UnityEditor.EditorUtility.SetDirty(this);
 		#endif
 	}
+}
 }

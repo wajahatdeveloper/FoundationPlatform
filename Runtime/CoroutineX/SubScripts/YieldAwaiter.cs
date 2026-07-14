@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Base class for awaiting some events on Coroutines.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public abstract class YieldAwaiter : YieldInstruction, IEnumerator
 {
     object IEnumerator.Current => null;
@@ -16,4 +18,4 @@ public abstract class YieldAwaiter : YieldInstruction, IEnumerator
     /// Should we continue to wait for the event?
     /// </summary>
     public abstract bool KeepWaiting { get; }
-}
+}}

@@ -4,6 +4,8 @@ using System;
 /// Identity structure holding a single string identifier.
 /// Used for unified event filtering and entity context.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public readonly struct Identity : IEquatable<Identity>
 {
 	public static readonly Identity None = default;
@@ -34,4 +36,5 @@ public readonly struct Identity : IEquatable<Identity>
 	public static bool operator !=(Identity left, Identity right) => !left.Equals(right);
 
 	public static implicit operator Identity(string id) => new Identity(id);
+}
 }

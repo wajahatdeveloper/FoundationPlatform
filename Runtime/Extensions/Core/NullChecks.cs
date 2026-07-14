@@ -1,5 +1,7 @@
 using System;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class NullChecks
 {
     public static void VerifyNotNull<T>(this T obj, string errorMsg)
@@ -17,4 +19,4 @@ public static class NullChecks
     {
         return @this != null;
     }
-}
+}}

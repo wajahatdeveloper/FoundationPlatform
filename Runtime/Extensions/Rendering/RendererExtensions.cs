@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RendererExtensions
 {
     // http://wiki.unity3d.com/index.php?title=IsVisibleFrom
@@ -37,5 +39,6 @@ public static class RendererExtensions
             material.color = color;
         }
     }
+}
 }
 

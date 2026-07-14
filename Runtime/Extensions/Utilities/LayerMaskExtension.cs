@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class LayerMaskExtension
 {
     public static LayerMask Create(params string[] layerNames)
@@ -176,4 +178,4 @@ public static class LayerMaskExtension
     {
         return string.Join(separator, GetLayerNames(layerMask));
     }
-}
+}}

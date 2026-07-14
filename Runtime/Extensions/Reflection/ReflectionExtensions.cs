@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ReflectionExtensions
 {
     /// <summary>
@@ -26,5 +28,6 @@ public static class ReflectionExtensions
     {
         return target.GetType().GetProperty(propertyName) != null;
     }
+}
 }
 

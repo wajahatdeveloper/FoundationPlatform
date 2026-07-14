@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.SupportTypes;
 using UnityEngine;
 
 /// <summary>
 /// Hierarchy and traversal extensions for GameObjects
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class GameObjectHierarchyExtensions
 {
     #region GetChildrenWithName
@@ -704,5 +707,6 @@ public static class GameObjectHierarchyExtensions
     }
 
     #endregion
+}
 }
 

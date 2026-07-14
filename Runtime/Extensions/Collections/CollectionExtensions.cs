@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class CollectionExtensions
 {
     /// <summary>
@@ -331,4 +333,4 @@ public static class CollectionExtensions
             argument.Dispose();
         }
     }
-}
+}}

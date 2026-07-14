@@ -7,6 +7,8 @@ using UnityEngine.UI;
 /// <summary>
 /// Fade helpers
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class FadeExtensions
 {
     /// <summary>
@@ -148,4 +150,4 @@ public static class FadeExtensions
 
         target.alpha = targetAlpha;
     }
-}
+}}

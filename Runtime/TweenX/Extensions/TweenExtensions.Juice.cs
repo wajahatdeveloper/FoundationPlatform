@@ -6,6 +6,8 @@ using UnityEngine.UI;
 /// "Juice" tween entry points — punch, shake, flash, blink — in the global namespace. Punch/shake
 /// build a <see cref="JuiceTween"/>; flash/blink are thin wrappers over color/alpha yoyo tweens.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class JuiceTweenExtensions
 {
     private static int _shakeSeed;   // varies successive shakes; pass an explicit seed for reproducibility
@@ -71,4 +73,5 @@ public static class JuiceTweenExtensions
     private static int ResolveSeed(int seed) => seed >= 0 ? seed : unchecked(_shakeSeed++);
     private static int FlashLoops(int count) => Mathf.Max(1, count) * 2;              // out + back per flash
     private static float HalfStep(float duration, int count) => duration / (Mathf.Max(1, count) * 2f);
+}
 }

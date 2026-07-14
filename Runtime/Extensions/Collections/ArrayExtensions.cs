@@ -1,3 +1,5 @@
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ArrayExtensions
 {
     /// <summary>
@@ -8,4 +10,4 @@ public static class ArrayExtensions
     /// <param name="index">The index to check.</param>
     /// <returns>Whether the index is inside the bounds.</returns>
     public static bool HasIndex<T>(this T[] array, int index) => index.InRange(0, array.Length - 1);
-}
+}}

@@ -7,6 +7,8 @@
     using UnityEditor.Callbacks;
     using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
     public class DeclarativeOrder
     {
         struct Edge
@@ -298,4 +300,5 @@
             }
         }
     }
+}
 #endif

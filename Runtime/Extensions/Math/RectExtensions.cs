@@ -1,6 +1,8 @@
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RectExtensions
 {
     /// <summary>
@@ -432,4 +434,4 @@ public static class RectExtensions
     }
 
     #endregion
-}
+}}

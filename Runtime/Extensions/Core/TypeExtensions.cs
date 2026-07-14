@@ -4,6 +4,8 @@ using System;
 /// <summary>
 /// Provides extended type checking operations.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class TypeExtensions
 {
     /// <summary>
@@ -36,4 +38,4 @@ public static class TypeExtensions
 
         return false;
     }
-}
+}}

@@ -7,6 +7,8 @@ using UnityEngine;
 /// <summary>
 /// Contains helper methods for adding rich text to for example debug logs.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RichTextExtensions
 {
     /// <summary>
@@ -104,4 +106,4 @@ public enum RichTextColor : uint
     TEAL = 0x008080ff,
     WHITE = 0xffffffff,
     YELLOW = 0xffff00ff,
-}
+}}

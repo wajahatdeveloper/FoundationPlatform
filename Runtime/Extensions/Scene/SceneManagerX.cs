@@ -4,6 +4,11 @@ using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
+    using CoroutineX = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX;
+    using DebugX = AetherNexus.FoundationPlatform.DebugX.DebugX;
+    
 public static class SceneManagerX
 {
     private static void LogSceneErrorAndThrowInvalidOp(string message)
@@ -476,4 +481,5 @@ public static class SceneManagerX
 
     /// <summary>Delegate to <see cref="SceneManager.GetSceneByName"/>.</summary>
     public static Scene GetSceneByName(string name) => SceneManager.GetSceneByName(name);
+}
 }

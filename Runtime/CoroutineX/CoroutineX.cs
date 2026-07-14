@@ -2,13 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 
 /// <summary>
 /// Represents a more advanced coroutine. You can control execution, subscribe to events, <br/>
 /// get the last result, wait for a specific events, and more.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
+using AetherNexus.FoundationPlatform.DebugX;
+    
 [Serializable]
 public sealed class CoroutineX
 {
@@ -902,4 +905,4 @@ public sealed class CoroutineX
 
 internal class CoroutineOwner : MonoBehaviour
 {
-}*/
+}*/}

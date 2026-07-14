@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public static class CoroutineXExtensions
 {
     /// <summary>
@@ -58,4 +60,4 @@ public static class CoroutineXExtensions
     /// <param name="instruction">CustomYieldInstruction object.</param>
     /// <returns>The YieldInstruction object.</returns>
     public static YieldInstruction AsYieldInstruction(this CustomYieldInstruction instruction) => instruction.AsCoroutineX().WaitForComplete();
-}
+}}

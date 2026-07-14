@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>
 /// Utility extensions for GameObjects
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class GameObjectUtilityExtensions
 {
     /// <summary>
@@ -117,7 +119,7 @@ public static class GameObjectUtilityExtensions
     /// <returns></returns>
     public static bool HasAnimation(this GameObject go)
     {
-        return (go.GetComponent<Animation>() != null);
+        return (go.GetComponent<UnityEngine.Animation>() != null);
     }
 
     #endregion
@@ -445,5 +447,6 @@ public static class GameObjectUtilityExtensions
             .ScaleBy(source.localScale);
         return source;
     }
+}
 }
 

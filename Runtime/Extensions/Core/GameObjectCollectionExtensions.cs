@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>
 /// Collection/IEnumerable extensions for GameObjects
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class GameObjectCollectionExtensions
 {
     #region IEnumerables
@@ -114,5 +116,6 @@ public static class GameObjectCollectionExtensions
     }
 
     #endregion
+}
 }
 

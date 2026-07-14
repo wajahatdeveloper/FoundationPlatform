@@ -4,6 +4,8 @@ using System;
 /// Token returned by EventBus.Subscribe for reliable unsubscribe. Dispose to unsubscribe.
 /// Eliminates delegate equality issues with lambdas/closures.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public readonly struct SubscriptionToken : IDisposable
 {
 	internal readonly Type EventType;
@@ -20,4 +22,5 @@ public readonly struct SubscriptionToken : IDisposable
 	public bool IsValid => Id != 0;
 
 	public void Dispose() => EventBus.Unsubscribe(this);
+}
 }

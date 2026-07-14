@@ -1,7 +1,10 @@
 using System;
+using AetherNexus.FoundationPlatform.SupportTypes;
 using UnityEngine;
 
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ColorExtensions
 {
     /// <summary>
@@ -358,4 +361,4 @@ public static class ColorExtensions
             c1.b + (c2.b - c1.b) * value,
             c1.a + (c2.a - c1.a) * value);
     }
-}
+}}

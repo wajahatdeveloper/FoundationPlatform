@@ -1,20 +1,14 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-/* *****************************************************************************
- * File:    UnityTransformExtensions.cs
- * Author:  Philip Pierce - Monday, September 29, 2014
- * Description:
- *  Extensions for transforms and vector3
- *  
- * History:
- *  Monday, September 29, 2014 - Created
- * ****************************************************************************/
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 
+using AetherNexus.FoundationPlatform.DebugX;
+    
 /// <summary>
 /// Extensions for transforms and vector3
 /// </summary>
@@ -1287,4 +1281,4 @@ public static class UnityTransformExtensions
         transform.localScale = new Vector3(lossyScale.x / currentLossyScale.x, lossyScale.y / currentLossyScale.y,
             lossyScale.z / currentLossyScale.z);
     }
-}
+}}

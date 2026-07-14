@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>
 /// Essential Camera extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class CameraExtensions
 {
     #region Camera Control
@@ -493,4 +495,4 @@ public static class CameraExtensions
     }
 
     #endregion
-}
+}}

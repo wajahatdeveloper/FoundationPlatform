@@ -7,6 +7,8 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 public static class EditorAssetScanCache
 {
     private static bool _hasChanges;
@@ -201,5 +203,6 @@ public class EditorAssetScanCachePostprocessor : AssetPostprocessor
     {
         EditorAssetScanCache.HandleAssetChanges(importedAssets, deletedAssets, movedAssets, movedFromAssetPaths);
     }
+}
 }
 #endif

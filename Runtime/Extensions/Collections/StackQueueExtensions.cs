@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class StackQueueExtensions
 {
     /// <summary>
@@ -64,5 +66,6 @@ public static class StackQueueExtensions
 
         return array;
     }
+}
 }
 

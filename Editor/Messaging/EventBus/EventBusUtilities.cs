@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AetherNexus.FoundationPlatform.Messaging;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -240,7 +241,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			return $"{baseName}<{string.Join(", ", typeArgNames)}>";
 		}
 
-		public static string FormatEventData(global::EventBus.EventHistoryEntry entry)
+		public static string FormatEventData(EventBus.EventHistoryEntry entry)
 		{
 			#if RULESYSTEM_PRESENT
 			// Framework events: Extract key action properties (Actor, Target, Validation status)
@@ -617,12 +618,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 			if (Application.isPlaying)
 			{
-				global::EventBus.ConfigureMonitoring(
+				EventBus.ConfigureMonitoring(
 					next,
 					enableEventHistory: next
 				);
-				global::EventBus.EnableSubscriptionTracking(next);
-				global::EventBus.SetLoggingLevel(next ? LoggingLevel.Detailed : LoggingLevel.None);
+				EventBus.EnableSubscriptionTracking(next);
+				EventBus.SetLoggingLevel(next ? LoggingLevel.Detailed : LoggingLevel.None);
 			}
 
 			// Sync the window's settings if it's open

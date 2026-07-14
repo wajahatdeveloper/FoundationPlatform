@@ -5,6 +5,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 public static class EditorSceneScanCache
 {
     private static bool _hasChanges;
@@ -120,5 +122,6 @@ public static class EditorSceneScanCache
         _isInitialized = false;
         _isDirty = false;
     }
+}
 }
 #endif

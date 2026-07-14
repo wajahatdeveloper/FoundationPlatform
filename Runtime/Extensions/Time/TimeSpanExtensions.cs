@@ -3,6 +3,8 @@ using System;
 /// <summary>
 /// Extension methods for TimeSpan and float time-related operations.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class TimeSpanExtensions
 {
     /// <summary>
@@ -50,4 +52,5 @@ public static class TimeSpanExtensions
         
         return $"{timeSpan.TotalSeconds:F1} second{(timeSpan.TotalSeconds != 1 ? "s" : "")}";
     }
+}
 }

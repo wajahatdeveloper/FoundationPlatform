@@ -1,10 +1,13 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.Identity;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
 /// Draws identity string in Scene view for selected GameObjects with IdentityComponent.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Editor.Identity
+{
 [InitializeOnLoad]
 public static class IdentityGizmoDrawer
 {
@@ -36,5 +39,6 @@ public static class IdentityGizmoDrawer
 			Handles.Label(pos, id.Value, style);
 		}
 	}
+}
 }
 #endif

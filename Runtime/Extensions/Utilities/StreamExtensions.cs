@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class StreamExts
 {
     /// <summary>
@@ -214,4 +216,4 @@ public static class StreamExts
 
         return sb.ToString();
     }
-}
+}}

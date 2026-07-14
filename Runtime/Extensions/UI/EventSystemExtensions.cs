@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class EventSystemExtensions
 {
     #region IsPointerOnUIElement
@@ -49,4 +51,4 @@ public static class EventSystemExtensions
     }
 
     #endregion
-}
+}}

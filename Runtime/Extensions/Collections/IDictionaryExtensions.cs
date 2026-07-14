@@ -5,6 +5,8 @@ using System.Collections.Specialized;
 using System.Linq;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class IDictionaryExtensions
 {
     // <summary>
@@ -393,4 +395,4 @@ public static class IDictionaryExtensions
         }
         return nullKeys.Count;
     }
-}
+}}

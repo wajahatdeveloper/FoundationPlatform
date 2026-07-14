@@ -5,6 +5,8 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 public static class ScriptingDefineSymbolController
 {
 	public static void ToggleScriptingDefineSymbol(string symbol, bool value)
@@ -96,5 +98,6 @@ public static class ScriptingDefineSymbolController
 		AssetDatabase.Refresh();
 		EditorUtility.RequestScriptReload();
 	}
+}
 }
 #endif

@@ -5,6 +5,8 @@ using UnityEngine;
 /// Fluent tween entry points for renderers/materials: <see cref="SpriteRenderer"/>,
 /// <see cref="Material"/>, <see cref="Light"/>. Global namespace.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class RenderingTweenExtensions
 {
     // ---- SpriteRenderer ----
@@ -40,4 +42,5 @@ public static class RenderingTweenExtensions
     public static TweenHandle TweenColor(this Light light, Color to, float duration)
         => TweenManager.Create(() => light.color, v => light.color = v, to, duration,
             TweenInterpolators.Color, TweenInterpolators.AddColor, null, light).AsHandle();
+}
 }

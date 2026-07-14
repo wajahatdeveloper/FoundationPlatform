@@ -1,7 +1,10 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.Identity;
 using UnityEditor;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Identity
+{
 [CustomPropertyDrawer(typeof(IdentityFieldAttribute))]
 public sealed class IdentityFieldDrawer : PropertyDrawer
 {
@@ -114,5 +117,6 @@ public sealed class IdentityFieldDrawer : PropertyDrawer
 
         EditorGUI.EndProperty();
     }
+}
 }
 #endif

@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ValidationExtensions
 {
     /// <summary>
@@ -50,5 +52,6 @@ public static class ValidationExtensions
 
         return argument;
     }
+}
 }
 

@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Essential AudioSource extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class AudioSourceExtensions
 {
     // Plays a random clip from the list provided on the audio source.
@@ -98,4 +100,4 @@ public static class AudioSourceExtensions
         @this.spread = 0;
         @this.maxDistance = 500;
     }
-}
+}}

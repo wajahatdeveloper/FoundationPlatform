@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class IEquatableExtensions
 {
     /// <summary>
@@ -24,4 +26,4 @@ public static class IEquatableExtensions
     /// <returns><see langword="true"/> if at least one of all elements of <paramref name="values"/> are equals to <paramref name="value"/>.</returns>
     public static bool EqualsToAny<T>(this T value, params T[] values) where T : IEquatable<T> =>
         values.Any(o => EqualityComparer<T>.Default.Equals(value, o));
-}
+}}

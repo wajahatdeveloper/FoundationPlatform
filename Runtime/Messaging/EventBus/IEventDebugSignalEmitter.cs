@@ -3,6 +3,8 @@
 /// Allows EventBus to emit debug signals without depending on GameEngineCore.
 /// GameEngineCore can provide an implementation that bridges to DebugSignalBus.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public interface IEventDebugSignalEmitter
 {
 	/// <summary>
@@ -13,5 +15,6 @@ public interface IEventDebugSignalEmitter
 	/// <param name="scope">Scope information (Global, Entity, System, Rule)</param>
 	/// <param name="message">Message string</param>
 	void EmitEventSignal(int channel, int severity, EventDebugScope scope, string message);
+}
 }
 

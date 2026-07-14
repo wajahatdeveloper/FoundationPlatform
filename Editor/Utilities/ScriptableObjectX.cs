@@ -1,9 +1,12 @@
 #if UNITY_EDITOR
 using System.IO;
-using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 using UnityEditor;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
+using AetherNexus.FoundationPlatform.DebugX;
+	
 	public static class ScriptableObjectX
 	{
 		/// <summary>
@@ -68,4 +71,5 @@ using UnityEditor;
 			return CreateAsset<T>(filename, relativePath);
 		}
 	}
+}
 #endif

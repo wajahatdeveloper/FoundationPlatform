@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public class SyncAnimatorTime : MonoBehaviour
 {
 	public enum UpdatePhase
@@ -84,4 +86,4 @@ public class SyncAnimatorTime : MonoBehaviour
 		float t = Mathf.Repeat(srcInfo.normalizedTime, 1f);
 		animator.Play(stateName, layerIndex, t);
 	}
-}
+}}

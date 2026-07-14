@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Fluent tween entry points for audio/camera plus the generic value tweeners. Global namespace.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class MiscTweenExtensions
 {
     // ---- AudioSource ----
@@ -47,4 +49,5 @@ public static class TweenValue
     public static TweenHandle Color(Func<Color> getter, Action<Color> setter, Color to, float duration, UnityEngine.Object link = null)
         => TweenManager.Create(getter, setter, to, duration,
             TweenInterpolators.Color, TweenInterpolators.AddColor, null, link).AsHandle();
+}
 }

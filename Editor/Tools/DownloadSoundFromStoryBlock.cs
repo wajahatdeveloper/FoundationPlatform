@@ -8,10 +8,14 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEngine.Networking;
 
+namespace AetherNexus.FoundationPlatform.Editor.Tools
+{
+    
+using AetherNexus.FoundationPlatform.DebugX;
+    
 public class DownloadSoundFromStoryBlock : EditorWindow
 {
     private string websiteURL = "https://example.com";
@@ -350,5 +354,6 @@ public class DownloadSoundFromStoryBlock : EditorWindow
 
         Repaint();
     }
+}
 }
 #endif

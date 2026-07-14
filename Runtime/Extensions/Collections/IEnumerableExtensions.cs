@@ -5,6 +5,8 @@ using System.Linq;
 using AetherNexus.FoundationPlatform.Behaviours;
 using UnityRandom = UnityEngine.Random;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class IEnumerableExtensions
 {
     public static IEnumerable<T> Concat<T>(params IEnumerable<T>[] enumerables)
@@ -169,11 +171,6 @@ public static class IEnumerableExtensions
     public static Dictionary<TKey, T> ToDictionary<TKey, T>(this IEnumerable<KeyValuePair<TKey, T>> @this)
     {
         return @this.ToDictionary(p => p.Key, p => p.Value);
-    }
-
-    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> @this)
-    {
-        return new HashSet<T>(@this);
     }
 
     public static HashSet<T> ToHashSet<T>(this IEnumerable<T> @this, IEqualityComparer<T> comparer)
@@ -988,4 +985,4 @@ internal static class ThrowIf
             }
         }
     }
-}
+}}

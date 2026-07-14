@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class RegexPattern
 {
     /// <summary>
@@ -446,4 +448,4 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(@string)) return @string;
         return @string.EndsWith("(Clone)") ? @string.Substring(0, @string.Length - 7) : @string;
     }
-}
+}}

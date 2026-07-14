@@ -1,6 +1,8 @@
 using UnityEngine;
 
 
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 internal sealed class CoroutineXExecutor : MonoBehaviour
 {
     internal static bool HideCoroutineXExecutor = true;
@@ -23,4 +25,4 @@ internal sealed class CoroutineXExecutor : MonoBehaviour
 
         DontDestroyOnLoad(Instance.gameObject);
     }
-}
+}}

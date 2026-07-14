@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 ///
 /// </summary>
+namespace AetherNexus.FoundationPlatform.SupportTypes
+{
 public struct HSV
 // ReSharper restore InconsistentNaming
 {
@@ -133,4 +135,4 @@ public struct HSV
 
         return new HSV() { Hue = h, Saturation = s, Value = v };
     }
-}
+}}

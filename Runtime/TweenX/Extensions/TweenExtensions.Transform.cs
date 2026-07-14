@@ -7,6 +7,8 @@ using UnityEngine;
 /// DOTween's <c>transform.DOMove(...)</c>. Every method returns a <see cref="TweenHandle"/> you can
 /// chain (<c>.SetEase(...).SetLoops(...)</c>) or store to control later.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class TransformTweenExtensions
 {
     /// <summary>Tween world position to <paramref name="to"/> over <paramref name="duration"/> seconds.</summary>
@@ -54,4 +56,5 @@ public static class TransformTweenExtensions
     public static TweenHandle TweenLocalRotate(this Transform tr, Vector3 toEuler, float duration)
         => TweenManager.Create(() => tr.localRotation, v => tr.localRotation = v, Quaternion.Euler(toEuler), duration,
             TweenInterpolators.Quaternion, null, null, tr).AsHandle();
+}
 }

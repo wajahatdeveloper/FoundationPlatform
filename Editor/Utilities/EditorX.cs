@@ -12,6 +12,8 @@ using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
+{
 public static class EditorX
 {
 	/// <summary>
@@ -463,6 +465,7 @@ public static class EditorX
 			te.SelectAll();
 			te.Copy();
 		}
+}
 }
 #endif
 #pragma warning restore 618

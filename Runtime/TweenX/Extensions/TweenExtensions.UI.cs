@@ -7,6 +7,8 @@ using UnityEngine.UI;
 /// <see cref="Graphic"/> (base of Image/RawImage/Text, and TextMeshPro's graphic). Global namespace,
 /// zero <c>using</c> required at call sites.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.TweenX
+{
 public static class UITweenExtensions
 {
     // ---- RectTransform ----
@@ -34,4 +36,5 @@ public static class UITweenExtensions
     public static TweenHandle TweenFade(this Graphic g, float to, float duration)
         => TweenManager.Create(() => g.color.a, v => { var c = g.color; c.a = v; g.color = c; }, to, duration,
             TweenInterpolators.Float, TweenInterpolators.AddFloat, null, g).AsHandle();
+}
 }

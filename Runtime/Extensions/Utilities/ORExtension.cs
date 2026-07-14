@@ -1,3 +1,5 @@
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class ORExtension
 {
     public static bool IsOneOf<TThis>(this TThis o, params TThis[] orList)
@@ -25,4 +27,4 @@ public static class ORExtension
 
         return false;
     }
-}
+}}

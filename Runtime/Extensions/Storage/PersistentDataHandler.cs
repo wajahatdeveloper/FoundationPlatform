@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class PersistentDataHandler
 {
     private const string CacheInitKey = "CacheInit";
@@ -119,4 +121,5 @@ public static class PersistentDataHandler
         EnsureInitialized();
         return adapter.GetData(key, defaultValue);
     }
+}
 }

@@ -1,5 +1,7 @@
 using System.Collections;
 
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 internal class EnumerableEnumerator : IEnumerable
 {
     private IEnumerator _enumerator;
@@ -7,4 +9,4 @@ internal class EnumerableEnumerator : IEnumerable
     public EnumerableEnumerator(IEnumerator enumerator) => _enumerator = enumerator;
 
     public IEnumerator GetEnumerator() => _enumerator;
-}
+}}

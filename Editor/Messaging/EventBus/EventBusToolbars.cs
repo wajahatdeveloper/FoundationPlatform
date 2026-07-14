@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.Messaging;
 using UnityEditor;
 using UnityEngine;
 
@@ -142,7 +143,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[Button(ButtonSizes.Small), LabelText("Clear")]
 		[PropertyOrder(-89)]
 		[Tooltip("Clear all event history")]
-		public void Clear() { global::EventBus.ClearEventHistory(); }
+		public void Clear() { EventBus.ClearEventHistory(); }
 
 		[HorizontalGroup("historyToolbar")]
 		[Button(ButtonSizes.Small), LabelText("Active Subscriptions")]
@@ -456,7 +457,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[Button(ButtonSizes.Small), LabelText("Clear")]
 		[PropertyOrder(-92)]
 		[Tooltip("Clear all subscription history")]
-		public void Clear() { global::EventBus.ClearSubscriptionHistory(); }
+		public void Clear() { EventBus.ClearSubscriptionHistory(); }
 	}
 }
 #endif

@@ -1,5 +1,7 @@
 using System;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class IComparableExtensions
 {
     /// <summary>
@@ -25,4 +27,4 @@ public static class IComparableExtensions
         return (aInclusive ? value.CompareTo(a) >= 0 : value.CompareTo(a) > 0) &&
                (bInclusive ? value.CompareTo(b) <= 0 : value.CompareTo(b) < 0);
     }
-}
+}}

@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public class OnceAction
 {
     private Action action;
@@ -34,5 +36,6 @@ public static class ActionExtensions
     {
         return new OnceAction(action);
     }
+}
 }
 

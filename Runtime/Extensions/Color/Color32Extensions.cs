@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Color32Extensions
 {
     /// <summary>
@@ -178,4 +180,4 @@ public static class Color32Extensions
     /// <param name="a">Value to set in alpha channel.</param>
     /// <returns>Changed copy of the color.</returns>
     public static Color32 WithGBA(this Color32 color, byte g, byte b, byte a) => With(color, 1, g, 2, b, 3, a);
-}
+}}

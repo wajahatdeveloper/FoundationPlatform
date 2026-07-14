@@ -7,6 +7,8 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// Component-related extensions for GameObjects
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class GameObjectComponentExtensions
 {
     #region GetComponentOnObject
@@ -428,5 +430,6 @@ public static class GameObjectComponentExtensions
             Interface = @interface;
         }
     }
+}
 }
 

@@ -13,6 +13,8 @@ using UnityEngine;
 /// Used by GameManager.
 /// System/UI event - published by services or view roots (see DOMAIN_PACKAGE_SHAPE.md; product types use *Screen).
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Messaging
+{
 public class GamePaused : BaseGameEvent
 {
     [EventData]
@@ -50,4 +52,4 @@ public class GameResumed : BaseGameEvent
         PauseDuration = pauseDuration;
         ResumeReason = resumeReason;
     }
-}
+}}

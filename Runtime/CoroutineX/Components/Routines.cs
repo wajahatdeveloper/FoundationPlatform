@@ -6,6 +6,8 @@ using UnityEngine;
 /// Auxiliary class for regular coroutine/Coroutine tasks. <br/>
 /// All methods in the class create <see cref="IEnumerable"/> objects.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.CoroutineX
+{
 public static class Routines
 {
     /// <summary>
@@ -119,4 +121,4 @@ public static class Routines
     {
         yield return instruction;
     }
-}
+}}

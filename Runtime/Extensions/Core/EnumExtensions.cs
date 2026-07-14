@@ -4,6 +4,8 @@ using System;
 /// <summary>
 /// Provides extensions methods for working with enumerations.
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class EnumExtensions
 {
     // Per-T cached values array: Enum.GetValues reflects + allocates a fresh array on every call,
@@ -92,4 +94,4 @@ public static class EnumExtensions
 
         return (int)(object)enumValue;
     }
-}
+}}

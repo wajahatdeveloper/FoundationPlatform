@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class CanvasExtensions
 {
     /// <summary>
@@ -33,4 +35,4 @@ public static class CanvasExtensions
         return Mathf.Lerp(Screen.width / scaler.referenceResolution.x, Screen.height / scaler.referenceResolution.y,
             scaler.matchWidthOrHeight);
     }
-}
+}}

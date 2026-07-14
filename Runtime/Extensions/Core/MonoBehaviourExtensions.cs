@@ -1,7 +1,10 @@
 using System;
 using System.Runtime.CompilerServices;
+using AetherNexus.FoundationPlatform.SupportTypes;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class MonoBehaviourExtensions
 {
     public static void RunOnce(this MonoBehaviour behaviour, Action action)
@@ -79,4 +82,4 @@ public static class MonoBehaviourExtensions
             behaviour.enabled = false;
         }
     }
-}
+}}

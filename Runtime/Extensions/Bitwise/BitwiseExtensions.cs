@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class BitwiseExtensions
 {
     /// <summary>
@@ -74,5 +76,6 @@ public static class BitwiseExtensions
             input = input & ~(1 << index);
         return input;
     }
+}
 }
 

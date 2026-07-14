@@ -9,6 +9,8 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Essential UI extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class UIExtensions
 {
     #region Canvas Extensions
@@ -530,4 +532,5 @@ public static class UIExtensions
     }
 
     #endregion
+}
 }

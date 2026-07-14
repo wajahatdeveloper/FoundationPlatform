@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class UnityEventExtensions
 {
     /// <summary>
@@ -196,4 +198,4 @@ public static class UnityEventExtensions
             del.Invoke(p1, p2, p3, p4);
         }
     }
-}
+}}

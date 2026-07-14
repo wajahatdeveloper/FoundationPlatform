@@ -5,12 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using AetherNexus.FoundationPlatform.Editor.Windows;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Tools
+{
 public static class MonoBehaviourScriptDuplicator
 {
 	private const int MenuPriority = 100;
@@ -536,5 +539,6 @@ public static class MonoBehaviourScriptDuplicator
 			Close();
 		}
 	}
+}
 }
 #endif

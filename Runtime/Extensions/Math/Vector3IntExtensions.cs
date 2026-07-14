@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class Vector3IntExtensions
 {
     /// <summary>
@@ -423,4 +425,4 @@ public static class Vector3IntExtensions
     {
         return new Vector3Int(Mathf.Abs(vec.x), Mathf.Abs(vec.y), Mathf.Abs(vec.z));
     }
-}
+}}

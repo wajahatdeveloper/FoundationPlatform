@@ -5,6 +5,8 @@ using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class IListExtensions
 {
     public static T Random<T>(this IList<T> list)
@@ -819,4 +821,4 @@ public static class IListExtensions
     {
         return list.Count > 0 ? list[UnityEngine.Random.Range(0, list.Count)] : default(T);
     }
-}
+}}

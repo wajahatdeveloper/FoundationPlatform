@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Essential Animator extension methods for Unity development
 /// </summary>
+namespace AetherNexus.FoundationPlatform.Extensions
+{
 public static class AnimatorExtensions
 {
     /// <summary>
@@ -122,4 +124,4 @@ public static class AnimatorExtensions
     }
 
     #endregion
-}
+}}

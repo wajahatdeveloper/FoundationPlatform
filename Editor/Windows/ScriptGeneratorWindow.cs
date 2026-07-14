@@ -6,6 +6,8 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Windows
+{
 public class ScriptGeneratorWindow : EditorWindow
 {
 	private const string LastOutputFolderPrefsKey = "FoundationPlatform.ScriptGeneratorWindow.LastOutputFolder";
@@ -253,5 +255,6 @@ public class ScriptGeneratorWindow : EditorWindow
 			EditorUtility.DisplayDialog("Error", "Failed to generate file:\n" + ex.Message, "OK");
 		}
 	}
+}
 }
 #endif

@@ -1,10 +1,14 @@
 #if UNITY_EDITOR
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Identity;
 using UnityEditor;
 using UnityEngine;
 
+namespace AetherNexus.FoundationPlatform.Editor.Identity
+{ 
+	using AetherNexus.FoundationPlatform.DebugX;
+	
 [CustomEditor(typeof(IdentityComponent))]
-public class IdentityComponentEditor : Editor
+public class IdentityComponentEditor : UnityEditor.Editor
 {
 	private void OnEnable() { }
 
@@ -29,7 +33,7 @@ public class IdentityComponentEditor : Editor
 		if (GUILayout.Button("Copy", GUILayout.Width(50)))
 		{
 			EditorGUIUtility.systemCopyBuffer = comp.Identity.Value;
-			DebugX.Debug($"Copied Identity: {comp.Identity}");
+			DebugX.Debug("Copied Identity: {}",comp.Identity);
 		}
 		if (GUILayout.Button("Clear", GUILayout.Width(50)))
 		{
@@ -40,5 +44,6 @@ public class IdentityComponentEditor : Editor
 
 		serializedObject.ApplyModifiedProperties();
 	}
+}
 }
 #endif
