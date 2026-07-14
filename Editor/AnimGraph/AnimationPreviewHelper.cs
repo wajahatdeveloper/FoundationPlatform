@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	public static class AnimationPreviewHelper
 	{

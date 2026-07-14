@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	/// Animation mask for specifying which body parts an animation affects.

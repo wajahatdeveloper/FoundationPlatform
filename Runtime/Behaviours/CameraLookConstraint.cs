@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
     public class CameraLookConstraint : MonoBehaviour
     {

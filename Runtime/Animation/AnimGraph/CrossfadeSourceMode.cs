@@ -1,4 +1,4 @@
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	/// Selects the playable mixed against a new overlay clip in <see cref="AnimGraph.CrossfadeAsync"/>.

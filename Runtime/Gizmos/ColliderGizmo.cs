@@ -1,6 +1,6 @@
 ﻿
 
-namespace FoundationPlatform.Gizmos
+namespace AetherNexus.FoundationPlatform.Gizmos
 {
 	using System.Collections.Generic;
 	using UnityEngine;

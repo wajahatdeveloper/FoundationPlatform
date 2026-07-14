@@ -1,4 +1,4 @@
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Truncates log messages from the bottom at newline boundaries for fixed-size buffers (e.g. FixedString4096Bytes).

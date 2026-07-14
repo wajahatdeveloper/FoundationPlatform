@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public class SimpleEditorTableView<TData>
 	{

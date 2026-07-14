@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// "Save Values When Exiting Play Mode": components flagged via the context menu are

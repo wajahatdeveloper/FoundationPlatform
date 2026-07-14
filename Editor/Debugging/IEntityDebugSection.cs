@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Debugging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
 	///  One collapsible detail block in the <see cref="EntityDebuggerOverlay"/> — the in-context

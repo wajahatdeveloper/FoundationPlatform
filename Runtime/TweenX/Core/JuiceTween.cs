@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
     /// "Juice" tween: a decaying oscillation applied around a captured origin — the engine behind punch

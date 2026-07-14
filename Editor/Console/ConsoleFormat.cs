@@ -1,8 +1,8 @@
 using System.Text;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
 
-namespace FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Builds the display-only strings for an entry (property text, filtered stack) lazily on the main

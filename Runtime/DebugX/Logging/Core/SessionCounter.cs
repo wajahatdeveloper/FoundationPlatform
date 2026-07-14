@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Manages persistent session counter for log file naming

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.AssetImport
+namespace AetherNexus.FoundationPlatform.Editor.AssetImport
 {
     public static class AssetImportPathFilters
     {

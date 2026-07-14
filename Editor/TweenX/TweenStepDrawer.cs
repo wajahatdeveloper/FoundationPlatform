@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
-using FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
 using UnityEditor;
 
-namespace FoundationPlatform.TweenX.EditorTools
+namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
 {
     /// <summary>
     /// Routes <see cref="TweenAnimator.TweenStep"/> through the parity-engine reflected drawer so its

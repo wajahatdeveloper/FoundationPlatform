@@ -1,6 +1,6 @@
 using System;
 
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
 	/// <summary>
 	///  Signals when deterministic scene initialization has finished seeding gameplay RNG.

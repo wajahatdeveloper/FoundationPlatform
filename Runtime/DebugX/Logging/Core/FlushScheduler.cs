@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Periodically flushes file sinks on a background thread so the main thread is not blocked.

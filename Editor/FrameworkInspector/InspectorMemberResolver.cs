@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Collections;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Resolves the member-name / "$member" / "@expression" strings that the attributes accept

@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System;
-using FoundationPlatform.TweenX.Feedbacks;
+using AetherNexus.FoundationPlatform.TweenX.Feedbacks;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX.EditorTools
+namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
 {
     /// <summary>
     /// Inspector for <see cref="FeedbackPlayer"/>: a reorderable, polymorphic feedback list plus an

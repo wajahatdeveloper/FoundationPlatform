@@ -1,4 +1,4 @@
-namespace FoundationPlatform.Editor.Utilities.PresetAutomation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 {
 	internal static class PresetAutomationConstants
 	{

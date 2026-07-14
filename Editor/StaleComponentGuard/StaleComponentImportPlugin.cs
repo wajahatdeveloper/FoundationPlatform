@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 using System;
-using FoundationPlatform.Editor.AssetImport;
+using AetherNexus.FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// Re-scan trigger: when a script (<c>.cs</c>) changes its serialized fields can shift, so any open-scene

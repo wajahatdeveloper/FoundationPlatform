@@ -1,4 +1,4 @@
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Caller information (Editor only typically)

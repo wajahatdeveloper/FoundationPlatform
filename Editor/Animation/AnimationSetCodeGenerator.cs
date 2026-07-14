@@ -3,12 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using FoundationPlatform.Animation;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Animation
+namespace AetherNexus.FoundationPlatform.Editor.Animation
 {
 	public static class AnimationSetCodeGenerator
 	{

@@ -1,4 +1,4 @@
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Compile-time constants for log channels/filters

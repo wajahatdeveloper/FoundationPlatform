@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 using System;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Skin-aware IMGUI theme tokens and cached styles for FrameworkInspector chrome.

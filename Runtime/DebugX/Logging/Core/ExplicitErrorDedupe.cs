@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
 	internal static class ExplicitErrorDedupe
 	{

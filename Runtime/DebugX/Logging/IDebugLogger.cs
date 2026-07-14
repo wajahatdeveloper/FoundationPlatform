@@ -1,4 +1,4 @@
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Instance-based logger with automatic class context injection

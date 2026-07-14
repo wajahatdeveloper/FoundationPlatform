@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public static class EventBusConstants
 	{

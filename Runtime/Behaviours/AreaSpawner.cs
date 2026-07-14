@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
 	/// <summary>
 	///  Spawner script for spawning units within an adjustable area.

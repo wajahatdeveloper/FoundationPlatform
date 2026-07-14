@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
 using UnityEditor;
 using UnityEngine;
-using FoundationPlatform.Animation;
-using FoundationPlatform.Editor.Utilities.Debugging;
-using FoundationPlatform.FrameworkInspector.Editor;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	/// <summary>
 	///  Live play-mode control surface for a <see cref="PlayableGraphBridge"/>. Beyond monitoring, this lets

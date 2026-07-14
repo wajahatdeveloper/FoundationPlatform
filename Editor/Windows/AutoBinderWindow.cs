@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 

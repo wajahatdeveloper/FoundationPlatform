@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     public static class HierarchyPathPolicy
     {

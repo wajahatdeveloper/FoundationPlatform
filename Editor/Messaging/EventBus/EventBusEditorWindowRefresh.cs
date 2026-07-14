@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
     internal static class EventBusEditorWindowRefresh
     {

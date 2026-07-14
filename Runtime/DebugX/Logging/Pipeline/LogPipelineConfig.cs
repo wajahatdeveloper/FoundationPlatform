@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Fluent builder for log pipeline configuration

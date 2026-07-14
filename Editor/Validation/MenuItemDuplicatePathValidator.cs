@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Validation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
 {
     /// <summary>
     /// Regression guard for the Tools/Window/GameObject/CONTEXT menu restructure: two

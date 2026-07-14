@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// Core detection. A component is "stale" when the asset's YAML carries a top-level serialized key

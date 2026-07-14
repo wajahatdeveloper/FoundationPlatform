@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public class ActiveSubscriptionsWindow : EditorWindow
 	{

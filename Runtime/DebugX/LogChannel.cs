@@ -1,4 +1,4 @@
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Typed log channel wrapper. Use LogChannels.* constants or implicit string conversion.

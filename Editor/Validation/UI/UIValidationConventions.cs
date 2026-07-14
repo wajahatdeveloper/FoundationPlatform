@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
     internal enum UILayer
     {

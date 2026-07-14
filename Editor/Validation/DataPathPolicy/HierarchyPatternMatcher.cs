@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     public static class HierarchyPatternMatcher
     {

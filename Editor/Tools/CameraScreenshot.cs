@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 

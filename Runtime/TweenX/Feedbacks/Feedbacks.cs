@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace FoundationPlatform.TweenX.Feedbacks
+namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
 {
     /// <summary>Move the transform to a target position.</summary>
     [Serializable]

@@ -3,11 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Reflection inspector for a plain C# object (not a <see cref="UnityEngine.Object"/>) — the

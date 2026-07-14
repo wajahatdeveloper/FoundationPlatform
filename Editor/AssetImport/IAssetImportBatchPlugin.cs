@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace FoundationPlatform.Editor.AssetImport
+namespace AetherNexus.FoundationPlatform.Editor.AssetImport
 {
     public interface IAssetImportBatchPlugin
     {

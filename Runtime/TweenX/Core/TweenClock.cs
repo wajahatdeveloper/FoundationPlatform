@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
     /// Which time source drives a tween. Presentation clocks (<see cref="Unscaled"/>,

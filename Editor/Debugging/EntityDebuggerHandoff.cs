@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Debugging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
 	/// Hands off from an out-of-context tool (e.g. the Central Authoring Window) to the in-context

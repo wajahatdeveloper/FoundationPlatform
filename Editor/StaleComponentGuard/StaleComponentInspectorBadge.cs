@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using FoundationPlatform.FrameworkInspector;
-using FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// Draws a stale-data warning in the inspector — listing the orphan field names, with Strip actions.

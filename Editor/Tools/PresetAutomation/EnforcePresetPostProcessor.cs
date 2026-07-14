@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using FoundationPlatform.Editor.AssetImport;
+using AetherNexus.FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 using UnityEditor.Experimental;
 using UnityEditor.Presets;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.PresetAutomation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 {
 	[InitializeOnLoad]
 	internal static class EnforcePresetPreprocessPluginRegistration

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-namespace FoundationPlatform.Editor.Tools
+namespace AetherNexus.FoundationPlatform.Editor.Tools
 {
     /// <summary>
     /// Configuration settings for PrefabLightmapData behavior.

@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace FoundationPlatform.Utilities.Menus
+namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
     /// <summary>
     /// Centralized <c>[MenuItem]</c> priority bands. Replaces the ad-hoc magic numbers that were

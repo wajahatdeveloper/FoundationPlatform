@@ -8,8 +8,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEngine.Networking;
 
 public class DownloadSoundFromStoryBlock : EditorWindow

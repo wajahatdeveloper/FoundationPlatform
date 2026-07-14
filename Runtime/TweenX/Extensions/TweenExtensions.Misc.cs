@@ -1,5 +1,5 @@
 using System;
-using FoundationPlatform.TweenX;
+using AetherNexus.FoundationPlatform.TweenX;
 using UnityEngine;
 
 /// <summary>

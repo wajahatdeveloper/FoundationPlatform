@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Extra CONTEXT/Component menu items: move-to-top/bottom, JSON copy/paste of

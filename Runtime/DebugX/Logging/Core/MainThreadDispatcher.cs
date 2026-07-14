@@ -1,7 +1,7 @@
 using System.Threading;
 using UnityEngine;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// MonoBehaviour that dispatches actions to Unity's main thread

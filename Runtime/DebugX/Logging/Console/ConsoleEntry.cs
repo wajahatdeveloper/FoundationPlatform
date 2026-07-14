@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Where a console row originated. DebugX = structured pipeline, Unity = plain Debug.Log /

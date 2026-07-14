@@ -2,12 +2,12 @@
 using System;
 using System.IO;
 using System.Text;
-using FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Animation;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Animation
+namespace AetherNexus.FoundationPlatform.Editor.Animation
 {
     internal static class AnimatorConstantsGenerator
     {

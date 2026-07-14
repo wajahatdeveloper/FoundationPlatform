@@ -6,12 +6,12 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.Editor.Animation;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Editor.Animation;
 using UnityEditor.Animations;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 public class Weaver : EditorWindow
 {

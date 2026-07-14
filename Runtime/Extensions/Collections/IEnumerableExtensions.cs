@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using FoundationPlatform.Behaviours;
+using AetherNexus.FoundationPlatform.Behaviours;
 using UnityRandom = UnityEngine.Random;
 
 public static class IEnumerableExtensions

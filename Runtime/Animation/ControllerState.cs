@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	public class ControllerState : PlayableState
 	{

@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// On-demand project-wide sweep for stale components, grouped by asset, with per-item Ping/Strip and a

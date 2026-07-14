@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>Pure interpolation between two values of <typeparamref name="T"/> at factor <c>t</c>.</summary>
     public delegate T Interpolator<T>(T a, T b, float t);

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	[CreateAssetMenu(fileName = "AnimationSet", menuName = "Foundation/Animation/Animation Set", order = 45)]
 	public class AnimationSet : ScriptableObject

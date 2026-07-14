@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.PresetAutomation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 {
 	/// <summary>
 	/// Central settings for Preset Automation. Controls behavior, filtering, and UX toggles.

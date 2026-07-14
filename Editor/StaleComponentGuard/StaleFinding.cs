@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// One stale MonoBehaviour found in an asset: its script serializes fewer fields than the

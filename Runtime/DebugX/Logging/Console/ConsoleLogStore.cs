@@ -6,7 +6,7 @@ using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Always-on, editor-only backing store for the DebugX Console. Producers (the

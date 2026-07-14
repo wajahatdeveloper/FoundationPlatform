@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     public enum HierarchyRoot
     {

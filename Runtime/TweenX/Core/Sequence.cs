@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
     /// A timeline that composes tweens, intervals, and callbacks into one controllable unit. Build it

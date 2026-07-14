@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Helper for adaptively detecting caller information by skipping internal logging methods.

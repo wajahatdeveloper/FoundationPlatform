@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	internal static class LocomotionBlendTemplateUtility
 	{

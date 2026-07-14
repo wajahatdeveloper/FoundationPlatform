@@ -1,6 +1,6 @@
 using UnityEngine.Playables;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	/// Manages locomotion blend playables: stances, directional blending, turn resolution.

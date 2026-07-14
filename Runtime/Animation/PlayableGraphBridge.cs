@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using FoundationPlatform;
+using AetherNexus.FoundationPlatform;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
     public class AnimEventDispatcher
     {

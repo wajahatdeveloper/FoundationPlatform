@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using FoundationPlatform.Behaviours;
+using AetherNexus.FoundationPlatform.Behaviours;
 using UnityEditor;
 using UnityEngine;
 

@@ -1,8 +1,8 @@
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
     /// <summary>
     /// A class to handle cooldown related properties and their resource consumption over time.

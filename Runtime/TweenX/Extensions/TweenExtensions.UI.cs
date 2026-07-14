@@ -1,4 +1,4 @@
-using FoundationPlatform.TweenX;
+using AetherNexus.FoundationPlatform.TweenX;
 using UnityEngine;
 using UnityEngine.UI;
 

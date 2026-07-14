@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using UnityEngine;
 
-namespace FoundationPlatform.Attributes
+namespace AetherNexus.FoundationPlatform.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class RunBefore : Attribute

@@ -8,9 +8,9 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System;
 using System.IO;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     /// <summary>
     /// Scene switcher window, an editor window for switching between scenes.

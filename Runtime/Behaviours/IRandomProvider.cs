@@ -1,4 +1,4 @@
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
 	/// <summary>
 	///  Interface for random number generation providers.

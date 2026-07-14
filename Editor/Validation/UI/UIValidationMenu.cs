@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
-using FoundationPlatform.Utilities.Menus;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
     internal static class UIValidationMenu
     {

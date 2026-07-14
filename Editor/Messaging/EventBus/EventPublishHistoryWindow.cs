@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public class EventPublishHistoryWindow : EditorWindow
 	{

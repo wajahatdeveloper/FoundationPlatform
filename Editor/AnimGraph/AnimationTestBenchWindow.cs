@@ -1,13 +1,13 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using FoundationPlatform.Animation;
-using FoundationPlatform;
-using FoundationPlatform.Editor.Utilities.Debugging;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	/// <summary>
 	///  Designer-facing bench for previewing AnimationSets and transitions.

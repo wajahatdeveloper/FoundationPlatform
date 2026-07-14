@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Debugging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
 	///  Stateless IMGUI draw helpers shared by every framework debugger window so each new debugger

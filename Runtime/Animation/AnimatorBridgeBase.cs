@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using FoundationPlatform;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform;
 using UnityEngine;
-using FoundationPlatform.FrameworkInspector;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	///  Centralized wrapper around Unity's Animator.

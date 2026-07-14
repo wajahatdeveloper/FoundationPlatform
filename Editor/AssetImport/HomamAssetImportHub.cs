@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.AssetImport
+namespace AetherNexus.FoundationPlatform.Editor.AssetImport
 {
     internal sealed class HomamAssetImportHub : AssetPostprocessor
     {

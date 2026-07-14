@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>Interpolation shape for a <see cref="PathTween"/>.</summary>
     public enum PathType

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace FoundationPlatform.Attributes
+namespace AetherNexus.FoundationPlatform.Attributes
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public sealed class TooltipIconAttribute : PropertyAttribute

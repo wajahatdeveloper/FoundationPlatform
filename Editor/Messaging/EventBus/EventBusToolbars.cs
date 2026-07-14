@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
-using FoundationPlatform.FrameworkInspector;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	[Serializable]
 	public class HistoryTabToolbar

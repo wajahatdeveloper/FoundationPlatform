@@ -3,12 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.PresetAutomation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 {
 	public class PresetAutomationWindow : EditorWindow
 	{

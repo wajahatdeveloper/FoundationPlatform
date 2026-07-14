@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.Behaviours;
+using AetherNexus.FoundationPlatform.Behaviours;
 using UnityEngine;
 
 /// <summary>

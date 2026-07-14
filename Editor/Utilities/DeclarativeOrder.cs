@@ -2,7 +2,7 @@
     using System;
     using System.Collections.Generic;
     using System.Reflection;
-    using FoundationPlatform.Attributes;
+    using AetherNexus.FoundationPlatform.Attributes;
     using UnityEditor;
     using UnityEditor.Callbacks;
     using UnityEngine;

@@ -5,7 +5,7 @@ using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FoundationPlatform.Editor.Utilities.Debugging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
 	///  Scene-View overlay that folds the project's per-entity debugger detail panes into the scene,

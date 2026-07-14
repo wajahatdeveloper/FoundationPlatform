@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Animation;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Animation
+namespace AetherNexus.FoundationPlatform.Editor.Animation
 {
 	public static class AnimationSetValidator
 	{

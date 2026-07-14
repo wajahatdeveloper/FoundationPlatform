@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
     /// Designer-facing tween component: author a list of <see cref="TweenStep"/>s on a GameObject and

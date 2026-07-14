@@ -1,13 +1,13 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Live parity harness for the <see cref="FrameworkEditor"/> engine. Menu:

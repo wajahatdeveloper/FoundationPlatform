@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
     internal enum UIValidationRolloutMode
     {

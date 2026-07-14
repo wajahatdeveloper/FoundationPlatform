@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX.Feedbacks
+namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
 {
     /// <summary>
     /// Plays a designer-authored list of composable <see cref="Feedback"/>s on one trigger — the

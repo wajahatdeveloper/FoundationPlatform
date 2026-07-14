@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Debugging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
 	///  Base class for the project's "single pane" debugger windows (see the AI Debugger). Provides the

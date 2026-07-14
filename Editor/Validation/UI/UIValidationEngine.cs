@@ -6,7 +6,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
     internal enum UIValidationSeverity
     {

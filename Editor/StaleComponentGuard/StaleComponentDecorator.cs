@@ -2,7 +2,7 @@
 using HierarchyX;
 using UnityEngine;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// Paints a red row + <b>STALE</b> chip on any GameObject that owns a component whose script no longer

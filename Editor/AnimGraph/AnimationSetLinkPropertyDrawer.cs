@@ -1,12 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using FoundationPlatform;
-using FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	[CustomPropertyDrawer(typeof(AnimationSetLink))]
 	internal sealed class AnimationSetLinkPropertyDrawer : PropertyDrawer

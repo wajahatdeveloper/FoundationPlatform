@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Central configuration for log filtering - checked BEFORE expensive log processing

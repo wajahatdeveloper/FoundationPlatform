@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.DebugX.ConsoleView;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// In-house replacement for Editor Console Pro 3, built on UI Toolkit. Reads the always-on

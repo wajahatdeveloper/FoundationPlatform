@@ -4,7 +4,7 @@ using HierarchyX;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.StaleComponentGuard.Editor
+namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// "Stale Components" section in the Hierarchy setup panel: a header chip with the open-scene stale count,

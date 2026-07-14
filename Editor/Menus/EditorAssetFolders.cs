@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEditor;
 
-namespace FoundationPlatform.Utilities.Menus
+namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
     /// <summary>
     /// Shared project-folder helper for editor asset generators. Consolidates the recursive

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace FoundationPlatform.Editor.Utilities.PresetAutomation
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 {
 	internal static class PresetAutomationUtilities
 	{

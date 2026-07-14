@@ -2,10 +2,10 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using FoundationPlatform.DebugX;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.DebugX;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Editor menu items for DebugX

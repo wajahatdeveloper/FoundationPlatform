@@ -2,14 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using FoundationPlatform;
-using FoundationPlatform.Animation;
-using FoundationPlatform.Editor.Animation;
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Editor.Animation;
+using AetherNexus.FoundationPlatform;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	[CustomEditor(typeof(AnimationSet))]
 	internal class AnimationSetEditor : FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor

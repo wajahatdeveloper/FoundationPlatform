@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>How a tween repeats once it reaches the end of a step.</summary>
     public enum LoopType

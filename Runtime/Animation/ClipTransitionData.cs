@@ -1,8 +1,8 @@
 using System;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	///  A single named event fired at a point along a clip's timeline. The <see cref="eventName"/> is

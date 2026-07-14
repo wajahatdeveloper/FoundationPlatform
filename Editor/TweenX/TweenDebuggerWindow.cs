@@ -1,12 +1,12 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using FoundationPlatform.Editor.Utilities.Debugging;
-using FoundationPlatform.TweenX;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.TweenX;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX.EditorTools
+namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
 {
     /// <summary>
     /// Global tween debugger: a live list of every tween the <see cref="TweenManager"/> is running,

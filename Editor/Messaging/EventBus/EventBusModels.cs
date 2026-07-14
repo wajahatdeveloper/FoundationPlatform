@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
-using FoundationPlatform.FrameworkInspector;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public enum HistorySortBy { Timestamp, Type, Category, Publisher, Subscribers, Depth, Channel }
 	public enum SubscribersSortBy { EventType, Target, Method, Context, Channel, TokenId }

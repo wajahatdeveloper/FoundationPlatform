@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 {
     /// <summary>
     /// Project Settings page (Project/DebugX Console) for the per-project console settings. Edits the

@@ -1,8 +1,8 @@
 using System;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
-namespace FoundationPlatform
+namespace AetherNexus.FoundationPlatform
 {
     public enum FragmentSource
     {

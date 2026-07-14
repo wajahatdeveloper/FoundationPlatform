@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEngine;
 using Object = UnityEngine.Object;
 

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-namespace FoundationPlatform.Behaviours
+namespace AetherNexus.FoundationPlatform.Behaviours
 {
     [RequireComponent(typeof(BoxCollider2D))]
     public class Drag2DHandler : MonoBehaviour

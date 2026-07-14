@@ -2,9 +2,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
-namespace FoundationPlatform.Editor.Utilities.Messaging
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
     public class EventChannelGenerator : EditorWindow
     {

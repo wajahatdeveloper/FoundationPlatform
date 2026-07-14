@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	[CreateAssetMenu(fileName = "LocomotionBlendProfile", menuName = "Foundation/Animation/Locomotion Blend Profile", order = 44)]
 	public class LocomotionBlendProfile : ScriptableObject

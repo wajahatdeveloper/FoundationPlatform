@@ -6,7 +6,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 #endif
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     public static class DebugX
     {

@@ -2,7 +2,7 @@
 using System.Text;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
 using FoundationPlatform.DebugX;
     

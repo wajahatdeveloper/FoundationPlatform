@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Base class with common filtering logic

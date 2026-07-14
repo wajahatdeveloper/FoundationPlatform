@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX
+namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
     /// Easing curve applied to a tween's normalized time. Names mirror the industry-standard

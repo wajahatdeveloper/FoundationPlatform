@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FoundationPlatform.Behaviours;
+using AetherNexus.FoundationPlatform.Behaviours;
 
 public static class RandomX
 {

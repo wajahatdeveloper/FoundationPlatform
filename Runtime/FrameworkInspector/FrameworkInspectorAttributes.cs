@@ -1,6 +1,6 @@
 using System;
 
-namespace FoundationPlatform.FrameworkInspector
+namespace AetherNexus.FoundationPlatform.FrameworkInspector
 {
     // ---- Enums -------------------------------------------------------------
 

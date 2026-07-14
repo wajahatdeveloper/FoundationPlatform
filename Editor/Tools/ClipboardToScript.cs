@@ -4,7 +4,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 public static class ClipboardToScript
 {

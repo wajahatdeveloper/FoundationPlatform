@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>Draws FrameworkInspector feature settings under Project Settings ▸ FrameworkInspector.</summary>
     public static class InspectorXSettingsProvider

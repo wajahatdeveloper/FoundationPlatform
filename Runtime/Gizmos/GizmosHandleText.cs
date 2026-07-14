@@ -1,7 +1,7 @@
 ﻿
 using UnityEngine;
 
-namespace FoundationPlatform.Gizmos
+namespace AetherNexus.FoundationPlatform.Gizmos
 {
     public class GizmosHandleText : MonoBehaviour
     {

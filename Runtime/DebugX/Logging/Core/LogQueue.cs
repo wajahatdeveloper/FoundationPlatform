@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     internal struct QueuedLog
     {

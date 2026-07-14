@@ -1,8 +1,8 @@
-using FoundationPlatform.Attributes;
+using AetherNexus.FoundationPlatform.Attributes;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities
+namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     [CustomPropertyDrawer(typeof(TooltipIconAttribute))]
     public sealed class TooltipIconDrawer : PropertyDrawer

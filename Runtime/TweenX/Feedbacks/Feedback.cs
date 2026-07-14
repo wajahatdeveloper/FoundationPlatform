@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX.Feedbacks
+namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
 {
     /// <summary>
     /// Shared state passed to every feedback when a <see cref="FeedbackPlayer"/> plays. Owns the tween

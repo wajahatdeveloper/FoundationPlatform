@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.AssetImport
+namespace AetherNexus.FoundationPlatform.Editor.AssetImport
 {
     using DebugX;
     

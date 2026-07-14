@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace FoundationPlatform.Utilities.Menus
+namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
 using FoundationPlatform.DebugX;
     

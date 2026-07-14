@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace FoundationPlatform.Gizmos
+namespace AetherNexus.FoundationPlatform.Gizmos
 {
 
     public class GizmosComponent : MonoBehaviour

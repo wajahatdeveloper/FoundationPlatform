@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-namespace FoundationPlatform.Gizmos
+namespace AetherNexus.FoundationPlatform.Gizmos
 {
     [CustomEditor(typeof(GizmosHandleText))]
     [CanEditMultipleObjects]

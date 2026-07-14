@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Reflection wrapper over Unity's internal <c>UnityEditor.LogEntries</c> / <c>LogEntry</c> so the

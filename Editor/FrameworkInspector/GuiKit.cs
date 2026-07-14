@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 using System;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Public facade over <see cref="FrameworkInspectorTheme"/> for editor windows outside the inspector engine.

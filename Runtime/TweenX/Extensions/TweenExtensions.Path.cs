@@ -1,4 +1,4 @@
-using FoundationPlatform.TweenX;
+using AetherNexus.FoundationPlatform.TweenX;
 using UnityEngine;
 
 /// <summary>Fluent path-tween entry point on <see cref="Transform"/>. Global namespace.</summary>

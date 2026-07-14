@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FoundationPlatform.Animation
+namespace AetherNexus.FoundationPlatform.Animation
 {
 	public static class AnimationSetSequenceUtility
 	{

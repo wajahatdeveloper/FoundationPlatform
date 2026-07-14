@@ -14,11 +14,11 @@
 using System;
 using System.IO;
 using System.Reflection;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.Editor.Utilities.Tools
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Tools
 {
     public static class Package2Folder
     {

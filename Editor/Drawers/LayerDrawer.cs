@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using System;
-using FoundationPlatform.Attributes;
+using AetherNexus.FoundationPlatform.Attributes;
 
 [CustomPropertyDrawer(typeof(LayerAttribute))]
     public class LayerDrawer : PropertyDrawer

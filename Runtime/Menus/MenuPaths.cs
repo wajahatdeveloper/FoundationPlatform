@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace FoundationPlatform.Utilities.Menus
+namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
     /// <summary>
     /// Single source of truth for editor <c>[MenuItem]</c> paths. Grouped by menu area; nested

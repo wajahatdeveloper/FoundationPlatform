@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 {
     internal enum ExportFormat { Text, Csv, Ndjson }
 

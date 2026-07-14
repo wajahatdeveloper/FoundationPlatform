@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using FoundationPlatform.Editor.AssetImport;
+using AetherNexus.FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Utilities.Validation.UI
+namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
     [InitializeOnLoad]
     internal static class UIValidationImportPluginRegistration

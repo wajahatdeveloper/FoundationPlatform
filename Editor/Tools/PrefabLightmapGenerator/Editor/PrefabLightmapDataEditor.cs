@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-namespace FoundationPlatform.Editor.Tools.Editor
+namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
 {
     /// <summary>
     /// Custom editor for PrefabLightmapData component with improved Inspector interface.

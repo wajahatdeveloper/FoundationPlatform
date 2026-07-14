@@ -2,11 +2,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.FrameworkInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 {
     /// <summary>
     /// Read-only key/value grid for <c>IDictionary</c> and <c>Dictionary&lt;,&gt;</c> members

@@ -5,9 +5,9 @@ using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System;
-using FoundationPlatform.Utilities.Menus;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
-namespace FoundationPlatform.Editor.Tools
+namespace AetherNexus.FoundationPlatform.Editor.Tools
 {
 using FoundationPlatform.DebugX;
     

@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
-using FoundationPlatform.Animation;
-using FoundationPlatform.Editor.AssetImport;
+using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Editor.AssetImport;
 using UnityEditor;
 
-namespace FoundationPlatform.Editor.Animation
+namespace AetherNexus.FoundationPlatform.Editor.Animation
 {
 	[InitializeOnLoad]
 	internal static class AnimationSetImportPluginRegistration

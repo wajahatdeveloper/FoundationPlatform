@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
-using FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace FoundationPlatform.TweenX.EditorTools
+namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
 {
     /// <summary>
     /// Inspector + scene preview for <see cref="TweenAnimator"/>. Inherits the parity-engine editor so
