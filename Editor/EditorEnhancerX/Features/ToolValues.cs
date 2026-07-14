@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Live readout of the active transform's position/rotation/scale next to the
     /// current Move/Rotate/Scale handle in the Scene View.

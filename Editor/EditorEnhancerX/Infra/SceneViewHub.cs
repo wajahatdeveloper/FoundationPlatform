@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Single SceneView.duringSceneGui subscription fanning out to ordered passes.
     /// Each pass is exception-isolated: a throwing pass logs once and keeps siblings alive.

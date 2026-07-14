@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Project-wide EditorEnhancerX settings, stored in ProjectSettings/EditorEnhancerXSettings.asset
     /// (version-controlled, shared by the team). Edited via Project Settings ▸ EditorEnhancerX.

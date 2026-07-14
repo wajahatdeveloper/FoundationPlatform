@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Rotate the selection in 90° steps by shortcut: yaw around world up,
     /// pitch around the Scene View camera's dominant right axis. Honors

@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Duplicate Array: drag the handle away from the selected object to preview a row
     /// of copies spaced by the object's bounds along the drag direction; click Apply in

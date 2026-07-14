@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Drop an object onto an editor window's tab strip to open it in a floating
     /// Property Editor. Fed by <see cref="GlobalKeyCapture"/> (requires the Tier-2

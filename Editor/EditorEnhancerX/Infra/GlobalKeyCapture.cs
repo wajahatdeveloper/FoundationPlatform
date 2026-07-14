@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Tier-2 key capture: prepends a handler to the internal
     /// EditorApplication.globalEventHandler so shortcuts (Maximize, Switch View)

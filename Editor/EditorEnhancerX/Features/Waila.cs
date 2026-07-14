@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Waila ("what am I looking at"): floating tooltip naming the object under the
     /// Scene View cursor (optional modifier gate). Smart Selection: a shortcut that

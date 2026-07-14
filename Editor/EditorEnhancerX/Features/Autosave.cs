@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Saves dirty, previously-saved scenes on an interval and/or when entering play mode.
     /// Untitled scenes are never touched (no dialogs). Skips play mode, compiles and builds.

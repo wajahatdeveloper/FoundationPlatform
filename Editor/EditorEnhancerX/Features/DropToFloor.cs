@@ -2,7 +2,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Drops the selected objects onto the surface below them: raycast down from the
     /// bounds base (ignoring the selection's own colliders), translate so the bounds

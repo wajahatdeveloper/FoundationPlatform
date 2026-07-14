@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Scene View navigation shortcuts: fast zoom in/out (halve/double the view size)
     /// and frame-selected-true-bounds (renderers/colliders/RectTransforms).

@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.Toolbars;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Main-toolbar Time.timeScale slider + a stepper dropdown (pause / step frames /
     /// scale presets), matching the project's existing [MainToolbarElement] buttons.

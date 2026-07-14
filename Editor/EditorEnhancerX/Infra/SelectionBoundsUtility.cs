@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// World-space bounds of GameObjects for framing/floor-snapping/size display.
     /// Priority per object: Renderers (skipping trail/particle noise) → Colliders →

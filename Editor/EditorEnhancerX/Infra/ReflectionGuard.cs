@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using UnityEditor;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Guarded access to internal editor APIs. Resolve members once; any miss flips
     /// <see cref="Available"/> to false so the owning feature can self-disable
@@ -16,7 +16,7 @@ namespace EditorEnhancerX {
 
         /// <summary>Resolves an internal UnityEditor type by full name (e.g. "UnityEditor.AddComponent.AddComponentWindow").</summary>
         public Type EditorType(string fullName) {
-            var type = typeof(Editor).Assembly.GetType(fullName, false);
+            var type = typeof(UnityEditor.Editor).Assembly.GetType(fullName, false);
             if (type == null) Available = false;
             return type;
         }

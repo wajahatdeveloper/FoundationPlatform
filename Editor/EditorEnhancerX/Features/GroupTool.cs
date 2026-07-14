@@ -3,7 +3,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Group: wraps the selection in a new parent GameObject (placement per settings,
     /// optional name prompt), preserving sibling order. Ungroup: moves children of the

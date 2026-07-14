@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Draws the selection's world bounds as a wire cube with per-axis size labels.
     /// Bounds recompute only when the selection or its transforms change.

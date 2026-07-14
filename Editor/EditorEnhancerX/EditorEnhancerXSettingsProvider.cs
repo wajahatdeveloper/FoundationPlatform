@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Draws EditorEnhancerX settings under Project Settings ▸ EditorEnhancerX.
     /// Project-scoped (stored in ProjectSettings/), with JSON export/import.

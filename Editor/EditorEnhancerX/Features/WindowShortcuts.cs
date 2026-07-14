@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Window shortcuts: maximize the active window, and switch between
     /// Scene and Game views (optionally auto-switching to Game on play).

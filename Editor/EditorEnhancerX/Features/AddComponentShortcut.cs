@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Opens an Add Component search at the mouse by shortcut. Prefers Unity's internal
     /// AddComponentWindow (reflection-guarded); falls back to an in-house searchable
@@ -17,7 +17,7 @@ namespace EditorEnhancerX {
 
         static AddComponentShortcut() {
             try {
-                var type = typeof(Editor).Assembly.GetType("UnityEditor.AddComponent.AddComponentWindow", false);
+                var type = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.AddComponent.AddComponentWindow", false);
                 showMethod = type?.GetMethod("Show",
                     BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
                     null, new[] { typeof(Rect), typeof(GameObject[]) }, null);

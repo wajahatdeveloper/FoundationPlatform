@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Rename / mass-rename dialog. Single target: plain rename. Multiple targets:
     /// token expansion — {N} original name, {C} counter (optionally {C:start}) —

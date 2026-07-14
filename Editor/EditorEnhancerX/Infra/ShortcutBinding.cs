@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// A user-rebindable keyboard shortcut: key + exact modifier mask + enable flag.
     /// Edited in Project Settings ▸ EditorEnhancerX; matched by <see cref="KeyRouter"/>.

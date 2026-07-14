@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
 
-namespace EditorEnhancerX {
+namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Pivot Rotate: rotates the whole selection around a freely placeable pivot point
     /// (drag the dot to relocate, use the rotation handle to rotate).
