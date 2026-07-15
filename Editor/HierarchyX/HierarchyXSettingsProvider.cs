@@ -135,7 +135,7 @@ namespace HierarchyX {
                 EditorGUILayout.PropertyField(serialized.FindProperty("headerColor"), new GUIContent("Bar Color"));
             }
             if (headers.boolValue)
-                EditorGUILayout.HelpBox("Create one via GameObject ▸ HierarchyX Header. Header objects are tagged EditorOnly and stripped from builds.", MessageType.None);
+                EditorGUILayout.HelpBox("Create one via GameObject ▸ Header. Header objects are tagged EditorOnly and stripped from builds.", MessageType.None);
 
             Space();
             EditorGUILayout.LabelField("Scene View", EditorStyles.boldLabel);

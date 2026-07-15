@@ -10,7 +10,7 @@ namespace HierarchyX {
     /// </summary>
     internal static class HierarchyXHeaders {
 
-        private const string CreateMenuPath = "GameObject/HierarchyX Header";
+        private const string CreateMenuPath = "GameObject/Header";
         private static readonly char[] TrimChars = { ' ', '-', '=', '/' };
 
         /// <summary>True when the row is a header (caller skips icon/tree/label passes).</summary>
