@@ -94,6 +94,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
         private SortColumn _sortColumn = SortColumn.None;
         private bool _sortAsc = true;
+        private readonly RowSortComparer _rowSortComparer = new RowSortComparer();
 
         // Drag-selection state.
         private int _dragButton = -1;
@@ -1775,11 +1776,31 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         private void ApplySort()
         {
             if (_sortColumn == SortColumn.None) return;
-            _rows.Sort((a, b) =>
+
+            _rowSortComparer.Column = _sortColumn;
+            _rowSortComparer.Asc = _sortAsc;
+
+            // Time sort already places markers chronologically among all rows.
+            if (_sortColumn == SortColumn.Time)
             {
-                int c = CompareRows(a, b, _sortColumn);
-                return _sortAsc ? c : -c;
-            });
+                _rows.Sort(_rowSortComparer);
+                return;
+            }
+
+            // Channel / Count / Message: keep Marker rows as chronological session brackets;
+            // sort only the non-marker segments between them so Entered/Exited stay useful.
+            int segStart = 0;
+            for (int i = 0; i <= _rows.Count; i++)
+            {
+                bool boundary = i == _rows.Count
+                    || (_rows[i].Entry != null && _rows[i].Entry.Source == ConsoleSource.Marker);
+                if (!boundary) continue;
+
+                int len = i - segStart;
+                if (len > 1)
+                    _rows.Sort(segStart, len, _rowSortComparer);
+                segStart = i + 1;
+            }
         }
 
         private static int CompareRows(RowRef a, RowRef b, SortColumn col)
@@ -1791,6 +1812,18 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
                 case SortColumn.Count: return a.Count.CompareTo(b.Count);
                 case SortColumn.Message: return string.Compare(a.Entry.Message ?? "", b.Entry.Message ?? "", System.StringComparison.OrdinalIgnoreCase);
                 default: return 0;
+            }
+        }
+
+        private sealed class RowSortComparer : IComparer<RowRef>
+        {
+            public SortColumn Column;
+            public bool Asc;
+
+            public int Compare(RowRef a, RowRef b)
+            {
+                int c = CompareRows(a, b, Column);
+                return Asc ? c : -c;
             }
         }
 

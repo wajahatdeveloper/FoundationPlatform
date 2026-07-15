@@ -71,6 +71,7 @@ namespace HierarchyX {
 
             try {
                 DoDoubleClickFocus(rect, go, s);
+                DoMiddleClickToggleActive(rect, go, s);
                 DoSelection(rect, go, s);
 
                 if (!go)
@@ -549,6 +550,33 @@ namespace HierarchyX {
 
             sceneView.FrameSelected();
             sceneView.Focus();
+        }
+
+        #endregion
+
+        #region Middle-Click Toggle Active
+
+        // Middle-click on a row toggles that GameObject's activeSelf (undoable). Independent of
+        // the hover checkbox; useful when you want a fast activate/deactivate without aiming at
+        // the right-edge control.
+        private static void DoMiddleClickToggleActive(Rect rect, GameObject go, HierarchyXSettings s) {
+            if (!s.middleClickToggleActive || !go)
+                return;
+
+            var e = Event.current;
+            if (e.type != EventType.MouseDown || e.button != 2)
+                return;
+
+            var hit = rect;
+            hit.xMin = 0f;
+            hit.xMax = EditorGUIUtility.currentViewWidth;
+            if (!hit.Contains(e.mousePosition))
+                return;
+
+            var next = !go.activeSelf;
+            Undo.RecordObject(go, next ? "Activate GameObject" : "Deactivate GameObject");
+            go.SetActive(next);
+            e.Use();
         }
 
         #endregion

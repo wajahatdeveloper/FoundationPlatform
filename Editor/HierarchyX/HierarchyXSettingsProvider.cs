@@ -21,7 +21,8 @@ namespace HierarchyX {
                 keywords = new HashSet<string> {
                     "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection",
                     "badge", "chip", "decorator", "domain", "placement",
-                    "focus", "double-click", "2d", "frame", "recttransform"
+                    "focus", "double-click", "2d", "frame", "recttransform",
+                    "middle-click", "active", "toggle"
                 }
             };
         }
@@ -47,6 +48,7 @@ namespace HierarchyX {
             Space();
             EditorGUILayout.LabelField("Enhanced Selection", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("enhancedSelection"), new GUIContent("Right-drag Select"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("middleClickToggleActive"), new GUIContent("Middle-Click Toggle Active"));
 
             Space();
             EditorGUILayout.LabelField("Double-Click Focus", EditorStyles.boldLabel);

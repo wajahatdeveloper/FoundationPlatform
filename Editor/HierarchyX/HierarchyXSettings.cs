@@ -59,6 +59,9 @@ namespace HierarchyX {
         [Tooltip("Select GameObjects by dragging over their rows with the right mouse button.")]
         public bool enhancedSelection = true;
 
+        [Tooltip("Middle-click a hierarchy row to toggle that GameObject's active state.")]
+        public bool middleClickToggleActive = true;
+
         [Tooltip("Double-clicking a hierarchy row selects the object and frames it in the Scene View.")]
         public bool focusOnDoubleClick = false;
         [Tooltip("Match Scene View 2D mode to the object type when focusing: enable 2D for RectTransform (UI) objects, disable it for normal Transforms. Requires 'Focus On Double Click'.")]
