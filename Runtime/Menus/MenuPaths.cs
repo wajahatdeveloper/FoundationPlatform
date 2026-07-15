@@ -336,17 +336,17 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string Here = Root + "Here...";
         }
 
-        // ============================================================================
-        // UIWidgets — own root (free package, positioned to feel native to Unity's UI tooling)
-        // ============================================================================
+		// ============================================================================
+		// UIWidgets — Window/Tools branded; Hierarchy create items are flat under GameObject/UI (Canvas)/
+		// ============================================================================
 
-        /// <summary>Window/UIWidgets/* and GameObject/UIWidgets/* — shared widget browser.</summary>
-        public static class UIWidgets
-        {
-            private const string WindowRoot = Window + "UIWidgets/";
-            public const string WidgetsWindow = WindowRoot + "UI Widgets...";
-            public const string GameObjectOpen = GameObject + "UIWidgets/Open UI Widgets Window...";
-        }
+		/// <summary>Window/UIWidgets/* and GameObject/UI (Canvas)/* — widget browser + flat create entries.</summary>
+		public static class UIWidgets
+		{
+			private const string WindowRoot = Window + "UIWidgets/";
+			public const string WidgetsWindow = WindowRoot + "UI Widgets...";
+			public const string GameObjectOpen = GameObject + "UI (Canvas)/Open UI Widgets Window...";
+		}
 
         /// <summary>Tools/UIWidgets/* — items with no natural home in a native Unity menu.</summary>
         public static class UIWidgetsTools

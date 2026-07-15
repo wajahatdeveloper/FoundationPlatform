@@ -20,7 +20,8 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 keywords = new HashSet<string> {
                     "shortcut", "autosave", "group", "ungroup", "rename", "rotate", "zoom",
                     "frame", "bounds", "pivot", "duplicate", "drop", "floor", "waila",
-                    "maximize", "timescale", "stepper", "selection", "tool"
+                    "maximize", "timescale", "stepper", "selection", "tool",
+                    "nudge", "ui"
                 }
             };
         }
@@ -109,6 +110,21 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 EditorGUI.indentLevel--;
             }
             Shortcut("smartSelectKey", "Smart Selection Cycle");
+
+#if AETHERNEXUS_UIWIDGETS
+            Space();
+            EditorGUILayout.LabelField("UI Nudge", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("nudgeStep"), new GUIContent("Step (px)"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("nudgeStepCoarse"), new GUIContent("Coarse Step (px)"));
+            Shortcut("nudgeLeftKey", "Nudge Left");
+            Shortcut("nudgeRightKey", "Nudge Right");
+            Shortcut("nudgeUpKey", "Nudge Up");
+            Shortcut("nudgeDownKey", "Nudge Down");
+            Shortcut("nudgeLeftCoarseKey", "Nudge Left (Coarse)");
+            Shortcut("nudgeRightCoarseKey", "Nudge Right (Coarse)");
+            Shortcut("nudgeUpCoarseKey", "Nudge Up (Coarse)");
+            Shortcut("nudgeDownCoarseKey", "Nudge Down (Coarse)");
+#endif
 
             Space();
             EditorGUILayout.LabelField("Windows", EditorStyles.boldLabel);

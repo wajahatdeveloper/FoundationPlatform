@@ -85,6 +85,20 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         public ShortcutBinding maximizeKey = new ShortcutBinding(true, KeyCode.Space, EventModifiers.Shift);
         public ShortcutBinding switchViewKey = new ShortcutBinding(false, KeyCode.Tab, EventModifiers.Control);
 
+#if AETHERNEXUS_UIWIDGETS
+        // ---- UI Nudge (UIWidgets present) ----
+        public float nudgeStep = 1f;
+        public float nudgeStepCoarse = 10f;
+        public ShortcutBinding nudgeLeftKey = new ShortcutBinding(true, KeyCode.LeftArrow, EventModifiers.Alt);
+        public ShortcutBinding nudgeRightKey = new ShortcutBinding(true, KeyCode.RightArrow, EventModifiers.Alt);
+        public ShortcutBinding nudgeUpKey = new ShortcutBinding(true, KeyCode.UpArrow, EventModifiers.Alt);
+        public ShortcutBinding nudgeDownKey = new ShortcutBinding(true, KeyCode.DownArrow, EventModifiers.Alt);
+        public ShortcutBinding nudgeLeftCoarseKey = new ShortcutBinding(true, KeyCode.LeftArrow, EventModifiers.Alt | EventModifiers.Shift);
+        public ShortcutBinding nudgeRightCoarseKey = new ShortcutBinding(true, KeyCode.RightArrow, EventModifiers.Alt | EventModifiers.Shift);
+        public ShortcutBinding nudgeUpCoarseKey = new ShortcutBinding(true, KeyCode.UpArrow, EventModifiers.Alt | EventModifiers.Shift);
+        public ShortcutBinding nudgeDownCoarseKey = new ShortcutBinding(true, KeyCode.DownArrow, EventModifiers.Alt | EventModifiers.Shift);
+#endif
+
         public void SaveNow() {
             Save(true);
         }
