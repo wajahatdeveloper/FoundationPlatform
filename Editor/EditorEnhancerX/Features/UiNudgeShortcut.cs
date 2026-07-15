@@ -13,7 +13,9 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     internal static class UiNudgeShortcut {
 
         static UiNudgeShortcut() {
-            var scope = KeyScope.SceneView | KeyScope.Hierarchy;
+            // Global: when Project Settings ▸ EditorEnhancerX ▸ Global Key Capture is on
+            // (so Alt+Arrow works with Inspector focused).
+            var scope = KeyScope.SceneView | KeyScope.Hierarchy | KeyScope.Global;
             KeyRouter.Register("nudgeLeft", () => EditorEnhancerXSettings.instance.nudgeLeftKey, scope, () => Nudge(-1f, 0f, false));
             KeyRouter.Register("nudgeRight", () => EditorEnhancerXSettings.instance.nudgeRightKey, scope, () => Nudge(1f, 0f, false));
             KeyRouter.Register("nudgeUp", () => EditorEnhancerXSettings.instance.nudgeUpKey, scope, () => Nudge(0f, 1f, false));

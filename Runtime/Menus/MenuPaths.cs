@@ -348,19 +348,20 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string GameObjectOpen = GameObject + "UI (Canvas)/Open UI Widgets Window...";
 		}
 
-        /// <summary>Tools/UIWidgets/* — items with no natural home in a native Unity menu.</summary>
+        /// <summary>Tools/UIWidgets/* — items with no natural home in a native Unity menu.
+        /// Fit Anchors Alt+O lives here (not CONTEXT) because CONTEXT menu hotkeys never fire globally.</summary>
         public static class UIWidgetsTools
         {
             private const string Root = Tools + "UIWidgets/";
             public const string ScenePickerEnabled = Root + "Scene Picker Enabled";
+            public const string FitAnchors         = Root + "Fit Anchors &o";
             public const string Settings           = Root + "Settings...";
         }
 
-        /// <summary>CONTEXT/RectTransform/* — Fit Anchors integrates into Unity's own RectTransform context menu
-        /// instead of adding a UIWidgets-branded Tools entry.</summary>
+        /// <summary>CONTEXT/RectTransform/Fit Anchors — right-click only (no hotkey).</summary>
         public static class UIWidgetsContext
         {
-            public const string FitAnchors = Context + "RectTransform/Fit Anchors &o";
+            public const string FitAnchors = Context + "RectTransform/Fit Anchors";
         }
     }
 }

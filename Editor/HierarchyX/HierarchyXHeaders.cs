@@ -23,20 +23,24 @@ namespace HierarchyX {
                 return false;
 
             if (Event.current.type == EventType.Repaint) {
+                var selected = Selection.Contains(go);
                 var bar = rect;
                 bar.xMin = 0f;
                 bar.xMax = EditorGUIUtility.currentViewWidth;
 
                 // Keep Unity's selection highlight readable through the bar.
                 var color = s.headerColor;
-                if (Selection.Contains(go))
+                if (selected)
                     color.a *= 0.5f;
                 EditorGUI.DrawRect(bar, color);
 
-                var text = name.Substring(s.headerPrefix.Length).Trim(TrimChars);
-                if (text.Length == 0)
-                    text = name;
-                GUI.Label(bar, text, HierarchyXStyles.HeaderStyle);
+                // When selected, skip custom text so Unity's GameObject name is visible alone.
+                if (!selected) {
+                    var text = name.Substring(s.headerPrefix.Length).Trim(TrimChars);
+                    if (text.Length == 0)
+                        text = name;
+                    GUI.Label(bar, text, HierarchyXStyles.HeaderStyle);
+                }
             }
             return true;
         }
