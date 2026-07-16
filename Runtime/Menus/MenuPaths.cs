@@ -197,6 +197,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string CreateNewDomain     = Root + "Create New Domain...";
             public const string CreateNewScene      = Root + "Create New Scene...";
             public const string CreateDomainEvent   = Root + "Create Domain Event...";
+            public const string SampleGuide         = Root + "Sample Guide...";
         }
 
         // ============================================================================
