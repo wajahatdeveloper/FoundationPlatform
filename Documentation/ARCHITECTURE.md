@@ -46,10 +46,6 @@ FoundationPlatform.Editor        (Editor/)
   includePlatforms: [Editor]
 ```
 
-Optional editor asmdefs (EditorEnhancerX, HierarchyX, ProjectWindowX, StaleComponentGuard) require scripting define `HOMAM_GEC` and stay inactive for standalone installs.
-
----
-
 ## Event Bus
 
 `EventBus` — `Runtime/Messaging/EventBus/EventBus.cs` — static pub/sub.

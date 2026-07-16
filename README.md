@@ -66,8 +66,6 @@ transform.TweenMove(target, 1f).SetEase(Ease.OutBack);
 | `FoundationPlatform.Editor` | Editor tooling |
 | `UniTask.Editor` | UniTask Tracker window |
 
-Optional editor assemblies (EditorEnhancerX, HierarchyX, ProjectWindowX, StaleComponentGuard) compile only when the scripting define `HOMAM_GEC` is present (used with GameEngineCore installs). They stay inactive for a standalone Foundation Platform project.
-
 ## Package Integration Manifest
 
 `PackageIntegrationManifest.asset` registers this package with **GameEngineCore Central Authoring** when that product is installed. It is optional metadata for the wider AetherNexus hub — not required for EventBus, DebugX, CoroutineX, or TweenX.
