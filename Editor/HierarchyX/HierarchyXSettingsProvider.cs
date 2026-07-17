@@ -1,9 +1,49 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
 namespace HierarchyX {
+    /// <summary>
+    /// Draw hooks for packages that extend Project Settings ▸ HierarchyX without HierarchyX
+    /// referencing them (avoids circular asmdefs). Call <see cref="Register"/> from
+    /// <c>[InitializeOnLoadMethod]</c> in the contributing assembly.
+    /// </summary>
+    public static class HierarchyXSettingsExtras {
+        private static readonly List<(string Title, Action Drawer)> drawers = new List<(string, Action)>();
+
+        public static void Register(string title, Action drawer) {
+            if (drawer == null)
+                throw new ArgumentNullException(nameof(drawer));
+            if (string.IsNullOrEmpty(title))
+                throw new ArgumentException("Title is required.", nameof(title));
+            for (var i = 0; i < drawers.Count; i++) {
+                if (drawers[i].Title == title) {
+                    drawers[i] = (title, drawer);
+                    return;
+                }
+            }
+            drawers.Add((title, drawer));
+        }
+
+        internal static void DrawAll() {
+            for (var i = 0; i < drawers.Count; i++) {
+                EditorGUILayout.Space(8);
+                EditorGUILayout.LabelField(drawers[i].Title, EditorStyles.boldLabel);
+                drawers[i].Drawer();
+            }
+        }
+
+        internal static void CollectKeywords(HashSet<string> keywords) {
+            for (var i = 0; i < drawers.Count; i++) {
+                var title = drawers[i].Title;
+                if (!string.IsNullOrEmpty(title))
+                    keywords.Add(title.ToLowerInvariant());
+            }
+        }
+    }
+
     /// <summary>
     /// Draws HierarchyX settings under Project Settings ▸ HierarchyX.
     /// Project-scoped so config is per-project (stored in ProjectSettings/).
@@ -15,15 +55,18 @@ namespace HierarchyX {
 
         [SettingsProvider]
         public static SettingsProvider Create() {
+            var keywords = new HashSet<string> {
+                "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection",
+                "badge", "chip", "decorator", "domain", "placement",
+                "focus", "double-click", "2d", "frame", "recttransform",
+                "middle-click", "active", "toggle",
+                "stale", "component", "guard", "orphan"
+            };
+            HierarchyXSettingsExtras.CollectKeywords(keywords);
             return new SettingsProvider("Project/HierarchyX", SettingsScope.Project) {
                 label = "HierarchyX",
                 guiHandler = OnGUI,
-                keywords = new HashSet<string> {
-                    "hierarchy", "tree", "row", "tag", "layer", "sorting", "separator", "selection",
-                    "badge", "chip", "decorator", "domain", "placement",
-                    "focus", "double-click", "2d", "frame", "recttransform",
-                    "middle-click", "active", "toggle"
-                }
+                keywords = keywords
             };
         }
 
@@ -118,6 +161,8 @@ namespace HierarchyX {
                     "The docked footer is unavailable on this Unity version. Use " + HierarchyPanelWindow.MenuPath + " for the companion window.",
                     MessageType.Warning);
 
+            HierarchyXSettingsExtras.DrawAll();
+
             Space();
             EditorGUILayout.LabelField("Rows", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("bestIcons"), new GUIContent("Best Component Icons"));
@@ -183,7 +228,7 @@ namespace HierarchyX {
                     var flags = settings.hideFlags;
                     var fresh = ScriptableObject.CreateInstance<HierarchyXSettings>();
                     EditorUtility.CopySerialized(fresh, settings);
-                    Object.DestroyImmediate(fresh);
+                    UnityEngine.Object.DestroyImmediate(fresh);
                     settings.hideFlags = flags;
                     settings.ApplySkinDefaults();
                     settings.Save();

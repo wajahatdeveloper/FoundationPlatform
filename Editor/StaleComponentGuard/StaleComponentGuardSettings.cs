@@ -5,8 +5,8 @@ namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
     /// Single on/off switch for the whole feature, persisted in <see cref="EditorPrefs"/> (per user,
-    /// per machine). Read by the decorator, inspector badge, and panel section so one toggle silences
-    /// every surface at once. Default on.
+    /// per machine). Read by the decorator, inspector badge, and HierarchyX settings UI so one toggle
+    /// silences every surface at once. Default on.
     /// </summary>
     public static class StaleComponentGuardSettings
     {

@@ -335,7 +335,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		}
 
 		#if RULESYSTEM_PRESENT
-		// Memoized lookup: resolves "GameEngineCore.Rules.{typeName}, GameEngineCore" once per
+		// Memoized lookup: resolves "AetherNexus.GameEngineCore.{typeName}, GameEngineCore.Runtime" once per
 		// distinct type name and caches whether it is a GameAction infrastructure class.
 		private bool IsRuleSystemTypeName(string typeName)
 		{
@@ -347,7 +347,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				return cached;
 			}
-			var resolvedType = System.Type.GetType($"GameEngineCore.Rules.{typeName}, GameEngineCore");
+			var resolvedType = System.Type.GetType($"AetherNexus.GameEngineCore.{typeName}, GameEngineCore.Runtime");
 			var result = resolvedType != null && EventBus.IsRuleSystemClass(resolvedType);
 			_ruleSystemClassCache[typeName] = result;
 			return result;

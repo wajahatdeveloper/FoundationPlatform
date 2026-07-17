@@ -263,8 +263,8 @@ public static class EventBus
 	{
 		if (type == null) return false;
 		
-		// Check if type is in GameAction namespace
-		if (type.Namespace != "GameEngineCore.Rules")
+		// GameAction infrastructure lives under AetherNexus.GameEngineCore.
+		if (type.Namespace != "AetherNexus.GameEngineCore")
 			return false;
 		
 		// List of GameAction infrastructure classes to filter out
@@ -293,7 +293,7 @@ public static class EventBus
 		
 		// Check if it's the base RuleHandler class itself (not user rules that inherit from it)
 		// User rules inherit from RuleHandler but are not in GameAction namespace
-		if (type.Name == "RuleSetBehaviour" && type.Namespace == "GameEngineCore.Rules")
+		if (type.Name == "RuleSetBehaviour" && type.Namespace == "AetherNexus.GameEngineCore")
 		{
 			// This is the base class, not a user rule
 			return true;
@@ -456,14 +456,8 @@ public static class EventBus
 											{
 												// Extract the actual rule method name
 												var ruleMethodName = originalMethod.Name;
-												
-												// Check if the method has [Condition] or [Reaction] attribute (user rule method)
-												var condType = Type.GetType("GameEngineCore.Rules.ConditionAttribute, GameEngineCore");
-												var reactType = Type.GetType("GameEngineCore.Rules.ReactionAttribute, GameEngineCore");
-												var hasRuleAttr = (condType != null && originalMethod.GetCustomAttributes(condType, false).Length > 0)
-													|| (reactType != null && originalMethod.GetCustomAttributes(reactType, false).Length > 0);
-												
-												if (hasRuleAttr || !ruleMethodName.StartsWith("<>", StringComparison.Ordinal))
+
+												if (!ruleMethodName.StartsWith("<>", StringComparison.Ordinal))
 												{
 													// Return the user rule class name
 													return originalDeclaringType.Name;
@@ -696,23 +690,8 @@ public static class EventBus
 								if (originalMethod != null)
 								{
 									var originalMethodName = originalMethod.Name;
-									
-									// Check if this is a user rule method (has [Condition] or [Reaction] attribute)
-									var condAttr = Type.GetType("GameEngineCore.Rules.ConditionAttribute, GameEngineCore");
-									var reactAttr = Type.GetType("GameEngineCore.Rules.ReactionAttribute, GameEngineCore");
-									if (condAttr != null && reactAttr != null)
-									{
-										var hasRuleAttr = originalMethod.GetCustomAttributes(condAttr, false).Length > 0
-											|| originalMethod.GetCustomAttributes(reactAttr, false).Length > 0;
-										if (hasRuleAttr && !originalMethodName.StartsWith("<>", StringComparison.Ordinal))
-										{
-											return originalMethodName;
-										}
-									}
-									
-									// If not compiler-generated, use it
-									if (!originalMethodName.StartsWith("<>", StringComparison.Ordinal) && 
-									    !originalMethodName.Contains("b__"))
+
+									if (!originalMethodName.StartsWith("<>", StringComparison.Ordinal))
 									{
 										return originalMethodName;
 									}
@@ -730,19 +709,6 @@ public static class EventBus
 				{
 					// Fall through
 				}
-			}
-		}
-		
-		// Check if the method has [Condition] or [Reaction] attribute
-		var condType = Type.GetType("GameEngineCore.Rules.ConditionAttribute, GameEngineCore");
-		var reactType = Type.GetType("GameEngineCore.Rules.ReactionAttribute, GameEngineCore");
-		if (condType != null && reactType != null)
-		{
-			var hasRuleAttr = method.GetCustomAttributes(condType, false).Length > 0
-				|| method.GetCustomAttributes(reactType, false).Length > 0;
-			if (hasRuleAttr && !methodName.StartsWith("<>", StringComparison.Ordinal))
-			{
-				return methodName;
 			}
 		}
 		

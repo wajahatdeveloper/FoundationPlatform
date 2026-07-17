@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using HierarchyX;
 using UnityEditor;
 using UnityEngine;
@@ -7,36 +6,19 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 {
     /// <summary>
-    /// "Stale Components" section in the Hierarchy setup panel: a header chip with the open-scene stale count,
-    /// a row per stale component (Select + Strip), and a project-sweep launcher. Auto-discovered by
-    /// <c>HierarchyXPanelRegistry</c>.
+    /// "Stale Components" block under Project Settings ▸ HierarchyX: enable toggle, open-scene
+    /// findings (Select + Strip), and project-sweep launcher. Registered via
+    /// <see cref="HierarchyXSettingsExtras"/> so HierarchyX does not reference this assembly.
     /// </summary>
-    public sealed class StaleComponentsPanelSection : IHierarchyPanelSection
+    public static class StaleComponentsSettingsGui
     {
-        public string Id => "FoundationPlatform.StaleComponents";
-        public string Title => "Stale Components";
-        public int Order => 60;
-
-        public IEnumerable<PanelChip> GetHeaderChips()
+        [InitializeOnLoadMethod]
+        private static void Register()
         {
-            if (!StaleComponentGuardSettings.Enabled)
-            {
-                yield return new PanelChip("Off", PanelChipStatus.Neutral, "Stale Component Guard is disabled.");
-                yield break;
-            }
-            int count = StaleComponentCache.GetSceneFindings().Count;
-            yield return count == 0
-                ? new PanelChip("Clean", PanelChipStatus.Ok, "No stale components in the open scene(s).")
-                : new PanelChip($"{count} stale", PanelChipStatus.Error, "Components with serialized data their script no longer defines.");
+            HierarchyXSettingsExtras.Register("Stale Components", Draw);
         }
 
-        public IEnumerable<PanelAction> GetToolbarActions()
-        {
-            yield return new PanelAction("⟳", "Scan the whole project for stale components",
-                StaleComponentWindow.Open, "Search Icon");
-        }
-
-        public void OnBodyGUI()
+        private static void Draw()
         {
             bool enabled = EditorGUILayout.ToggleLeft("Enable Stale Component Guard", StaleComponentGuardSettings.Enabled);
             if (enabled != StaleComponentGuardSettings.Enabled)
