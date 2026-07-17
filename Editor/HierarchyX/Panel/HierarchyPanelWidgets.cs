@@ -54,7 +54,11 @@ namespace HierarchyX {
                 };
             }
             if (titleStyle == null) {
-                titleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 11 };
+                // Base on foldout (not boldLabel) so Unity draws the expand/collapse arrow.
+                titleStyle = new GUIStyle(EditorStyles.foldout) {
+                    fontStyle = FontStyle.Bold,
+                    fontSize = 11,
+                };
             }
             if (emptyStyle == null) {
                 emptyStyle = new GUIStyle(EditorStyles.miniLabel) {
