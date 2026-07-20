@@ -73,7 +73,9 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         }
         else if (!ReferenceEquals(existing, this))
         {
-            DebugX.DebugX.Logger(LogChannels.DevTools).Error("SingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
+            DebugX.DebugX.Logger(LogChannels.DevTools).Info(
+                "SingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
+                type.Name);
             Destroy(gameObject);
         }
     }
@@ -158,7 +160,9 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
         }
         else if (!ReferenceEquals(existing, this))
         {
-            DebugX.DebugX.Logger(LogChannels.DevTools).Error("PersistentSingletonBehaviour<{TypeName}>: Duplicate instance detected. Destroying duplicate.", type.Name);
+            DebugX.DebugX.Logger(LogChannels.DevTools).Info(
+                "PersistentSingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
+                type.Name);
             Destroy(gameObject);
         }
     }

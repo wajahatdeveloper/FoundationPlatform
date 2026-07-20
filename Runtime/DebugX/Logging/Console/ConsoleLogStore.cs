@@ -145,32 +145,104 @@ namespace AetherNexus.FoundationPlatform.DebugX
             Version++;
         }
 
+        private const string PlayModeEnterTimestampKey = "DebugX.Console.PlayModeEnterTicks";
+
         private static void OnPlayModeChanged(PlayModeStateChange change)
         {
+            if (change == PlayModeStateChange.ExitingEditMode)
+            {
+                SessionState.SetString(PlayModeEnterTimestampKey, DateTime.Now.Ticks.ToString());
+                return;
+            }
+
             if (change == PlayModeStateChange.EnteredPlayMode)
             {
                 if (ClearOnPlay) Clear();
-                AppendMarker("――  Entered Play Mode  " + DateTime.Now.ToString("HH:mm:ss") + "  ――");
+                DrainIngest();
+                var stamp = ResolvePlayModeEnterTimestamp();
+                PrependMarker("――  Entered Play Mode  " + stamp.ToString("HH:mm:ss") + "  ――", stamp);
+                return;
             }
-            else if (change == PlayModeStateChange.EnteredEditMode)
+
+            if (change == PlayModeStateChange.ExitingPlayMode)
             {
+                DrainIngest();
                 AppendMarker("――  Exited Play Mode  " + DateTime.Now.ToString("HH:mm:ss") + "  ――");
+            }
+        }
+
+        private static DateTime ResolvePlayModeEnterTimestamp()
+        {
+            var raw = SessionState.GetString(PlayModeEnterTimestampKey, string.Empty);
+            SessionState.EraseString(PlayModeEnterTimestampKey);
+            if (!string.IsNullOrEmpty(raw) && long.TryParse(raw, out var ticks))
+            {
+                return new DateTime(ticks, DateTimeKind.Local);
+            }
+
+            return DateTime.Now;
+        }
+
+        /// <summary>Drains the ingest queue into the ring so markers are not overtaken by queued lines.</summary>
+        private static void DrainIngest()
+        {
+            while (_ingest.TryDequeue(out var entry))
+            {
+                Append(entry);
             }
         }
 
         /// <summary>Appends a synthetic divider row (main thread). Unique collapse key so it never collapses.</summary>
         private static void AppendMarker(string text)
         {
+            AppendMarker(text, DateTime.Now);
+        }
+
+        private static void AppendMarker(string text, DateTime timestamp)
+        {
             long id = NextId();
             Append(new ConsoleEntry
             {
                 Id = id,
-                Timestamp = DateTime.Now,
+                Timestamp = timestamp,
                 Level = LogLevel.Information,
                 Source = ConsoleSource.Marker,
                 Message = text,
                 CollapseKey = "M|" + id
             });
+            Version++;
+        }
+
+        /// <summary>
+        ///  Inserts a marker as the oldest visible row (session start bracket) using <paramref name="timestamp"/>.
+        /// </summary>
+        private static void PrependMarker(string text, DateTime timestamp)
+        {
+            long id = NextId();
+            var marker = new ConsoleEntry
+            {
+                Id = id,
+                Timestamp = timestamp,
+                Level = LogLevel.Information,
+                Source = ConsoleSource.Marker,
+                Message = text,
+                CollapseKey = "M|" + id
+            };
+
+            if (_count == Capacity)
+            {
+                var evicted = _ring[_head];
+                if (evicted != null) Decrement(evicted.Category);
+                _head = (_head + 1) % Capacity;
+                _count--;
+                EvictedTotal++;
+            }
+
+            _head = (_head - 1 + Capacity) % Capacity;
+            _ring[_head] = marker;
+            _count++;
+            AppendedTotal++;
+            Increment(marker.Category);
             Version++;
         }
 
