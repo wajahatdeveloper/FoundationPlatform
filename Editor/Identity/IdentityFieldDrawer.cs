@@ -8,8 +8,15 @@ namespace AetherNexus.FoundationPlatform.Editor.Identity
 [CustomPropertyDrawer(typeof(IdentityFieldAttribute))]
 public sealed class IdentityFieldDrawer : PropertyDrawer
 {
-    private const float ButtonWidth = 22f;
     private const float ButtonSpacing = 2f;
+
+    // Text labels, not icons — "Copy" vs "Paste" share Unity's built-in Clipboard icon and are
+    // visually indistinguishable at a glance, which is exactly how a probe field ends up filled
+    // with an unrelated freshly-generated id instead of a pasted one.
+    private static readonly GUIContent GenerateContent = new GUIContent("New", "Generate a brand-new random ID for THIS field. Do not use this to fill a lookup field that must match another entity's id.");
+    private static readonly GUIContent PasteContent = new GUIContent("Paste", "Paste the ID from the clipboard (use after clicking Copy on the entity you want to match).");
+    private static readonly GUIContent CopyContent = new GUIContent("Copy", "Copy this ID to the clipboard.");
+    private static readonly GUIContent ClearContent = new GUIContent("Clear", "Clear this ID.");
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
@@ -31,23 +38,34 @@ public sealed class IdentityFieldDrawer : PropertyDrawer
         var idLabel = EditorGUIUtility.TrTextContent("ID");
         float labelWidth = GUI.skin.label.CalcSize(idLabel).x + 4f;
 
+        float clearWidth = GUI.skin.button.CalcSize(ClearContent).x;
+        float copyWidth = GUI.skin.button.CalcSize(CopyContent).x;
+        float pasteWidth = GUI.skin.button.CalcSize(PasteContent).x;
+        float generateWidth = GUI.skin.button.CalcSize(GenerateContent).x;
+
         // Right-aligned buttons
         var clearRect = new Rect(
-            position.xMax - ButtonWidth,
+            position.xMax - clearWidth,
             position.y,
-            ButtonWidth,
+            clearWidth,
             position.height);
 
         var copyRect = new Rect(
-            clearRect.x - ButtonSpacing - ButtonWidth,
+            clearRect.x - ButtonSpacing - copyWidth,
             position.y,
-            ButtonWidth,
+            copyWidth,
+            position.height);
+
+        var pasteRect = new Rect(
+            copyRect.x - ButtonSpacing - pasteWidth,
+            position.y,
+            pasteWidth,
             position.height);
 
         var generateRect = new Rect(
-            copyRect.x - ButtonSpacing - ButtonWidth,
+            pasteRect.x - ButtonSpacing - generateWidth,
             position.y,
-            ButtonWidth,
+            generateWidth,
             position.height);
 
         // Label
@@ -74,21 +92,7 @@ public sealed class IdentityFieldDrawer : PropertyDrawer
                 : property.stringValue);
         EditorGUI.EndDisabledGroup();
 
-        // Icons
-        GUIContent generateIcon =
-            EditorGUIUtility.IconContent("Refresh");
-
-        GUIContent copyIcon =
-            EditorGUIUtility.IconContent("Clipboard");
-
-        GUIContent clearIcon =
-            EditorGUIUtility.IconContent("TreeEditor.Trash");
-
-        generateIcon.tooltip = "Generate ID";
-        copyIcon.tooltip = "Copy ID";
-        clearIcon.tooltip = "Clear ID";
-
-        if (GUI.Button(generateRect, generateIcon))
+        if (GUI.Button(generateRect, GenerateContent))
         {
             foreach (var target in property.serializedObject.targetObjects)
             {
@@ -104,12 +108,29 @@ public sealed class IdentityFieldDrawer : PropertyDrawer
             }
         }
 
-        if (GUI.Button(copyRect, copyIcon))
+        if (GUI.Button(pasteRect, PasteContent))
+        {
+            string clipboard = EditorGUIUtility.systemCopyBuffer;
+            foreach (var target in property.serializedObject.targetObjects)
+            {
+                using (var so = new SerializedObject(target))
+                {
+                    var prop = so.FindProperty(property.propertyPath);
+                    if (prop != null)
+                    {
+                        prop.stringValue = clipboard;
+                        so.ApplyModifiedProperties();
+                    }
+                }
+            }
+        }
+
+        if (GUI.Button(copyRect, CopyContent))
         {
             EditorGUIUtility.systemCopyBuffer = property.stringValue;
         }
 
-        if (GUI.Button(clearRect, clearIcon))
+        if (GUI.Button(clearRect, ClearContent))
         {
             property.stringValue = string.Empty;
             property.serializedObject.ApplyModifiedProperties();
