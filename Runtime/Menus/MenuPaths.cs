@@ -44,6 +44,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string RebuildTagReferenceIndex = Root + "Rebuild Tag Reference Index";
             public const string SanitizeTagHashes    = Root + "Sanitize Tag Hashes";
             public const string MigrateEffectIdentityTags = Root + "Migrate Effect Identity Tags";
+            public const string InstallGizmoIcons    = Root + "Install Gizmo Icons";
 
             private const string WindowRoot = GecWindow + "GAS/";
             public const string Debugger   = WindowRoot + "GAS Debugger...";
@@ -183,6 +184,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         {
             private const string Root = Gec;
             public const string RebuildGeneratedRegistries = Root + "Rebuild/Rebuild All Generated Registries";
+            public const string InstallGizmoIcons = Root + "Install Gizmo Icons";
         }
 
         /// <summary>Window/GameEngineCore/* — engine hub, diagnostic windows, and scaffold creators.</summary>
