@@ -107,11 +107,19 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 return value.ToString();
             }
 
+            var type = value.GetType();
+
+            // Respect custom ToString() overrides (e.g. GameplayTag) before falling to JsonUtility
+            var toStringMethod = type.GetMethod("ToString", System.Type.EmptyTypes);
+            if (toStringMethod != null && toStringMethod.DeclaringType != typeof(object))
+            {
+                return value.ToString();
+            }
+
             // Complex objects: try JsonUtility if it's a Unity-serializable type
             try
             {
                 // Check if the type is marked as Serializable
-                var type = value.GetType();
                 if (type.IsDefined(typeof(System.SerializableAttribute), false))
                 {
                     string json = JsonUtility.ToJson(value);
