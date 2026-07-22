@@ -38,7 +38,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class Gas
         {
             private const string Root = Gec + "GAS/";
-            public const string BootstrapConfig      = Root + "GAS Bootstrap Config";
             public const string NormalizeAttributeSetTags = Root + "Normalize AttributeSet Tags";
             public const string RebuildAbilityLogic  = Root + "Rebuild Ability Logic";
             public const string RebuildTagReferenceIndex = Root + "Rebuild Tag Reference Index";
