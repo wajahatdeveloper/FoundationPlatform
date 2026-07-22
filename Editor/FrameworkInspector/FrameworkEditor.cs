@@ -1781,7 +1781,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
 
             // Nested serializable object — recurse through the engine (property-tree style) when it
-            // either carries [InlineProperty] (draw inline, no wrapper) OR declares ANY FoundationPlatform.FrameworkInspector
+            // either carries [InlineProperty] (draw inline, no wrapper) OR declares ANY AetherNexus.FoundationPlatform.FrameworkInspector
             // attribute (draw under a collapsible foldout). Plain data (only Unity attrs) and types with
             // their own custom PropertyDrawer fall through to the default PropertyField below.
             var fieldType = e.Field?.FieldType;
@@ -2145,9 +2145,10 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             if (indent) EditorGUI.indentLevel--;
         }
 
-        // Cached: does the type declare ANY FoundationPlatform.FrameworkInspector attribute (on itself or any member)?
-        // Used to auto-recurse attributed nested objects without requiring an explicit [InlineProperty].
-        private const string EngineAttrNamespace = "FoundationPlatform.FrameworkInspector";
+        // Cached: does the type declare ANY AetherNexus.FoundationPlatform.FrameworkInspector attribute
+        // (on itself or any member)? Used to auto-recurse attributed nested objects without requiring
+        // an explicit [InlineProperty].
+        private const string EngineAttrNamespace = "AetherNexus.FoundationPlatform.FrameworkInspector";
         private static readonly Dictionary<Type, bool> s_engineAttrTypes = new Dictionary<Type, bool>();
 
         internal static bool TypeHidesReferencePicker(Type t)
@@ -2178,7 +2179,10 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         private static bool HasEngineAttr(object[] attrs)
         {
             for (int i = 0; i < attrs.Length; i++)
-                if (attrs[i].GetType().Namespace == EngineAttrNamespace) return true;
+            {
+                var ns = attrs[i].GetType().Namespace;
+                if (ns == EngineAttrNamespace) return true;
+            }
             return false;
         }
 
