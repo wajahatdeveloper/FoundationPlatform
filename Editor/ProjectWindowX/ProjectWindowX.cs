@@ -5,14 +5,16 @@ using UnityEngine;
 
 namespace ProjectWindowX {
     /// <summary>
-    /// Main dispatcher. Hooks the Project window rows and layers ProjectWindowX passes
-    /// (zebra tint, folder icons, extension labels, hover create-actions) on top of each row.
+    /// Main dispatcher. Hooks the Project window rows and layers registered
+    /// <see cref="IProjectWindowXPass"/>es (zebra tint, folder icons, extension labels,
+    /// hover create-actions, …) on top of each row.
     /// Row metadata is cached per GUID and invalidated when the project changes.
     /// </summary>
     [InitializeOnLoad]
     public static class ProjectWindowX {
 
-        internal sealed class RowContext {
+        /// <summary>Cached per-row metadata available to passes and context-menu contributors.</summary>
+        public sealed class RowContext {
             public string guid;
             public string path;
             public string extension;   // lowercase, with dot; "" for folders
@@ -68,20 +70,16 @@ namespace ProjectWindowX {
 
             // Grid tiles are taller than list rows; most passes are list-only.
             var listMode = rect.height <= 20f;
+            var rightInset = 0f;
 
             try {
-                if (listMode && s.zebraRows)
-                    ZebraRows.Draw(rect, s);
-
-                if (s.folderIcons && ctx.isFolder)
-                    FolderIcons.Draw(ctx, rect, listMode, s);
-
-                var rightInset = 0f;
-                if (listMode && s.contextActions)
-                    rightInset = ContextActions.Draw(ctx, rect);
-
-                if (listMode && s.extensionLabels && !ctx.isFolder)
-                    FileExtensionLabels.Draw(ctx, rect, rightInset);
+                var passes = ProjectWindowXPassRegistry.Passes;
+                for (var i = 0; i < passes.Count; i++) {
+                    var pass = passes[i];
+                    if (!pass.Enabled(s))
+                        continue;
+                    pass.Draw(ctx, rect, listMode, ref rightInset);
+                }
             } catch (Exception e) {
                 Debug.LogError("ProjectWindowX draw error\n" + e);
             }

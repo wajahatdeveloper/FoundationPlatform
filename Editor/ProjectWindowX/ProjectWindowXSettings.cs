@@ -35,6 +35,13 @@ namespace ProjectWindowX {
         // Hover "+" create-actions button
         public bool contextActions = true;
 
+        // Authoring (GEC / Central Authoring consumers)
+        public bool authoringContextMenus = true;
+        public bool driftBadges = true;
+        public Color driftBadgeColor = new Color(1f, 0.75f, 0.15f, 1f); // amber / warning
+        public string driftBadgeTooltip = "Asset is outside its declared folder pattern";
+        public Texture2D driftBadgeIcon;
+
         public void SaveNow() {
             Save(true);
         }

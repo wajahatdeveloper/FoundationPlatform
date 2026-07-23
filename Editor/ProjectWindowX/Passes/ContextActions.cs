@@ -63,6 +63,12 @@ namespace ProjectWindowX {
                 menu.AddItem(new GUIContent("Stop Audio"), false, AudioPreview.StopAll);
             }
 
+            if (ProjectWindowXSettings.instance.authoringContextMenus) {
+                var contribs = ProjectWindowXContextMenuRegistry.Menus;
+                for (var i = 0; i < contribs.Count; i++)
+                    contribs[i].Contribute(ctx, folder, menu);
+            }
+
             menu.ShowAsContext();
         }
 

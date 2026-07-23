@@ -191,7 +191,9 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class WindowCore
         {
             private const string Root = GecWindow;
-            public const string CentralAuthoring    = Root + "Central Authoring...";
+            public const string CentralWindow       = Root + "Central Window...";
+            [System.Obsolete("Use CentralWindow")]
+            public const string CentralAuthoring    = CentralWindow;
             public const string GameActionMatrix    = Root + "Game Action Matrix...";
             public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
             public const string Telemetry           = Root + "Telemetry...";

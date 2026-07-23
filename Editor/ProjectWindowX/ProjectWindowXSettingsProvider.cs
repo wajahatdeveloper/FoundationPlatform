@@ -20,7 +20,8 @@ namespace ProjectWindowX {
                 guiHandler = OnGUI,
                 keywords = new HashSet<string> {
                     "project", "folder", "icon", "extension", "zebra", "row",
-                    "create", "script", "material", "shader", "template"
+                    "create", "script", "material", "shader", "template",
+                    "authoring", "drift", "badge", "context", "menu"
                 }
             };
         }
@@ -62,6 +63,17 @@ namespace ProjectWindowX {
             EditorGUILayout.LabelField("Create Actions", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("contextActions"), new GUIContent("Hover \"+\" Button"));
             EditorGUILayout.HelpBox("Hovering a row shows a \"+\" button with create actions (script, material, shader, folder, animator, custom editor...).", MessageType.None);
+
+            Space();
+            EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("authoringContextMenus"), new GUIContent("Authoring Context Menus"));
+            var drift = serialized.FindProperty("driftBadges");
+            EditorGUILayout.PropertyField(drift, new GUIContent("Drift Badges"));
+            using (new EditorGUI.DisabledScope(!drift.boolValue)) {
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeColor"), new GUIContent("Drift Badge Color"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeTooltip"), new GUIContent("Drift Badge Tooltip"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeIcon"), new GUIContent("Drift Badge Icon"));
+            }
 
             if (EditorGUI.EndChangeCheck()) {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
