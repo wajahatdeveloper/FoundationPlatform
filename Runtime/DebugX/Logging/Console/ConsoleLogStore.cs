@@ -37,6 +37,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static int _warningCount;
         private static int _errorCount;
 
+        // Cached compiler-entry category counts from the last pump so we can track delta and fold
+        // them into the main ring-buffer counts above.
+        private static int _compilerErrorCount;
+        private static int _compilerWarningCount;
+        private static int _compilerLogCount;
+
         // Watch table (main thread only).
         private static readonly Dictionary<string, WatchEntry> _watches = new Dictionary<string, WatchEntry>();
         private static readonly List<WatchEntry> _watchList = new List<WatchEntry>();
@@ -76,6 +82,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
         public static int LogCount => _logCount;
         public static int WarningCount => _warningCount;
         public static int ErrorCount => _errorCount;
+        public static int TotalErrorCount => _errorCount + _compilerErrorCount;
         public static IReadOnlyList<ConsoleEntry> CompilerEntries => _compilerEntries;
         public static IReadOnlyList<WatchEntry> Watches => _watchList;
 
@@ -112,12 +119,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _head = 0;
             _count = 0;
             _logCount = _warningCount = _errorCount = 0;
+            _compilerEntries.Clear();
+            _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
-            // Compiler/import diagnostics are a live mirror of Unity's LogEntries — the significant
-            // errors that survive a console clear until the code actually compiles. Keep them (matches
-            // Unity's own console, which drops stale logs but retains standing compile errors).
-            // Watches are likewise retained (they track live variables, not history).
             Version++;
         }
 
@@ -280,13 +285,32 @@ namespace AetherNexus.FoundationPlatform.DebugX
             {
                 if (LogEntriesBridge.Refresh(_compilerEntries))
                 {
+                    int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
+                    for (int i = 0; i < _compilerEntries.Count; i++)
+                    {
+                        switch (_compilerEntries[i].Category)
+                        {
+                            case ConsoleCategory.Error:   compilerErrors++; break;
+                            case ConsoleCategory.Warning: compilerWarnings++; break;
+                            default:                      compilerLogs++;    break;
+                        }
+                    }
+                    _errorCount   += compilerErrors   - _compilerErrorCount;
+                    _warningCount += compilerWarnings - _compilerWarningCount;
+                    _logCount     += compilerLogs     - _compilerLogCount;
+                    _compilerErrorCount   = compilerErrors;
+                    _compilerWarningCount = compilerWarnings;
+                    _compilerLogCount    = compilerLogs;
                     CompilerVersion++;
                     changed = true;
                 }
             }
-            else if (_compilerEntries.Count > 0)
+            else if (_compilerErrorCount + _compilerWarningCount + _compilerLogCount > 0)
             {
-                _compilerEntries.Clear();
+                _errorCount   -= _compilerErrorCount;
+                _warningCount -= _compilerWarningCount;
+                _logCount     -= _compilerLogCount;
+                _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
                 CompilerVersion++;
                 changed = true;
             }

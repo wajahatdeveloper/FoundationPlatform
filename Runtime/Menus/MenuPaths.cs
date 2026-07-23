@@ -184,6 +184,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Gec;
             public const string RebuildGeneratedRegistries = Root + "Rebuild/Rebuild All Generated Registries";
             public const string InstallGizmoIcons = Root + "Install Gizmo Icons";
+            public const string RunProjectSetup = Root + "Run Project Setup...";
         }
 
         /// <summary>Window/GameEngineCore/* — engine hub, diagnostic windows, and scaffold creators.</summary>

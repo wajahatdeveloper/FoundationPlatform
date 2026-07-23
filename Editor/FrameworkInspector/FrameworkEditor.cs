@@ -1345,7 +1345,11 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     if (!string.IsNullOrEmpty(info.VisibleIf) &&
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
-                    FrameworkInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(target, info.Message), info.InfoMessageType);
+                    string ibKey = "ibox:" + (e.AttributeSource?.Name ?? "?") + ":" + info.Message;
+                    foldouts.TryGetValue(ibKey, out bool expanded);
+                    FrameworkInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(target, info.Message),
+                        info.InfoMessageType, ref expanded, info.Collapsible);
+                    foldouts[ibKey] = expanded;
                 }
             }
 

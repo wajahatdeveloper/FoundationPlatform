@@ -679,21 +679,44 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             EditorGUILayout.Space(2f);
         }
 
-        /// <summary>Themed callout matching FrameworkInspector chrome (replaces raw HelpBox in engine UI).</summary>
         public static void DrawInfoBox(string message, InfoMessageType type = InfoMessageType.Info)
         {
+            bool dummy = true;
+            DrawInfoBox(message, type, ref dummy, collapsible: false);
+        }
+
+        /// <summary>Themed callout matching FrameworkInspector chrome (replaces raw HelpBox in engine UI).</summary>
+        public static void DrawInfoBox(string message, InfoMessageType type, ref bool expanded, bool collapsible)
+        {
             if (string.IsNullOrEmpty(message)) return;
-            var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
-            float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
-            var rect = EditorGUILayout.GetControlRect(false, h + 8f);
-            EditorGUI.DrawRect(rect, InfoBoxBackground(type));
-            var border = InfoBoxBorder(type);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
-            EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
-            EditorGUILayout.Space(SectionSpacing * 0.5f);
+
+            if (collapsible)
+            {
+                EditorGUILayout.BeginHorizontal();
+                expanded = EditorGUILayout.Foldout(expanded, GUIContent.none, true, EditorStyles.foldoutHeader);
+                var headerRect = GUILayoutUtility.GetLastRect();
+                var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
+                float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
+                var msgRect = new Rect(headerRect.xMin, headerRect.yMax, headerRect.width, h);
+                GUI.Label(msgRect, message, style);
+                EditorGUILayout.EndHorizontal();
+                if (!expanded) return;
+                EditorGUILayout.Space(2f);
+            }
+            else
+            {
+                var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
+                float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
+                var rect = EditorGUILayout.GetControlRect(false, h + 8f);
+                EditorGUI.DrawRect(rect, InfoBoxBackground(type));
+                var border = InfoBoxBorder(type);
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
+                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
+                EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
+                GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
+                EditorGUILayout.Space(SectionSpacing * 0.5f);
+            }
         }
 
         public static void DrawValidationBox(string message, InfoMessageType type = InfoMessageType.Error)

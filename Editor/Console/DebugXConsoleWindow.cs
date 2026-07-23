@@ -1379,9 +1379,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         {
             if (_logToggle != null) _logToggle.text = $"Log {ConsoleLogStore.LogCount}";
             if (_warnToggle != null) _warnToggle.text = $"Warn {ConsoleLogStore.WarningCount}";
-            if (_errToggle != null) _errToggle.text = $"Err {ConsoleLogStore.ErrorCount}";
+            if (_errToggle != null) _errToggle.text = $"Err {ConsoleLogStore.TotalErrorCount}";
 
-            int err = ConsoleLogStore.ErrorCount;
+            int err = ConsoleLogStore.TotalErrorCount;
             if (titleContent != null)
                 titleContent.text = err > 0 ? $"DebugX ● {err}" : "DebugX Console";
         }

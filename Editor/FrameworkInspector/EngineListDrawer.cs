@@ -255,6 +255,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             SerializedProperty elemProp, Type elemType, bool engineElems,
             ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel)
         {
+            var labelContent = string.IsNullOrEmpty(elemLabel) ? GUIContent.none : new GUIContent(elemLabel);
+
             if (vd != null && vd.DrawDropdownForListElements &&
                 InspectorDropdown.DrawValueDropdownElement(elemProp, e, targets, vd, elemLabel))
                 return;
@@ -276,12 +278,12 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     AttributeSource = null,
                 };
                 FrameworkInspectorRenderer.DrawNestedObject(entry, targets, foldouts, tabs, inline: elemInline,
-                    labelOverride: new GUIContent(elemLabel));
+                    labelOverride: labelContent);
                 return;
             }
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(elemProp, new GUIContent(elemLabel), true);
+            EditorGUILayout.PropertyField(elemProp, labelContent, true);
             if (EditorGUI.EndChangeCheck())
             {
                 elemProp.serializedObject.ApplyModifiedProperties();
@@ -291,6 +293,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         private static string ElementLabel(SerializedProperty elemProp, ListDrawerSettingsAttribute lds, bool showIndex, int index)
         {
+            if (lds != null && !lds.ShowElementLabels)
+                return string.Empty;
+
             string label = null;
             if (lds != null && !string.IsNullOrEmpty(lds.ListElementLabelName))
             {
