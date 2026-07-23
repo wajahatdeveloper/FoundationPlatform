@@ -2,11 +2,96 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
+    /// <summary>
+    /// Simple LRU cache implementation using Dictionary + LinkedList.
+    /// Thread-safe for single-threaded Unity main thread usage.
+    /// </summary>
+    internal sealed class LruCache<TKey, TValue>
+    {
+        private readonly int _capacity;
+        private readonly Dictionary<TKey, LinkedListNode<LruEntry>> _map;
+        private readonly LinkedList<LruEntry> _list;
+        private readonly Action<TKey, TValue> _onEvict;
+
+        public LruCache(int capacity, Action<TKey, TValue> onEvict = null)
+        {
+            _capacity = Math.Max(1, capacity);
+            _map = new Dictionary<TKey, LinkedListNode<LruEntry>>();
+            _list = new LinkedList<LruEntry>();
+            _onEvict = onEvict;
+        }
+
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            if (_map.TryGetValue(key, out var node))
+            {
+                value = node.Value.Value;
+                _list.Remove(node);
+                _list.AddFirst(node);
+                return true;
+            }
+            value = default;
+            return false;
+        }
+
+        public void AddOrUpdate(TKey key, TValue value)
+        {
+            if (_map.TryGetValue(key, out var node))
+            {
+                node.Value.Value = value;
+                _list.Remove(node);
+                _list.AddFirst(node);
+            }
+            else
+            {
+                if (_map.Count >= _capacity)
+                {
+                    var lru = _list.Last;
+                    if (lru != null)
+                    {
+                        _map.Remove(lru.Value.Key);
+                        _onEvict?.Invoke(lru.Value.Key, lru.Value.Value);
+                        _list.RemoveLast();
+                    }
+                }
+                var newNode = new LinkedListNode<LruEntry>(new LruEntry { Key = key, Value = value });
+                _list.AddFirst(newNode);
+                _map[key] = newNode;
+            }
+        }
+
+        public bool Remove(TKey key)
+        {
+            if (_map.TryGetValue(key, out var node))
+            {
+                _list.Remove(node);
+                _map.Remove(key);
+                return true;
+            }
+            return false;
+        }
+
+        public void Clear()
+        {
+            _map.Clear();
+            _list.Clear();
+        }
+
+        public int Count => _map.Count;
+
+        private sealed class LruEntry
+        {
+            public TKey Key;
+            public TValue Value;
+        }
+    }
+
     /// <summary>
     /// Collection renderer honoring the <c>[ListDrawerSettings]</c> surface — foldout, index labels,
     /// paging, add/remove/move controls, custom add/remove callbacks, per-element label member,
@@ -18,8 +103,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
     /// </summary>
     internal static class EngineListDrawer
     {
-        private static readonly Dictionary<string, int> s_pages = new Dictionary<string, int>();
-        private static readonly Dictionary<string, string> s_search = new Dictionary<string, string>();
+        private static readonly LruCache<string, int> s_pages = new LruCache<string, int>(100);
+        private static readonly LruCache<string, string> s_search = new LruCache<string, string>(100);
 
         // Free-drag reorder state: row rects are captured on Repaint, drag events resolve the drop
         // index against them, and the move commits on MouseUp (the standard IMGUI reorder pattern —
@@ -27,24 +112,39 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         private static string s_dragKey;
         private static int s_dragIndex = -1;
         private static int s_dropIndex = -1;
-        private static readonly Dictionary<string, List<(int index, Rect rect)>> s_rowRects
-            = new Dictionary<string, List<(int, Rect)>>();
+        private static readonly LruCache<string, List<(int index, Rect rect)>> s_rowRects
+            = new LruCache<string, List<(int, Rect)>>(100);
 
         public static void Draw(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, Type elemType,
             ListDrawerSettingsAttribute lds, SearchableAttribute searchable,
             ValueDropdownAttribute vd, AssetSelectorAttribute asel,
-            OnCollectionChangedAttribute occ)
+            OnCollectionChangedAttribute occ, int maxDepth = -1, HashSet<object> visited = null)
         {
             var prop = e.Property;
             string key = prop.propertyPath;
-            var label = FrameworkInspectorRenderer.GetLabel(e, targets) ?? new GUIContent(prop.displayName);
+            
+            // Get label with proper fallback to LabelText attribute on the field
+            var label = AetherInspectorRenderer.GetLabel(e, targets);
+            if (label == null && e.Field != null)
+            {
+                var ltAttr = e.Field.GetCustomAttribute(typeof(LabelTextAttribute)) as LabelTextAttribute;
+                if (ltAttr != null)
+                {
+                    string text = InspectorMemberResolver.ResolveString(targets[0], ltAttr.Text);
+                    if (ltAttr.NicifyText && !string.IsNullOrEmpty(text)) 
+                        text = ObjectNames.NicifyVariableName(text);
+                    label = new GUIContent(text);
+                }
+            }
+            if (label == null) label = new GUIContent(prop.displayName);
+            
             var target = targets[0];
             bool readOnly = lds != null && lds.IsReadOnly;
-            bool engineElems = elemType != null && !FrameworkInspectorRenderer.HasCustomPropertyDrawer(elemType)
+            bool engineElems = elemType != null && !AetherInspectorRenderer.HasCustomPropertyDrawer(elemType)
                 && !typeof(UnityEngine.Object).IsAssignableFrom(elemType)
                 && (elemType.GetCustomAttribute<InlinePropertyAttribute>() != null
-                    || FrameworkInspectorRenderer.TypeHasEngineAttributes(elemType));
+                    || AetherInspectorRenderer.TypeHasEngineAttributes(elemType));
 
             // Expansion: foldout persisted on the property; first-seen default from the settings.
             bool showFoldout = lds == null || lds.ShowFoldout;
@@ -52,21 +152,27 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             if (lds != null && foldouts != null && !foldouts.ContainsKey(initKey))
             {
                 foldouts[initKey] = true;
-                if (lds.DefaultExpandedState || lds.Expanded) prop.isExpanded = true;
+                if (lds.DefaultExpandedState || lds.Expanded || lds.DisplayMode == ListDisplayMode.Expanded) prop.isExpanded = true;
+                else if (lds.DisplayMode == ListDisplayMode.Collapsed) prop.isExpanded = false;
             }
             bool expanded = !showFoldout || prop.isExpanded;
 
             // --- Header row ---
-            using (new EditorGUILayout.HorizontalScope())
+            // Use proper horizontal layout for header with foldout, title bar hooks, and add button
+            EditorGUILayout.BeginHorizontal();
             {
                 string headerText = $"{label.text} ({prop.arraySize})";
+                
                 if (showFoldout)
                 {
                     prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true,
-                        FrameworkInspectorTheme.FlatFoldoutStyle);
+                        AetherInspectorTheme.FlatFoldoutStyle);
                     expanded = prop.isExpanded;
                 }
-                else EditorGUILayout.LabelField(headerText, FrameworkInspectorTheme.FlatHeaderLabel);
+                else
+                {
+                    EditorGUILayout.LabelField(headerText, AetherInspectorTheme.FlatHeaderLabel);
+                }
 
                 GUILayout.FlexibleSpace();
 
@@ -75,12 +181,17 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
                 }
 
+                bool disableAdd = vd != null && vd.DisableListAddButtonBehaviour && vd.IsUniqueList;
                 if (!readOnly && (lds == null || !lds.HideAddButton))
                 {
-                    if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
-                        AddElement(e, targets, elemType, lds, occ);
+                    using (new EditorGUI.DisabledScope(disableAdd))
+                    {
+                        if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
+                            AddElement(e, targets, elemType, lds, occ);
+                    }
                 }
             }
+            EditorGUILayout.EndHorizontal();
 
             if (!expanded) return;
 
@@ -90,7 +201,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             {
                 s_search.TryGetValue(key, out search);
                 search = EditorGUILayout.TextField(GUIContent.none, search ?? string.Empty, EditorStyles.toolbarSearchField);
-                s_search[key] = search;
+                s_search.AddOrUpdate(key, search);
             }
 
             // --- Paging ---
@@ -113,7 +224,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     using (new EditorGUI.DisabledScope(page >= pageCount - 1))
                         if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(24))) page++;
                 }
-                s_pages[key] = page;
+                s_pages.AddOrUpdate(key, page);
                 start = page * pageSize;
                 end = Mathf.Min(start + pageSize, count);
             }
@@ -125,7 +236,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             int removeIndex = -1, moveFrom = -1, moveTo = -1;
             var evt = Event.current;
             bool repaint = evt.type == EventType.Repaint;
-            if (repaint) s_rowRects[key] = new List<(int, Rect)>();
+            if (repaint) s_rowRects.AddOrUpdate(key, new List<(int, Rect)>());
 
             using (new EditorGUI.IndentLevelScope())
             {
@@ -134,9 +245,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     var elemProp = prop.GetArrayElementAtIndex(i);
                     string elemLabel = ElementLabel(elemProp, lds, showIndex, i);
 
-                    if (!string.IsNullOrEmpty(search) &&
-                        elemLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0 &&
-                        ElementValueText(elemProp).IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0)
+                    if (!MatchSearch(elemProp, elemLabel, search, searchable != null && searchable.Recursive))
                         continue;
 
                     if (lds != null && !string.IsNullOrEmpty(lds.OnBeginListElementGUI))
@@ -144,23 +253,27 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                         foreach (var t in targets) InvokeHook(t, lds.OnBeginListElementGUI, i);
                     }
 
-                    // HorizontalScope/VerticalScope below guarantee the row closes even if DrawElement
+// HorizontalScope/VerticalScope below guarantee the row closes even if DrawElement
                     // throws (e.g. a reflection-driven element drawer) — otherwise one bad row would
                     // corrupt the layout stack for every row after it.
                     using (var rowScope = new EditorGUILayout.HorizontalScope())
                     {
-                        if (repaint) s_rowRects[key].Add((i, rowScope.rect));
+                        if (repaint && s_rowRects.TryGetValue(key, out var rectList))
+                            rectList.Add((i, rowScope.rect));
 
+                        // Drag handle on the left
                         if (movable)
                         {
                             GUILayout.Label("≡", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(14), GUILayout.Height(18));
                             HandleRowDrag(GUILayoutUtility.GetLastRect(), key, i, ref moveFrom, ref moveTo);
                         }
 
-                        using (new EditorGUILayout.VerticalScope())
+                        // Element content - fills remaining horizontal space
+                        using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
                         using (new EditorGUI.DisabledScope(readOnly))
-                            DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel);
+                            DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel, maxDepth, visited);
 
+                        // Remove button on the right
                         if (removable)
                         {
                             if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(20), GUILayout.Height(18)))
@@ -253,7 +366,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         private static void DrawElement(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             SerializedProperty elemProp, Type elemType, bool engineElems,
-            ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel)
+            ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel, int maxDepth = -1, HashSet<object> visited = null)
         {
             var labelContent = string.IsNullOrEmpty(elemLabel) ? GUIContent.none : new GUIContent(elemLabel);
 
@@ -277,8 +390,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     Property = elemProp,
                     AttributeSource = null,
                 };
-                FrameworkInspectorRenderer.DrawNestedObject(entry, targets, foldouts, tabs, inline: elemInline,
-                    labelOverride: labelContent);
+                AetherInspectorRenderer.DrawNestedObject(entry, targets, foldouts, tabs, inline: elemInline,
+                    labelOverride: labelContent, maxDepth: maxDepth, visited: visited);
                 return;
             }
 
@@ -287,7 +400,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 elemProp.serializedObject.ApplyModifiedProperties();
-                FrameworkInspectorRenderer.InvokeOnValueChanged(e, targets);
+                AetherInspectorRenderer.InvokeOnValueChanged(e, targets);
             }
         }
 
@@ -364,7 +477,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                                 // But since arraySize++ is called, we just let it copy or we can set it.
                             }
                         }
-                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.AetherInspector] CustomAddFunction '{lds.CustomAddFunction}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     }
                 }
                 // void custom add: target callback already mutated the list.
@@ -417,7 +530,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     if (mi != null)
                     {
                         try { mi.Invoke(mi.IsStatic ? null : target, new object[] { index }); }
-                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.AetherInspector] CustomRemoveIndexFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     }
                 }
                 prop.serializedObject.Update();
@@ -436,7 +549,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                         var ps = mi.GetParameters();
                         if (ps.Length != 1) continue;
                         try { mi.Invoke(mi.IsStatic ? null : target, new[] { value }); }
-                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
+                        catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.AetherInspector] CustomRemoveElementFunction threw: {ex.InnerException?.Message ?? ex.Message}"); }
                     }
                 }
                 prop.serializedObject.Update();
@@ -452,7 +565,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         private static void FinishMutation(InspectorEntry e, object[] targets, OnCollectionChangedAttribute occ)
         {
             NotifyCollection(targets, occ, before: false);
-            FrameworkInspectorRenderer.InvokeOnValueChanged(e, targets);
+            AetherInspectorRenderer.InvokeOnValueChanged(e, targets);
             foreach (var target in targets)
             {
                 if (target is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
@@ -484,8 +597,26 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] list hook '{method}' threw: {ex.InnerException?.Message ?? ex.Message}");
+                Debug.LogWarning($"[FoundationPlatform.AetherInspector] list hook '{method}' threw: {ex.InnerException?.Message ?? ex.Message}");
             }
+        }
+        private static bool MatchSearch(SerializedProperty elemProp, string elemLabel, string search, bool recursive)
+        {
+            if (string.IsNullOrEmpty(search)) return true;
+            if (elemLabel != null && elemLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            string valText = ElementValueText(elemProp);
+            if (valText != null && valText.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            if (recursive && elemProp != null)
+            {
+                var copy = elemProp.Copy();
+                var end = elemProp.GetEndProperty();
+                while (copy.NextVisible(true) && !SerializedProperty.EqualContents(copy, end))
+                {
+                    string text = ElementValueText(copy);
+                    if (!string.IsNullOrEmpty(text) && text.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                }
+            }
+            return false;
         }
     }
 }

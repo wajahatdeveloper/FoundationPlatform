@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
-using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +14,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 	///  <see cref="AnimationTestBenchWindow"/> (button below).
 	/// </summary>
 	[CustomEditor(typeof(PlayableGraphBridge))]
-	public class PlayableGraphBridgeEditor : FrameworkEditor
+	public class PlayableGraphBridgeEditor : AetherInspectorEditor
 	{
 		private bool _layersSectionExpanded = true;
 		private float _testFadeDuration = 0.25f;

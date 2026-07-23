@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Animation

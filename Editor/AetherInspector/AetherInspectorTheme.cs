@@ -1,16 +1,16 @@
 #if UNITY_EDITOR
 using System;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
-    /// Skin-aware IMGUI theme tokens and cached styles for FrameworkInspector chrome.
+    /// Skin-aware IMGUI theme tokens and cached styles for AetherInspector chrome.
     /// Centralizes spacing, colors, and GUIStyles so inspectors align with Unity 6 editor look.
     /// </summary>
-    public static class FrameworkInspectorTheme
+    public static class AetherInspectorTheme
     {
         public const float RowHeight = 18f;
         public const float SectionSpacing = 4f;
@@ -685,7 +685,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             DrawInfoBox(message, type, ref dummy, collapsible: false);
         }
 
-        /// <summary>Themed callout matching FrameworkInspector chrome (replaces raw HelpBox in engine UI).</summary>
+        /// <summary>Themed callout matching AetherInspector chrome (replaces raw HelpBox in engine UI).</summary>
         public static void DrawInfoBox(string message, InfoMessageType type, ref bool expanded, bool collapsible)
         {
             if (string.IsNullOrEmpty(message)) return;

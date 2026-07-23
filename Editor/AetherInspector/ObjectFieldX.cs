@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// The engine's enhanced object-reference field: optional pencil button (opens a floating

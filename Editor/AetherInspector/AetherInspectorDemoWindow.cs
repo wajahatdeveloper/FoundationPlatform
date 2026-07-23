@@ -3,31 +3,31 @@ using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
-    /// Live parity harness for the <see cref="FrameworkEditor"/> engine. Menu:
-    /// <c>Tools/Diagnostics/Framework Inspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
-    /// that exercises every supported Framework Inspector attribute, drawn through the
+    /// Live parity harness for the <see cref="AetherInspectorEditor"/> engine. Menu:
+    /// <c>Tools/Diagnostics/AetherInspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
+    /// that exercises every supported AetherInspector attribute, drawn through the
     /// in-house engine. Use it as the visual regression harness for the attribute surface.
     /// Editor-only asset — never ships.
     /// </summary>
-    public sealed class FrameworkInspectorDemoWindow : EditorWindow
+    public sealed class AetherInspectorDemoWindow : EditorWindow
     {
-        private FrameworkInspectorDemoData _data;
+        private AetherInspectorDemoData _data;
         private UnityEditor.Editor _editor;
         private IMGUIContainer _imguiContainer;
+        private Vector2 _scrollPosition;
 
-        [MenuItem(MenuPaths.Diagnostics.FrameworkInspectorDemo, false, MenuPriorities.Diagnostics + 1)]
-        private static void Open() => GetWindow<FrameworkInspectorDemoWindow>("Framework Inspector Demo");
+        [MenuItem(MenuPaths.Diagnostics.AetherInspectorDemo, false, MenuPriorities.Diagnostics + 1)]
+        private static void Open() => GetWindow<AetherInspectorDemoWindow>("AetherInspector Demo");
 
         private void OnEnable()
         {
-            _data = CreateInstance<FrameworkInspectorDemoData>();
+            _data = CreateInstance<AetherInspectorDemoData>();
             _data.hideFlags = HideFlags.DontSave;
             _editor = UnityEditor.Editor.CreateEditor(_data);
         }
@@ -44,38 +44,40 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             root.style.flexDirection = FlexDirection.Column;
 
             var banner = new HelpBox(
-                "This inspector is drawn by FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor (in-house). " +
-                "Every field below uses a FoundationPlatform.FrameworkInspector attribute.",
+                "This inspector is drawn by FoundationPlatform.AetherInspector.Editor.AetherInspectorEditor (in-house). " +
+                "Every field below uses a FoundationPlatform.AetherInspector attribute.",
                 HelpBoxMessageType.Info);
             root.Add(banner);
-
-            var scroll = new ScrollView(ScrollViewMode.Vertical);
-            scroll.style.flexGrow = 1;
+            
             _imguiContainer = new IMGUIContainer(DrawInspectorImgui);
-            scroll.Add(_imguiContainer);
-            root.Add(scroll);
+            _imguiContainer.style.flexGrow = 1;
         }
 
         private void DrawInspectorImgui()
         {
-            FrameworkInspectorTheme.BeginInspectorScope();
-            if (_editor != null) _editor.OnInspectorGUI();
-            FrameworkInspectorTheme.EndInspectorScope();
+            AetherInspectorTheme.BeginInspectorScope();
+            if (_editor != null)
+            {
+                EditorGUILayout.BeginScrollView(_scrollPosition);
+                _editor.OnInspectorGUI();
+                EditorGUILayout.EndScrollView();
+            }
+            AetherInspectorTheme.EndInspectorScope();
         }
     }
 
-    [CustomEditor(typeof(FrameworkInspectorDemoData))]
-    public sealed class FrameworkInspectorDemoDataEditor : FrameworkEditor { }
+    [CustomEditor(typeof(AetherInspectorDemoData))]
+    public sealed class AetherInspectorInspectorDemoDataEditor : AetherInspectorEditor { }
 
-    [CustomPropertyDrawer(typeof(FrameworkInspectorDemoData.DemoPayload))]
-    internal sealed class DemoPayloadDrawer : FrameworkReflectedDrawer { }
+    [CustomPropertyDrawer(typeof(AetherInspectorDemoData.DemoPayload))]
+    internal sealed class DemoPayloadDrawer : AetherInspectorReflectedDrawer { }
 
     /// <summary>Editor-only data object exercising the supported attribute surface.</summary>
     [TypeInfoBox("[TypeInfoBox] — drawn at the top of the inspector for this type.")]
-    public sealed class FrameworkInspectorDemoData : ScriptableObject
+    public sealed class AetherInspectorDemoData : ScriptableObject
     {
         // --- Titles & simple labels ---
-        [Title("Framework Inspector Demo", "Exercises the in-house attribute engine")]
+        [Title("AetherInspector Demo", "Exercises the in-house attribute engine")]
         [LabelText("Renamed Label")]
         public string labeled = "value";
 
@@ -410,7 +412,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         [FoldoutGroup("ConditionalFoldout", VisibleIf = nameof(showFoldoutGroup))]
         public string foldoutVisibleField = "visible when showFoldoutGroup";
 
-        // --- Nested list elements (FrameworkReflectedDrawer pattern) ---
+        // --- Nested list elements (AetherInspectorReflectedDrawer pattern) ---
         [Title("Nested List Payloads")]
         [ListDrawerSettings(ShowIndexLabels = true)]
         public List<DemoPayload> payloadList = new List<DemoPayload>
@@ -421,7 +423,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         [InfoBox("Partial support: CollapseOthersOnExpand, ShowIf/HideIf Animate, ValueDropdown AppendNextDrawer — API only.", InfoMessageType.Warning)]
         [PropertyOrder(199)]
-        public string unsupportedApiNote = "see DOCS/FrameworkInspector.md";
+        public string unsupportedApiNote = "see DOCS/AetherInspector.md";
 
         // --- Fragment pattern repro (nested box paths + inline payload + private base button) ---
         [Title("Fragment Pattern")]

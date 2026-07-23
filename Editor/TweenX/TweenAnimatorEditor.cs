@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
     /// dashed line from the current transform, so designers can author motion targets visually.
     /// </summary>
     [CustomEditor(typeof(TweenAnimator))]
-    public sealed class TweenAnimatorEditor : FrameworkEditor
+    public sealed class TweenAnimatorEditor : AetherInspectorEditor
     {
         private void OnSceneGUI()
         {

@@ -3,11 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Reusable property drawer for a nested <c>[Serializable]</c> type that carries engine-only members
@@ -18,9 +18,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
     /// then the reflected engine-only members read from the property's boxed instance.
     ///
     /// Register per type with a 3-line subclass — Unity applies it to fields AND list/array elements:
-    /// <code>[CustomPropertyDrawer(typeof(MySpec))] sealed class MySpecDrawer : FrameworkReflectedDrawer { }</code>
+    /// <code>[CustomPropertyDrawer(typeof(MySpec))] sealed class MySpecDrawer : AetherInspectorReflectedDrawer { }</code>
     /// </summary>
-    public abstract class FrameworkReflectedDrawer : PropertyDrawer
+    public abstract class AetherInspectorReflectedDrawer : PropertyDrawer
     {
         private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         private const float Pad = 2f;
@@ -65,7 +65,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             if (!headerless)
             {
                 var header = new Rect(position.x, position.y, position.width, Line);
-                property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true, FrameworkInspectorTheme.FlatFoldoutStyle);
+                property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true, AetherInspectorTheme.FlatFoldoutStyle);
                 if (!property.isExpanded) return;
                 y = header.yMax;
                 EditorGUI.indentLevel = indent + 1; // children indented under the header

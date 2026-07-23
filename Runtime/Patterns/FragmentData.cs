@@ -1,5 +1,5 @@
 using System;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform

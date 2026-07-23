@@ -50,6 +50,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
         // Compiler/import diagnostics, rebuilt from UnityEditor.LogEntries each poll (main thread).
         private static readonly List<ConsoleEntry> _compilerEntries = new List<ConsoleEntry>();
 
+        // Fast-lookup set of compiler entry messages for dedup in OnUnityLog (main thread only).
+        private static readonly HashSet<string> _compilerMessages = new HashSet<string>();
+
         /// <summary>Bumped whenever visible state changes; the window compares this to decide when to rebuild.</summary>
         public static int Version { get; private set; }
 
@@ -120,9 +123,23 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _count = 0;
             _logCount = _warningCount = _errorCount = 0;
             _compilerEntries.Clear();
+            _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
+            Version++;
+        }
+
+        /// <summary>
+        /// Clears only runtime logs (ring buffer). Compiler diagnostics and their counts are preserved.
+        /// </summary>
+        public static void ClearRuntime()
+        {
+            Array.Clear(_ring, 0, Capacity);
+            _head = 0;
+            _count = 0;
+            _logCount = _warningCount = _errorCount = 0;
+            ClearCount++;
             Version++;
         }
 
@@ -255,6 +272,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
         {
             // DebugX logs do not reach Unity's log system in the editor (the native relay is dropped),
             // so this feed only carries plain Debug.Log calls, uncaught exceptions and third-party logs.
+            // Skip messages already captured as compiler/import diagnostics to avoid duplicates.
+            if (CaptureCompilerErrors && _compilerMessages.Contains(condition ?? string.Empty))
+                return;
+
             var level = UnityTypeToLevel(type);
             var entry = new ConsoleEntry
             {
@@ -286,9 +307,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 if (LogEntriesBridge.Refresh(_compilerEntries))
                 {
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
+                    _compilerMessages.Clear();
                     for (int i = 0; i < _compilerEntries.Count; i++)
                     {
-                        switch (_compilerEntries[i].Category)
+                        var ce = _compilerEntries[i];
+                        if (ce.Category == ConsoleCategory.Error)
+                            _compilerMessages.Add(ce.Message ?? string.Empty);
+                        switch (ce.Category)
                         {
                             case ConsoleCategory.Error:   compilerErrors++; break;
                             case ConsoleCategory.Warning: compilerWarnings++; break;

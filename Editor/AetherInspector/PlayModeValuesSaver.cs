@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// "Save Values When Exiting Play Mode": components flagged via the context menu are
@@ -17,8 +17,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
     [InitializeOnLoad]
     internal static class PlayModeValuesSaver
     {
-        private const string WatchKey = "FrameworkInspectorX.PlayModeSaver.Watch";
-        private const string DataKey = "FrameworkInspectorX.PlayModeSaver.Data";
+        private const string WatchKey = "AetherInspectorX.PlayModeSaver.Watch";
+        private const string DataKey = "AetherInspectorX.PlayModeSaver.Data";
 
         [Serializable]
         private sealed class StringListPayload
@@ -49,7 +49,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             var id = IdOf(component);
             if (id == null)
             {
-                Debug.LogWarning("[FrameworkInspector] This object has no persistent id (created in play mode?) — values can't be saved across play mode.");
+                Debug.LogWarning("[AetherInspector] This object has no persistent id (created in play mode?) — values can't be saved across play mode.");
                 return;
             }
 
@@ -114,7 +114,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
 
             if (applied > 0)
-                Debug.Log($"[FrameworkInspector] Applied play-mode values to {applied} component(s).");
+                Debug.Log($"[AetherInspector] Applied play-mode values to {applied} component(s).");
         }
 
         private static StringListPayload LoadWatchList()

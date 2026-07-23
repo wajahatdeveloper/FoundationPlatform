@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Extra CONTEXT/Component menu items: move-to-top/bottom, JSON copy/paste of
@@ -60,7 +60,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[FrameworkInspector] JSON paste failed: {e.Message}");
+                Debug.LogError($"[AetherInspector] JSON paste failed: {e.Message}");
             }
         }
 
@@ -94,7 +94,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[FrameworkInspector] JSON load failed: {e.Message}");
+                Debug.LogError($"[AetherInspector] JSON load failed: {e.Message}");
             }
         }
 

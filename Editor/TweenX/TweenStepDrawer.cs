@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
@@ -10,6 +10,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
     /// render correctly (Unity's default drawer ignores those). Three lines, no custom GUI.
     /// </summary>
     [CustomPropertyDrawer(typeof(TweenAnimator.TweenStep))]
-    internal sealed class TweenStepDrawer : FrameworkReflectedDrawer { }
+    internal sealed class TweenStepDrawer : AetherInspectorReflectedDrawer { }
 }
 #endif

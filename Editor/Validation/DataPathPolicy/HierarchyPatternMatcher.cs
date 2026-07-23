@@ -44,24 +44,33 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
                 return result;
             }
 
-            string searchRoot = BuildSearchRootBeforeWildcard(normalizedPattern);
-            if (string.IsNullOrEmpty(searchRoot) || !AssetDatabase.IsValidFolder(searchRoot))
-                return result;
+            // Handle patterns that start with wildcards by searching both Assets and Packages
+            string initialSearchRoot = BuildSearchRootBeforeWildcard(normalizedPattern);
+            string[] searchRoots = string.IsNullOrEmpty(initialSearchRoot) 
+                ? new[] { "Assets", "Packages" } 
+                : new[] { initialSearchRoot };
 
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (Match(searchRoot, normalizedPattern, knownDomains, out _, out _) && seen.Add(searchRoot))
-                result.Add(searchRoot);
-
-            string[] guids = AssetDatabase.FindAssets("t:DefaultAsset", new[] { searchRoot });
-            for (int i = 0; i < guids.Length; i++)
+            
+            foreach (string searchRoot in searchRoots)
             {
-                string candidate = AssetDatabase.GUIDToAssetPath(guids[i]);
-                if (!AssetDatabase.IsValidFolder(candidate))
+                if (string.IsNullOrEmpty(searchRoot) || !AssetDatabase.IsValidFolder(searchRoot))
                     continue;
-                if (!Match(candidate, normalizedPattern, knownDomains, out _, out _))
-                    continue;
-                if (seen.Add(candidate))
-                    result.Add(candidate);
+
+                if (Match(searchRoot, normalizedPattern, knownDomains, out _, out _) && seen.Add(searchRoot))
+                    result.Add(searchRoot);
+
+                string[] guids = AssetDatabase.FindAssets("t:DefaultAsset", new[] { searchRoot });
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    string candidate = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    if (!AssetDatabase.IsValidFolder(candidate))
+                        continue;
+                    if (!Match(candidate, normalizedPattern, knownDomains, out _, out _))
+                        continue;
+                    if (seen.Add(candidate))
+                        result.Add(candidate);
+                }
             }
 
             return result;
@@ -82,6 +91,27 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
                 return assetIndex == assetSegments.Length;
 
             string token = patternSegments[patternIndex];
+            if (token == "***")
+            {
+                // Unbounded pattern - matches anywhere in the project
+                // This is like ** but without the Assets/Data constraint
+                if (patternIndex == patternSegments.Length - 1)
+                    return true;
+
+                for (int i = assetIndex; i <= assetSegments.Length; i++)
+                {
+                    string capturedClone = capturedDomain;
+                    if (MatchSegments(assetSegments, i, patternSegments, patternIndex + 1, knownDomains, ref capturedClone, out reason))
+                    {
+                        capturedDomain = capturedClone;
+                        return true;
+                    }
+                }
+
+                reason = string.Empty;
+                return false;
+            }
+
             if (token == "**")
             {
                 if (patternIndex == patternSegments.Length - 1)

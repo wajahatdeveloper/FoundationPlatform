@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
-using AetherNexus.FoundationPlatform.FrameworkInspector.Editor;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -58,7 +58,7 @@ namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
                 : $"{findings.Count} stale components on this object:\n" +
                   string.Join("\n", findings.ConvertAll(f => $"• {ShortType(f.TypeName)}: {f.OrphanList}"));
 
-            FrameworkInspectorTheme.DrawInfoBox(
+            AetherInspectorTheme.DrawInfoBox(
                 body + "\nRe-author the component, or Strip to discard the orphan data (permanent).",
                 InfoMessageType.Warning);
 

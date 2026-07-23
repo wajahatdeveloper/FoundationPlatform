@@ -1,6 +1,6 @@
 using System;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector
+namespace AetherNexus.FoundationPlatform.AetherInspector
 {
     // ---- Enums -------------------------------------------------------------
 
@@ -27,6 +27,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector
 
     /// <summary>Where an icon sits relative to button text.</summary>
     public enum IconAlignment { LeftOfText = 0, RightOfText = 1, LeftEdge = 2, RightEdge = 3 }
+
+    /// <summary>Display mode for lists and dictionaries in the inspector.</summary>
+    public enum ListDisplayMode { Default = 0, Expanded = 1, Collapsed = 2 }
 
     // ---- Action attributes -------------------------------------------------
 
@@ -930,7 +933,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector
         /// <summary>When true, entries cannot be added or removed.</summary>
         public bool IsReadOnly;
         /// <summary>Display mode identifier; interpretation is engine-defined.</summary>
-        public int DisplayMode;
+        public ListDisplayMode DisplayMode;
         /// <summary>Fixed width of the key column in pixels.</summary>
         public int KeyColumnWidth;
         /// <summary>Fixed width of the value column in pixels.</summary>
@@ -1015,6 +1018,8 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector
         public int NumberOfItemsPerPage;
         /// <summary>Initial expanded/collapsed state of the list foldout.</summary>
         public bool Expanded;
+        /// <summary>Display mode for the collection foldout.</summary>
+        public ListDisplayMode DisplayMode;
         /// <summary>When true (default), per-element labels (e.g. <c>Element 0</c>) are shown; set to false for a flat list appearance.</summary>
         public bool ShowElementLabels = true;
         /// <summary>Create default list drawer settings.</summary>

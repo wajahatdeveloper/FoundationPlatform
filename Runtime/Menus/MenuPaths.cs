@@ -247,7 +247,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         {
             private const string Root = Tools + "Diagnostics/";
             public const string AnimationTestBench   = Root + "Animation Test Bench";
-            public const string FrameworkInspectorDemo = Root + "Framework Inspector Demo";
+            public const string AetherInspectorDemo = Root + "AetherInspector Demo";
         }
 
         /// <summary>Tools/Linting/* — validation &amp; rollout toggles (FoundationPlatform-owned half of the former shared Linting class).</summary>
@@ -300,7 +300,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string Ungroup        = GameObject + "Ungroup";
         }
 
-        /// <summary>CONTEXT/Component/* — generic component context-menu utilities (FrameworkInspector).</summary>
+        /// <summary>CONTEXT/Component/* — generic component context-menu utilities (AetherInspector).</summary>
         public static class ContextComponent
         {
             private const string Root = Context + "Component/";
@@ -311,7 +311,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string SaveValuesToJsonFile = Root + "Save Values To JSON File...";
             public const string LoadValuesFromJsonFile = Root + "Load Values From JSON File...";
             public const string SaveValuesWhenExitingPlayMode = Root + "Save Values When Exiting Play Mode";
-            public const string ForceRebuildInspectorCache = Root + "Force Rebuild Framework Inspector Cache";
+            public const string ForceRebuildInspectorCache = Root + "Force Rebuild AetherInspector Cache";
             public const string FoldAllComponents   = Root + "Fold All Components";
             public const string ExpandAllComponents = Root + "Expand All Components";
         }

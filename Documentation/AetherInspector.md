@@ -46,28 +46,19 @@ internal sealed class MyPayloadDrawer : FrameworkReflectedDrawer { }
 
 | Attribute | Status | Notes |
 |-----------|--------|-------|
-| `BoxGroup`, `FoldoutGroup`, `TitleGroup`, `TabGroup`, `HorizontalGroup`, `VerticalGroup`, `ToggleGroup`, `ButtonGroup` | Supported | `FoldoutGroup.VisibleIf` supported; `ToggleGroup.CollapseOthersOnExpand` API only |
-| `Title`, `LabelText`, `LabelWidth`, `HideLabel`, `PropertyOrder`, `PropertySpace`, `Indent`, `GUIColor` | Supported | `$member` / `@expression` string resolution |
-| `ShowIf`, `HideIf`, `EnableIf`, `DisableIf` | Supported | `Animate` API only (instant show/hide) |
-| `HideInEditorMode`, `HideInPlayMode`, `ShowInPlayMode`, `DisableInEditorMode`, `DisableInPlayMode` | Supported | |
-| `ReadOnly`, `Required`, `ValidateInput`, `InfoBox`, `DetailedInfoBox`, `TypeInfoBox` | Supported | Themed callouts via `FrameworkInspectorTheme` |
-| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Supported | `Button.Style`, `Icon`, `IconAlignment`, alignment, parameterized invoke |
-| `ListDrawerSettings`, `Searchable`, `TableList`, `TableColumnWidth`, `OnCollectionChanged` | Supported | `Searchable.Recursive` API only |
-| `ValueDropdown`, `AssetSelector`, `AssetsOnly`, `SceneObjectsOnly` | Supported | Several dropdown flags API only (see below) |
-| `DictionaryDrawerSettings` | Supported | `ShowInInspector` / `IDictionary` read-only grid |
-| `HideReferenceObjectPicker` | Supported | Nested serializable types + inline editors |
-| `InlineProperty`, `InlineEditor`, `PreviewField`, `DrawWithUnity` | Supported | `InlineEditor.MaxHeight` API only |
-| `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Supported | |
-| `DisplayAsString`, `RequireComponentButton` | Supported | |
-
-### Declared but not fully implemented (API-only)
-
-- `ValueDropdown`: `AppendNextDrawer`, `IsUniqueList`, `DisableListAddButtonBehaviour`, `HideChildProperties`, `ExpandAllMenuItems`
-- `AssetSelector`: `ExcludeExistingValuesInList`, `ExpandAllMenuItems`
-- `ShowIf` / `HideIf`: `Animate`
-- `ToggleGroup`: `CollapseOthersOnExpand`
-- `InfoBox`: `GUIAlwaysEnabled` (member-level boxes already draw outside field `DisabledScope`)
-- `ListDrawerSettings.DisplayMode`, `DictionaryDrawerSettings.DisplayMode`
+| `BoxGroup`, `FoldoutGroup`, `TitleGroup`, `TabGroup`, `HorizontalGroup`, `VerticalGroup`, `ToggleGroup`, `ButtonGroup` | Fully Supported | `ToggleGroup.CollapseOthersOnExpand` fully implemented |
+| `Title`, `LabelText`, `LabelWidth`, `HideLabel`, `PropertyOrder`, `PropertySpace`, `Indent`, `GUIColor` | Fully Supported | `$member` / `@expression` string resolution; `HideLabel` overrides text |
+| `ShowIf`, `HideIf`, `EnableIf`, `DisableIf` | Fully Supported | Animated visibility transitions (`Animate = true`) supported via fade groups |
+| `HideInEditorMode`, `HideInPlayMode`, `ShowInPlayMode`, `DisableInEditorMode`, `DisableInPlayMode` | Fully Supported | |
+| `ReadOnly`, `Required`, `ValidateInput`, `InfoBox`, `DetailedInfoBox`, `TypeInfoBox` | Fully Supported | `InfoBox.GUIAlwaysEnabled` scope handling supported |
+| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Fully Supported | `Button.Style`, `Icon`, `IconAlignment`, alignment, parameterized invoke |
+| `ListDrawerSettings`, `Searchable`, `TableList`, `TableColumnWidth`, `OnCollectionChanged` | Fully Supported | `ListDisplayMode` and `Searchable.Recursive` fully implemented |
+| `ValueDropdown`, `AssetSelector`, `AssetsOnly`, `SceneObjectsOnly` | Fully Supported | `AppendNextDrawer`, `IsUniqueList`, `DisableListAddButtonBehaviour`, `HideChildProperties` implemented |
+| `DictionaryDrawerSettings` | Fully Supported | `DisplayMode` and `ShowInInspector` / `IDictionary` read-only grid |
+| `HideReferenceObjectPicker` | Fully Supported | Nested serializable types + inline editors |
+| `InlineProperty`, `InlineEditor`, `PreviewField`, `DrawWithUnity` | Fully Supported | `InlineEditor.MaxHeight` scrolling supported |
+| `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Fully Supported | |
+| `DisplayAsString`, `RequireComponentButton` | Fully Supported | |
 
 ## Editor extension guidelines
 

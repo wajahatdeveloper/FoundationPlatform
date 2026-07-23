@@ -2,14 +2,14 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
-    /// Project-wide toggles for the FrameworkInspector convenience features
+    /// Project-wide toggles for the AetherInspector convenience features
     /// (object-field pencil/drag-out/selector, missing-script fixer, play-mode value saver,
-    /// UnityEvent drop target). Stored in ProjectSettings/FrameworkInspectorXSettings.asset.
+    /// UnityEvent drop target). Stored in ProjectSettings/AetherInspectorXSettings.asset.
     /// </summary>
-    [FilePath("ProjectSettings/FrameworkInspectorXSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    [FilePath("ProjectSettings/AetherInspectorXSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class InspectorXSettings : ScriptableSingleton<InspectorXSettings>
     {
         [Tooltip("Pencil button next to populated object-reference fields opening a floating Property Editor.")]
@@ -29,6 +29,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         [Tooltip("Drop a GameObject or Component onto a UnityEvent field to add a persistent listener targeting it.")]
         public bool unityEventDrop = true;
+
+        [Tooltip("Maximum nested depth for recursive [ShowInInspector] and [InlineProperty] drawers. Prevents stack overflow on circular references.")]
+        public int maxNestedDepth = 10;
 
         public void SaveNow() => Save(true);
 

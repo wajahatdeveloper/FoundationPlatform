@@ -12,18 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6732b2eab66f6ec45ae6c3d58d1fdc62, type: 3}
   m_Name: PackageIntegrationManifest
   m_EditorClassIdentifier: GameEngineCore.Editor::GameEngineCore.Editor.PackageIntegration.PackageIntegrationManifest
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes: []
   packageId: FoundationPlatform
   displayName: Foundation Platform
   icon: {fileID: 0}
+  documentationPath: Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md
+  packageToolMenuPaths: []
+  setupInstructions: 
   gameplayTags: []
   typeMappings:
   - TypeScript: {fileID: 11500000, guid: ded7978ee7d2d3b41bf146451d719e74, type: 3}
@@ -68,11 +62,27 @@ MonoBehaviour:
     StructuredPatterns:
     - ConcretePrefix: Assets/Data/Global/Authoring
       Tokens: []
-  documentationPath: Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md
-  validateMenuPaths: []
-  packageToolMenuPaths:
-  - Tools/FoundationPlatform/Refresh/Currency Registries
-  toolsMenuPrefix: FoundationPlatform
-  setupInstructions: "SCENE SETUP:\n\u2022 EventBus/Service layer initialization\n\nASSETS
-    SETUP:\n\u2022 AnimationSet assets under character domains folder\n\nINSPECTOR
-    SETUP:\n\u2022 AnimationSet: configure clips, transition tags, sub-state behaviors"
+  - TypeScript: {fileID: 11500000, guid: 86b3f2ba540e9fa45849d617ce311d33, type: 3}
+    AuthoringTier: 2
+    StructuredPatterns:
+    - ConcretePrefix: Assets/Data/Global/Authoring
+      Tokens: []
+  - TypeScript: {fileID: 11500000, guid: 5021efff9a0202f4abd81765a55e6137, type: 3}
+    AuthoringTier: 0
+    StructuredPatterns:
+    - ConcretePrefix: 
+      Tokens:
+      - Kind: 0
+        Literal: 
+  requiredProjectFolders: []
+  productAssemblyScaffold:
+    Enabled: 0
+    AsmdefAssetPath: 
+    AsmdefName: 
+    AsmdefReferences: []
+    RootNamespace: 
+    GlobalUsingsAssetPath: 
+    GlobalUsingNamespaces: []
+    CscRspAssetPath: 
+    CscRspLines: []
+    SeedTextFiles: []

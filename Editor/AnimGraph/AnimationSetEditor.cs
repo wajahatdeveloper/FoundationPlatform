@@ -12,7 +12,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	[CustomEditor(typeof(AnimationSet))]
-	internal class AnimationSetEditor : FoundationPlatform.FrameworkInspector.Editor.FrameworkEditor
+	internal class AnimationSetEditor : FoundationPlatform.AetherInspector.Editor.AetherInspectorEditor
 	{
 		private const float DragHandleInset = 18f;
 
@@ -86,10 +86,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			
 			EditorGUILayout.Space(12);
 			
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox();
+			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox();
 			DrawBlendProfileSection();
 			DrawValidationSection();
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
+			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
 			
 			DrawCopyEntriesSection();
 			
@@ -122,7 +122,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			if (inherited.Count > 0)
 			{
 				EditorGUILayout.Space(10);
-				FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox("Inherited Entries");
+				FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox("Inherited Entries");
 				foreach (var entry in inherited)
 				{
 					if (entry == null) continue;
@@ -147,7 +147,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 					EditorGUI.EndDisabledGroup();
 					EditorGUILayout.Space(2);
 				}
-				FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
+				FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
 			}
 		}
 
@@ -220,10 +220,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 		private void DrawCopyEntriesSection()
 		{
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBox();
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.BeginBoxHeader();
-			_copyFoldout = FoundationPlatform.FrameworkInspector.Editor.GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBoxHeader();
+			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox();
+			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBoxHeader();
+			_copyFoldout = FoundationPlatform.AetherInspector.Editor.GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
+			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBoxHeader();
 
 			if (_copyFoldout)
 			{
@@ -244,7 +244,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 					}
 				}
 			}
-			FoundationPlatform.FrameworkInspector.Editor.GuiKit.EndBox();
+			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
 			EditorGUILayout.Space(2);
 		}
 

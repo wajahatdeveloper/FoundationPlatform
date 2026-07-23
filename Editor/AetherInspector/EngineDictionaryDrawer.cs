@@ -2,11 +2,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Read-only key/value grid for <c>IDictionary</c> and <c>Dictionary&lt;,&gt;</c> members
@@ -56,8 +56,11 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 : $"Dictionary ({count})";
 
             string fKey = foldoutKey ?? header;
-            if (!s_foldouts.TryGetValue(fKey, out bool expanded)) expanded = true;
-            expanded = FrameworkInspectorTheme.FoldoutInSection(expanded, header);
+            if (!s_foldouts.TryGetValue(fKey, out bool expanded))
+            {
+                expanded = settings.DisplayMode != ListDisplayMode.Collapsed;
+            }
+            expanded = AetherInspectorTheme.FoldoutInSection(expanded, header);
             s_foldouts[fKey] = expanded;
             if (!expanded) return;
 
@@ -75,11 +78,11 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             int row = 0;
             foreach (DictionaryEntry entry in dict)
             {
-                float rowH = FrameworkInspectorTheme.RowHeight;
+                float rowH = AetherInspectorTheme.RowHeight;
                 var rect = EditorGUILayout.GetControlRect(false, rowH);
                 EditorGUI.DrawRect(rect, (row & 1) == 0
-                    ? FrameworkInspectorTheme.TableRowBackgroundA
-                    : FrameworkInspectorTheme.TableRowBackgroundB);
+                    ? AetherInspectorTheme.TableRowBackgroundA
+                    : AetherInspectorTheme.TableRowBackgroundB);
                 DrawEntryRow(rect, entry.Key, entry.Value, keyW, valueW, readOnly);
                 row++;
             }
@@ -88,12 +91,12 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         private static void DrawHeaderRow(string keyLabel, string valueLabel, float keyW, float valueW)
         {
-            float rowH = FrameworkInspectorTheme.RowHeight + 2f;
+            float rowH = AetherInspectorTheme.RowHeight + 2f;
             var rect = EditorGUILayout.GetControlRect(false, rowH);
-            EditorGUI.DrawRect(rect, FrameworkInspectorTheme.TableHeaderBackground);
+            EditorGUI.DrawRect(rect, AetherInspectorTheme.TableHeaderBackground);
             var cells = SplitColumns(rect, keyW, valueW);
-            GUI.Label(cells[0], keyLabel, FrameworkInspectorTheme.TableHeader);
-            GUI.Label(cells[1], valueLabel, FrameworkInspectorTheme.TableHeader);
+            GUI.Label(cells[0], keyLabel, AetherInspectorTheme.TableHeader);
+            GUI.Label(cells[1], valueLabel, AetherInspectorTheme.TableHeader);
         }
 
         private static void DrawEntryRow(Rect row, object key, object value, float keyW, float valueW, bool readOnly)
@@ -104,14 +107,14 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
             using (new EditorGUI.DisabledScope(readOnly))
             {
-                GUI.Label(cells[0], keyText, FrameworkInspectorTheme.TableCell);
+                GUI.Label(cells[0], keyText, AetherInspectorTheme.TableCell);
                 if (value is UnityEngine.Object uo && !readOnly)
                 {
                     var content = new GUIContent(valueText);
                     EditorGUI.ObjectField(cells[1], content, uo, uo.GetType(), true);
                 }
                 else
-                    GUI.Label(cells[1], valueText, FrameworkInspectorTheme.TableCell);
+                    GUI.Label(cells[1], valueText, AetherInspectorTheme.TableCell);
             }
         }
 
@@ -124,7 +127,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         private static Rect[] SplitColumns(Rect row, float keyW, float valueW)
         {
-            float pad = FrameworkInspectorTheme.SectionSpacing;
+            float pad = AetherInspectorTheme.SectionSpacing;
             float total = row.width - pad;
             float k = keyW > 0 ? Mathf.Min(keyW, total * 0.65f) : total * 0.45f;
             float v = valueW > 0 ? Mathf.Min(valueW, total - k) : total - k;

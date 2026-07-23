@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Dropdown infrastructure for <c>[ValueDropdown]</c> and <c>[AssetSelector]</c>.
@@ -31,7 +31,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         {
             var options = BuildValueOptions(targets[0], vd);
             if (options == null) return false;
-            FrameworkInspectorRenderer.DrawUnityHeaders(e.Metadata);
+            AetherInspectorRenderer.DrawUnityHeaders(e.Metadata);
             DrawDropdownForProperty(e.Property, e, targets, vd, options, labelText ?? e.Property.displayName);
             return true;
         }
@@ -75,7 +75,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         private static void DrawDropdownForProperty(SerializedProperty prop, InspectorEntry owner, object[] targets,
             ValueDropdownAttribute vd, List<Option> options, string label)
         {
-            object current = FrameworkInspectorRenderer.ReadProperty(prop);
+            object current = AetherInspectorRenderer.ReadProperty(prop);
             string currentLabel = "(none)";
             foreach (var o in options)
                 if (InspectorMemberResolver.ValuesEqual(current, o.Value)) { currentLabel = LeafOf(o.Label); break; }
@@ -122,15 +122,15 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 so.Update();
                 var p = so.FindProperty(path);
                 if (p == null) return;
-                FrameworkInspectorRenderer.WriteProperty(p, value);
+                AetherInspectorRenderer.WriteProperty(p, value);
                 so.ApplyModifiedProperties();
 
                 var entry = new InspectorEntry { Property = p, Field = field, AttributeSource = src };
-                FrameworkInspectorRenderer.InvokeOnValueChanged(entry, targets);
+                AetherInspectorRenderer.InvokeOnValueChanged(entry, targets);
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[FoundationPlatform.FrameworkInspector] dropdown apply failed: {ex.Message}");
+                Debug.LogWarning($"[FoundationPlatform.AetherInspector] dropdown apply failed: {ex.Message}");
             }
         }
 
@@ -140,7 +140,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
-            var lbl = FrameworkInspectorRenderer.GetLabel(e, targets) ?? new GUIContent(prop.displayName);
+            var lbl = AetherInspectorRenderer.GetLabel(e, targets) ?? new GUIContent(prop.displayName);
 
             var rect = EditorGUILayout.GetControlRect();
             const float btnW = 20f;
@@ -149,7 +149,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
             EditorGUI.BeginChangeCheck();
             var obj = EditorGUI.ObjectField(fieldRect, lbl, prop.objectReferenceValue, t, false);
-            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; FrameworkInspectorRenderer.Commit(e, targets); }
+            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; AetherInspectorRenderer.Commit(e, targets); }
 
             if (EditorGUI.DropdownButton(btnRect, new GUIContent("▾"), FocusType.Keyboard))
             {

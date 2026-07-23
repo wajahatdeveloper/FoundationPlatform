@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
-    /// <summary>Draws FrameworkInspector feature settings under Project Settings ▸ FrameworkInspector.</summary>
+    /// <summary>Draws AetherInspector feature settings under Project Settings ▸ AetherInspector.</summary>
     public static class InspectorXSettingsProvider
     {
         private static SerializedObject serialized;
@@ -13,9 +13,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         [SettingsProvider]
         public static SettingsProvider Create()
         {
-            return new SettingsProvider("Project/FrameworkInspector", SettingsScope.Project)
+            return new SettingsProvider("Project/AetherInspector", SettingsScope.Project)
             {
-                label = "FrameworkInspector",
+                label = "AetherInspector",
                 guiHandler = OnGUI,
                 keywords = new HashSet<string>
                 {
@@ -46,13 +46,17 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             EditorGUILayout.PropertyField(serialized.FindProperty("objectFieldPencil"), new GUIContent("Pencil (Open Property Editor)"));
             EditorGUILayout.PropertyField(serialized.FindProperty("objectFieldDragOut"), new GUIContent("Drag From Field"));
             EditorGUILayout.PropertyField(serialized.FindProperty("objectFieldSelector"), new GUIContent("Right-Click Selector"));
-            EditorGUILayout.HelpBox("Object-field enhancements apply where the FrameworkInspector engine draws the field. Inspectors using their own concrete custom editors or property drawers are unaffected.", MessageType.None);
+            EditorGUILayout.HelpBox("Object-field enhancements apply where the AetherInspector engine draws the field. Inspectors using their own concrete custom editors or property drawers are unaffected.", MessageType.None);
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Components", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("missingScriptFixer"), new GUIContent("Missing Script Fixer"));
             EditorGUILayout.PropertyField(serialized.FindProperty("saveComponentValuesInPlayMode"), new GUIContent("Play-Mode Value Saver"));
             EditorGUILayout.PropertyField(serialized.FindProperty("unityEventDrop"), new GUIContent("UnityEvent Drop Target"));
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Nested Drawers", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for [ShowInInspector] and [InlineProperty] nested drawers. Clamped to 1-50."));
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -61,17 +65,22 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
 
             EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Nested Drawers", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for nested object drawers (PocoInspector, InlineProperty, engine-attributed nested objects). Prevents stack overflow on deeply nested or circular references."));
+            EditorGUILayout.HelpBox("Increase if you have deeply nested attributed objects. Decrease to catch circular references earlier. Range: 1-50.", MessageType.None);
+
+            EditorGUILayout.Space(8);
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("Export...", GUILayout.Width(90f)))
                 {
-                    var path = EditorUtility.SaveFilePanel("Export FrameworkInspector Settings", "", "FrameworkInspectorXSettings", "json");
+                    var path = EditorUtility.SaveFilePanel("Export AetherInspector Settings", "", "AetherInspectorXSettings", "json");
                     if (!string.IsNullOrEmpty(path))
                         InspectorXSettings.instance.ExportToJson(path);
                 }
                 if (GUILayout.Button("Import...", GUILayout.Width(90f)))
                 {
-                    var path = EditorUtility.OpenFilePanel("Import FrameworkInspector Settings", "", "json");
+                    var path = EditorUtility.OpenFilePanel("Import AetherInspector Settings", "", "json");
                     if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
                     {
                         InspectorXSettings.instance.ImportFromJson(path);

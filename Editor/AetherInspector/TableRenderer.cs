@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Native IMGUI grid renderer backing <c>[TableList]</c>. Renders one
@@ -17,7 +17,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
     ///  * <see cref="DrawValueTable"/> — reflection over a live <see cref="IList"/> (read-only monitoring
     ///    tables, e.g. the EventBus windows);
     ///  * <see cref="DrawSerializedTable"/> — editable table over an array <see cref="SerializedProperty"/>
-    ///    (authoring assets). Wired into <see cref="FrameworkInspectorRenderer"/> for <c>[TableList]</c> fields.
+    ///    (authoring assets). Wired into <see cref="AetherInspectorRenderer"/> for <c>[TableList]</c> fields.
     /// </summary>
     public static class TableRenderer
     {
@@ -52,9 +52,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             var cols = new List<Column>();
             var members = new List<MemberInfo>();
             // Hierarchy-walking enumerators so private members of base classes are included.
-            foreach (var f in FrameworkInspectorRenderer.AllFields(elementType)) members.Add(f);
-            foreach (var p in FrameworkInspectorRenderer.AllProperties(elementType)) members.Add(p);
-            foreach (var m in FrameworkInspectorRenderer.AllMethods(elementType)) members.Add(m);
+            foreach (var f in AetherInspectorRenderer.AllFields(elementType)) members.Add(f);
+            foreach (var p in AetherInspectorRenderer.AllProperties(elementType)) members.Add(p);
+            foreach (var m in AetherInspectorRenderer.AllMethods(elementType)) members.Add(m);
             members.Sort((a, b) => a.MetadataToken.CompareTo(b.MetadataToken));
 
             foreach (var m in members)
@@ -115,9 +115,9 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
         {
             var cols = GetColumns(elementType);
             if (!string.IsNullOrEmpty(title))
-                EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
+                EditorGUILayout.LabelField(title, AetherInspectorTheme.SectionTitle);
 
-            float rowH = FrameworkInspectorTheme.RowHeight * MaxLines(cols);
+            float rowH = AetherInspectorTheme.RowHeight * MaxLines(cols);
             DrawHeaderRow(cols, title ?? elementType?.FullName);
 
             if (list == null || list.Count == 0)
@@ -130,7 +130,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             {
                 object element = list[i];
                 Rect row = EditorGUILayout.GetControlRect(false, rowH);
-                EditorGUI.DrawRect(row, (i & 1) == 0 ? FrameworkInspectorTheme.TableRowBackgroundA : FrameworkInspectorTheme.TableRowBackgroundB);
+                EditorGUI.DrawRect(row, (i & 1) == 0 ? AetherInspectorTheme.TableRowBackgroundA : AetherInspectorTheme.TableRowBackgroundB);
                 LayoutCells(row, cols, (cell, col) => DrawValueCell(cell, col, element));
             }
         }
@@ -146,14 +146,14 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 if (col.IsButton)
                 {
                     string label = string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name;
-                    if (GUI.Button(cell, label, FrameworkInspectorTheme.CompactButton) && col.Method.GetParameters().Length == 0)
+                    if (GUI.Button(cell, label, AetherInspectorTheme.CompactButton) && col.Method.GetParameters().Length == 0)
                         col.Method.Invoke(element, null);
                 }
                 else
                 {
                     object value = col.Field != null ? col.Field.GetValue(element)
                         : col.Property != null && col.Property.CanRead ? col.Property.GetValue(element) : null;
-                    GUI.Label(cell, value != null ? value.ToString() : string.Empty, FrameworkInspectorTheme.TableCell);
+                    GUI.Label(cell, value != null ? value.ToString() : string.Empty, AetherInspectorTheme.TableCell);
                 }
             }
             catch { /* defensive: never let one cell break the table */ }
@@ -187,12 +187,12 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (settings.AlwaysExpanded)
-                    EditorGUILayout.LabelField(headerText, FrameworkInspectorTheme.SectionTitle);
+                    EditorGUILayout.LabelField(headerText, AetherInspectorTheme.SectionTitle);
                 else
                     arrayProp.isExpanded = EditorGUILayout.Foldout(arrayProp.isExpanded, headerText, true);
                 GUILayout.FlexibleSpace();
                 if (!settings.HideToolbar && !settings.IsReadOnly &&
-                    GUILayout.Button("+", FrameworkInspectorTheme.CompactButton, GUILayout.Width(22)))
+                    GUILayout.Button("+", AetherInspectorTheme.CompactButton, GUILayout.Width(22)))
                 {
                     arrayProp.InsertArrayElementAtIndex(arrayProp.arraySize);
                     arrayProp.serializedObject.ApplyModifiedProperties();
@@ -226,7 +226,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 }
             }
 
-            float rowH = FrameworkInspectorTheme.RowHeight * MaxLines(cols);
+            float rowH = AetherInspectorTheme.RowHeight * MaxLines(cols);
             DrawHeaderRow(cols, key, settings.ShowIndexLabels, !settings.IsReadOnly, settings.DefaultMinColumnWidth);
 
             // --- Scroll view (bounded height) ---
@@ -246,12 +246,12 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             {
                 var element = arrayProp.GetArrayElementAtIndex(i);
                 Rect row = EditorGUILayout.GetControlRect(false, rowH);
-                EditorGUI.DrawRect(row, (i & 1) == 0 ? FrameworkInspectorTheme.TableRowBackgroundA : FrameworkInspectorTheme.TableRowBackgroundB);
+                EditorGUI.DrawRect(row, (i & 1) == 0 ? AetherInspectorTheme.TableRowBackgroundA : AetherInspectorTheme.TableRowBackgroundB);
 
                 float x = row.x;
                 if (settings.ShowIndexLabels)
                 {
-                    GUI.Label(new Rect(x, row.y, 24, row.height), i.ToString(), FrameworkInspectorTheme.TableCell);
+                    GUI.Label(new Rect(x, row.y, 24, row.height), i.ToString(), AetherInspectorTheme.TableCell);
                     x += 24;
                 }
 
@@ -265,7 +265,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
                 if (!settings.IsReadOnly)
                 {
-                    if (GUI.Button(new Rect(row.xMax - 18, row.y, 16, FrameworkInspectorTheme.RowHeight), "×", FrameworkInspectorTheme.CompactButton))
+                    if (GUI.Button(new Rect(row.xMax - 18, row.y, 16, AetherInspectorTheme.RowHeight), "×", AetherInspectorTheme.CompactButton))
                         removeAt = i;
                 }
             }
@@ -288,7 +288,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
             if (col.IsButton)
             {
-                if (boxed != null && GUI.Button(cell, string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name, FrameworkInspectorTheme.CompactButton)
+                if (boxed != null && GUI.Button(cell, string.IsNullOrEmpty(col.Button.Name) ? "▶" : col.Button.Name, AetherInspectorTheme.CompactButton)
                     && col.Method.GetParameters().Length == 0)
                     col.Method.Invoke(boxed, null);
                 GUI.color = prev;
@@ -308,7 +308,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     string text;
                     try { text = col.Property.GetValue(boxed)?.ToString() ?? string.Empty; }
                     catch { text = "<n/a>"; }
-                    GUI.Label(cell, text, FrameworkInspectorTheme.TableCell); // getter-only prop
+                    GUI.Label(cell, text, AetherInspectorTheme.TableCell); // getter-only prop
                 }
             }
             GUI.color = prev;
@@ -318,20 +318,20 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         private static void DrawHeaderRow(List<Column> cols, string key = null, bool indexColumn = false, bool actionColumn = false, int minColumnWidth = 40)
         {
-            Rect header = EditorGUILayout.GetControlRect(false, FrameworkInspectorTheme.RowHeight);
-            EditorGUI.DrawRect(header, FrameworkInspectorTheme.TableHeaderBackground);
+            Rect header = EditorGUILayout.GetControlRect(false, AetherInspectorTheme.RowHeight);
+            EditorGUI.DrawRect(header, AetherInspectorTheme.TableHeaderBackground);
             float x = header.x;
             if (indexColumn)
             {
-                GUI.Label(new Rect(x, header.y, 24, header.height), "#", FrameworkInspectorTheme.TableHeader);
+                GUI.Label(new Rect(x, header.y, 24, header.height), "#", AetherInspectorTheme.TableHeader);
                 x += 24;
             }
             float actionReserve = actionColumn ? 20f : 0f;
             var widths = ResolveWidths(cols, header.width - (x - header.x) - actionReserve, minColumnWidth);
             for (int c = 0; c < cols.Count; c++)
             {
-                GUI.Label(new Rect(x + CellPad, header.y, widths[c] - CellPad * 2, header.height), cols[c].Header, FrameworkInspectorTheme.TableHeader);
-                EditorGUI.DrawRect(new Rect(x, header.y, 1, header.height), FrameworkInspectorTheme.TableGridLine);
+                GUI.Label(new Rect(x + CellPad, header.y, widths[c] - CellPad * 2, header.height), cols[c].Header, AetherInspectorTheme.TableHeader);
+                EditorGUI.DrawRect(new Rect(x, header.y, 1, header.height), AetherInspectorTheme.TableGridLine);
                 HandleColumnResize(new Rect(x + widths[c] - 3f, header.y, 6f, header.height), cols[c], widths[c], key, c);
                 x += widths[c];
             }

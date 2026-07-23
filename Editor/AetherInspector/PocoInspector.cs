@@ -3,11 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using AetherNexus.FoundationPlatform.FrameworkInspector;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
+namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Reflection inspector for a plain C# object (not a <see cref="UnityEngine.Object"/>) — the
@@ -30,18 +30,18 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 return;
             }
 
-            DrawObject(target, 0);
+            DrawObject(target, 0, null);
         }
 
         /// <summary>
         /// Draw one reflected member (field/property/[Button] method) through the POCO pipeline —
-        /// used by <see cref="FrameworkInspectorRenderer"/> for <c>[ShowInInspector]</c> members so
+        /// used by <see cref="AetherInspectorRenderer"/> for <c>[ShowInInspector]</c> members so
         /// writable values are editable and complex values recurse (property-tree behavior).
         /// </summary>
         public static void DrawSingleMember(object target, MemberInfo mi)
-            => DrawSingleMember(target, mi, null);
+            => DrawSingleMember(target, mi, null, null);
 
-        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata)
+        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata, HashSet<object> visited = null)
         {
             var m = MakeMember(mi, 0);
             try
@@ -52,11 +52,11 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                     var btn = mi.GetCustomAttribute<ButtonAttribute>();
                     if (btn != null) { m.IsButton = true; m.Button = btn; m.Method = method; DrawButton(m, target); return; }
                 }
-                DrawValue(m, target, 0, metadata);
+                DrawValue(m, target, 0, metadata, visited);
             }
             catch (Exception ex)
             {
-                FrameworkInspectorTheme.DrawInfoBox($"{mi.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error);
+                AetherInspectorTheme.DrawInfoBox($"{mi.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error);
             }
         }
 
@@ -75,8 +75,14 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             public List<Member> Members;          // group members in declaration order
         }
 
-        private static void DrawObject(object target, int depth)
+        private static void DrawObject(object target, int depth, HashSet<object> visited = null)
         {
+            if (visited != null)
+            {
+                if (visited.Contains(target)) return;
+                visited.Add(target);
+            }
+
             Type type = target.GetType();
             var members = CollectMembers(type);
 
@@ -111,7 +117,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             {
                 if (s.Inline != null)
                 {
-                    if (IsVisible(s.Inline.Info, target)) DrawMemberSafe(s.Inline, target, depth);
+                    if (IsVisible(s.Inline.Info, target)) DrawMemberSafe(s.Inline, target, depth, visited);
                     continue;
                 }
 
@@ -126,30 +132,35 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 {
                     string key = "grp:" + s.GroupPath;
                     if (!s_nestedFoldouts.TryGetValue(key, out expanded)) expanded = s.GroupExpandedDefault;
-                    expanded = FrameworkInspectorTheme.SectionFoldout(expanded, title);
+                    expanded = AetherInspectorTheme.SectionFoldout(expanded, title);
                     s_nestedFoldouts[key] = expanded;
                     if (expanded)
                     {
-                        FrameworkInspectorTheme.BeginSectionFoldoutBody();
+                        AetherInspectorTheme.BeginSectionFoldoutBody();
                         for (int i = 0; i < s.Members.Count; i++)
-                            if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
-                        FrameworkInspectorTheme.EndSectionFoldoutBody();
+                            if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth, visited);
+                        AetherInspectorTheme.EndSectionFoldoutBody();
                     }
                     continue;
                 }
 
-                FrameworkInspectorTheme.BeginSection();
-                EditorGUILayout.LabelField(title, FrameworkInspectorTheme.SectionTitle);
+                AetherInspectorTheme.BeginSection();
+                EditorGUILayout.LabelField(title, AetherInspectorTheme.SectionTitle);
 
                 for (int i = 0; i < s.Members.Count; i++)
-                    if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth);
-                FrameworkInspectorTheme.EndSection();
+                    if (IsVisible(s.Members[i].Info, target)) DrawMemberSafe(s.Members[i], target, depth, visited);
+                AetherInspectorTheme.EndSection();
+            }
+
+            if (visited != null)
+            {
+                visited.Remove(target);
             }
         }
 
-        private static void DrawMemberSafe(Member m, object target, int depth)
+        private static void DrawMemberSafe(Member m, object target, int depth, HashSet<object> visited = null)
         {
-            try { DrawMember(m, target, depth); }
+            try { DrawMember(m, target, depth, visited); }
             catch (Exception ex)
             {
                 EditorGUILayout.HelpBox($"{m.Info.Name}: {ex.InnerException?.Message ?? ex.Message}", MessageType.Error);
@@ -181,7 +192,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             var list = new List<Member>();
             int seq = 0;
 
-            foreach (var f in FrameworkInspectorRenderer.AllFields(type))
+            foreach (var f in AetherInspectorRenderer.AllFields(type))
             {
                 if (f.IsStatic) continue;
                 if (f.GetCustomAttribute<HideInInspector>() != null) continue;
@@ -194,12 +205,12 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 if (!serialized && !shown) continue;
                 list.Add(MakeMember(f, seq++));
             }
-            foreach (var p in FrameworkInspectorRenderer.AllProperties(type))
+            foreach (var p in AetherInspectorRenderer.AllProperties(type))
             {
                 if (p.GetCustomAttribute<ShowInInspectorAttribute>() == null) continue;
                 list.Add(MakeMember(p, seq++));
             }
-            foreach (var mi in FrameworkInspectorRenderer.AllMethods(type))
+            foreach (var mi in AetherInspectorRenderer.AllMethods(type))
             {
                 if (mi.GetParameters().Length != 0) continue;
                 var btn = mi.GetCustomAttribute<ButtonAttribute>();
@@ -249,7 +260,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
 
         // ---------------------------------------------------------------- draw
 
-        private static void DrawMember(Member m, object target, int depth)
+        private static void DrawMember(Member m, object target, int depth, HashSet<object> visited = null)
         {
             var src = m.Info;
 
@@ -258,16 +269,16 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 if (!string.IsNullOrEmpty(info.VisibleIf) &&
                     !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                     continue;
-                FrameworkInspectorTheme.DrawInfoBox(ResolveText(target, info.Message), info.InfoMessageType);
+                AetherInspectorTheme.DrawInfoBox(ResolveText(target, info.Message), info.InfoMessageType);
             }
 
             var title = src.GetCustomAttribute<TitleAttribute>();
             if (title != null)
             {
-                EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
+                EditorGUILayout.Space(AetherInspectorTheme.SectionSpacing * 0.5f);
                 var align = title.TitleAlignment == TitleAlignments.Centered ? TextAlignment.Center
                     : title.TitleAlignment == TitleAlignments.Right ? TextAlignment.Right : TextAlignment.Left;
-                FrameworkInspectorTheme.DrawTitle(title.Title, title.Subtitle, align, title.HorizontalLine, title.Bold);
+                AetherInspectorTheme.DrawTitle(title.Title, title.Subtitle, align, title.HorizontalLine, title.Bold);
             }
 
             var space = src.GetCustomAttribute<PropertySpaceAttribute>();
@@ -277,7 +288,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             {
                 // [OnInspectorGUI] method — invoke to draw its own custom IMGUI.
                 try { m.Method.Invoke(m.Method.IsStatic ? null : target, null); }
-                catch (Exception ex) { FrameworkInspectorTheme.DrawInfoBox($"[OnInspectorGUI] {m.Method.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error); }
+                catch (Exception ex) { AetherInspectorTheme.DrawInfoBox($"[OnInspectorGUI] {m.Method.Name}: {ex.InnerException?.Message ?? ex.Message}", InfoMessageType.Error); }
                 if (space != null && space.SpaceAfter > 0) EditorGUILayout.Space(space.SpaceAfter);
                 return;
             }
@@ -286,7 +297,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             using (new EditorGUI.DisabledScope(!enabled))
             {
                 if (m.IsButton) DrawButton(m, target);
-                else DrawValue(m, target, depth);
+                else DrawValue(m, target, depth, metadata: null, visited: visited);
             }
 
             if (space != null && space.SpaceAfter > 0) EditorGUILayout.Space(space.SpaceAfter);
@@ -297,7 +308,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             string label = m.Button.Name;
             if (string.IsNullOrEmpty(label)) label = ObjectNames.NicifyVariableName(m.Method.Name);
             else label = InspectorMemberResolver.ResolveString(target, label);
-            float h = FrameworkInspectorRenderer.ButtonHeight(m.Button);
+            float h = AetherInspectorRenderer.ButtonHeight(m.Button);
             var content = new GUIContent(label);
             if (!string.IsNullOrEmpty(m.Button.Icon))
             {
@@ -305,11 +316,11 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 if (ic != null && ic.image != null) content.image = ic.image;
             }
             var pseudo = new ButtonAttribute { Stretch = true, ButtonAlignment = ButtonAlignment.Stretch, Style = m.Button.Style, IconAlignment = m.Button.IconAlignment };
-            if (FrameworkInspectorRenderer.DrawAlignedButtonPublic(pseudo, content, h) && m.Method.GetParameters().Length == 0)
+            if (AetherInspectorRenderer.DrawAlignedButtonPublic(pseudo, content, h) && m.Method.GetParameters().Length == 0)
                 m.Method.Invoke(m.Method.IsStatic ? null : target, null);
         }
 
-        private static void DrawValue(Member m, object target, int depth, MemberMetadata metadata = null)
+        private static void DrawValue(Member m, object target, int depth, MemberMetadata metadata = null, HashSet<object> visited = null)
         {
             string label = ResolveText(target, GetLabel(m.Info));
             bool hideLabel = m.Info.GetCustomAttribute<HideLabelAttribute>() != null;
@@ -336,7 +347,7 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
                 foreach (var o in seq) items.Add(o);
                 var et = GetListElementType(declaredType) ?? (items.Count > 0 ? items[0]?.GetType() : null);
                 if (!hideLabel && !string.IsNullOrEmpty(label))
-                    EditorGUILayout.LabelField($"{label} ({items.Count})", FrameworkInspectorTheme.SectionTitle);
+                    EditorGUILayout.LabelField($"{label} ({items.Count})", AetherInspectorTheme.SectionTitle);
                 if (et != null && IsComplexElement(et))
                 {
                     TableRenderer.DrawValueTable(items, et, null);
@@ -352,18 +363,28 @@ namespace AetherNexus.FoundationPlatform.FrameworkInspector.Editor
             }
 
             // Nested complex object (not a Unity type / list / primitive) → recurse under a foldout.
-            if (value != null && depth < 4 && !(value is System.Collections.IEnumerable) && IsComplexElement(value.GetType()))
+            int maxDepth = InspectorXSettings.instance.maxNestedDepth;
+            if (value != null && depth < maxDepth && !(value is System.Collections.IEnumerable) && IsComplexElement(value.GetType()))
             {
+                if (visited != null && visited.Contains(value)) return;
                 string key = (m.Info.DeclaringType?.FullName ?? "") + "." + m.Info.Name;
                 if (!s_nestedFoldouts.TryGetValue(key, out bool exp)) exp = true;
-                EditorGUILayout.Space(FrameworkInspectorTheme.SectionSpacing * 0.5f);
+                EditorGUILayout.Space(AetherInspectorTheme.SectionSpacing * 0.5f);
                 exp = EditorGUILayout.Foldout(exp, string.IsNullOrEmpty(label) ? m.Info.Name : label, true);
                 s_nestedFoldouts[key] = exp;
                 if (exp)
                 {
                     EditorGUI.indentLevel++;
-                    DrawObject(value, depth + 1);
-                    EditorGUI.indentLevel--;
+                    if (visited != null) { visited.Add(value); }
+                    try
+                    {
+                        DrawObject(value, depth + 1, visited);
+                    }
+                    finally
+                    {
+                        if (visited != null) { visited.Remove(value); }
+                        EditorGUI.indentLevel--;
+                    }
                 }
                 return;
             }

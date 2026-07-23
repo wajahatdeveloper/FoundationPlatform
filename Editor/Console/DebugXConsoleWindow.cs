@@ -386,7 +386,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             var bar = new Toolbar();
 
             // Clear + behaviour dropdown (clear-on-play/build config lives where the action is).
-            var clear = new ToolbarButton(() => { ConsoleLogStore.Clear(); _list.ClearSelection(); RefreshDetail(); Rebuild(); }) { text = "Clear" };
+            var clear = new ToolbarButton(() => { ConsoleLogStore.ClearRuntime(); _list.ClearSelection(); RefreshDetail(); Rebuild(); }) { text = "Clear" };
             clear.style.flexShrink = 0;
             bar.Add(clear);
             var clearMenuBtn = new ToolbarButton(ShowClearMenu) { text = "▾" };
