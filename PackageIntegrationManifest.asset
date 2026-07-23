@@ -68,18 +68,7 @@ MonoBehaviour:
     StructuredPatterns:
     - ConcretePrefix: Assets/Data/Global/Authoring
       Tokens: []
-  authoringChecklist:
-  - Step: Author AnimationSet assets under Assets/Data/Domains/Characters for character
-      presentation.
-  - Step: "Use Tools \u2192 FoundationPlatform \u2192 Refresh \u2192 Currency Registrys
-      when Economy catalogs change."
-  - Step: Wire EventBus subscriptions through stored delegates per FoundationPlatform
-      messaging docs.
-  successSignal: Animation sets resolve in play mode and currency refresh completes
-    without errors.
-  exampleSceneAsset: {fileID: 0}
   documentationPath: Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md
-  prefabFolderPath: 
   validateMenuPaths: []
   packageToolMenuPaths:
   - Tools/FoundationPlatform/Refresh/Currency Registries
