@@ -278,7 +278,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string ItemEquipKit       = Root + "Item/Character Equipment Kit...";
 			public const string QuestDebugger      = Root + "Quest/Quest Debugger...";
 			public const string ShopEconomy        = Root + "Shop/Shop & Economy Debugger...";
-			public const string CentralWindow      = Root + "Central Window...";
+			public const string CentralWindow      = Root + "Central Validation...";
 			public const string GameActionMatrix   = Root + "Game Action Matrix...";
 			public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
 			public const string Telemetry          = Root + "Telemetry...";
