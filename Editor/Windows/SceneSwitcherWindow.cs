@@ -628,12 +628,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
         public virtual void Open(string path)
         {
-            if (EditorSceneManager.EnsureUntitledSceneHasBeenSaved(
-                    "You don't have saved the Untitled Scene, Do you want to leave?"))
+            // SaveCurrentModifiedScenesIfUserWantsTo covers untitled + dirty scenes
+            // with Save / Don't Save / Cancel (EnsureUntitledSceneHasBeenSaved has no Don't Save).
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
             {
-                EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
-                EditorSceneManager.OpenScene(path, this.openSceneMode);
+                return;
             }
+
+            EditorSceneManager.OpenScene(path, this.openSceneMode);
         }
 
         private void MarkSceneListDirty()
