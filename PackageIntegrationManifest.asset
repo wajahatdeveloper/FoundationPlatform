@@ -71,9 +71,7 @@ MonoBehaviour:
     AuthoringTier: 0
     StructuredPatterns:
     - ConcretePrefix: 
-      Tokens:
-      - Kind: 0
-        Literal: 
+      Tokens: []
   requiredProjectFolders: []
   productAssemblyScaffold:
     Enabled: 0

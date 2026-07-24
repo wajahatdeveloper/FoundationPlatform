@@ -53,6 +53,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
         // Fast-lookup set of compiler entry messages for dedup in OnUnityLog (main thread only).
         private static readonly HashSet<string> _compilerMessages = new HashSet<string>();
 
+        // Warnings suppressed by ClearRuntime so they don't reappear on the next LogEntries refresh.
+        private static readonly HashSet<string> _suppressedCompilerWarnings = new HashSet<string>();
+
         /// <summary>Bumped whenever visible state changes; the window compares this to decide when to rebuild.</summary>
         public static int Version { get; private set; }
 
@@ -125,13 +128,16 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _compilerEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
+            _suppressedCompilerWarnings.Clear();
             ClearCount++;
             LogEntriesBridge.Clear();
             Version++;
         }
 
         /// <summary>
-        /// Clears only runtime logs (ring buffer). Compiler diagnostics and their counts are preserved.
+        /// Clears only runtime logs (ring buffer). Compiler diagnostics and their counts are preserved,
+        /// except that compiler warnings are removed from the store and suppressed so they don't
+        /// reappear on the next LogEntries refresh. Compiler errors remain visible.
         /// </summary>
         public static void ClearRuntime()
         {
@@ -141,6 +147,17 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _logCount = _warningCount = _errorCount = 0;
             ClearCount++;
             Version++;
+
+            for (int i = _compilerEntries.Count - 1; i >= 0; i--)
+            {
+                var ce = _compilerEntries[i];
+                if (ce.Category == ConsoleCategory.Warning)
+                {
+                    _suppressedCompilerWarnings.Add(ce.Message ?? string.Empty);
+                    _compilerEntries.RemoveAt(i);
+                }
+            }
+            _compilerWarningCount = 0;
         }
 
         public static void ClearWatches()
@@ -308,6 +325,15 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
                     _compilerMessages.Clear();
+                    for (int i = _compilerEntries.Count - 1; i >= 0; i--)
+                    {
+                        var ce = _compilerEntries[i];
+                        if (ce.Category == ConsoleCategory.Warning &&
+                            _suppressedCompilerWarnings.Contains(ce.Message ?? string.Empty))
+                        {
+                            _compilerEntries.RemoveAt(i);
+                        }
+                    }
                     for (int i = 0; i < _compilerEntries.Count; i++)
                     {
                         var ce = _compilerEntries[i];

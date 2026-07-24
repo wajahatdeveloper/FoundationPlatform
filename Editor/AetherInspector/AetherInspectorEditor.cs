@@ -2077,20 +2077,25 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // Draw a nested serializable object through the engine. inline=true → no wrapper
         // ([InlineProperty]); inline=false → collapsible foldout (default collapsed), the default
         // rendering of an attributed nested object.
+        // preResolvedTargets: when non-null (list→element handoff), use as nested scope directly —
+        // do not re-walk e.Property's root path against already-nested list owners.
         internal static void DrawNestedObject(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, bool inline,
-            GUIContent labelOverride = null, int maxDepth = -1, HashSet<object> visited = null)
+            GUIContent labelOverride = null, int maxDepth = -1, HashSet<object> visited = null,
+            object[] preResolvedTargets = null)
         {
             if (maxDepth < 0) maxDepth = InspectorXSettings.instance.maxNestedDepth;
 
             if (maxDepth <= 0) return;
 
+            object[] nestedTargets = preResolvedTargets ?? GetTargetsForScope(e.Property, targets);
+
             if (visited == null) visited = new HashSet<object>();
-            foreach (var t in targets) visited.Add(t);
+            // When list drawer pre-resolved elements, mark those (not list owners) as visited.
+            foreach (var t in nestedTargets != null && nestedTargets.Length > 0 ? nestedTargets : targets)
+                if (t != null) visited.Add(t);
 
-            object[] nestedTargets = GetTargetsForScope(e.Property, targets);
-
-            var lbl = labelOverride ?? GetLabel(e, targets);
+            var lbl = labelOverride ?? GetLabel(e, nestedTargets != null && nestedTargets.Length > 0 ? nestedTargets : targets);
             bool hideLabel = lbl == GUIContent.none;
 
             // Fallback: no boxed instance (multi-edit/unresolvable) → default field draw.

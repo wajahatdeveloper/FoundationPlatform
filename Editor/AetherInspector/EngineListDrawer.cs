@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using AetherNexus.FoundationPlatform.AetherInspector;
@@ -271,7 +272,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         // Element content - fills remaining horizontal space
                         using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
                         using (new EditorGUI.DisabledScope(readOnly))
-                            DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel, maxDepth, visited);
+                            DrawElement(e, targets, foldouts, tabs, elemProp, elemType, engineElems, vd, asel, elemLabel, i, maxDepth, visited);
 
                         // Remove button on the right
                         if (removable)
@@ -366,7 +367,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static void DrawElement(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             SerializedProperty elemProp, Type elemType, bool engineElems,
-            ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel, int maxDepth = -1, HashSet<object> visited = null)
+            ValueDropdownAttribute vd, AssetSelectorAttribute asel, string elemLabel, int index,
+            int maxDepth = -1, HashSet<object> visited = null)
         {
             var labelContent = string.IsNullOrEmpty(elemLabel) ? GUIContent.none : new GUIContent(elemLabel);
 
@@ -390,8 +392,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     Property = elemProp,
                     AttributeSource = null,
                 };
+                // Resolve element instances from current list owners — never walk full root
+                // propertyPath against already-nested targets (breaks L2+ engine attrs).
+                object[] elemTargets = ResolveListElementTargets(targets, e, index);
                 AetherInspectorRenderer.DrawNestedObject(entry, targets, foldouts, tabs, inline: elemInline,
-                    labelOverride: labelContent, maxDepth: maxDepth, visited: visited);
+                    labelOverride: labelContent, maxDepth: maxDepth, visited: visited,
+                    preResolvedTargets: elemTargets.Length > 0 ? elemTargets : null);
                 return;
             }
 
@@ -402,6 +408,56 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 elemProp.serializedObject.ApplyModifiedProperties();
                 AetherInspectorRenderer.InvokeOnValueChanged(e, targets);
             }
+        }
+
+        /// <summary>
+        /// Boxed list element instances for the current list-owner targets (relative to owners,
+        /// not via root SerializedProperty path).
+        /// </summary>
+        private static object[] ResolveListElementTargets(object[] listOwners, InspectorEntry listEntry, int index)
+        {
+            if (listOwners == null || listOwners.Length == 0) return Array.Empty<object>();
+
+            var list = new List<object>(listOwners.Length);
+            string fallbackMember = null;
+            if (listEntry.Field == null && listEntry.Property != null)
+                fallbackMember = ListFieldNameFromPath(listEntry.Property.propertyPath);
+
+            foreach (var owner in listOwners)
+            {
+                if (owner == null) continue;
+
+                object listObj = null;
+                if (listEntry.Field != null)
+                {
+                    try { listObj = listEntry.Field.GetValue(owner); }
+                    catch { listObj = null; }
+                }
+                else if (!string.IsNullOrEmpty(fallbackMember))
+                {
+                    listObj = InspectorMemberResolver.GetValue(owner, fallbackMember, out bool failed);
+                    if (failed) listObj = null;
+                }
+
+                if (listObj is IList ilist && index >= 0 && index < ilist.Count)
+                {
+                    var elem = ilist[index];
+                    if (elem != null) list.Add(elem);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        private static string ListFieldNameFromPath(string propertyPath)
+        {
+            if (string.IsNullOrEmpty(propertyPath)) return null;
+            // e.g. typeMappings.Array.data[0].Tokens → Tokens
+            //      Tokens → Tokens
+            int arrayIdx = propertyPath.LastIndexOf(".Array", StringComparison.Ordinal);
+            string beforeArray = arrayIdx >= 0 ? propertyPath.Substring(0, arrayIdx) : propertyPath;
+            int dot = beforeArray.LastIndexOf('.');
+            return dot >= 0 ? beforeArray.Substring(dot + 1) : beforeArray;
         }
 
         private static string ElementLabel(SerializedProperty elemProp, ListDrawerSettingsAttribute lds, bool showIndex, int index)

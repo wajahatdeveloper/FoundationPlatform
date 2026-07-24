@@ -48,9 +48,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 "Every field below uses a FoundationPlatform.AetherInspector attribute.",
                 HelpBoxMessageType.Info);
             root.Add(banner);
-            
+
             _imguiContainer = new IMGUIContainer(DrawInspectorImgui);
             _imguiContainer.style.flexGrow = 1;
+            root.Add(_imguiContainer);
         }
 
         private void DrawInspectorImgui()
@@ -58,7 +59,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             AetherInspectorTheme.BeginInspectorScope();
             if (_editor != null)
             {
-                EditorGUILayout.BeginScrollView(_scrollPosition);
+                _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
                 _editor.OnInspectorGUI();
                 EditorGUILayout.EndScrollView();
             }
