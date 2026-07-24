@@ -693,55 +693,68 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
             float wrapW = EditorGUIUtility.currentViewWidth - 24f;
 
-            if (collapsible)
+            if (collapsible && !expanded)
             {
                 var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
                 EditorGUI.DrawRect(headerRect, InfoBoxBackground(type));
-                var border = InfoBoxBorder(type);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1f), border);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), border);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1f, headerRect.height), border);
-                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1f, headerRect.y, 1f, headerRect.height), border);
+                var headerBorder = InfoBoxBorder(type);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1f), headerBorder);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), headerBorder);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1f, headerRect.height), headerBorder);
+                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1f, headerRect.y, 1f, headerRect.height), headerBorder);
 
                 var prevIndent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
-                var arrowRect = new Rect(headerRect.x + 6f, headerRect.y + 3f, 16f, headerRect.height - 6f);
-                expanded = EditorGUI.Foldout(arrowRect, expanded, GUIContent.none, true);
+                var labelStyle = new GUIStyle(EditorStyles.label) { wordWrap = false };
+                var labelRect = new Rect(headerRect.x + 6f, headerRect.y + 2f, headerRect.width - 12f, headerRect.height - 4f);
+                string firstLine = message.Split('\n')[0];
+                if (firstLine.Length > 64) firstLine = firstLine.Substring(0, 64);
+                string display = firstLine + "...";
+                GUI.Label(labelRect, display, labelStyle);
                 EditorGUI.indentLevel = prevIndent;
-
-                var labelRect = new Rect(arrowRect.xMax + 4f, headerRect.y,
-                    headerRect.width - arrowRect.width - 14f, headerRect.height);
-                GUI.Label(labelRect, expanded ? message : "...", EditorStyles.label);
 
                 if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
                 {
-                    expanded = !expanded;
+                    expanded = true;
                     Event.current.Use();
                     GUI.changed = true;
                 }
 
-                if (!expanded)
-                {
-                    EditorGUILayout.Space(SectionSpacing * 0.5f);
-                    return;
-                }
-
-                EditorGUILayout.Space(2f);
+                EditorGUILayout.Space(SectionSpacing * 0.5f);
+                return;
             }
 
-            if (!collapsible || expanded)
+            // Full body for non-collapsible, or collapsible+expanded
+            float h = style.CalcHeight(new GUIContent(message), wrapW);
+            var rect = EditorGUILayout.GetControlRect(false, h + 8f);
+            EditorGUI.DrawRect(rect, InfoBoxBackground(type));
+            var border = InfoBoxBorder(type);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
+            EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
+            GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
+
+            if (collapsible && Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
-                float h = style.CalcHeight(new GUIContent(message), wrapW);
-                var rect = EditorGUILayout.GetControlRect(false, h + 8f);
-                EditorGUI.DrawRect(rect, InfoBoxBackground(type));
-                var border = InfoBoxBorder(type);
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
-                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
-                EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
-                GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
-                if (!collapsible) EditorGUILayout.Space(SectionSpacing * 0.5f);
+                expanded = false;
+                Event.current.Use();
+                GUI.changed = true;
             }
+
+            if (!collapsible) EditorGUILayout.Space(SectionSpacing * 0.5f);
+        }
+
+        private static string TruncateWithEllipsis(string text, float maxWidth, GUIStyle style)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            if (maxWidth <= 0f) return text;
+            if (style.CalcSize(new GUIContent(text)).x <= maxWidth) return text;
+            while (text.Length > 0 && style.CalcSize(new GUIContent(text + "...")).x > maxWidth)
+            {
+                text = text.Substring(0, text.Length - 1);
+            }
+            return text + "...";
         }
 
         public static void DrawValidationBox(string message, InfoMessageType type = InfoMessageType.Error)
