@@ -287,6 +287,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
         private static void OnUnityLog(string condition, string stackTrace, LogType type)
         {
+#if UNITY_EDITOR && DEBUG
+            if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert) &&
+                (condition ?? "").Contains("CS0246"))
+            {
+                UnityEngine.Debug.LogWarning($"[ConsoleLogStore.OnUnityLog] Source=UnityLog Count={_count} CompilerMessagesCount={_compilerMessages.Count} ConditionHash={(condition ?? "").GetHashCode()} Condition='{condition}'");
+            }
+#endif
             // DebugX logs do not reach Unity's log system in the editor (the native relay is dropped),
             // so this feed only carries plain Debug.Log calls, uncaught exceptions and third-party logs.
             // Skip messages already captured as compiler/import diagnostics to avoid duplicates.
@@ -346,6 +353,40 @@ namespace AetherNexus.FoundationPlatform.DebugX
                             default:                      compilerLogs++;    break;
                         }
                     }
+
+                    if (_compilerEntries.Count > 0)
+                    {
+                        var compilerSet = new HashSet<string>(_compilerEntries.Count);
+                        foreach (var ce in _compilerEntries)
+                            compilerSet.Add(ce.Message ?? string.Empty);
+
+                        int removed = 0;
+                        int write = 0;
+                        for (int read = 0; read < _count; read++)
+                        {
+                            var entry = _ring[(_head + read) % Capacity];
+                            bool match = entry != null &&
+                                compilerSet.Contains(entry.Message ?? string.Empty) &&
+                                entry.Source == ConsoleSource.Unity &&
+                                entry.Category == ConsoleCategory.Error;
+                            if (match)
+                            {
+                                Decrement(entry.Category);
+                                removed++;
+                                continue;
+                            }
+                            if (write != read)
+                                _ring[(_head + write) % Capacity] = entry;
+                            write++;
+                        }
+                        for (int i = write; i < _count; i++)
+                            _ring[(_head + i) % Capacity] = null;
+                        _count = write;
+#if UNITY_EDITOR && DEBUG
+                        UnityEngine.Debug.LogWarning($"[ConsoleLogStore.Pump] Compaction: removed={removed} remainingRing={_count} compilerEntries={_compilerEntries.Count}");
+#endif
+                    }
+
                     _errorCount   += compilerErrors   - _compilerErrorCount;
                     _warningCount += compilerWarnings - _compilerWarningCount;
                     _logCount     += compilerLogs     - _compilerLogCount;
