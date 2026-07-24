@@ -387,7 +387,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
         private static bool IsDomainServiceComponent(string scriptPath, Type type)
         {
-            if (!string.IsNullOrEmpty(scriptPath) && UIValidationConventions.IsPathUnder(scriptPath, "Assets/Scripts/Domains"))
+            if (!string.IsNullOrEmpty(scriptPath) && UIValidationConventions.IsPathUnder(scriptPath, "Assets/Scripts/DomainScripts"))
                 return true;
 
             string fullName = type.FullName ?? string.Empty;

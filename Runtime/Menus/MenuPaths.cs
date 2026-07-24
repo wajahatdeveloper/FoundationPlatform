@@ -5,15 +5,11 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
     /// Single source of truth for editor <c>[MenuItem]</c> paths. Grouped by menu area; nested
     /// classes mirror the on-screen submenu hierarchy so the taxonomy is readable at a glance and
     /// reorganizing a group is a one-line edit here rather than a hunt across frameworks.
-    /// <para>GameEngineCore and every framework that depends on it (GAS, AI, Character, Combat,
-    /// Item, Quest, Shop, Economy, PresetLibrary, Network, GameFeatures...) nest under a single
-    /// <c>Tools/GameEngineCore/&lt;Module&gt;</c> / <c>Window/GameEngineCore/&lt;Module&gt;</c>
-    /// umbrella — an Invector/Game Creator style ecosystem where every current and future
-    /// extension package reads as part of one product instead of adding its own top-level menu
-    /// folder. FoundationPlatform is a separate free, generic Unity-enhancement package and is
-    /// intentionally NOT wrapped in a branded folder — its categories (Debug, Utilities,
-    /// Diagnostics, Rebuild, Linting...) sit directly under <c>Tools/</c>/<c>Window/</c> as if
-    /// native to the engine. UIWidgets is its own free package with its own root.</para>
+    /// <para>Product/framework tooling uses designer-facing <c>Tools/Domain/*</c>,
+    /// <c>Window/Domain/*</c>, <c>Tools/Platform/*</c>, and <c>Window/Platform/*</c> only — no
+    /// dual registration under legacy <c>Tools/GameEngineCore/*</c> / <c>Window/GameEngineCore/*</c>.
+    /// FoundationPlatform stays unwrapped (Debug, Utilities, Diagnostics, Rebuild, Linting under
+    /// <c>Tools/</c>/<c>Window/</c>). UIWidgets keeps its own root.</para>
     /// <para>All members are <c>const string</c> (built by concatenating <c>const</c> roots) to
     /// satisfy the <c>[MenuItem]</c> attribute's compile-time-constant requirement.</para>
     /// </summary>
@@ -25,184 +21,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public const string GameObject = "GameObject/";
         public const string Context = "CONTEXT/";
         public const string Assets = "Assets/";
-
-        // Shared umbrella for GameEngineCore + every dependent extension framework.
-        private const string Gec = Tools + "GameEngineCore/";
-        private const string GecWindow = Window + "GameEngineCore/";
-
-        // ============================================================================
-        // GameEngineCore + extension frameworks — Tools/GameEngineCore/<Module>/*, Window/GameEngineCore/<Module>/*
-        // ============================================================================
-
-        /// <summary>Tools/GameEngineCore/GAS/* and Window/GameEngineCore/GAS/* — Gameplay Ability System authoring &amp; codegen.</summary>
-        public static class Gas
-        {
-            private const string Root = Gec + "GAS/";
-            public const string NormalizeAttributeSetTags = Root + "Normalize AttributeSet Tags";
-            public const string RebuildAbilityLogic  = Root + "Rebuild Ability Logic";
-            public const string RebuildTagReferenceIndex = Root + "Rebuild Tag Reference Index";
-            public const string SanitizeTagHashes    = Root + "Sanitize Tag Hashes";
-            public const string MigrateEffectIdentityTags = Root + "Migrate Effect Identity Tags";
-            public const string InstallGizmoIcons    = Root + "Install Gizmo Icons";
-
-            private const string WindowRoot = GecWindow + "GAS/";
-            public const string Debugger   = WindowRoot + "GAS Debugger...";
-            public const string TagManager = WindowRoot + "Gameplay Tag Manager...";
-        }
-
-        /// <summary>Tools/GameEngineCore/AI/* and Window/GameEngineCore/AI/* — AI authoring, generators, debuggers.</summary>
-        public static class Ai
-        {
-            private const string Root = Gec + "AI/";
-            public const string GenerateCommanderBrain    = Root + "Generate Default Commander Brain";
-            public const string GenerateDecisionSet       = Root + "Generate Default Decision Set";
-            public const string GenerateBuiltInBehaviors  = Root + "Generate Built-in Behavior Assets";
-            public const string GenerateBlackboardRegistry = Root + "Generate Blackboard Registry";
-            public const string SetupPawnOnSelection      = Root + "Setup AI Pawn on Selection";
-
-            private const string WindowRoot = GecWindow + "AI/";
-            public const string Author   = WindowRoot + "AI Author...";
-            public const string Debugger = WindowRoot + "AI Debugger...";
-
-            public const string SetupPawnContext = GameObject + "GameEngineCore/AI/Setup AI Pawn";
-        }
-
-        /// <summary>Tools/GameEngineCore/Character/* and Window/GameEngineCore/Character/* — character setup &amp; debuggers.</summary>
-        public static class Character
-        {
-            private const string Root = Gec + "Character/";
-            public const string CreateDefaultStateProfile = Root + "Create Default Character State Profile";
-            public const string ReconcileSubsystemHub     = Root + "Reconcile Subsystem Hub on Selection";
-
-            private const string WindowRoot = GecWindow + "Character/";
-            public const string Debugger        = WindowRoot + "Character Debugger...";
-            public const string LocomotionBlend = WindowRoot + "Locomotion Blend Debug...";
-            public const string RagdollHelper   = WindowRoot + "Ragdoll Helper...";
-
-            public const string ReconcileHubContext = GameObject + "GameEngineCore/Character/Reconcile Subsystem Hub";
-        }
-
-        /// <summary>Window/GameEngineCore/Combat/* — combat authoring &amp; debug windows.</summary>
-        public static class Combat
-        {
-            private const string WindowRoot = GecWindow + "Combat/";
-            public const string CombatDebugger = WindowRoot + "Combat Debugger...";
-            public const string WeaponWizard   = WindowRoot + "Weapon Wizard...";
-            public const string CombatPreview  = WindowRoot + "Combat Preview...";
-        }
-
-        /// <summary>Tools/GameEngineCore/Item/* and Window/GameEngineCore/Item/* — item authoring, creation &amp; debug windows.</summary>
-        public static class Item
-        {
-            private const string CreateRoot = Gec + "Item/Create/";
-            public const string CreateEquippable   = CreateRoot + "Equippable Item";
-            public const string CreateConsumable   = CreateRoot + "Consumable Item";
-            public const string CreateCraftingRecipe = CreateRoot + "Crafting Recipe";
-            public const string CreateItemDefinitionRegistry = CreateRoot + "Item Definition Registry";
-            public const string CreateItemContainerDefinitionRegistry = CreateRoot + "Item Container Definition Registry";
-            public const string CreateCraftingRecipeRegistry = CreateRoot + "Crafting Recipe Registry";
-            public const string CreateInventoryBagContainer = CreateRoot + "Inventory Bag Container";
-            public const string CreateEquipmentSlotSetProfileContainer = CreateRoot + "Equipment Slot Set + Profile + Container";
-
-            private const string WindowRoot = GecWindow + "Item/";
-            public const string EquipmentRig = WindowRoot + "Equipment Rig Setup...";
-            public const string IkPreview    = WindowRoot + "Equipment IK Preview...";
-            public const string Debugger     = WindowRoot + "Item Debugger...";
-            public const string EquipmentKit = WindowRoot + "Character Equipment Kit...";
-        }
-
-        /// <summary>Window/GameEngineCore/Quest/* — quest debug window.</summary>
-        public static class Quest
-        {
-            private const string WindowRoot = GecWindow + "Quest/";
-            public const string Debugger = WindowRoot + "Quest Debugger...";
-        }
-
-        /// <summary>Window/GameEngineCore/Shop/* — shop &amp; economy debug window.</summary>
-        public static class Shop
-        {
-            private const string WindowRoot = GecWindow + "Shop/";
-            public const string Debugger = WindowRoot + "Shop & Economy Debugger...";
-        }
-
-        /// <summary>Tools/GameEngineCore/Economy/* — currency registry tooling.</summary>
-        public static class Economy
-        {
-            private const string Root = Gec + "Economy/";
-            public const string RefreshCurrencyRegistries = Root + "Refresh Currency Registries";
-        }
-
-        /// <summary>Tools/GameEngineCore/Input/* — input provision authoring.</summary>
-        public static class Input
-        {
-            private const string Root = Gec + "Input/";
-            public const string CreateCharacterProvision = Root + "Create Character Input Provision";
-            public const string CreateCombatProvision    = Root + "Create Combat Input Provision";
-            public const string CreatePartyProvision     = Root + "Create Party Input Provision";
-            public const string Integration              = Root + "Input Integration";
-        }
-
-        /// <summary>Tools/GameEngineCore/PresetLibrary/* — preset asset generation.</summary>
-        public static class PresetLibrary
-        {
-            private const string Root = Gec + "PresetLibrary/";
-            public const string GenerateAll          = Root + "Generate All";
-            public const string RegisterTagsOnly     = Root + "Register Tags Only";
-            public const string GenerateGas          = Root + "Generate GAS (Attributes + Effects + Cues)";
-            public const string GenerateCharactersItems = Root + "Generate Characters + Items";
-            public const string GenerateArchetypesAi = Root + "Generate Archetypes + AI";
-        }
-
-        /// <summary>Tools/GameEngineCore/Network/* — network layer setup.</summary>
-        public static class Network
-        {
-            private const string Root = Gec + "Network/";
-            public const string CreateConfig  = Root + "Create Network Config";
-            public const string ValidateSetup = Root + "Validate Setup";
-        }
-
-        /// <summary>Tools/GameEngineCore/Validation/* — scene/entity validation (GameEngineCore-owned half of the former shared Linting class).</summary>
-        public static class Validation
-        {
-            private const string Root = Gec + "Validation/";
-            public const string ValidatePlayableScene  = Root + "Validate Playable Scene";
-            public const string ValidateDomainEntities = Root + "Validate Domain Entities";
-        }
-
-        /// <summary>Tools/GameEngineCore/Packages/* — package integration tooling.</summary>
-        public static class Packages
-        {
-            private const string Root = Gec + "Packages/";
-            public const string RebuildIntegrations = Root + "Rebuild Package Integrations";
-            public const string AuditManifestCoverage = Root + "Audit Package Manifest Coverage";
-            public const string PopulateManifestDefaults = Root + "Populate Package Manifest Defaults";
-        }
-
-        /// <summary>Tools/GameEngineCore/* — misc GameEngineCore tools with no dedicated module bucket.</summary>
-        public static class GameEngineCore
-        {
-            private const string Root = Gec;
-            public const string RebuildGeneratedRegistries = Root + "Rebuild/Rebuild All Generated Registries";
-            public const string InstallGizmoIcons = Root + "Install Gizmo Icons";
-            public const string RunProjectSetup = Root + "Run Project Setup...";
-        }
-
-        /// <summary>Window/GameEngineCore/* — engine hub, diagnostic windows, and scaffold creators.</summary>
-        public static class WindowCore
-        {
-            private const string Root = GecWindow;
-            public const string CentralWindow       = Root + "Central Window...";
-            [System.Obsolete("Use CentralWindow")]
-            public const string CentralAuthoring    = CentralWindow;
-            public const string GameActionMatrix    = Root + "Game Action Matrix...";
-            public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
-            public const string Telemetry           = Root + "Telemetry...";
-            public const string SessionStateAudit   = Root + "Session State Contributor Audit...";
-            public const string CreateNewDomain     = Root + "Create New Domain...";
-            public const string CreateNewScene      = Root + "Create New Scene...";
-            public const string CreateDomainEvent   = Root + "Create Domain Event...";
-            public const string SampleGuide         = Root + "Sample Guide...";
-        }
 
         // ============================================================================
         // FoundationPlatform — unwrapped, flat Tools/<Category>/*, Window/<Category>/*
@@ -245,7 +63,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         /// <summary>Tools/Diagnostics/* — dev/demo diagnostic tools.</summary>
         public static class Diagnostics
         {
-            private const string Root = Tools + "Diagnostics/";
+            private const string Root = Window + "Diagnostics/";
             public const string AnimationTestBench   = Root + "Animation Test Bench";
             public const string AetherInspectorDemo = Root + "AetherInspector Demo";
         }
@@ -363,11 +181,130 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string Settings           = Root + "Settings...";
         }
 
-        /// <summary>CONTEXT/RectTransform/Fit Anchors — right-click only (no hotkey).</summary>
-        public static class UIWidgetsContext
-        {
-            public const string FitAnchors = Context + "RectTransform/Fit Anchors";
-        }
-    }
+		/// <summary>CONTEXT/RectTransform/Fit Anchors — right-click only (no hotkey).</summary>
+		public static class UIWidgetsContext
+		{
+			public const string FitAnchors = Context + "RectTransform/Fit Anchors";
+		}
+
+		// ============================================================================
+		// Designer-facing menus — Domain / Platform only (no dual legacy registration).
+		// Domain: reach a tool by *what it does*. Platform: project setup / package integration.
+		// ============================================================================
+
+		/// <summary>Tools/Domain/<System>/* — designer authoring, generation, and validation actions.</summary>
+		public static class Domain
+		{
+			private const string Root = Tools + "Domain/";
+
+			/// <summary>Tools/Domain/GAS/* — GAS authoring and codegen.</summary>
+			public const string GasNormalizeAttributeSetTags    = Root + "GAS/Normalize AttributeSet Tags";
+			public const string GasRebuildAbilityLogic          = Root + "GAS/Rebuild Ability Logic";
+			public const string GasRebuildTagReferenceIndex     = Root + "GAS/Rebuild Tag Reference Index";
+			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
+			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
+			public const string GasInstallGizmoIcons            = Root + "GAS/Install Gizmo Icons";
+
+			/// <summary>Tools/Domain/AI/* — AI authoring and generators.</summary>
+			public const string AiGenerateCommanderBrain        = Root + "AI/Generate Default Commander Brain";
+			public const string AiGenerateDecisionSet           = Root + "AI/Generate Default Decision Set";
+			public const string AiGenerateBuiltInBehaviors      = Root + "AI/Generate Built-in Behavior Assets";
+			public const string AiGenerateBlackboardRegistry    = Root + "AI/Generate Blackboard Registry";
+			public const string AiSetupPawnOnSelection          = Root + "AI/Setup AI Pawn on Selection";
+			public const string AiSetupPawnContext              = GameObject + "Domain/AI/Setup AI Pawn";
+
+			/// <summary>Tools/Domain/Character/* — character setup.</summary>
+			public const string CharacterCreateDefaultStateProfile = Root + "Character/Create Default Character State Profile";
+			public const string CharacterReconcileSubsystemHub     = Root + "Character/Reconcile Subsystem Hub on Selection";
+			public const string CharacterReconcileHubContext       = GameObject + "Domain/Character/Reconcile Subsystem Hub";
+
+			/// <summary>Tools/Domain/Economy/* — currency registry tooling.</summary>
+			public const string EconomyRefreshCurrencyRegistries = Root + "Economy/Refresh Currency Registries";
+
+			/// <summary>Tools/Domain/Item/Create/* — item asset scaffolding.</summary>
+			public const string ItemCreateEquippable              = Root + "Item/Create/Equippable Item";
+			public const string ItemCreateConsumable              = Root + "Item/Create/Consumable Item";
+			public const string ItemCreateCraftingRecipe          = Root + "Item/Create/Crafting Recipe";
+			public const string ItemCreateItemDefRegistry         = Root + "Item/Create/Item Definition Registry";
+			public const string ItemCreateItemContainerDefRegistry = Root + "Item/Create/Item Container Definition Registry";
+			public const string ItemCreateCraftingRecipeRegistry   = Root + "Item/Create/Crafting Recipe Registry";
+			public const string ItemCreateInventoryBagContainer    = Root + "Item/Create/Inventory Bag Container";
+			public const string ItemCreateEquipmentSlotSetProfile  = Root + "Item/Create/Equipment Slot Set + Profile + Container";
+
+			/// <summary>Tools/Domain/Input/* — input provision authoring.</summary>
+			public const string InputCreateCharacterProvision     = Root + "Input/Create Character Input Provision";
+			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Provision";
+			public const string InputCreatePartyProvision         = Root + "Input/Create Party Input Provision";
+			public const string InputIntegration                  = Root + "Input/Input Integration";
+
+			/// <summary>Tools/Domain/PresetLibrary/* — preset asset generation.</summary>
+			public const string PresetLibraryGenerateAll          = Root + "PresetLibrary/Generate All";
+			public const string PresetLibraryRegisterTagsOnly     = Root + "PresetLibrary/Register Tags Only";
+			public const string PresetLibraryGenerateGas          = Root + "PresetLibrary/Generate GAS (Attributes + Effects + Cues)";
+			public const string PresetLibraryGenerateCharactersItems = Root + "PresetLibrary/Generate Characters + Items";
+			public const string PresetLibraryGenerateArchetypesAi = Root + "PresetLibrary/Generate Archetypes + AI";
+
+			/// <summary>Tools/Domain/Validation/* — scene/entity validation.</summary>
+			public const string ValidationPlayableScene           = Root + "Validation/Validate Playable Scene";
+			public const string ValidationDomainEntities          = Root + "Validation/Validate Domain Entities";
+
+			/// <summary>Tools/Domain/Network/* — network layer setup.</summary>
+			public const string NetworkCreateConfig               = Root + "Network/Create Network Config";
+			public const string NetworkValidateSetup               = Root + "Network/Validate Setup";
+
+			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
+			public const string CreateNewDomain                   = Root + "Create New Domain...";
+			public const string CreateNewScene                    = Root + "Create New Scene...";
+			public const string CreateDomainEvent                = Root + "Create Domain Event...";
+		}
+
+		/// <summary>Window/Domain/<System>/* — designer-facing debugger and preview windows.</summary>
+		public static class DomainWindow
+		{
+			private const string Root = Window + "Domain/";
+			public const string GasDebugger        = Root + "GAS/GAS Debugger...";
+			public const string GasTagManager      = Root + "GAS/Gameplay Tag Manager...";
+			public const string AiAuthor           = Root + "AI/AI Author...";
+			public const string AiDebugger         = Root + "AI/AI Debugger...";
+			public const string CharacterDebugger  = Root + "Character/Character Debugger...";
+			public const string CharacterLocomotion = Root + "Character/Locomotion Blend Debug...";
+			public const string CharacterRagdoll   = Root + "Character/Ragdoll Helper...";
+			public const string CombatDebugger     = Root + "Combat/Combat Debugger...";
+			public const string WeaponWizard       = Root + "Combat/Weapon Wizard...";
+			public const string CombatPreview      = Root + "Combat/Combat Preview...";
+			public const string ItemRig            = Root + "Item/Equipment Rig Setup...";
+			public const string ItemIkPreview      = Root + "Item/Equipment IK Preview...";
+			public const string ItemDebugger       = Root + "Item/Item Debugger...";
+			public const string ItemEquipKit       = Root + "Item/Character Equipment Kit...";
+			public const string QuestDebugger      = Root + "Quest/Quest Debugger...";
+			public const string ShopEconomy        = Root + "Shop/Shop & Economy Debugger...";
+			public const string CentralWindow      = Root + "Central Window...";
+			public const string GameActionMatrix   = Root + "Game Action Matrix...";
+			public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
+			public const string Telemetry          = Root + "Telemetry...";
+			public const string SessionStateAudit  = Root + "Session State Contributor Audit...";
+		}
+
+		/// <summary>Tools/Platform/* — project setup, package integration, registry refresh.</summary>
+		public static class Platform
+		{
+			private const string Root = Tools + "Platform/";
+			public const string Setup               = Root + "Project Setup...";
+			public const string InstallGizmoIcons   = Root + "Install Gizmo Icons";
+			public const string RegistryRefresh     = Root + "Rebuild All Generated Registries";
+			public const string PackageRebuild      = Root + "Rebuild Package Integrations";
+			public const string PackageAudit        = Root + "Audit Package Manifest Coverage";
+			public const string PackagePopulate     = Root + "Populate Package Manifest Defaults";
+			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
+			public const string NetworkValidateSetup = Root + "Network/Validate Setup";
+		}
+
+		/// <summary>Window/Platform/* — admin / integration windows.</summary>
+		public static class PlatformWindow
+		{
+			private const string Root = Window + "Platform/";
+			public const string PackageIntegration  = Root + "Package Integration...";
+		}
+	}
 }
 #endif

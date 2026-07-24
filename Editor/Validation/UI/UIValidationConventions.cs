@@ -18,8 +18,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
     {
         internal const string ConfigAssetPath = DataFolderMappingConfig.CentralAuthoringProjectConfigAssetPath;
         internal const string UserScriptsUiRoot = "Assets/Scripts/UI";
-        internal const string UserScriptsDomainsUiRoot = "Assets/Scripts/Domains/UI";
-        internal const string UserScriptsDomainsUiOrchestration = "Assets/Scripts/Domains/UI/Orchestration";
+        internal const string UserScriptsDomainsUiRoot = "Assets/Scripts/DomainScripts/UI";
+        internal const string UserScriptsDomainsUiOrchestration = "Assets/Scripts/DomainScripts/UI/Orchestration";
         internal const string UserDataUiRoot = "Assets/Data/UI";
 
         internal static readonly string[] UserScriptLayerFolders =
