@@ -344,8 +344,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
                     for (int i = 0; i < _compilerEntries.Count; i++)
                     {
                         var ce = _compilerEntries[i];
-                        if (ce.Category == ConsoleCategory.Error)
-                            _compilerMessages.Add(ce.Message ?? string.Empty);
+                        _compilerMessages.Add(ce.Message ?? string.Empty);
                         switch (ce.Category)
                         {
                             case ConsoleCategory.Error:   compilerErrors++; break;
@@ -367,8 +366,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
                             var entry = _ring[(_head + read) % Capacity];
                             bool match = entry != null &&
                                 compilerSet.Contains(entry.Message ?? string.Empty) &&
-                                entry.Source == ConsoleSource.Unity &&
-                                entry.Category == ConsoleCategory.Error;
+                                entry.Source == ConsoleSource.Unity;
                             if (match)
                             {
                                 Decrement(entry.Category);
@@ -382,9 +380,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         for (int i = write; i < _count; i++)
                             _ring[(_head + i) % Capacity] = null;
                         _count = write;
-#if UNITY_EDITOR && DEBUG
-                        UnityEngine.Debug.LogWarning($"[ConsoleLogStore.Pump] Compaction: removed={removed} remainingRing={_count} compilerEntries={_compilerEntries.Count}");
-#endif
                     }
 
                     _errorCount   += compilerErrors   - _compilerErrorCount;

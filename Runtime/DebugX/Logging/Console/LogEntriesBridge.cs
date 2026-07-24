@@ -97,24 +97,40 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         if (!ok) continue;
 
                         int mode = _fMode != null ? Convert.ToInt32(_fMode.GetValue(_entryInstance)) : 0;
-                        if ((mode & CompileMask) == 0)
-                            continue;
 
                         string message = _fMessage != null ? _fMessage.GetValue(_entryInstance) as string : null;
+                        if (string.IsNullOrEmpty(message))
+                            continue;
+
                         string file = _fFile != null ? _fFile.GetValue(_entryInstance) as string : null;
                         int line = _fLine != null ? Convert.ToInt32(_fLine.GetValue(_entryInstance)) : 0;
 
-                        bool isWarning = (mode & WarningMask) != 0 &&
-                                         (mode & (ModeScriptCompileError | ModeAssetImportError | ModeGraphCompileError)) == 0;
+                        bool isWarning;
+                        if ((mode & CompileMask) != 0)
+                        {
+                            isWarning = (mode & WarningMask) != 0 &&
+                                        (mode & (ModeScriptCompileError | ModeAssetImportError | ModeGraphCompileError)) == 0;
+                        }
+                        else
+                        {
+                            isWarning = message.StartsWith("Warning:", StringComparison.OrdinalIgnoreCase) ||
+                                        message.StartsWith("Warning-", StringComparison.Ordinal);
+                        }
+
+                        var level = isWarning ? LogLevel.Warning :
+                                    message.StartsWith("Error:", StringComparison.OrdinalIgnoreCase) ||
+                                    message.StartsWith("Error-", StringComparison.Ordinal)
+                                    ? LogLevel.Error
+                                    : LogLevel.Information;
 
                         target.Add(new ConsoleEntry
                         {
                             Id = ConsoleLogStore.NextId(),
                             Timestamp = DateTime.Now,
-                            Level = isWarning ? LogLevel.Warning : LogLevel.Error,
+                            Level = level,
                             Source = ConsoleSource.Compiler,
                             Channel = "Compiler",
-                            Message = message ?? string.Empty,
+                            Message = message,
                             CallerFilePath = file,
                             CallerLineNumber = line,
                             CollapseKey = "C|" + mode + "|" + message
