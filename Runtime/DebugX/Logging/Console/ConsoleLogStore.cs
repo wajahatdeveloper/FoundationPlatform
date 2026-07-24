@@ -47,14 +47,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static readonly Dictionary<string, WatchEntry> _watches = new Dictionary<string, WatchEntry>();
         private static readonly List<WatchEntry> _watchList = new List<WatchEntry>();
 
-        // Compiler/import diagnostics, rebuilt from UnityEditor.LogEntries each poll (main thread).
+        // Editor Console mirror, rebuilt from UnityEditor.LogEntries each poll (main thread).
+        // Includes Compiler (compile/import) and Unity-sourced rows that may not hit logMessageReceived.
         private static readonly List<ConsoleEntry> _compilerEntries = new List<ConsoleEntry>();
 
-        // Fast-lookup set of compiler entry messages for dedup in OnUnityLog (main thread only).
+        // Fast-lookup set of mirrored LogEntries messages for dedup in OnUnityLog (main thread only).
         private static readonly HashSet<string> _compilerMessages = new HashSet<string>();
-
-        // Warnings suppressed by ClearRuntime so they don't reappear on the next LogEntries refresh.
-        private static readonly HashSet<string> _suppressedCompilerWarnings = new HashSet<string>();
 
         /// <summary>Bumped whenever visible state changes; the window compares this to decide when to rebuild.</summary>
         public static int Version { get; private set; }
@@ -128,16 +126,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _compilerEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
-            _suppressedCompilerWarnings.Clear();
             ClearCount++;
             LogEntriesBridge.Clear();
             Version++;
         }
 
         /// <summary>
-        /// Clears only runtime logs (ring buffer). Compiler diagnostics and their counts are preserved,
-        /// except that compiler warnings are removed from the store and suppressed so they don't
-        /// reappear on the next LogEntries refresh. Compiler errors remain visible.
+        /// Clears the ring buffer and the native Unity Editor Console (same as Unity's Clear).
+        /// Next pump rebuilds any sticky LogEntries Unity still keeps (e.g. compile errors).
         /// </summary>
         public static void ClearRuntime()
         {
@@ -145,19 +141,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _head = 0;
             _count = 0;
             _logCount = _warningCount = _errorCount = 0;
+            _compilerEntries.Clear();
+            _compilerMessages.Clear();
+            _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
+            LogEntriesBridge.Clear();
+            CompilerVersion++;
             Version++;
-
-            for (int i = _compilerEntries.Count - 1; i >= 0; i--)
-            {
-                var ce = _compilerEntries[i];
-                if (ce.Category == ConsoleCategory.Warning)
-                {
-                    _suppressedCompilerWarnings.Add(ce.Message ?? string.Empty);
-                    _compilerEntries.RemoveAt(i);
-                }
-            }
-            _compilerWarningCount = 0;
         }
 
         public static void ClearWatches()
@@ -296,7 +286,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
 #endif
             // DebugX logs do not reach Unity's log system in the editor (the native relay is dropped),
             // so this feed only carries plain Debug.Log calls, uncaught exceptions and third-party logs.
-            // Skip messages already captured as compiler/import diagnostics to avoid duplicates.
+            // Skip messages already captured via the LogEntries mirror to avoid duplicates.
             if (CaptureCompilerErrors && _compilerMessages.Contains(condition ?? string.Empty))
                 return;
 
@@ -332,15 +322,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
                     _compilerMessages.Clear();
-                    for (int i = _compilerEntries.Count - 1; i >= 0; i--)
-                    {
-                        var ce = _compilerEntries[i];
-                        if (ce.Category == ConsoleCategory.Warning &&
-                            _suppressedCompilerWarnings.Contains(ce.Message ?? string.Empty))
-                        {
-                            _compilerEntries.RemoveAt(i);
-                        }
-                    }
                     for (int i = 0; i < _compilerEntries.Count; i++)
                     {
                         var ce = _compilerEntries[i];

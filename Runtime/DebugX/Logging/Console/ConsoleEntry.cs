@@ -5,8 +5,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Where a console row originated. DebugX = structured pipeline, Unity = plain Debug.Log /
-    /// exceptions / third-party captured via Application.logMessageReceived, Compiler = editor-time
-    /// compile/import diagnostics mirrored from UnityEditor.LogEntries.
+    /// exceptions / third-party / mirrored Editor Console rows, Compiler = sticky script/import/graph
+    /// compile diagnostics from UnityEditor.LogEntries.
     /// </summary>
     public enum ConsoleSource
     {

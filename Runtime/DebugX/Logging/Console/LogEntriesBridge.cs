@@ -7,9 +7,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Reflection wrapper over Unity's internal <c>UnityEditor.LogEntries</c> / <c>LogEntry</c> so the
-    /// DebugX Console can mirror editor-time compiler and asset-import diagnostics (which never reach
-    /// Application.logMessageReceived). Only compile/import-flagged rows are pulled, so runtime logs
-    /// already captured via the normal feeds are not duplicated.
+    /// DebugX Console can mirror the Editor Console (including rows that never reach
+    /// <see cref="UnityEngine.Application.logMessageReceived"/>, e.g. some shader/native logs).
+    ///
+    /// Severity follows Unity's <c>ConsoleWindow.GetIconForErrorMode</c> mode masks.
+    /// <see cref="ConsoleSource.Compiler"/> is reserved for script/import/graph compile flags;
+    /// all other rows are <see cref="ConsoleSource.Unity"/>.
     ///
     /// Lives in the runtime assembly (editor-guarded) so <see cref="ConsoleLogStore"/> can call it —
     /// the runtime asmdef cannot reference the editor asmdef. Every member lookup is cached and
@@ -17,19 +20,39 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// </summary>
     internal static class LogEntriesBridge
     {
-        // ConsoleWindow.Mode bits (stable across many Unity versions).
+        // ConsoleWindow.Mode bits — UnityCsReference Editor/Mono/ConsoleWindow.cs
+        private const int ModeError = 1 << 0;
+        private const int ModeAssert = 1 << 1;
+        private const int ModeLog = 1 << 2;
+        private const int ModeFatal = 1 << 4;
         private const int ModeAssetImportError = 1 << 6;
         private const int ModeAssetImportWarning = 1 << 7;
+        private const int ModeScriptingError = 1 << 8;
+        private const int ModeScriptingWarning = 1 << 9;
+        private const int ModeScriptingLog = 1 << 10;
         private const int ModeScriptCompileError = 1 << 11;
         private const int ModeScriptCompileWarning = 1 << 12;
+        private const int ModeStickyError = 1 << 13;
+        private const int ModeScriptingException = 1 << 17;
         private const int ModeGraphCompileError = 1 << 20;
+        private const int ModeScriptingAssertion = 1 << 21;
+        private const int ModeVisualScriptingError = 1 << 22;
 
+        /// <summary>Script / asset-import / graph compile diagnostics (sticky Compiler source).</summary>
         private const int CompileMask =
             ModeAssetImportError | ModeAssetImportWarning |
             ModeScriptCompileError | ModeScriptCompileWarning |
             ModeGraphCompileError;
 
-        private const int WarningMask = ModeAssetImportWarning | ModeScriptCompileWarning;
+        // Matches ConsoleWindow.GetIconForErrorMode error branch (+ exception / visual-scripting).
+        private const int ErrorMask =
+            ModeFatal | ModeAssert | ModeError | ModeScriptingError |
+            ModeAssetImportError | ModeScriptCompileError | ModeGraphCompileError |
+            ModeScriptingAssertion | ModeScriptingException | ModeVisualScriptingError;
+
+        // Matches ConsoleWindow.GetIconForErrorMode warning branch.
+        private const int WarningMask =
+            ModeScriptCompileWarning | ModeScriptingWarning | ModeAssetImportWarning;
 
         private static bool _resolved;
         private static bool _available;
@@ -48,7 +71,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static int _lastSignature = -1;
 
         /// <summary>
-        /// Rebuilds <paramref name="target"/> from the current compile/import diagnostics if they
+        /// Rebuilds <paramref name="target"/> from the current Editor Console rows if they
         /// changed since the last call. Returns true when the list was modified.
         /// </summary>
         public static bool Refresh(List<ConsoleEntry> target)
@@ -105,35 +128,21 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         string file = _fFile != null ? _fFile.GetValue(_entryInstance) as string : null;
                         int line = _fLine != null ? Convert.ToInt32(_fLine.GetValue(_entryInstance)) : 0;
 
-                        bool isWarning;
-                        if ((mode & CompileMask) != 0)
-                        {
-                            isWarning = (mode & WarningMask) != 0 &&
-                                        (mode & (ModeScriptCompileError | ModeAssetImportError | ModeGraphCompileError)) == 0;
-                        }
-                        else
-                        {
-                            isWarning = message.StartsWith("Warning:", StringComparison.OrdinalIgnoreCase) ||
-                                        message.StartsWith("Warning-", StringComparison.Ordinal);
-                        }
-
-                        var level = isWarning ? LogLevel.Warning :
-                                    message.StartsWith("Error:", StringComparison.OrdinalIgnoreCase) ||
-                                    message.StartsWith("Error-", StringComparison.Ordinal)
-                                    ? LogLevel.Error
-                                    : LogLevel.Information;
+                        bool isCompiler = (mode & CompileMask) != 0 || (mode & ModeStickyError) != 0;
+                        var level = LevelFromMode(mode, message);
+                        var source = isCompiler ? ConsoleSource.Compiler : ConsoleSource.Unity;
 
                         target.Add(new ConsoleEntry
                         {
                             Id = ConsoleLogStore.NextId(),
                             Timestamp = DateTime.Now,
                             Level = level,
-                            Source = ConsoleSource.Compiler,
-                            Channel = "Compiler",
+                            Source = source,
+                            Channel = isCompiler ? "Compiler" : null,
                             Message = message,
                             CallerFilePath = file,
                             CallerLineNumber = line,
-                            CollapseKey = "C|" + mode + "|" + message
+                            CollapseKey = (isCompiler ? "C|" : "U|") + mode + "|" + message
                         });
                     }
                 }
@@ -150,6 +159,37 @@ namespace AetherNexus.FoundationPlatform.DebugX
             }
 
             return target.Count != previousCount || target.Count > 0;
+        }
+
+        /// <summary>
+        /// Maps Unity Console mode bits to <see cref="LogLevel"/> using the same masks as
+        /// <c>ConsoleWindow.GetIconForErrorMode</c>. Prefix fallback only when mode has no severity bits.
+        /// </summary>
+        private static LogLevel LevelFromMode(int mode, string message)
+        {
+            if ((mode & ErrorMask) != 0)
+                return LogLevel.Error;
+            if ((mode & WarningMask) != 0)
+                return LogLevel.Warning;
+            if ((mode & (ModeLog | ModeScriptingLog)) != 0)
+                return LogLevel.Information;
+
+            if (StartsWithOrdinalIgnoreCase(message, "Shader error") ||
+                StartsWithOrdinalIgnoreCase(message, "Error:") ||
+                message.StartsWith("Error-", StringComparison.Ordinal))
+                return LogLevel.Error;
+
+            if (StartsWithOrdinalIgnoreCase(message, "Shader warning") ||
+                StartsWithOrdinalIgnoreCase(message, "Warning:") ||
+                message.StartsWith("Warning-", StringComparison.Ordinal))
+                return LogLevel.Warning;
+
+            return LogLevel.Information;
+        }
+
+        private static bool StartsWithOrdinalIgnoreCase(string message, string prefix)
+        {
+            return message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Hash of the message at the given LogEntries index (0 on any failure). Call between Start/EndGettingEntries.</summary>
@@ -175,6 +215,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
             try
             {
                 _clear?.Invoke(null, null);
+                _lastSignature = -1;
             }
             catch
             {
