@@ -1345,7 +1345,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
                     string ibKey = "ibox:" + (e.AttributeSource?.Name ?? "?") + ":" + info.Message;
-                    foldouts.TryGetValue(ibKey, out bool expanded);
+                    if (!foldouts.TryGetValue(ibKey, out bool expanded))
+                    {
+                        expanded = info.Expanded;
+                        foldouts[ibKey] = expanded;
+                    }
+
                     AetherInspectorTheme.DrawInfoBox(InspectorMemberResolver.ResolveString(target, info.Message),
                         info.InfoMessageType, ref expanded, info.Collapsible);
                     foldouts[ibKey] = expanded;

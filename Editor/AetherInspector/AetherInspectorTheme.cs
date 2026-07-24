@@ -685,28 +685,53 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             DrawInfoBox(message, type, ref dummy, collapsible: false);
         }
 
-        /// <summary>Themed callout matching AetherInspector chrome (replaces raw HelpBox in engine UI).</summary>
+        /// <summary>Themed callout matching AetherInspector chrome.</summary>
         public static void DrawInfoBox(string message, InfoMessageType type, ref bool expanded, bool collapsible)
         {
             if (string.IsNullOrEmpty(message)) return;
 
+            var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
+            float wrapW = EditorGUIUtility.currentViewWidth - 24f;
+
             if (collapsible)
             {
-                EditorGUILayout.BeginHorizontal();
-                expanded = EditorGUILayout.Foldout(expanded, GUIContent.none, true, EditorStyles.foldoutHeader);
-                var headerRect = GUILayoutUtility.GetLastRect();
-                var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
-                float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
-                var msgRect = new Rect(headerRect.xMin, headerRect.yMax, headerRect.width, h);
-                GUI.Label(msgRect, message, style);
-                EditorGUILayout.EndHorizontal();
-                if (!expanded) return;
+                var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+                EditorGUI.DrawRect(headerRect, InfoBoxBackground(type));
+                var border = InfoBoxBorder(type);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1f), border);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), border);
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1f, headerRect.height), border);
+                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1f, headerRect.y, 1f, headerRect.height), border);
+
+                var prevIndent = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
+                var arrowRect = new Rect(headerRect.x + 6f, headerRect.y + 3f, 16f, headerRect.height - 6f);
+                expanded = EditorGUI.Foldout(arrowRect, expanded, GUIContent.none, true);
+                EditorGUI.indentLevel = prevIndent;
+
+                var labelRect = new Rect(arrowRect.xMax + 4f, headerRect.y,
+                    headerRect.width - arrowRect.width - 14f, headerRect.height);
+                GUI.Label(labelRect, expanded ? message : "...", EditorStyles.label);
+
+                if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
+                {
+                    expanded = !expanded;
+                    Event.current.Use();
+                    GUI.changed = true;
+                }
+
+                if (!expanded)
+                {
+                    EditorGUILayout.Space(SectionSpacing * 0.5f);
+                    return;
+                }
+
                 EditorGUILayout.Space(2f);
             }
-            else
+
+            if (!collapsible || expanded)
             {
-                var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
-                float h = style.CalcHeight(new GUIContent(message), EditorGUIUtility.currentViewWidth - 24f);
+                float h = style.CalcHeight(new GUIContent(message), wrapW);
                 var rect = EditorGUILayout.GetControlRect(false, h + 8f);
                 EditorGUI.DrawRect(rect, InfoBoxBackground(type));
                 var border = InfoBoxBorder(type);
@@ -715,7 +740,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
                 EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
                 GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
-                EditorGUILayout.Space(SectionSpacing * 0.5f);
+                if (!collapsible) EditorGUILayout.Space(SectionSpacing * 0.5f);
             }
         }
 

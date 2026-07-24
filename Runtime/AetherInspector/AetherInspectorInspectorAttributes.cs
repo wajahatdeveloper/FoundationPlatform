@@ -652,8 +652,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public bool GUIAlwaysEnabled;
         public bool Collapsible;
         public bool Expanded = true;
-        public InfoBoxAttribute(string message, InfoMessageType infoMessageType = InfoMessageType.Info, string visibleIfMemberName = null)
-        { Message = message; InfoMessageType = infoMessageType; VisibleIf = visibleIfMemberName; }
+        public InfoBoxAttribute(string message, InfoMessageType infoMessageType = InfoMessageType.Info, string visibleIfMemberName = null, bool collapsible = false)
+        { Message = message; InfoMessageType = infoMessageType; VisibleIf = visibleIfMemberName; Collapsible = collapsible; }
+        public InfoBoxAttribute(string message, InfoMessageType infoMessageType, string visibleIfMemberName, bool collapsible, bool expanded)
+        { Message = message; InfoMessageType = infoMessageType; VisibleIf = visibleIfMemberName; Collapsible = collapsible; Expanded = expanded; }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
