@@ -5,7 +5,25 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform
 {
-    
+    // Non-generic host so a single RuntimeInitializeOnLoadMethod can reset every
+    // closed SingletonBehaviour<T>/PersistentSingletonBehaviour<T> instantiation.
+    // Domain reload being off means static fields of already-used closed generics
+    // survive Stop->Play; each generic class registers its reset once (in its
+    // static ctor) and this registry replays all of them every SubsystemRegistration.
+    internal static class SingletonResetRegistry
+    {
+        private static readonly List<Action> resetCallbacks = new List<Action>();
+
+        internal static void Register(Action reset) => resetCallbacks.Add(reset);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetAll()
+        {
+            foreach (Action reset in resetCallbacks)
+                reset();
+        }
+    }
+
 public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
 {
     // Keyed by concrete runtime type so subclasses that share the same closed
@@ -13,6 +31,15 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     // instead of fighting over one shared static and destroying each other.
     private static readonly Dictionary<Type, T> instances = new Dictionary<Type, T>();
     private static bool isQuitting;
+
+    static SingletonBehaviour()
+    {
+        SingletonResetRegistry.Register(() =>
+        {
+            isQuitting = false;
+            instances.Clear();
+        });
+    }
 
     public static T Instance => GetInstance(typeof(T));
 
@@ -101,6 +128,15 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
     private static readonly Dictionary<Type, T> instances = new Dictionary<Type, T>();
     private static bool isQuitting;
 
+    static PersistentSingletonBehaviour()
+    {
+        SingletonResetRegistry.Register(() =>
+        {
+            isQuitting = false;
+            instances.Clear();
+        });
+    }
+
     public static T Instance => GetInstance(typeof(T));
 
     /// <summary>
@@ -186,6 +222,11 @@ public class Singleton<T> where T : new()
 {
     private static T instance;
     private static readonly object sync = new object();
+
+    static Singleton()
+    {
+        SingletonResetRegistry.Register(() => instance = default);
+    }
 
     public static T Instance
     {
