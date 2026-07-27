@@ -18,5 +18,11 @@
     "defineConstraints": [
         "HOMAM_GEC"
     ],
-    "versionDefines": []
+    "versionDefines": [
+        {
+            "name": "com.aethernexus.gameenginecore",
+            "expression": "",
+            "define": "HOMAM_GEC"
+        }
+    ]
 }
