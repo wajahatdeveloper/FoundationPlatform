@@ -96,9 +96,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
             // Merge builder properties with template properties
             var allProperties = MergeProperties(templateProperties, _properties);
 
-            // Capture stack trace if error/fatal or explicitly enabled
+            // Exception.ToString() is the SoT for throw-site stacks; skip call-site capture when present.
             string stackTrace = null;
-            if (level == LogLevel.Error || level == LogLevel.Fatal || EnableFullStackTraces)
+            if (exception == null &&
+                (level == LogLevel.Error || level == LogLevel.Fatal || EnableFullStackTraces))
             {
                 // Skip frames: 0=GetStackTrace, 1=Write, 2=Debug/Info/etc, 3=Caller
                 stackTrace = new StackTrace(3, true).ToString();

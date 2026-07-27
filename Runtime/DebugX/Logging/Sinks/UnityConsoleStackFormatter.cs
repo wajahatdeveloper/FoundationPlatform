@@ -137,15 +137,17 @@ namespace AetherNexus.FoundationPlatform.DebugX
             return line.Substring(0, pathStart) + projectPath + line.Substring(colonIndex);
         }
 
+        private const string DebugXNamespacePrefix = "AetherNexus.FoundationPlatform.DebugX.";
+        private const string DebugXNamespacePrefixAt = "at AetherNexus.FoundationPlatform.DebugX.";
+        private const string LegacyDebugXNamespacePrefix = "FoundationPlatform.DebugX.";
+        private const string LegacyDebugXNamespacePrefixAt = "at FoundationPlatform.DebugX.";
+
         private static bool ShouldSkipStackTraceLine(string trimmed, ref bool foundCaller)
         {
             if (!foundCaller)
             {
-                if (trimmed.StartsWith("at FoundationPlatform.DebugX.", StringComparison.Ordinal) ||
-                    trimmed.StartsWith("FoundationPlatform.DebugX.", StringComparison.Ordinal))
-                {
+                if (IsDebugXOrExtractorFrame(trimmed))
                     return true;
-                }
 
                 foundCaller = true;
             }
@@ -157,6 +159,25 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 return true;
 
             if (trimmed.Contains("<>d__", StringComparison.Ordinal) && trimmed.Contains("MoveNext", StringComparison.Ordinal))
+                return true;
+
+            return false;
+        }
+
+        private static bool IsDebugXOrExtractorFrame(string trimmed)
+        {
+            if (trimmed.StartsWith(DebugXNamespacePrefix, StringComparison.Ordinal) ||
+                trimmed.StartsWith(DebugXNamespacePrefixAt, StringComparison.Ordinal) ||
+                trimmed.StartsWith(LegacyDebugXNamespacePrefix, StringComparison.Ordinal) ||
+                trimmed.StartsWith(LegacyDebugXNamespacePrefixAt, StringComparison.Ordinal))
+                return true;
+
+            if (trimmed.StartsWith("UnityEngine.StackTraceUtility", StringComparison.Ordinal) ||
+                trimmed.StartsWith("at UnityEngine.StackTraceUtility", StringComparison.Ordinal))
+                return true;
+
+            if (trimmed.StartsWith("UnityEngine.Debug:ExtractStackTrace", StringComparison.Ordinal) ||
+                trimmed.StartsWith("at UnityEngine.Debug.ExtractStackTrace", StringComparison.Ordinal))
                 return true;
 
             return false;

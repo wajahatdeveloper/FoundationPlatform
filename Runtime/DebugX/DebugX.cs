@@ -100,12 +100,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
             var (renderedMessage, properties) = MessageTemplateParser.Parse(messageTemplate, propertyValues);
 
-            // Capture stack trace if error/fatal or explicitly enabled
+            // Capture call-site stack only when there is no exception (exception.ToString() is the SoT).
+            // Unity's extractor resolves user-assembly frames to clickable (at Assets/..:N) form,
+            // unlike System.Diagnostics which renders many frames as <GUID>:0 in this project.
             string stackTrace = null;
-            if (level == LogLevel.Error || level == LogLevel.Fatal || DebugXBuilder.EnableFullStackTraces)
+            if (exception == null &&
+                (level == LogLevel.Error || level == LogLevel.Fatal || DebugXBuilder.EnableFullStackTraces))
             {
-                // Unity's extractor resolves user-assembly frames to clickable (at Assets/..:N) form,
-                // unlike System.Diagnostics which renders many frames as <GUID>:0 in this project.
                 stackTrace = UnityEngine.StackTraceUtility.ExtractStackTrace();
             }
 

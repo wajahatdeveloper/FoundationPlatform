@@ -27,8 +27,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
             var callerInfo = CallerInfoHelper.GetCallerInfo();
             var (renderedMessage, templateProperties) = MessageTemplateParser.Parse(messageTemplate, propertyValues);
 
+            // Exception.ToString() is the SoT for throw-site stacks; skip call-site capture when present.
             string stackTrace = null;
-            if (level == LogLevel.Error || level == LogLevel.Fatal || DebugXBuilder.EnableFullStackTraces)
+            if (exception == null &&
+                (level == LogLevel.Error || level == LogLevel.Fatal || DebugXBuilder.EnableFullStackTraces))
                 stackTrace = UnityEngine.StackTraceUtility.ExtractStackTrace();
 
             var logEvent = new LogEvent(
