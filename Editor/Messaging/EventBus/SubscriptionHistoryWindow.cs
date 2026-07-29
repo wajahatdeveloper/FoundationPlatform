@@ -2,6 +2,8 @@
 #pragma warning disable CS0414 // Serialized/inspector-driven error flags
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -266,13 +268,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 			if (_hasError && !string.IsNullOrEmpty(_errorMessage))
 			{
-				EditorGUILayout.HelpBox(_errorMessage, MessageType.Error);
+				GuiKit.ValidationBox(_errorMessage);
 			}
 
 			// Draw empty state message if needed
 			if (SubscriptionsEmpty())
 			{
-				EditorGUILayout.HelpBox("No subscription activity yet. Enable subscription tracking in Settings → Monitoring → Enable Subscription Tracking, then click Apply. Subscriptions will appear here as they are registered.", MessageType.Info);
+				GuiKit.InfoBox("No subscription activity yet. Enable subscription tracking in Settings → Monitoring → Enable Subscription Tracking, then click Apply. Subscriptions will appear here as they are registered.");
 			}
 			else if (_tableView != null && _subscriptions != null && _subscriptions.Count > 0)
 			{

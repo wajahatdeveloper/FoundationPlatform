@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 using System.Text;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -78,10 +80,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			var sections = WorldDebugSectionRegistry.Sections;
 			if (sections.Count == 0)
 			{
-				EditorGUILayout.HelpBox(
+				GuiKit.InfoBox(
 					"No world debug sections found. Sections are discovered automatically — implement " +
-					nameof(IWorldDebugSection) + " in any editor assembly.",
-					MessageType.Info);
+					nameof(IWorldDebugSection) + " in any editor assembly.");
 				return;
 			}
 
@@ -170,11 +171,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 
 				if (!section.IsAvailable)
 				{
-					EditorGUILayout.HelpBox(
+					GuiKit.InfoBox(
 						string.IsNullOrEmpty(section.UnavailableReason)
 							? "Not available right now."
-							: section.UnavailableReason,
-						MessageType.Info);
+							: section.UnavailableReason);
 					return;
 				}
 

@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -45,20 +47,19 @@ namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
 
             if (_findings == null)
             {
-                EditorGUILayout.HelpBox("Press \"Scan Project\" to find components whose serialized data references " +
-                                        "fields their script no longer defines.", MessageType.Info);
+                GuiKit.InfoBox("Press \"Scan Project\" to find components whose serialized data references " +
+                               "fields their script no longer defines.");
                 return;
             }
 
             if (_findings.Count == 0)
             {
-                EditorGUILayout.HelpBox("No stale components found. 🎉", MessageType.Info);
+                GuiKit.InfoBox("No stale components found. 🎉");
                 return;
             }
 
-            EditorGUILayout.LabelField($"{_findings.Count} stale component(s) across " +
-                                       $"{_findings.Select(f => f.AssetPath).Distinct().Count()} asset(s):",
-                                       EditorStyles.boldLabel);
+            GuiKit.Title($"{_findings.Count} stale component(s) across " +
+                         $"{_findings.Select(f => f.AssetPath).Distinct().Count()} asset(s)");
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             foreach (var group in _findings.GroupBy(f => f.AssetPath).OrderBy(g => g.Key))

@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Messaging;
 using UnityEditor;
 using UnityEditor.Build;
@@ -326,7 +328,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 	{
 		if (_hasError && !string.IsNullOrEmpty(_errorMessage))
 		{
-			EditorGUILayout.HelpBox(_errorMessage, MessageType.Error);
+			GuiKit.ValidationBox(_errorMessage);
 		}
 
 		DrawToolbar();
@@ -351,7 +353,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		// Draw empty state message if needed
 		if (HistoryEmpty())
 		{
-			EditorGUILayout.HelpBox("No events recorded yet. Enable history tracking in Settings → Monitoring → Enable Event History, then click Apply. After enabling, trigger some events in Play Mode to see them here.", MessageType.Info);
+			GuiKit.InfoBox("No events recorded yet. Enable history tracking in Settings → Monitoring → Enable Event History, then click Apply. After enabling, trigger some events in Play Mode to see them here.");
 		}
 		else if (_tableView != null && _history != null && _history.Count > 0)
 		{

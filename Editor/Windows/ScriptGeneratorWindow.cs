@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -147,7 +149,7 @@ public class ScriptGeneratorWindow : EditorWindow
 
 	private void OnGUI()
 	{
-		EditorGUILayout.LabelField(_titleContent, EditorStyles.boldLabel);
+		GuiKit.Title(_titleContent);
 		EditorGUILayout.Space(5);
 
 		EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -178,11 +180,11 @@ public class ScriptGeneratorWindow : EditorWindow
 
 		var validationError = _validate != null ? _validate(CurrentContext()) : null;
 		if (!string.IsNullOrEmpty(validationError))
-			EditorGUILayout.HelpBox(validationError, MessageType.Error);
+			GuiKit.ValidationBox(validationError);
 
 		EditorGUILayout.Space(5);
 		EditorGUILayout.BeginHorizontal();
-		_showCodePreview = EditorGUILayout.Foldout(_showCodePreview, "Code Preview", true);
+		_showCodePreview = GuiKit.SectionFoldout(_showCodePreview, "Code Preview");
 		if (GUILayout.Button("Refresh", GUILayout.Width(60)))
 			RefreshPreview();
 		EditorGUILayout.EndHorizontal();

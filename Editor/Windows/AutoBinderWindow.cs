@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -95,8 +97,8 @@ public class AutoBinderToolWindow : EditorWindow
 			if (!skipRest)
 			{
 				GUILayout.Space(12);
-				EditorGUILayout.LabelField("Generated Code (Copy and paste into your script)", EditorStyles.boldLabel);
-				EditorGUILayout.HelpBox("This is the content that will be placed between the marked region. Copy and paste it into your script.", MessageType.Info);
+				GuiKit.Title("Generated Code (Copy and paste into your script)");
+				GuiKit.InfoBox("This is the content that will be placed between the marked region. Copy and paste it into your script.");
 				EditorGUILayout.TextArea(previewGeneratedCode, GUILayout.MinHeight(200));
 			}
 		}
@@ -112,7 +114,7 @@ public class AutoBinderToolWindow : EditorWindow
 		EditorGUILayout.LabelField("Component Types", EditorStyles.boldLabel);
 
 		// Selected Types Foldout
-		showSelectedTypesFoldout = EditorGUILayout.Foldout(showSelectedTypesFoldout, "Selected Types", true);
+		showSelectedTypesFoldout = GuiKit.SectionFoldout(showSelectedTypesFoldout, "Selected Types");
 		if (showSelectedTypesFoldout)
 		{
 			EditorGUI.indentLevel++;
@@ -185,11 +187,11 @@ public class AutoBinderToolWindow : EditorWindow
 		EditorGUILayout.Space(8);
 
 		// Terminal Types Foldout
-		showTerminalTypesFoldout = EditorGUILayout.Foldout(showTerminalTypesFoldout, "Terminal Types", true);
+		showTerminalTypesFoldout = GuiKit.SectionFoldout(showTerminalTypesFoldout, "Terminal Types");
 		if (showTerminalTypesFoldout)
 		{
 			EditorGUI.indentLevel++;
-			EditorGUILayout.HelpBox("Terminal types stop the search from traversing their children. Useful for UI components like Button that have standard child structures.", MessageType.Info);
+			GuiKit.InfoBox("Terminal types stop the search from traversing their children. Useful for UI components like Button that have standard child structures.");
 			
 			EditorGUILayout.BeginHorizontal();
 			if (GUILayout.Button("Pick Terminal Types...", GUILayout.Height(20)))
@@ -236,7 +238,7 @@ public class AutoBinderToolWindow : EditorWindow
 		}
 
 		EditorGUILayout.Space(4);
-		EditorGUILayout.HelpBox("Use UI picker/type selector to add component types. Only Component-derived types are supported.", MessageType.None);
+		GuiKit.InfoBox("Use UI picker/type selector to add component types. Only Component-derived types are supported.", InfoMessageType.None);
 	}
 
 	private IEnumerable<Type> GetAllUIComponentTypes()

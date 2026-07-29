@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEditor.Presets;
@@ -41,11 +43,16 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 			var settings = _settings;
 			if (settings == null)
 			{
-				EditorGUILayout.HelpBox("Settings asset not found.", MessageType.Error);
+				GuiKit.ValidationBox("Settings asset not found.");
 				return;
 			}
 
-			EditorGUILayout.LabelField("General", EditorStyles.boldLabel);
+			// _scroll was declared but never wired to a scroll view — Filters/Folder Priorities are both
+			// dynamic-length lists, so content taller than the window was silently clipped with no way to
+			// reach it.
+			_scroll = EditorGUILayout.BeginScrollView(_scroll);
+
+			GuiKit.Title("General");
 			settings.enabled = EditorGUILayout.Toggle("Enabled", settings.enabled);
 			settings.debugMode = EditorGUILayout.Toggle("Debug Mode", settings.debugMode);
 			settings.logLevel = (PresetAutomationSettings.LogLevel)EditorGUILayout.EnumPopup("Log Level", settings.logLevel);
@@ -114,6 +121,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 				ShowDependencyView(_diagnosticsFolder);
 			}
 			EditorGUILayout.EndHorizontal();
+
+			EditorGUILayout.EndScrollView();
 		}
 
 		private void ScanDiagnostics(string folder)

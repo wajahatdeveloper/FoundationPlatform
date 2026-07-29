@@ -2,6 +2,8 @@
 #pragma warning disable CS0414 // Serialized/inspector-driven error flags
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -286,13 +288,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 			if (_hasError && !string.IsNullOrEmpty(_errorMessage))
 			{
-				EditorGUILayout.HelpBox(_errorMessage, MessageType.Error);
+				GuiKit.ValidationBox(_errorMessage);
 			}
 
 			// Draw empty state message if needed
 			if (SubscribersEmpty())
 			{
-				EditorGUILayout.HelpBox("No subscribers detected. Enter Play Mode to see active subscribers, or ensure EventBus is properly initialized and systems have registered their subscriptions.", MessageType.Info);
+				GuiKit.InfoBox("No subscribers detected. Enter Play Mode to see active subscribers, or ensure EventBus is properly initialized and systems have registered their subscriptions.");
 			}
 			else if (_tableView != null && _subscribers != null && _subscribers.Count > 0)
 			{

@@ -8,6 +8,8 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System;
 using System.IO;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
@@ -155,7 +157,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             }
             // Allow -1 to remain -1 (no selection)
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            this.selectedTab = GUILayout.Toolbar(this.selectedTab, this.tabs, EditorStyles.toolbarButton);
+            this.selectedTab = GuiKit.Toolbar(this.selectedTab, this.tabs);
             if (commandButtonStyle == null)
             {
                 commandButtonStyle = new GUIStyle(EditorStyles.toolbarButton)

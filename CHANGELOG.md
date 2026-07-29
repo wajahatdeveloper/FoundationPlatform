@@ -13,6 +13,8 @@ All notable changes to this package are documented here. Format follows [Keep a 
 ### Changed
 
 - `RandomX` is now `partial` so the collection helpers and the new facade share one type name — gameplay code should never have to choose between two "random" types
+- Editor windows (`EventPublishHistoryWindow`, `ActiveSubscriptionsWindow`, `SubscriptionHistoryWindow`, `AnimationTestBenchWindow`, `AutoBinderWindow`, `SceneSwitcherWindow`, `ScriptGeneratorWindow`, `StaleComponentWindow`, `PresetAutomationWindow`, `GameStateWindow`) retrofitted onto the `GuiKit` shared chrome instead of ad-hoc `HelpBox`/`Foldout`/`GUILayout.Toolbar` calls
+- `PresetAutomationWindow` now actually uses its `_scroll` field — Filters and Folder Priorities are dynamic-length lists that were previously drawn with no scroll view, clipping content taller than the window with no way to reach it
 
 ## [1.0.0] - 2026-07-14
 

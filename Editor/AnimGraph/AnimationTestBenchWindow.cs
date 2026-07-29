@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
@@ -160,7 +162,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			DrawTargetSection();
 			if (_targetRig == null || _animator == null)
 			{
-				EditorGUILayout.HelpBox("Select a rig with an Animator in the scene, or assign one above.", MessageType.Info);
+				GuiKit.InfoBox("Select a rig with an Animator in the scene, or assign one above.");
 				EditorGUILayout.EndScrollView();
 				return;
 			}
@@ -168,14 +170,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			DrawSetSection();
 			if (_set == null)
 			{
-				EditorGUILayout.HelpBox("Assign an AnimationSet to preview its entries.", MessageType.Info);
+				GuiKit.InfoBox("Assign an AnimationSet to preview its entries.");
 				EditorGUILayout.EndScrollView();
 				return;
 			}
 
 			if (_entries.Count == 0)
 			{
-				EditorGUILayout.HelpBox("This set (and its parents) contain no entries with an assigned clip.", MessageType.Warning);
+				GuiKit.InfoBox("This set (and its parents) contain no entries with an assigned clip.", InfoMessageType.Warning);
 				EditorGUILayout.EndScrollView();
 				return;
 			}
@@ -296,7 +298,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 			var owning = FindOwningSet(entry);
 			if (owning != _set)
-				EditorGUILayout.HelpBox($"Entry is inherited from '{(owning != null ? owning.name : "?")}' — edits are written there.", MessageType.None);
+				GuiKit.InfoBox($"Entry is inherited from '{(owning != null ? owning.name : "?")}' — edits are written there.", InfoMessageType.None);
 
 			var clip = entry.clip;
 			var list = new List<AnimationClipEvent>(clip.events ?? System.Array.Empty<AnimationClipEvent>());
@@ -333,7 +335,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 				EditorGUILayout.EndHorizontal();
 
 				if (string.IsNullOrWhiteSpace(e.eventName))
-					EditorGUILayout.HelpBox("Empty event name — this event fires nothing at runtime.", MessageType.Warning);
+					GuiKit.InfoBox("Empty event name — this event fires nothing at runtime.", InfoMessageType.Warning);
 			}
 
 			// Add row: type a name (or fill it from the catalog dropdown), then add at the current preview time.
@@ -480,9 +482,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			EditorGUILayout.EndHorizontal();
 
 			if (AnimationMode.InAnimationMode())
-				EditorGUILayout.HelpBox("Animation Mode is ON — pose is being driven. Press 'Reset Pose' to restore the rig.", MessageType.None);
+				GuiKit.InfoBox("Animation Mode is ON — pose is being driven. Press 'Reset Pose' to restore the rig.", InfoMessageType.None);
 			else
-				EditorGUILayout.HelpBox("Press Play or Sample to preview. Blended cross-fades preview live in Play Mode.", MessageType.None);
+				GuiKit.InfoBox("Press Play or Sample to preview. Blended cross-fades preview live in Play Mode.", InfoMessageType.None);
 		}
 
 		private void ToggleOfflinePlay()
@@ -559,13 +561,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 			if (_bridge == null)
 			{
-				EditorGUILayout.HelpBox("No AnimatorBridgeBase on the target — live driving needs one. Offline sampling only.", MessageType.Warning);
+				GuiKit.InfoBox("No AnimatorBridgeBase on the target — live driving needs one. Offline sampling only.", InfoMessageType.Warning);
 				return;
 			}
 
 			bool registered = IsSetRegistered();
 			if (!registered)
-				EditorGUILayout.HelpBox("This set is not registered on the bridge, so live Play will throw. Pick a Registered Set above.", MessageType.Warning);
+				GuiKit.InfoBox("This set is not registered on the bridge, so live Play will throw. Pick a Registered Set above.", InfoMessageType.Warning);
 
 			_fadeDuration = EditorGUILayout.Slider("Fade Duration", _fadeDuration, 0f, 1f);
 
