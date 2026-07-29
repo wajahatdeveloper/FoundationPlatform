@@ -136,7 +136,7 @@ public static class IEnumerableExtensions
     }
 
     // Requires an explicit randomness source (no shared static System.Random): simulation callers pass
-    // DeterministicRandomProvider.Instance, presentation callers pass UnityRandomProvider.Instance.
+    // DeterministicRandomProvider.Instance, presentation callers pass UnityRandomProvider.Create().
     public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> @this, IRandomProvider rnd)
     {
         if (rnd == null) throw new ArgumentNullException(nameof(rnd));
