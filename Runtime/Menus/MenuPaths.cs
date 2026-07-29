@@ -204,6 +204,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
 			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
 			public const string GasInstallGizmoIcons            = Root + "GAS/Install Gizmo Icons";
+			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
+			public const string GasFindDuplicateEffectIdentityTags = Root + "GAS/Find Duplicate Effect Identity Tags";
 
 			/// <summary>Tools/Domain/AI/* — AI authoring and generators.</summary>
 			public const string AiGenerateCommanderBrain        = Root + "AI/Generate Default Commander Brain";
