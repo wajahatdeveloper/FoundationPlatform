@@ -2128,14 +2128,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             else
             {
                 // Collapsible foldout header; skip the body when collapsed.
+                // Foldout alone toggles; a second MouseDown flip would cancel expand.
                 e.Property.isExpanded = EditorGUILayout.Foldout(e.Property.isExpanded,
                     lbl ?? TempContent(e.Property.displayName), true, AetherInspectorTheme.FlatFoldoutStyle);
-                var rect = GUILayoutUtility.GetLastRect();
-                if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
-                {
-                    e.Property.isExpanded = !e.Property.isExpanded;
-                    Event.current.Use();
-                }
                 if (!e.Property.isExpanded) return;
                 indent = true;
             }

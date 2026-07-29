@@ -159,40 +159,56 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             bool expanded = !showFoldout || prop.isExpanded;
 
             // --- Header row ---
-            // Use proper horizontal layout for header with foldout, title bar hooks, and add button
-            EditorGUILayout.BeginHorizontal();
+            // Explicit-rect foldout (SectionHeaderRow) so nested list headers keep a reliable hit
+            // target; EditorGUILayout.Foldout inside Horizontal+FlexibleSpace often mis-hits.
+            string headerText = $"{label.text} ({prop.arraySize})";
+            var headerContent = new GUIContent(headerText);
+            bool showAdd = !readOnly && (lds == null || !lds.HideAddButton);
+            bool disableAdd = vd != null && vd.DisableListAddButtonBehaviour && vd.IsUniqueList;
+            Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+
+            if (showFoldout)
             {
-                string headerText = $"{label.text} ({prop.arraySize})";
-                
-                if (showFoldout)
-                {
-                    prop.isExpanded = EditorGUILayout.Foldout(prop.isExpanded, headerText, true,
-                        AetherInspectorTheme.FlatFoldoutStyle);
-                    expanded = prop.isExpanded;
-                }
-                else
-                {
-                    EditorGUILayout.LabelField(headerText, AetherInspectorTheme.FlatHeaderLabel);
-                }
-
-                GUILayout.FlexibleSpace();
-
-                if (lds != null && !string.IsNullOrEmpty(lds.OnTitleBarGUI))
-                {
-                    foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
-                }
-
-                bool disableAdd = vd != null && vd.DisableListAddButtonBehaviour && vd.IsUniqueList;
-                if (!readOnly && (lds == null || !lds.HideAddButton))
+                prop.isExpanded = AetherInspectorTheme.SectionHeaderRow(
+                    headerRect, headerContent, prop.isExpanded, showAdd ? 1 : 0, out Rect[] trailing);
+                expanded = prop.isExpanded;
+                if (showAdd && trailing.Length > 0)
                 {
                     using (new EditorGUI.DisabledScope(disableAdd))
                     {
-                        if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(22)))
+                        if (GUI.Button(trailing[0], "+", EditorStyles.miniButton))
                             AddElement(e, targets, elemType, lds, occ);
                     }
                 }
             }
-            EditorGUILayout.EndHorizontal();
+            else
+            {
+                Rect[] trailing = Array.Empty<Rect>();
+                if (showAdd)
+                {
+                    const float gap = 2f;
+                    const float buttonSize = 20f;
+                    const float buttonHeight = 16f;
+                    float by = headerRect.y + (headerRect.height - buttonHeight) * 0.5f;
+                    trailing = new[] { new Rect(headerRect.xMax - buttonSize, by, buttonSize, buttonHeight) };
+                    headerRect = new Rect(headerRect.x, headerRect.y,
+                        Mathf.Max(0f, headerRect.width - buttonSize - gap), headerRect.height);
+                }
+                GUI.Label(headerRect, headerContent, AetherInspectorTheme.FlatHeaderLabel);
+                if (showAdd && trailing.Length > 0)
+                {
+                    using (new EditorGUI.DisabledScope(disableAdd))
+                    {
+                        if (GUI.Button(trailing[0], "+", EditorStyles.miniButton))
+                            AddElement(e, targets, elemType, lds, occ);
+                    }
+                }
+            }
+
+            if (lds != null && !string.IsNullOrEmpty(lds.OnTitleBarGUI))
+            {
+                foreach (var t in targets) InvokeHook(t, lds.OnTitleBarGUI);
+            }
 
             if (!expanded) return;
 
