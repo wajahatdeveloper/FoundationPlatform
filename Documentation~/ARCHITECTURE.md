@@ -194,6 +194,23 @@ Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenera
 | `Extensions/Utilities/` | Base64, file I/O, streams, reflection |
 | `Extensions/Audio/`, `Extensions/Bitwise/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Reflection/`, `Extensions/Scene/`, `Extensions/Time/`, `Extensions/Validation/` | one concern each, self-explanatory from folder name |
 
+### RandomX — pluggable random with `UnityEngine.Random`'s shape
+
+`Extensions/Random/RandomX.cs` holds the collection helpers (`Shuffle`, `NextItem`, `NextWeightedInd`, …) that take an `IRandomProvider`. `RandomX.Unity.cs` adds a static facade mirroring `UnityEngine.Random` member for member — `value`, `Range`, `insideUnitCircle`, `insideUnitSphere`, `onUnitSphere`, `rotation`, `rotationUniform`, `ColorHSV` — routed through an installed `RandomX.Provider`.
+
+Lowercase member names are deliberate: they match Unity's exactly, so adopting the facade in a file is a mechanical `Random.` → `RandomX.` substitution and nothing else. The point is that a deterministic sim can use the full surface rather than only the two methods a narrower facade offered — the missing members were why `UnityEngine.Random` kept appearing in simulation paths.
+
+**No provider, no fallback:** every call throws and names the fix. A game engine installs one at bootstrap (GameEngineCore does this during SystemBoot). Falling back to `UnityEngine.Random` would make early rolls silently non-deterministic.
+
+Two seams, both in `Runtime/Behaviours/`:
+
+| Interface | Contract |
+|---|---|
+| `IRandomProvider` | `Range(float,float)`, `Range(int,int)` — all most callers need |
+| `IRandomStreamSource : IRandomProvider` | adds `Stream(name)` for independent named sequences, plus `CaptureState()` / `RestoreState()` with an opaque provider-defined payload |
+
+The state payload is an opaque string so this package stays ignorant of any particular RNG implementation. `RandomX.Stream` / `CaptureState` / `RestoreState` throw a naming error when the installed provider only implements the smaller interface.
+
 ---
 
 ## Editor tooling
@@ -207,6 +224,7 @@ Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenera
 | UI Validation | `Editor/Validation/UI/` | UI hierarchy/naming conventions (asset postprocessor) |
 | Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import |
 | Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
+| Game State window | `Editor/Debugging/` | World-scope live state (`IWorldDebugSection`) — **Window → Domain → Game State...** |
 | Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
 | Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities |
 | Prefab Lightmap Generator | `Editor/Tools/PrefabLightmapGenerator/` | Prefab lightmap baking |

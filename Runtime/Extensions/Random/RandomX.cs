@@ -5,7 +5,10 @@ using AetherNexus.FoundationPlatform.Behaviours;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
-public static class RandomX
+// The Unity-Random-shaped facade (value, Range, insideUnitSphere, rotation, State, named streams) lives
+// in RandomX.Unity.cs. Kept partial so the collection helpers below and that surface share one name —
+// gameplay code should never have to pick between two "random" types.
+public static partial class RandomX
 {
     public static void Shuffle<T>(this List<T> list, IRandomProvider rnd)
     {

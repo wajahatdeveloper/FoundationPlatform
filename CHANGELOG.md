@@ -2,6 +2,18 @@
 
 All notable changes to this package are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **`RandomX` gains a `UnityEngine.Random`-shaped facade** (`Extensions/Random/RandomX.Unity.cs`): `value`, `Range`, `insideUnitCircle`, `insideUnitSphere`, `onUnitSphere`, `rotation`, `rotationUniform`, `ColorHSV`, plus `Stream(name)` and `CaptureState`/`RestoreState`. Routed through an installed `RandomX.Provider`; throws with a fix message when none is installed (no silent fallback to a non-deterministic source). Member names match Unity's exactly so adoption is a mechanical `Random.` → `RandomX.` substitution
+- **`IRandomStreamSource : IRandomProvider`** (`Runtime/Behaviours/`) — adds independent named streams and opaque state capture/restore, so the package can expose those without knowing any particular RNG implementation
+- **`IWorldDebugSection` + `GameStateWindow`** (`Editor/Debugging/`) — world-scope counterpart to the per-entity `IEntityDebugSection` overlay: a dockable shell with TypeCache auto-discovery, live repaint, `DebugDrawKit`-backed Copy Info, and a handoff button to the Scene View overlay. Ships no gameplay sections; installed gameplay packages contribute them
+
+### Changed
+
+- `RandomX` is now `partial` so the collection helpers and the new facade share one type name — gameplay code should never have to choose between two "random" types
+
 ## [1.0.0] - 2026-07-14
 
 ### Added

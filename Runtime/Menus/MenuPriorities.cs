@@ -40,6 +40,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public const int DomainValidation  = 1100; // Tools/Domain/Validation/*
         public const int DomainPackages    = 1140; // Tools/Domain/Packages/*
         public const int DomainInput       = 1160; // Tools/Domain/Input/*
+        public const int DomainPlayer      = 1170; // Tools/Domain/Player/*
         public const int DomainCoreCreate  = 1180; // Tools/Domain/Create * scaffolds
         public const int DomainGec         = 1200; // Tools/Domain/* (fallback misc)
 

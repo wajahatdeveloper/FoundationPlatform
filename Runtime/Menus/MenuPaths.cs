@@ -231,6 +231,12 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string ItemCreateInventoryBagContainer    = Root + "Item/Create/Inventory Bag Container";
 			public const string ItemCreateEquipmentSlotSetProfile  = Root + "Item/Create/Equipment Slot Set + Profile + Container";
 
+			/// <summary>Tools/Domain/Player/* and GameObject/Domain/Player/* — player &amp; pawn authoring.</summary>
+			public const string PlayerCreateInputActions        = Root + "Player/Create Player Input Actions";
+			public const string PlayerFillRosterPrefabs         = Root + "Player/Fill Roster Prefabs From Prefab Map";
+			public const string PlayerCreateSimplePawn          = GameObject + "Domain/Player/Simple Pawn";
+			public const string PlayerCreatePlayerStart         = GameObject + "Domain/Player/Player Start";
+
 			/// <summary>Tools/Domain/Input/* — input provision authoring.</summary>
 			public const string InputCreateCharacterProvision     = Root + "Input/Create Character Input Provision";
 			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Provision";
@@ -247,6 +253,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			/// <summary>Tools/Domain/Validation/* — scene/entity validation.</summary>
 			public const string ValidationPlayableScene           = Root + "Validation/Validate Playable Scene";
 			public const string ValidationDomainEntities          = Root + "Validation/Validate Domain Entities";
+			public const string ValidationDeterministicRandom     = Root + "Validation/Find Non-Deterministic Random Usage";
 
 			/// <summary>Tools/Domain/Network/* — network layer setup.</summary>
 			public const string NetworkCreateConfig               = Root + "Network/Create Network Config";
@@ -279,7 +286,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string QuestDebugger      = Root + "Quest/Quest Debugger...";
 			public const string ShopEconomy        = Root + "Shop/Shop & Economy Debugger...";
 			public const string CentralWindow      = Root + "Central Validation...";
-			public const string GameActionMatrix   = Root + "Game Action Matrix...";
+			public const string GameState         = Root + "Game State...";
+			public const string GameActionMatrix   = Root + "Game Actions...";
 			public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
 			public const string Telemetry          = Root + "Telemetry...";
 			public const string SessionStateAudit  = Root + "Session State Contributor Audit...";

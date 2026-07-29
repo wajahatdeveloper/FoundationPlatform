@@ -17,8 +17,9 @@ Free Unity foundation layer for the **AetherNexus** toolkit (`com.aethernexus.fo
 | **Patterns** | Singletons, `FragmentData`, reactive `Observable` types |
 | **Identity** | String-backed entity / channel ids |
 | **Animation** | `AnimationSet`, locomotion blend profiles, playable tooling |
+| **RandomX** | `UnityEngine.Random`'s API over a pluggable provider — named streams, state save/load |
 | **Extensions** | Broad GameObject / math / physics / UI helpers |
-| **Editor** | Framework Inspector, DebugX Console, Event Bus window, validation & utilities |
+| **Editor** | Framework Inspector, DebugX Console, Event Bus window, Entity Debugger overlay, Game State window, validation & utilities |
 
 Docs index: [Documentation~/index.md](Documentation~/index.md)
 
@@ -53,9 +54,22 @@ var handle = CoroutineX.Run(MyRoutine(), owner: gameObject);
 yield return handle.WaitForComplete();
 
 transform.TweenMove(target, 1f).SetEase(Ease.OutBack);
+
+float roll = RandomX.value;              // deterministic when a provider is installed
+var loot = RandomX.Stream("loot");       // independent sequence
 ```
 
-`EventBus`, `CoroutineX`, and tween extension methods are in the **global** namespace. Logging types live under `AetherNexus.FoundationPlatform.DebugX`.
+`EventBus`, `CoroutineX`, and tween extension methods are in the **global** namespace. Logging types live under `AetherNexus.FoundationPlatform.DebugX`; `RandomX` under `AetherNexus.FoundationPlatform.Extensions`.
+
+### RandomX needs a provider
+
+`RandomX` mirrors `UnityEngine.Random`'s API — `value`, `Range`, `insideUnitSphere`, `rotation`, `ColorHSV` — but routes through an installed `RandomX.Provider`, so a game can make the same calls deterministic without changing call sites. With no provider it **throws** rather than falling back to a non-deterministic source; that silence is the bug it exists to prevent.
+
+Game Engine Core installs one during startup. Standalone, install your own:
+
+```csharp
+RandomX.Provider = myProvider;   // IRandomProvider, or IRandomStreamSource for streams + save/load
+```
 
 ## Assemblies
 
