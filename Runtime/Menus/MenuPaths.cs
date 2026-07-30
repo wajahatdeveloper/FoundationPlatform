@@ -226,6 +226,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string CharacterCreateDefaultStateProfile = Root + "Character/Create Default Character State Profile";
 			public const string CharacterReconcileSubsystemHub     = Root + "Character/Reconcile Subsystem Hub on Selection";
 			public const string CharacterReconcileHubContext       = GameObject + "Domain/Character/Reconcile Subsystem Hub";
+			public const string CharacterCreateFromArchetype       = GameObject + "Domain/Character/Character From Archetype...";
 
 			/// <summary>Tools/Domain/Economy/* — currency registry tooling.</summary>
 			public const string EconomyRefreshCurrencyRegistries = Root + "Economy/Refresh Currency Registries";
