@@ -64,6 +64,40 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             return TryBestSource(entry, out string path, out int line) && OpenPath(path, line);
         }
 
+        /// <summary>
+        /// Resolves a source path to the imported asset behind it. Fails for files that live outside
+        /// Assets/ and Packages/ (generated sources, package caches) — those have no asset to reveal.
+        /// </summary>
+        public static bool TryResolveAsset(string filePath, out Object asset, out string projectPath)
+        {
+            asset = null;
+            projectPath = null;
+            if (string.IsNullOrEmpty(filePath)) return false;
+
+            projectPath = UnityConsoleStackFormatter.ToUnityProjectPath(filePath);
+            if (string.IsNullOrEmpty(projectPath)) return false;
+
+            asset = AssetDatabase.LoadAssetAtPath<Object>(projectPath);
+            return asset != null;
+        }
+
+        /// <summary>
+        /// Selects and pings the entry's source file in the Project window. Reveal-only: it never
+        /// opens an editor and never steals keyboard focus from the console.
+        /// </summary>
+        public static bool PingEntry(ConsoleEntry entry) => PingEntry(entry, out _);
+
+        public static bool PingEntry(ConsoleEntry entry, out string projectPath)
+        {
+            projectPath = null;
+            if (!TryBestSource(entry, out string path, out _)) return false;
+            if (!TryResolveAsset(path, out Object asset, out projectPath)) return false;
+
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+            return true;
+        }
+
         public static bool TryParseFirstFrame(string text, out string path, out int line)
         {
             path = null;
@@ -81,10 +115,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         {
             if (string.IsNullOrEmpty(filePath)) return false;
 
-            string projectPath = UnityConsoleStackFormatter.ToUnityProjectPath(filePath) ?? filePath;
-
-            var script = AssetDatabase.LoadAssetAtPath<Object>(projectPath);
-            if (script != null)
+            if (TryResolveAsset(filePath, out Object script, out _))
                 return AssetDatabase.OpenAsset(script, Mathf.Max(1, line));
 
             return UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(filePath, Mathf.Max(1, line));

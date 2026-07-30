@@ -42,6 +42,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         public bool clearOnPlay = true;
         public bool clearOnBuild = false;
         public bool captureCompilerErrors = true;
+        public bool pingCompilerAsset = true; // select+ping the .cs asset when a compiler row is selected
 
         // Filters (persisted across sessions)
         public bool showLog = true;

@@ -86,6 +86,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
         private int _lastVersion = -1;
         private long _lastErrorSeen;
+        private string _lastPingedPath; // last asset revealed in the Project window, to avoid re-pinging
 
         private bool _autoscroll = true;
         private bool _errorPause;
@@ -678,6 +679,12 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
                 DebugXConsoleSettings.Instance.Save();
                 Rebuild();
             });
+            menu.AddItem(new GUIContent("Ping Script in Project"), DebugXConsoleSettings.Instance.pingCompilerAsset, () =>
+            {
+                var st = DebugXConsoleSettings.Instance;
+                st.pingCompilerAsset = !st.pingCompilerAsset;
+                st.Save();
+            });
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Jump to Next Error (F8)"), false, () => JumpError(1));
             menu.AddItem(new GUIContent("Jump to Previous Error (Shift+F8)"), false, () => JumpError(-1));
@@ -1244,6 +1251,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             // The incremental fast path only applies to the unsorted view: an active sort re-orders
             // the row list, which invalidates the model's positional bookkeeping.
             bool sorted = _sortColumn != SortColumn.None;
+            // Row identity is no longer trustworthy after a rebuild, so let the next selection ping
+            // again even if it lands on the same file (e.g. re-breaking a script after a recompile).
+            _lastPingedPath = null;
             _filter.Build(_rows, incremental && !sorted);
             ApplySort();
             _list.RefreshItems();
@@ -1422,6 +1432,32 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
                 ConsoleNavigation.OpenEntry(_rows[idx].Entry);
         }
 
+        /// <summary>
+        /// Reveals the offending script in the Project window when a single compiler diagnostic is
+        /// selected. Compiler rows only — runtime logs would clobber the user's selection while they
+        /// scroll. Silent when the path resolves to no asset (generated or out-of-project sources).
+        /// </summary>
+        private void MaybePingCompilerAsset()
+        {
+            if (!DebugXConsoleSettings.Instance.pingCompilerAsset) return;
+            if (_selectedSet.Count != 1) return;
+
+            int idx = _list.selectedIndex;
+            if (idx < 0 || idx >= _rows.Count) return;
+
+            var entry = _rows[idx].Entry;
+            if (entry == null || entry.Source != ConsoleSource.Compiler) return;
+
+            // Ping only on a change of target: selectionChanged can fire repeatedly for the same row.
+            if (!ConsoleNavigation.TryBestSource(entry, out string path, out _)) return;
+            if (!ConsoleNavigation.TryResolveAsset(path, out var asset, out string projectPath)) return;
+            if (projectPath == _lastPingedPath) return;
+
+            _lastPingedPath = projectPath;
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+        }
+
         // --- Selection ---
 
         private int RowIndex(VisualElement row) => row.userData is int i ? i : -1;
@@ -1433,6 +1469,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
                 _selectedSet.Add(i);
             _list.RefreshItems();
             RefreshDetail();
+            MaybePingCompilerAsset();
             UpdateStatus();
         }
 
@@ -1598,6 +1635,10 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             menu.AddItem(new GUIContent(n > 1 ? $"Copy {n} Rows" : "Copy"), false, CopySelected);
             menu.AddItem(new GUIContent("Copy Details"), false, () => EditorGUIUtility.systemCopyBuffer = BuildEntryText(e));
             menu.AddItem(new GUIContent("Open Source"), false, () => ConsoleNavigation.OpenEntry(e));
+            menu.AddItem(new GUIContent("Ping in Project"), false, () =>
+            {
+                if (ConsoleNavigation.PingEntry(e, out string pinged)) _lastPingedPath = pinged;
+            });
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Ignore this message"), false, () =>
             {

@@ -55,6 +55,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             s.clearOnPlay = EditorGUILayout.Toggle("Clear On Play", s.clearOnPlay);
             s.clearOnBuild = EditorGUILayout.Toggle("Clear On Build", s.clearOnBuild);
             s.captureCompilerErrors = EditorGUILayout.Toggle("Capture Compiler / Import Errors", s.captureCompilerErrors);
+            s.pingCompilerAsset = EditorGUILayout.Toggle("Ping Script in Project on Select", s.pingCompilerAsset);
             bool behaviourChanged = EditorGUI.EndChangeCheck();
 
             EditorGUILayout.Space();
