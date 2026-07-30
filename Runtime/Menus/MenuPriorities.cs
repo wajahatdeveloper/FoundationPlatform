@@ -27,6 +27,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 
         // ---- Context / GameObject menu bands ----
         public const int ContextComponent = 50;  // CONTEXT/Component/*, CONTEXT/MonoBehaviour/*
+        public const int ContextCharacter = 150; // CONTEXT/<character component>/* (rig actions)
         public const int GameObjectSetup  = 10;  // GameObject/Domain/*
 
         // ---- Tools/Domain/<Name>/* — designer-facing authoring bands ----

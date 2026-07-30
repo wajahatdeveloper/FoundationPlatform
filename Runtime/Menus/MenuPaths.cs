@@ -187,6 +187,13 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string FitAnchors = Context + "RectTransform/Fit Anchors";
 		}
 
+		/// <summary>CONTEXT/&lt;character component&gt;/* — component right-click actions on a character rig.</summary>
+		public static class CharacterContext
+		{
+			public const string ReconcileSubsystemHub = Context + "CharacterSubsystemHub/Reconcile Subsystem Hub";
+			public const string OpenRagdollHelper     = Context + "BoneMapper/Open Ragdoll Helper";
+		}
+
 		// ============================================================================
 		// Designer-facing menus — Domain / Platform only (no dual legacy registration).
 		// Domain: reach a tool by *what it does*. Platform: project setup / package integration.
