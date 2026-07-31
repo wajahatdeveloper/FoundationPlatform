@@ -1436,6 +1436,10 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         /// Reveals the offending script in the Project window when a single compiler diagnostic is
         /// selected. Compiler rows only — runtime logs would clobber the user's selection while they
         /// scroll. Silent when the path resolves to no asset (generated or out-of-project sources).
+        /// Note: compile WARNINGS are no longer Source=Compiler (they demote to ordinary Source=Unity
+        /// rows via Application.logMessageReceivedThreaded, which never carries file/line metadata), so
+        /// this convenience only fires for actual persistent compile errors — unchanged in practice,
+        /// since warnings never had usable caller info through that path either.
         /// </summary>
         private void MaybePingCompilerAsset()
         {

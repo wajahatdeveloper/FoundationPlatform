@@ -28,6 +28,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         protected virtual void OnEnable() { }
         protected virtual void OnDisable() { }
 
+        /// <summary>
+        /// Extra-section hook: other packages can draw additional Inspector UI below the standard
+        /// rendering without this shared base needing to know anything about them. Additive only —
+        /// a no-op unless something subscribes.
+        /// </summary>
+        public static event Action<UnityEditor.Editor> DrawExtraSections;
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -56,6 +63,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 DrawDefaultInspector();
             }
             serializedObject.ApplyModifiedProperties();
+            DrawExtraSections?.Invoke(this);
         }
     }
 

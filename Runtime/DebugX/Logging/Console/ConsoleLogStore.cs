@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.DebugX
@@ -48,7 +49,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static readonly List<WatchEntry> _watchList = new List<WatchEntry>();
 
         // Editor Console mirror, rebuilt from UnityEditor.LogEntries each poll (main thread).
-        // Includes Compiler (compile/import) and Unity-sourced rows that may not hit logMessageReceived.
+        // Includes persistent Compiler (compile/import/graph) ERRORS and Unity-sourced rows that may not
+        // hit logMessageReceived (e.g. shader/native logs). Compile WARNINGS are deliberately excluded
+        // from this mirror by LogEntriesBridge — they still reach the console via OnUnityLog below, as
+        // ordinary Source=Unity rows, so they behave like any other clearable/evictable log entry.
         private static readonly List<ConsoleEntry> _compilerEntries = new List<ConsoleEntry>();
 
         // Fast-lookup set of mirrored LogEntries messages for dedup in OnUnityLog (main thread only).
@@ -99,6 +103,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
             Application.logMessageReceivedThreaded += OnUnityLog;
             EditorApplication.update += Pump;
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
+
+            // Force one reconciliation the moment compilation ends, independent of whether the console
+            // window is open — closes the tail where a duplicate could otherwise linger until the next
+            // tick happens to see a change (or, before this fix, sometimes never).
+            CompilationPipeline.compilationFinished += _ => Pump();
         }
 
         /// <summary>Oldest-to-newest indexed access into the ring. Main thread only.</summary>
@@ -277,19 +286,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
         private static void OnUnityLog(string condition, string stackTrace, LogType type)
         {
-#if UNITY_EDITOR && DEBUG
-            if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert) &&
-                (condition ?? "").Contains("CS0246"))
-            {
-                UnityEngine.Debug.LogWarning($"[ConsoleLogStore.OnUnityLog] Source=UnityLog Count={_count} CompilerMessagesCount={_compilerMessages.Count} ConditionHash={(condition ?? "").GetHashCode()} Condition='{condition}'");
-            }
-#endif
             // DebugX logs do not reach Unity's log system in the editor (the native relay is dropped),
             // so this feed only carries plain Debug.Log calls, uncaught exceptions and third-party logs.
-            // Skip messages already captured via the LogEntries mirror to avoid duplicates.
-            if (CaptureCompilerErrors && _compilerMessages.Contains(condition ?? string.Empty))
-                return;
-
+            // Whether this duplicates a row already mirrored via LogEntries is decided later, in Pump's
+            // drain loop (main thread only) against a freshly-refreshed _compilerMessages — not here,
+            // since this callback can run off the main thread and _compilerMessages is not thread-safe.
             var level = UnityTypeToLevel(type);
             var entry = new ConsoleEntry
             {
@@ -309,12 +310,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static void Pump()
         {
             bool changed = false;
-
-            while (_ingest.TryDequeue(out var entry))
-            {
-                Append(entry);
-                changed = true;
-            }
 
             if (CaptureCompilerErrors)
             {
@@ -344,18 +339,18 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         int write = 0;
                         for (int read = 0; read < _count; read++)
                         {
-                            var entry = _ring[(_head + read) % Capacity];
-                            bool match = entry != null &&
-                                compilerSet.Contains(entry.Message ?? string.Empty) &&
-                                entry.Source == ConsoleSource.Unity;
+                            var ringEntry = _ring[(_head + read) % Capacity];
+                            bool match = ringEntry != null &&
+                                compilerSet.Contains(ringEntry.Message ?? string.Empty) &&
+                                ringEntry.Source == ConsoleSource.Unity;
                             if (match)
                             {
-                                Decrement(entry.Category);
+                                Decrement(ringEntry.Category);
                                 removed++;
                                 continue;
                             }
                             if (write != read)
-                                _ring[(_head + write) % Capacity] = entry;
+                                _ring[(_head + write) % Capacity] = ringEntry;
                             write++;
                         }
                         for (int i = write; i < _count; i++)
@@ -380,6 +375,20 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 _logCount     -= _compilerLogCount;
                 _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
                 CompilerVersion++;
+                changed = true;
+            }
+
+            // Drain after refreshing the mirror above, so this tick's dedup check sees the freshest
+            // possible _compilerMessages — closes the race where a message reaches OnUnityLog before the
+            // native LogEntries mirror has caught up to it on the same tick.
+            while (_ingest.TryDequeue(out var entry))
+            {
+                if (CaptureCompilerErrors &&
+                    entry.Source == ConsoleSource.Unity &&
+                    _compilerMessages.Contains(entry.Message ?? string.Empty))
+                    continue;
+
+                Append(entry);
                 changed = true;
             }
 

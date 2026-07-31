@@ -11,8 +11,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// <see cref="UnityEngine.Application.logMessageReceived"/>, e.g. some shader/native logs).
     ///
     /// Severity follows Unity's <c>ConsoleWindow.GetIconForErrorMode</c> mode masks.
-    /// <see cref="ConsoleSource.Compiler"/> is reserved for script/import/graph compile flags;
-    /// all other rows are <see cref="ConsoleSource.Unity"/>.
+    /// <see cref="ConsoleSource.Compiler"/> is reserved for persistent, currently-present script/import/
+    /// graph compile ERRORS only. Compile warnings are intentionally NOT mirrored here at all — they
+    /// already reach the console via <see cref="UnityEngine.Application.logMessageReceivedThreaded"/>
+    /// (<see cref="ConsoleLogStore.OnUnityLog"/>), so mirroring them here too would just duplicate them
+    /// as an unevictable row. All other mirrored rows are <see cref="ConsoleSource.Unity"/>.
     ///
     /// Lives in the runtime assembly (editor-guarded) so <see cref="ConsoleLogStore"/> can call it —
     /// the runtime asmdef cannot reference the editor asmdef. Every member lookup is cached and
@@ -32,17 +35,25 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private const int ModeScriptingLog = 1 << 10;
         private const int ModeScriptCompileError = 1 << 11;
         private const int ModeScriptCompileWarning = 1 << 12;
+
+        // Unity's own "survives Clear / domain reload" bit. Not used for Compiler classification below —
+        // a real compile error already carries its own specific bit (CompileErrorMask), and "present" is
+        // guaranteed here regardless since this bridge polls the live native console every tick.
         private const int ModeStickyError = 1 << 13;
         private const int ModeScriptingException = 1 << 17;
         private const int ModeGraphCompileError = 1 << 20;
         private const int ModeScriptingAssertion = 1 << 21;
         private const int ModeVisualScriptingError = 1 << 22;
 
-        /// <summary>Script / asset-import / graph compile diagnostics (sticky Compiler source).</summary>
-        private const int CompileMask =
-            ModeAssetImportError | ModeAssetImportWarning |
-            ModeScriptCompileError | ModeScriptCompileWarning |
-            ModeGraphCompileError;
+        /// <summary>Script / asset-import / graph compile ERRORS only — the persistent Compiler source.</summary>
+        private const int CompileErrorMask =
+            ModeAssetImportError | ModeScriptCompileError | ModeGraphCompileError;
+
+        /// <summary>
+        /// Compile warnings: not classified as Compiler (not a blocker) and not mirrored at all — they
+        /// reach the console via <see cref="UnityEngine.Application.logMessageReceivedThreaded"/> instead.
+        /// </summary>
+        private const int CompileWarningMask = ModeAssetImportWarning | ModeScriptCompileWarning;
 
         // Matches ConsoleWindow.GetIconForErrorMode error branch (+ exception / visual-scripting).
         private const int ErrorMask =
@@ -68,7 +79,16 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static FieldInfo _fLine;
         private static FieldInfo _fMode;
 
-        private static int _lastSignature = -1;
+        // Change-detector snapshot of the last-seen native console content (mode + message per row, in
+        // order). A plain count/first-last hash misses mid-list changes (e.g. one sticky error replaced
+        // by another with the same total count); comparing every row is the only way to catch those, and
+        // is cheap since the reflection walk below already visits every row regardless.
+        private static readonly List<int> _prevModes = new List<int>();
+        private static readonly List<string> _prevMessages = new List<string>();
+        private static readonly List<int> _scratchModes = new List<int>();
+        private static readonly List<string> _scratchMessages = new List<string>();
+        private static readonly List<string> _scratchFiles = new List<string>();
+        private static readonly List<int> _scratchLines = new List<int>();
 
         /// <summary>
         /// Rebuilds <paramref name="target"/> from the current Editor Console rows if they
@@ -80,15 +100,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
             {
                 if (target.Count == 0) return false;
                 target.Clear();
-                _lastSignature = -1;
+                _prevModes.Clear();
+                _prevMessages.Clear();
                 return true;
             }
 
             int count;
             try { count = (int)_getCount.Invoke(null, null); }
             catch { return false; }
-
-            var previousCount = target.Count;
 
             try
             {
@@ -97,19 +116,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     var args = new object[2];
 
-                    // Change detector: count alone misses "one error replaced by another with the same
-                    // total", so fold the first and last entry messages into the signature.
-                    int signature = count;
-                    if (count > 0)
-                    {
-                        signature = unchecked(signature * 31 + HashEntryAt(args, 0));
-                        signature = unchecked(signature * 31 + HashEntryAt(args, count - 1));
-                    }
-                    if (signature == _lastSignature)
-                        return false;
-                    _lastSignature = signature;
+                    _scratchModes.Clear();
+                    _scratchMessages.Clear();
+                    _scratchFiles.Clear();
+                    _scratchLines.Clear();
 
-                    target.Clear();
                     for (int i = 0; i < count; i++)
                     {
                         args[0] = i;
@@ -128,9 +139,28 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         string file = _fFile != null ? _fFile.GetValue(_entryInstance) as string : null;
                         int line = _fLine != null ? Convert.ToInt32(_fLine.GetValue(_entryInstance)) : 0;
 
-                        bool isCompiler = (mode & CompileMask) != 0 || (mode & ModeStickyError) != 0;
+                        _scratchModes.Add(mode);
+                        _scratchMessages.Add(message);
+                        _scratchFiles.Add(file);
+                        _scratchLines.Add(line);
+                    }
+
+                    if (!ContentChanged())
+                        return false;
+
+                    target.Clear();
+                    for (int i = 0; i < _scratchModes.Count; i++)
+                    {
+                        int mode = _scratchModes[i];
+                        string message = _scratchMessages[i];
+
+                        bool isCompilerError = (mode & CompileErrorMask) != 0;
+                        bool isDeclassifiedWarning = !isCompilerError && (mode & CompileWarningMask) != 0;
+                        if (isDeclassifiedWarning)
+                            continue; // reaches the console via Application.logMessageReceivedThreaded instead
+
                         var level = LevelFromMode(mode, message);
-                        var source = isCompiler ? ConsoleSource.Compiler : ConsoleSource.Unity;
+                        var source = isCompilerError ? ConsoleSource.Compiler : ConsoleSource.Unity;
 
                         target.Add(new ConsoleEntry
                         {
@@ -138,13 +168,21 @@ namespace AetherNexus.FoundationPlatform.DebugX
                             Timestamp = DateTime.Now,
                             Level = level,
                             Source = source,
-                            Channel = isCompiler ? "Compiler" : null,
+                            Channel = isCompilerError ? "Compiler" : null,
                             Message = message,
-                            CallerFilePath = file,
-                            CallerLineNumber = line,
-                            CollapseKey = (isCompiler ? "C|" : "U|") + mode + "|" + message
+                            CallerFilePath = _scratchFiles[i],
+                            CallerLineNumber = _scratchLines[i],
+                            CollapseKey = (isCompilerError ? "C|" : "U|") + mode + "|" + message
                         });
                     }
+
+                    // Commit the scratch snapshot as the new "previous" for next call's comparison.
+                    // Clear+AddRange reuses each list's backing array once capacity settles, so this
+                    // does not allocate on steady-state ticks.
+                    _prevModes.Clear();
+                    _prevModes.AddRange(_scratchModes);
+                    _prevMessages.Clear();
+                    _prevMessages.AddRange(_scratchMessages);
                 }
                 finally
                 {
@@ -158,7 +196,19 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 _resolved = true;
             }
 
-            return target.Count != previousCount || target.Count > 0;
+            return true;
+        }
+
+        /// <summary>True when the current scratch snapshot differs from the last-committed one.</summary>
+        private static bool ContentChanged()
+        {
+            if (_scratchModes.Count != _prevModes.Count) return true;
+            for (int i = 0; i < _scratchModes.Count; i++)
+            {
+                if (_scratchModes[i] != _prevModes[i]) return true;
+                if (!string.Equals(_scratchMessages[i], _prevMessages[i], StringComparison.Ordinal)) return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -192,20 +242,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
             return message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>Hash of the message at the given LogEntries index (0 on any failure). Call between Start/EndGettingEntries.</summary>
-        private static int HashEntryAt(object[] args, int index)
-        {
-            try
-            {
-                args[0] = index;
-                args[1] = _entryInstance;
-                if (!(bool)_getEntryInternal.Invoke(null, args)) return 0;
-                var message = _fMessage != null ? _fMessage.GetValue(_entryInstance) as string : null;
-                return message != null ? message.GetHashCode() : 0;
-            }
-            catch { return 0; }
-        }
-
         /// <summary>
         /// Clears the native Unity Editor Console logs.
         /// </summary>
@@ -215,7 +251,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
             try
             {
                 _clear?.Invoke(null, null);
-                _lastSignature = -1;
+                _prevModes.Clear();
+                _prevMessages.Clear();
             }
             catch
             {

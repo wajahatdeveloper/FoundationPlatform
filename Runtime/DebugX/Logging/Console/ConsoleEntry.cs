@@ -5,8 +5,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Where a console row originated. DebugX = structured pipeline, Unity = plain Debug.Log /
-    /// exceptions / third-party / mirrored Editor Console rows, Compiler = sticky script/import/graph
-    /// compile diagnostics from UnityEditor.LogEntries.
+    /// exceptions / third-party / mirrored Editor Console rows (including compile warnings), Compiler =
+    /// persistent, currently-present script/import/graph compile ERRORS only, mirrored live from
+    /// UnityEditor.LogEntries. Compile warnings are not blockers, so they are Unity-sourced and behave
+    /// like any other clearable/evictable log row rather than being pinned to the Compiler channel.
     /// </summary>
     public enum ConsoleSource
     {
