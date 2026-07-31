@@ -6,9 +6,10 @@ namespace ProjectWindowX {
     internal static class FileExtensionLabels {
 
         private const float MinRowWidth = 128f;
+        private const float Padding = 4f;
         private static GUIStyle style;
 
-        internal static void Draw(ProjectWindowX.RowContext ctx, Rect rect, float rightInset) {
+        internal static void Draw(ProjectWindowX.RowContext ctx, Rect rect, ref float rightInset) {
             if (Event.current.type != EventType.Repaint)
                 return;
             if (string.IsNullOrEmpty(ctx.extension) || rect.width < MinRowWidth)
@@ -23,9 +24,15 @@ namespace ProjectWindowX {
                     : new Color(0f, 0f, 0f, 0.35f);
             }
 
+            var width = style.CalcSize(new GUIContent(ctx.extension)).x;
+
             var label = rect;
-            label.xMax -= rightInset + 4f;
+            label.xMax -= rightInset + Padding;
+            label.xMin = label.xMax - width;
             GUI.Label(label, ctx.extension, style);
+
+            // Reserve the space we just drew into so later passes (badges/chips) land to our left.
+            rightInset += width + Padding;
         }
     }
 }
