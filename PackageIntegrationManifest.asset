@@ -61,12 +61,16 @@ MonoBehaviour:
     AuthoringTier: 2
     StructuredPatterns:
     - ConcretePrefix: Assets/Data/Global/Authoring
-      Tokens: []
+      Tokens:
+      - Kind: 2
+        Literal:
   - TypeScript: {fileID: 11500000, guid: 86b3f2ba540e9fa45849d617ce311d33, type: 3}
     AuthoringTier: 2
     StructuredPatterns:
     - ConcretePrefix: Assets/Data/Global/Authoring
-      Tokens: []
+      Tokens:
+      - Kind: 2
+        Literal:
   - TypeScript: {fileID: 11500000, guid: 5021efff9a0202f4abd81765a55e6137, type: 3}
     AuthoringTier: 0
     StructuredPatterns:

@@ -247,6 +247,10 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string PlayerCreateSimplePawn          = GameObject + "Domain/Player/Simple Pawn";
 			public const string PlayerCreatePlayerStart         = GameObject + "Domain/Player/Player Start";
 
+			/// <summary>Assets/* and GameObject/Domain/Level/* — one-click LevelDefinition authoring for the GameObject loader kind.</summary>
+			public const string LevelCreateForPrefab            = Assets + "Create Level For This Prefab";
+			public const string LevelCreateForInSceneRoot       = GameObject + "Domain/Level/Create Level For This GameObject";
+
 			/// <summary>Tools/Domain/Input/* — input provision authoring.</summary>
 			public const string InputCreateCharacterProvision     = Root + "Input/Create Character Input Provision";
 			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Provision";
