@@ -74,7 +74,6 @@ MonoBehaviour:
       Tokens:
       - Kind: 3
         Literal: 
-  requiredProjectFolders: []
   productAssemblyScaffold:
     Enabled: 0
     AsmdefAssetPath: 
