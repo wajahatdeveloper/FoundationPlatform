@@ -153,8 +153,6 @@ namespace HierarchyX {
             using (new EditorGUI.DisabledScope(!panelEnabled.boolValue)) {
                 EditorGUILayout.PropertyField(serialized.FindProperty("panelCollapsed"), new GUIContent("Start Collapsed"));
                 EditorGUILayout.PropertyField(serialized.FindProperty("panelStatusChips"), new GUIContent("Show Status Chips"));
-                var height = serialized.FindProperty("panelHeight");
-                height.floatValue = EditorGUILayout.Slider("Expanded Height", height.floatValue, 80f, 600f);
             }
             if (!HierarchyPanelHost.DockingSupported)
                 EditorGUILayout.HelpBox(

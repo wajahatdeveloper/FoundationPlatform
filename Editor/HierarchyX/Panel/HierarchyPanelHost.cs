@@ -6,9 +6,12 @@ using UnityEngine.UIElements;
 namespace HierarchyX {
 
     /// <summary>
-    /// Docks a resizable / collapsible setup panel to the bottom of Unity's built-in Hierarchy
+    /// Docks a collapsible, self-sizing setup panel to the bottom of Unity's built-in Hierarchy
     /// window. Sections are contributed by plugins via <see cref="IHierarchyPanelSection"/> and
-    /// rendered by <see cref="HierarchyPanelWidgets.DrawSections"/>.
+    /// rendered accordion-style (at most one expanded at a time) by
+    /// <see cref="HierarchyPanelWidgets.DrawSections"/>; the footer's height auto-fits whichever
+    /// section is currently open, clamped to <see cref="MinHeight"/>/<see cref="MaxHeight"/> (beyond
+    /// which the section scrolls instead of growing further).
     ///
     /// Mechanism: reflect the internal <c>UnityEditor.SceneHierarchyWindow</c> type, then append a
     /// single <see cref="IMGUIContainer"/> footer to its public <c>rootVisualElement</c>. This is the
@@ -24,7 +27,6 @@ namespace HierarchyX {
         internal const float MinHeight = 80f;
         internal const float MaxHeight = 600f;
         internal const float CollapsedHeight = 20f;
-        private const float ResizeHandleHeight = 4f;
         private const double PollInterval = 0.4;
 
         private static readonly Type SceneHierarchyWindowType =
@@ -33,6 +35,12 @@ namespace HierarchyX {
         private static double nextPoll;
         private static bool warnedUnsupported;
         private static Vector2 scroll;
+
+        /// <summary>
+        /// Last-applied expanded footer height — the auto-fit result, not a user preference. Seeded
+        /// with <see cref="MinHeight"/> until the first Repaint measures real content.
+        /// </summary>
+        private static float measuredHeight = MinHeight;
 
         static HierarchyPanelHost() {
             EditorApplication.update += Poll;
@@ -136,9 +144,7 @@ namespace HierarchyX {
                 root.Add(footer);
             }
 
-            var h = settings.panelCollapsed
-                ? CollapsedHeight
-                : Mathf.Clamp(settings.panelHeight, MinHeight, MaxHeight);
+            var h = settings.panelCollapsed ? CollapsedHeight : measuredHeight;
             footer.style.height = h;
             ReserveSpace(root, footer, h);
         }
@@ -187,7 +193,6 @@ namespace HierarchyX {
         private static void DrawFooter(IMGUIContainer footer) {
             var settings = HierarchyXSettings.Instance;
             var w = footer.contentRect.width;
-            var h = footer.contentRect.height;
             var collapsed = settings.panelCollapsed;
 
             if (collapsed) {
@@ -204,71 +209,39 @@ namespace HierarchyX {
                 return;
             }
 
-            DrawResizeHandle(footer, settings, new Rect(0f, 0f, w, ResizeHandleHeight));
-            var y = ResizeHandleHeight;
-
-            GUILayout.BeginArea(new Rect(0f, y, w, HeaderHeight));
+            // No fixed-height BeginArea here: the footer's height is derived FROM this content
+            // (measured below), not the other way around, so everything below stacks naturally.
+            EditorGUILayout.BeginVertical();
             DrawHeaderBar(settings, footer);
-            GUILayout.EndArea();
-            y += HeaderHeight;
 
             var statusBar = settings.panelStatusChips ? StatusBarHeight : 0f;
-            var bodyHeight = h - y - statusBar;
-            if (bodyHeight > 1f) {
-                GUILayout.BeginArea(new Rect(0f, y, w, bodyHeight));
-                HierarchyPanelWidgets.DrawSections(ref scroll);
-                GUILayout.EndArea();
-            }
+            var sectionsBudget = MaxHeight - HeaderHeight - statusBar;
+            HierarchyPanelWidgets.DrawSections(ref scroll, sectionsBudget);
 
-            if (settings.panelStatusChips) {
-                GUILayout.BeginArea(new Rect(0f, h - StatusBarHeight, w, StatusBarHeight));
+            if (settings.panelStatusChips)
                 HierarchyPanelWidgets.DrawStatusBar();
-                GUILayout.EndArea();
+            EditorGUILayout.EndVertical();
+
+            if (Event.current.type == EventType.Repaint) {
+                var desired = Mathf.Clamp(GUILayoutUtility.GetLastRect().height, MinHeight, MaxHeight);
+                if (!Mathf.Approximately(desired, measuredHeight)) {
+                    measuredHeight = desired;
+                    footer.style.height = desired;
+                    if (footer.parent != null)
+                        ReserveSpace(footer.parent, footer, desired);
+                    footer.MarkDirtyRepaint();
+                }
             }
         }
 
         private static void SetCollapsed(IMGUIContainer footer, HierarchyXSettings settings, bool collapsed) {
             settings.panelCollapsed = collapsed;
             settings.Save();
-            var h = collapsed ? CollapsedHeight : Mathf.Clamp(settings.panelHeight, MinHeight, MaxHeight);
+            var h = collapsed ? CollapsedHeight : measuredHeight;
             footer.style.height = h;
             if (footer.parent != null)
                 ReserveSpace(footer.parent, footer, h);
             footer.MarkDirtyRepaint();
-        }
-
-        private static void DrawResizeHandle(IMGUIContainer footer, HierarchyXSettings settings, Rect handleRect) {
-            EditorGUI.DrawRect(handleRect, new Color(1f, 1f, 1f, 0.06f));
-            EditorGUIUtility.AddCursorRect(handleRect, MouseCursor.ResizeVertical);
-
-            var id = GUIUtility.GetControlID(FocusType.Passive);
-            var e = Event.current;
-            switch (e.GetTypeForControl(id)) {
-                case EventType.MouseDown:
-                    if (handleRect.Contains(e.mousePosition)) {
-                        GUIUtility.hotControl = id;
-                        e.Use();
-                    }
-                    break;
-                case EventType.MouseDrag:
-                    if (GUIUtility.hotControl == id) {
-                        // Dragging up (negative delta) grows the panel.
-                        settings.panelHeight = Mathf.Clamp(settings.panelHeight - e.delta.y, MinHeight, MaxHeight);
-                        footer.style.height = settings.panelHeight;
-                        if (footer.parent != null)
-                            ReserveSpace(footer.parent, footer, settings.panelHeight);
-                        footer.MarkDirtyRepaint();
-                        e.Use();
-                    }
-                    break;
-                case EventType.MouseUp:
-                    if (GUIUtility.hotControl == id) {
-                        GUIUtility.hotControl = 0;
-                        settings.Save();
-                        e.Use();
-                    }
-                    break;
-            }
         }
 
         private static void DrawHeaderBar(HierarchyXSettings settings, IMGUIContainer footer) {
@@ -279,7 +252,6 @@ namespace HierarchyX {
 
             GUILayout.FlexibleSpace();
 
-            HierarchyPanelWidgets.DrawToolbarActions();
             if (GUILayout.Button(new GUIContent("⛶", "Open as window"), EditorStyles.toolbarButton, GUILayout.Width(22f)))
                 HierarchyPanelWindow.Open();
             if (GUILayout.Button(new GUIContent("⚙", "Settings"), EditorStyles.toolbarButton, GUILayout.Width(22f)))

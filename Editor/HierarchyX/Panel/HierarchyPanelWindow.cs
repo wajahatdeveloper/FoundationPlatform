@@ -8,6 +8,11 @@ namespace HierarchyX {
     /// renders. Always available from the menu; the automatic path is the docked footer
     /// (<see cref="HierarchyPanelHost"/>), and this window is what you dock manually next to the
     /// Hierarchy if the footer can't be injected on your Unity version.
+    ///
+    /// Height auto-fits the currently expanded accordion section (see
+    /// <see cref="HierarchyPanelWidgets.DrawSections"/>), clamped to the same
+    /// <see cref="HierarchyPanelHost.MinHeight"/>/<see cref="HierarchyPanelHost.MaxHeight"/> bounds as
+    /// the docked footer — beyond that the section scrolls instead of growing the window further.
     /// </summary>
     public sealed class HierarchyPanelWindow : EditorWindow {
 
@@ -19,7 +24,8 @@ namespace HierarchyX {
         public static void Open() {
             var window = GetWindow<HierarchyPanelWindow>();
             window.titleContent = new GUIContent("Setup Panel");
-            window.minSize = new Vector2(240f, 120f);
+            window.minSize = new Vector2(240f, HierarchyPanelHost.MinHeight);
+            window.maxSize = new Vector2(4096f, HierarchyPanelHost.MaxHeight);
             window.Show();
         }
 
@@ -39,28 +45,32 @@ namespace HierarchyX {
         private const float StatusBarHeight = 20f;
 
         private void OnGUI() {
-            var w = position.width;
-            var h = position.height;
+            var settings = HierarchyXSettings.Instance;
 
-            GUILayout.BeginArea(new Rect(0f, 0f, w, HeaderHeight));
+            EditorGUILayout.BeginVertical();
             GUILayout.BeginHorizontal(EditorStyles.toolbar);
             GUILayout.FlexibleSpace();
-            HierarchyPanelWidgets.DrawToolbarActions();
             if (GUILayout.Button(new GUIContent("⚙", "Settings"), EditorStyles.toolbarButton, GUILayout.Width(22f)))
                 SettingsService.OpenProjectSettings("Project/HierarchyX");
             GUILayout.EndHorizontal();
-            GUILayout.EndArea();
 
-            var bodyHeight = h - HeaderHeight - StatusBarHeight;
-            if (bodyHeight > 1f) {
-                GUILayout.BeginArea(new Rect(0f, HeaderHeight, w, bodyHeight));
-                HierarchyPanelWidgets.DrawSections(ref scroll);
-                GUILayout.EndArea();
+            var statusBar = settings.panelStatusChips ? StatusBarHeight : 0f;
+            var sectionsBudget = HierarchyPanelHost.MaxHeight - HeaderHeight - statusBar;
+            HierarchyPanelWidgets.DrawSections(ref scroll, sectionsBudget);
+
+            if (settings.panelStatusChips)
+                HierarchyPanelWidgets.DrawStatusBar();
+            EditorGUILayout.EndVertical();
+
+            if (Event.current.type == EventType.Repaint) {
+                var desired = Mathf.Clamp(GUILayoutUtility.GetLastRect().height,
+                    HierarchyPanelHost.MinHeight, HierarchyPanelHost.MaxHeight);
+                if (!Mathf.Approximately(desired, position.height)) {
+                    var p = position;
+                    p.height = desired;
+                    position = p;
+                }
             }
-
-            GUILayout.BeginArea(new Rect(0f, h - StatusBarHeight, w, StatusBarHeight));
-            HierarchyPanelWidgets.DrawStatusBar();
-            GUILayout.EndArea();
         }
     }
 }

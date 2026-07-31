@@ -98,15 +98,13 @@ namespace HierarchyX {
         [Range(0f, 1f)] [Tooltip("Opacity of a chip's fill background.")]
         public float badgeBackgroundOpacity = 0.18f;
 
-        [Tooltip("Dock a collapsible setup/status panel to the bottom of the Hierarchy window. Sections are contributed by IHierarchyPanelSection plugins (e.g. Scene Setup).")]
+        [Tooltip("Dock a collapsible setup/status panel to the bottom of the Hierarchy window. Sections are contributed by IHierarchyPanelSection plugins (e.g. Scene Setup). The panel auto-sizes to fit whichever section is expanded.")]
         public bool panelEnabled = true;
-        [Tooltip("Height of the docked panel in pixels when expanded.")]
-        public float panelHeight = 200f;
         [Tooltip("Whether the docked panel is currently collapsed to its header bar.")]
         public bool panelCollapsed = false;
         [Tooltip("Show the aggregated section status chips in the panel status bar / collapsed strip.")]
         public bool panelStatusChips = false;
-        [Tooltip("Section ids that are currently collapsed within the panel (state persistence).")]
+        [Tooltip("Accordion state: section ids that are currently collapsed (at most one section is ever expanded at a time).")]
         public List<string> panelCollapsedSections = new List<string>();
 
         [Tooltip("Replace the generic GameObject icon with the icon of the row's most distinctive component. Prefab roots keep the prefab icon.")]
