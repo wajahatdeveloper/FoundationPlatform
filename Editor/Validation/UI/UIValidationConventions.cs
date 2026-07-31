@@ -20,6 +20,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         internal const string UserScriptsUiRoot = "Assets/Scripts/UI";
         internal const string UserScriptsDomainsUiRoot = "Assets/Scripts/DomainScripts/UI";
         internal const string UserScriptsDomainsUiOrchestration = "Assets/Scripts/DomainScripts/UI/Orchestration";
+        internal const string UserScriptsScenesRoot = "Assets/Scripts/Scenes";
         internal const string UserDataUiRoot = "Assets/Data/UI";
 
         internal static readonly string[] UserScriptLayerFolders =
@@ -28,7 +29,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             "Assets/Scripts/UI/Widgets",
             "Assets/Scripts/UI/Panels",
             "Assets/Scripts/UI/Orchestration",
-            UserScriptsDomainsUiOrchestration
+            UserScriptsDomainsUiOrchestration,
+            UserScriptsScenesRoot
         };
 
         internal static readonly string[] UserPrefabLayerFolders =
@@ -70,12 +72,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             { UILayer.UIElement, new[] { "View" } },
             { UILayer.Widget, new[] { "Widget" } },
             { UILayer.Panel, new[] { "Panel" } },
-            { UILayer.Orchestration, new[] { "UIManager", "Presenter", "Screen" } }
+            { UILayer.Orchestration, new[] { "UIManager", "Presenter", "Screen", "Flow", "View" } }
         };
 
         internal static bool IsUserUiScriptRoot(string path)
         {
-            return IsPathUnder(path, UserScriptsUiRoot) || IsPathUnder(path, UserScriptsDomainsUiRoot);
+            return IsPathUnder(path, UserScriptsUiRoot)
+                   || IsPathUnder(path, UserScriptsDomainsUiRoot)
+                   || IsPathUnder(path, UserScriptsScenesRoot);
         }
 
         internal static bool IsCandidateUiPath(string path)
@@ -139,6 +143,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             }
 
             if (IsPathUnder(path, UserScriptsDomainsUiOrchestration))
+                return UILayer.Orchestration;
+
+            if (IsPathUnder(path, UserScriptsScenesRoot))
                 return UILayer.Orchestration;
 
             foreach (KeyValuePair<UILayer, string> kv in PrefabLayerFolderByLayer)
