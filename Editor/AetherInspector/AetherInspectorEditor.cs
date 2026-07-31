@@ -1996,7 +1996,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
                     var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                     var rect = EditorGUILayout.GetControlRect();
-                    var foldRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height);
+                    // HeaderRect cancels the hierarchyMode pull when this field sits inside a
+                    // [BoxGroup]/[FoldoutGroup]/etc. — otherwise the arrow hangs left of the container.
+                    var foldRect = AetherInspectorTheme.HeaderRect(
+                        new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height));
                     expanded = EditorGUI.Foldout(foldRect, expanded, lbl, true);
                     var fieldRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y,
                         rect.width - EditorGUIUtility.labelWidth, rect.height);
@@ -2018,7 +2021,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         }
                         else
                         {
-                            expanded = EditorGUILayout.Foldout(expanded, TempContent("Nested Inspector"), true);
+                            var boxedFoldRect = AetherInspectorTheme.HeaderRect(
+                                EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight));
+                            expanded = EditorGUI.Foldout(boxedFoldRect, expanded, TempContent("Nested Inspector"), true);
                         }
                         foldouts[foldKey] = expanded;
                     }
