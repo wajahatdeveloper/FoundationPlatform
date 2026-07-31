@@ -66,27 +66,27 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             if (count == 0)
             {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.LabelField("(empty)", EditorStyles.miniLabel);
-                EditorGUI.indentLevel--;
+                using (new AetherInspectorTheme.NestedIndentScope())
+                    EditorGUILayout.LabelField("(empty)", EditorStyles.miniLabel);
                 return;
             }
 
-            EditorGUI.indentLevel++;
-            DrawHeaderRow(keyLabel, valueLabel, keyW, valueW);
-
-            int row = 0;
-            foreach (DictionaryEntry entry in dict)
+            using (new AetherInspectorTheme.NestedIndentScope())
             {
-                float rowH = AetherInspectorTheme.RowHeight;
-                var rect = EditorGUILayout.GetControlRect(false, rowH);
-                EditorGUI.DrawRect(rect, (row & 1) == 0
-                    ? AetherInspectorTheme.TableRowBackgroundA
-                    : AetherInspectorTheme.TableRowBackgroundB);
-                DrawEntryRow(rect, entry.Key, entry.Value, keyW, valueW, readOnly);
-                row++;
+                DrawHeaderRow(keyLabel, valueLabel, keyW, valueW);
+
+                int row = 0;
+                foreach (DictionaryEntry entry in dict)
+                {
+                    float rowH = AetherInspectorTheme.RowHeight;
+                    var rect = EditorGUILayout.GetControlRect(false, rowH);
+                    EditorGUI.DrawRect(rect, (row & 1) == 0
+                        ? AetherInspectorTheme.TableRowBackgroundA
+                        : AetherInspectorTheme.TableRowBackgroundB);
+                    DrawEntryRow(rect, entry.Key, entry.Value, keyW, valueW, readOnly);
+                    row++;
+                }
             }
-            EditorGUI.indentLevel--;
         }
 
         private static void DrawHeaderRow(string keyLabel, string valueLabel, float keyW, float valueW)

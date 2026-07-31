@@ -60,16 +60,19 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             bool headerless = IsHeaderless(label);
             float y = position.y;
-            int indent = EditorGUI.indentLevel;
 
             if (!headerless)
             {
-                var header = new Rect(position.x, position.y, position.width, Line);
+                var header = AetherInspectorTheme.HeaderRect(new Rect(position.x, position.y, position.width, Line));
                 property.isExpanded = EditorGUI.Foldout(header, property.isExpanded, ResolveElementLabel(inst, label), true, AetherInspectorTheme.FlatFoldoutStyle);
                 if (!property.isExpanded) return;
                 y = header.yMax;
-                EditorGUI.indentLevel = indent + 1; // children indented under the header
             }
+
+            // Manual offset (not EditorGUI.indentLevel, which steps a fixed ~15px) so children line up
+            // with the rest of the engine's compact per-level indent.
+            float childX = headerless ? position.x : position.x + AetherInspectorTheme.NestedIndentWidth;
+            float childWidth = headerless ? position.width : position.width - AetherInspectorTheme.NestedIndentWidth;
 
             Type t = inst.GetType();
 
@@ -80,18 +83,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 float ch = EditorGUI.GetPropertyHeight(child, true);
                 bool enabled = f == null || IsFieldEnabled(f, inst);
                 using (new EditorGUI.DisabledScope(!enabled))
-                    EditorGUI.PropertyField(new Rect(position.x, y + Pad, position.width, ch), child, true);
+                    EditorGUI.PropertyField(new Rect(childX, y + Pad, childWidth, ch), child, true);
                 y += Pad + ch;
             }
 
             foreach (var m in ExtraMembers(t))
             {
                 float mh = ExtraHeight(m, inst);
-                DrawExtra(new Rect(position.x, y + Pad, position.width, mh), m, inst);
+                DrawExtra(new Rect(childX, y + Pad, childWidth, mh), m, inst);
                 y += Pad + mh;
             }
-
-            EditorGUI.indentLevel = indent;
         }
 
         // ---- serialized children -----------------------------------------------

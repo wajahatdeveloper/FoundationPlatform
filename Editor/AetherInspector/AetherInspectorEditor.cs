@@ -127,6 +127,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             s_initDone.Clear();
             InspectorMemberResolver.ClearCache();
             AetherInspectorTheme.InvalidateSkinCache();
+            AetherInspectorTheme.ResetContainerDepth();
         }
 
         [MenuItem(MenuPaths.ContextComponent.ForceRebuildInspectorCache)]
@@ -958,7 +959,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 case GroupKind.Box:
                 {
                     EditorGUILayout.Space(AetherInspectorTheme.HeaderSpacing);
-                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    using (new AetherInspectorTheme.ContainerScope())
                     {
                         if (g.ShowLabel)
                         {
@@ -990,7 +991,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     bool indent = t != null && t.Indent;
                     if (indent)
                     {
-                        using (new EditorGUI.IndentLevelScope())
+                        using (new AetherInspectorTheme.NestedGroupScope())
                             RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
                     }
                     else RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
@@ -1005,8 +1006,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     if (expanded)
                     {
                         AetherInspectorTheme.BeginSectionFoldoutBody();
-                        RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
-                        AetherInspectorTheme.EndSectionFoldoutBody();
+                        try
+                        {
+                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        }
+                        finally
+                        {
+                            AetherInspectorTheme.EndSectionFoldoutBody();
+                        }
                     }
                     break;
                 }
@@ -1151,7 +1158,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             bool hideBar = pages.Count == 1 && g.Tab != null && g.Tab.HideTabGroupIfTabGroupOnlyHasOneTab;
             bool paddingless = g.Tab != null && g.Tab.Paddingless;
 
-            using (EditorGUILayout.VerticalScope scope = paddingless ? null : new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (AetherInspectorTheme.ContainerScope scope = paddingless ? null : new AetherInspectorTheme.ContainerScope())
             {
                 if (!paddingless) EditorGUILayout.Space(AetherInspectorTheme.SectionSpacing * 0.5f);
                 int active = 0;
@@ -1198,7 +1205,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             string title = attr?.GroupTitle ?? ObjectNames.NicifyVariableName(toggleMember);
             title = InspectorMemberResolver.ResolveString(targets[0], title);
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new AetherInspectorTheme.ContainerScope())
             {
                 var prevMixed = EditorGUI.showMixedValue;
                 if (mixed) EditorGUI.showMixedValue = true;
@@ -1213,7 +1220,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
                 if (on)
                 {
-                    using (new EditorGUI.IndentLevelScope())
+                    using (new AetherInspectorTheme.NestedIndentScope())
                     {
                         foreach (var child in g.Children)
                         {
@@ -2036,13 +2043,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
             if (ed == null) return;
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new AetherInspectorTheme.ContainerScope())
             {
                 if (ie.DrawHeader) ed.DrawHeader();
                 if (ie.DrawGUI)
                 {
-                    // Nested editor's own OnInspectorGUI() is third-party/unknown code; the VerticalScope
-                    // above still guarantees this box closes even if it throws.
+                    // Nested editor's own OnInspectorGUI() is third-party/unknown code; the ContainerScope
+                    // above still guarantees this box closes (and the depth pops) even if it throws.
                     using (new EditorGUI.IndentLevelScope())
                         ed.OnInspectorGUI();
                 }
@@ -2129,13 +2136,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 // Collapsible foldout header; skip the body when collapsed.
                 // Foldout alone toggles; a second MouseDown flip would cancel expand.
-                e.Property.isExpanded = EditorGUILayout.Foldout(e.Property.isExpanded,
+                // Rect-based (not EditorGUILayout.Foldout) so HeaderRect can cancel the hierarchyMode
+                // pull when this sits right of a list row's "≡" drag handle (NestedGroupScope) or any
+                // other declared container — otherwise the arrow creeps left into reserved space.
+                var headerRect = AetherInspectorTheme.HeaderRect(
+                    EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight));
+                e.Property.isExpanded = EditorGUI.Foldout(headerRect, e.Property.isExpanded,
                     lbl ?? TempContent(e.Property.displayName), true, AetherInspectorTheme.FlatFoldoutStyle);
                 if (!e.Property.isExpanded) return;
                 indent = true;
             }
 
-            if (indent) EditorGUI.indentLevel++;
+            AetherInspectorTheme.NestedGroupScope indentScope = indent ? new AetherInspectorTheme.NestedGroupScope() : null;
             try
             {
                 var nestedMeta = GetOrCreateMetadata(nestedTargets[0].GetType());
@@ -2158,7 +2170,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 foreach (var child in ChildProperties(e.Property))
                     EditorGUILayout.PropertyField(child, true);
             }
-            if (indent) EditorGUI.indentLevel--;
+            finally
+            {
+                indentScope?.Dispose();
+            }
         }
 
         // Cached: does the type declare ANY AetherNexus.FoundationPlatform.AetherInspector attribute
@@ -2743,7 +2758,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 s_buttonParams[key] = st;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (GuiKit.Container())
             {
                 EditorGUILayout.LabelField(content, AetherInspectorTheme.SectionTitle);
                 for (int i = 0; i < ps.Length; i++)

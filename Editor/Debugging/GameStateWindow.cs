@@ -165,7 +165,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				return;
 			}
 
-			using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+			using (GuiKit.Container())
 			{
 				EditorGUILayout.LabelField(section.Title, EditorStyles.boldLabel);
 

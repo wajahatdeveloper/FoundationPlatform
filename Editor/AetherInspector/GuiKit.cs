@@ -14,6 +14,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         public static void EndBox() => AetherInspectorTheme.EndBox();
 
+        /// <summary>
+        /// helpBox container for inspector content. Prefer this over
+        /// <c>new EditorGUILayout.VerticalScope(EditorStyles.helpBox)</c>: it also declares the nesting,
+        /// so <c>[FoldoutGroup]</c> / section headers drawn inside stay within the box instead of hanging
+        /// over its left border. See <see cref="AetherInspectorTheme.ContainerScope"/>.
+        /// </summary>
+        public static AetherInspectorTheme.ContainerScope Container(GUIStyle style = null,
+            params GUILayoutOption[] options)
+            => new AetherInspectorTheme.ContainerScope(style, options);
+
         public static void BeginBoxHeader() => AetherInspectorTheme.BeginBoxHeader();
 
         public static void EndBoxHeader() => AetherInspectorTheme.EndBoxHeader();

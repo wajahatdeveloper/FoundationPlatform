@@ -526,12 +526,140 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUILayout.Space(2f);
         }
 
+        // --- Container tracking ----------------------------------------------------------
+        // EditorGUI.Foldout widens the rect it is handed leftwards while EditorGUIUtility.hierarchyMode
+        // is on (always, inside an Inspector window) so root-level arrows hug the window edge while the
+        // label still aligns with field labels. Inside a padded container the pull is bigger than the
+        // padding, so the arrow lands on/outside the container border. Section headers therefore cancel
+        // the pull whenever they are nested — containers declare themselves via ContainerScope.
+
+        private static int s_containerDepth;
+
+        /// <summary>
+        /// Leftward pull <see cref="EditorGUI.Foldout(Rect,bool,GUIContent,bool,GUIStyle)"/> applies to
+        /// the rect it is given. Mirrors Unity's internal expression; naturally 0 outside
+        /// <see cref="EditorGUIUtility.hierarchyMode"/>, so EditorWindow call sites are unaffected.
+        /// </summary>
+        internal static float FoldoutHangOffset => EditorGUIUtility.hierarchyMode
+            ? (int)(EditorStyles.foldout.padding.left - EditorStyles.label.padding.left)
+            : 0f;
+
+        /// <summary>Nesting depth of declared padded containers. 0 = inspector/window root.</summary>
+        internal static int ContainerDepth => s_containerDepth;
+
+        internal static void PushContainer() => s_containerDepth++;
+
+        internal static void PopContainer()
+        {
+            if (s_containerDepth > 0) s_containerDepth--;
+        }
+
+        /// <summary>Domain-reload safety net; scopes are IDisposable so they balance on their own.</summary>
+        internal static void ResetContainerDepth() => s_containerDepth = 0;
+
+        /// <summary>
+        /// Adjusts a layout rect before handing it to <c>EditorGUI.Foldout</c>: inside a declared
+        /// container the hierarchyMode pull is cancelled so the header stays in bounds; at root the
+        /// rect passes through unchanged and keeps Unity's flush-to-the-edge arrow.
+        /// </summary>
+        internal static Rect HeaderRect(Rect rect)
+        {
+            if (s_containerDepth > 0) rect.xMin += FoldoutHangOffset;
+            return rect;
+        }
+
+        /// <summary>x the foldout arrow of <see cref="HeaderRect"/> actually lands at, for aligned chrome.</summary>
+        internal static float HeaderArrowX(Rect rect)
+            => s_containerDepth > 0 ? rect.x : rect.x - FoldoutHangOffset;
+
+        /// <summary>
+        /// Horizontal indent applied per nesting level of engine-drawn content (foldout/toggle/title
+        /// bodies, list/dictionary rows, nested objects) — deliberately smaller than Unity's fixed
+        /// ~15px <see cref="EditorGUI.indentLevel"/> step so deep nesting stays compact.
+        /// </summary>
+        public const float NestedIndentWidth = 8f;
+
+        /// <summary>
+        /// Compact nested-content indent: reserves <see cref="NestedIndentWidth"/> px via layout
+        /// instead of Unity's fixed-width <see cref="EditorGUI.IndentLevelScope"/>. Purely cosmetic —
+        /// does not affect <see cref="ContainerDepth"/>. Use <see cref="NestedGroupScope"/> instead for
+        /// a chrome-free boundary (foldout/title body, inline recursion) that should also count as
+        /// nested for header pull-cancel / rule-gating purposes.
+        /// </summary>
+        public sealed class NestedIndentScope : IDisposable
+        {
+            public NestedIndentScope()
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(NestedIndentWidth);
+                GUILayout.BeginVertical();
+            }
+
+            public void Dispose()
+            {
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        /// <summary>
+        /// <see cref="NestedIndentScope"/> that also marks its content as nested (see
+        /// <see cref="ContainerDepth"/>) — for chrome-free boundaries (a <c>[FoldoutGroup]</c> body, a
+        /// <c>[TitleGroup(Indent = true)]</c> body, an <c>[InlineProperty]</c> recursion) where a
+        /// further nested header still needs correct pull-cancel / rule-gating despite no helpBox.
+        /// </summary>
+        public sealed class NestedGroupScope : IDisposable
+        {
+            private readonly NestedIndentScope _indent;
+
+            public NestedGroupScope()
+            {
+                PushContainer();
+                _indent = new NestedIndentScope();
+            }
+
+            public void Dispose()
+            {
+                _indent.Dispose();
+                PopContainer();
+            }
+        }
+
+        /// <summary>
+        /// helpBox container that also marks section headers drawn inside it as nested, so
+        /// <c>[FoldoutGroup]</c> headers stay within the box instead of hanging over its left border.
+        /// Use instead of <c>new EditorGUILayout.VerticalScope(EditorStyles.helpBox)</c> around
+        /// inspector content.
+        /// </summary>
+        public sealed class ContainerScope : IDisposable
+        {
+            private readonly EditorGUILayout.VerticalScope _scope;
+
+            public ContainerScope(GUIStyle style = null, params GUILayoutOption[] options)
+            {
+                _scope = new EditorGUILayout.VerticalScope(style ?? EditorStyles.helpBox,
+                    options ?? Array.Empty<GUILayoutOption>());
+                PushContainer();
+            }
+
+            public void Dispose()
+            {
+                PopContainer();
+                _scope.Dispose();
+            }
+        }
+
         public static void BeginSection()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            PushContainer();
         }
 
-        public static void EndSection() => EditorGUILayout.EndVertical();
+        public static void EndSection()
+        {
+            PopContainer();
+            EditorGUILayout.EndVertical();
+        }
 
         public static void BeginBox(string label = null)
         {
@@ -569,22 +697,37 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             EditorGUILayout.Space(HeaderSpacing);
             var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            var headerRect = HeaderRect(rect);
 
-            if (EditorGUI.indentLevel <= 0)
-                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), SectionRuleColor);
+            if (ContainerDepth <= 0)
+            {
+                // Start the rule at the arrow, not at the raw layout rect, so header and rule agree.
+                float ruleX = HeaderArrowX(headerRect);
+                EditorGUI.DrawRect(new Rect(ruleX, rect.yMax - 1f, rect.xMax - ruleX, 1f), SectionRuleColor);
+            }
 
-            return EditorGUI.Foldout(rect, expanded, label, true, FlatFoldoutStyle);
+            return EditorGUI.Foldout(headerRect, expanded, label, true, FlatFoldoutStyle);
         }
 
+        // Compact layout indent (NestedIndentWidth) + ContainerDepth push instead of Unity's fixed
+        // ~15px EditorGUI.indentLevel step, so a foldout nested under this body (chrome-free, no
+        // helpBox) still cancels its own header pull / rule correctly. Exposed as a Begin/End pair
+        // (not NestedGroupScope's IDisposable) since existing callers hold it open across a
+        // try/finally rather than a using block.
         public static void BeginSectionFoldoutBody()
         {
             EditorGUILayout.Space(HeaderSpacing);
-            EditorGUI.indentLevel++;
+            PushContainer();
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(NestedIndentWidth);
+            GUILayout.BeginVertical();
         }
 
         public static void EndSectionFoldoutBody()
         {
-            EditorGUI.indentLevel--;
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+            PopContainer();
             EditorGUILayout.Space(HeaderSpacing);
         }
 
@@ -612,7 +755,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
 
             float foldWidth = Mathf.Max(0f, x - rect.x - gap);
-            var foldRect = new Rect(rect.x, rect.y, foldWidth, rect.height);
+            // Only the foldout cell is adjusted for nesting; trailing button rects stay pinned to rect.xMax.
+            var foldRect = HeaderRect(new Rect(rect.x, rect.y, foldWidth, rect.height));
             return EditorGUI.Foldout(foldRect, expanded, label, true, FlatFoldoutStyle);
         }
 

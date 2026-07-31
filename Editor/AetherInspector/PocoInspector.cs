@@ -354,10 +354,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
                 else
                 {
-                    EditorGUI.indentLevel++;
-                    if (items.Count == 0) EditorGUILayout.LabelField("(empty)", EditorStyles.miniLabel);
-                    else for (int i = 0; i < items.Count; i++) EditorGUILayout.LabelField("• " + (items[i]?.ToString() ?? "null"));
-                    EditorGUI.indentLevel--;
+                    using (new AetherInspectorTheme.NestedIndentScope())
+                    {
+                        if (items.Count == 0) EditorGUILayout.LabelField("(empty)", EditorStyles.miniLabel);
+                        else for (int i = 0; i < items.Count; i++) EditorGUILayout.LabelField("• " + (items[i]?.ToString() ?? "null"));
+                    }
                 }
                 return;
             }
@@ -374,16 +375,17 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 s_nestedFoldouts[key] = exp;
                 if (exp)
                 {
-                    EditorGUI.indentLevel++;
-                    if (visited != null) { visited.Add(value); }
-                    try
+                    using (new AetherInspectorTheme.NestedIndentScope())
                     {
-                        DrawObject(value, depth + 1, visited);
-                    }
-                    finally
-                    {
-                        if (visited != null) { visited.Remove(value); }
-                        EditorGUI.indentLevel--;
+                        if (visited != null) { visited.Add(value); }
+                        try
+                        {
+                            DrawObject(value, depth + 1, visited);
+                        }
+                        finally
+                        {
+                            if (visited != null) { visited.Remove(value); }
+                        }
                     }
                 }
                 return;

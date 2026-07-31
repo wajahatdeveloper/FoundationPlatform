@@ -255,7 +255,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             bool repaint = evt.type == EventType.Repaint;
             if (repaint) s_rowRects.AddOrUpdate(key, new List<(int, Rect)>());
 
-            using (new EditorGUI.IndentLevelScope())
+            // movable rows reserve a "≡" drag-handle column to the left of element content; a nested
+            // element's own foldout arrow must not pull left into that column (NestedGroupScope cancels
+            // the pull), whereas non-draggable rows have nothing there to protect (plain indent is fine).
+            IDisposable rowsIndentScope = movable
+                ? new AetherInspectorTheme.NestedGroupScope()
+                : (IDisposable)new AetherInspectorTheme.NestedIndentScope();
+            using (rowsIndentScope)
             {
                 for (int i = start; i < end; i++)
                 {
