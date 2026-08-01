@@ -68,11 +68,11 @@ namespace ProjectWindowX {
             EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("authoringContextMenus"), new GUIContent("Authoring Context Menus"));
             var drift = serialized.FindProperty("driftBadges");
-            EditorGUILayout.PropertyField(drift, new GUIContent("Drift Badges"));
+            EditorGUILayout.PropertyField(drift, new GUIContent("Out-of-Sync Badges"));
             using (new EditorGUI.DisabledScope(!drift.boolValue)) {
-                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeColor"), new GUIContent("Drift Badge Color"));
-                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeTooltip"), new GUIContent("Drift Badge Tooltip"));
-                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeIcon"), new GUIContent("Drift Badge Icon"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeColor"), new GUIContent("Out-of-Sync Badge Color"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeTooltip"), new GUIContent("Out-of-Sync Badge Tooltip"));
+                EditorGUILayout.PropertyField(serialized.FindProperty("driftBadgeIcon"), new GUIContent("Out-of-Sync Badge Icon"));
             }
 
             if (EditorGUI.EndChangeCheck()) {

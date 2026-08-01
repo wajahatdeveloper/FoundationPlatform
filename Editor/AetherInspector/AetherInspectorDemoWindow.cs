@@ -414,7 +414,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public string foldoutVisibleField = "visible when showFoldoutGroup";
 
         // --- Nested list elements (AetherInspectorReflectedDrawer pattern) ---
-        [Title("Nested List Payloads")]
+        [Title("Nested Lists")]
         [ListDrawerSettings(ShowIndexLabels = true)]
         public List<DemoPayload> payloadList = new List<DemoPayload>
         {
@@ -427,7 +427,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public string unsupportedApiNote = "see DOCS/AetherInspector.md";
 
         // --- Fragment pattern repro (nested box paths + inline payload + private base button) ---
-        [Title("Fragment Pattern")]
+        [Title("Shared or Custom Value")]
         public DemoFragment fragment = new DemoFragment();
 
         [Serializable]

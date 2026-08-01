@@ -252,15 +252,15 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string LevelCreateForInSceneRoot       = GameObject + "Domain/Level/Create Level For This GameObject";
 
 			/// <summary>Tools/Domain/Input/* — input provision authoring.</summary>
-			public const string InputCreateCharacterProvision     = Root + "Input/Create Character Input Provision";
-			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Provision";
-			public const string InputCreatePartyProvision         = Root + "Input/Create Party Input Provision";
+			public const string InputCreateCharacterProvision     = Root + "Input/Create Character Input Setup";
+			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Setup";
+			public const string InputCreatePartyProvision         = Root + "Input/Create Party Input Setup";
 			public const string InputIntegration                  = Root + "Input/Input Integration";
 
 			/// <summary>Tools/Domain/PresetLibrary/* — preset asset generation.</summary>
 			public const string PresetLibraryGenerateAll          = Root + "PresetLibrary/Generate All";
 			public const string PresetLibraryRegisterTagsOnly     = Root + "PresetLibrary/Register Tags Only";
-			public const string PresetLibraryGenerateGas          = Root + "PresetLibrary/Generate GAS (Attributes + Effects + Cues)";
+			public const string PresetLibraryGenerateGas          = Root + "PresetLibrary/Generate Gameplay Abilities (Attributes + Effects + Cues)";
 			public const string PresetLibraryGenerateCharactersItems = Root + "PresetLibrary/Generate Characters + Items";
 			public const string PresetLibraryGenerateArchetypesAi = Root + "PresetLibrary/Generate Archetypes + AI";
 
