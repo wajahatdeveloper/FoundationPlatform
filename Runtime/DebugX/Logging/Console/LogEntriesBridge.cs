@@ -11,11 +11,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// <see cref="UnityEngine.Application.logMessageReceived"/>, e.g. some shader/native logs).
     ///
     /// Severity follows Unity's <c>ConsoleWindow.GetIconForErrorMode</c> mode masks.
-    /// <see cref="ConsoleSource.Compiler"/> is reserved for persistent, currently-present script/import/
-    /// graph compile ERRORS only. Compile warnings are intentionally NOT mirrored here at all — they
-    /// already reach the console via <see cref="UnityEngine.Application.logMessageReceivedThreaded"/>
-    /// (<see cref="ConsoleLogStore.OnUnityLog"/>), so mirroring them here too would just duplicate them
-    /// as an unevictable row. All other mirrored rows are <see cref="ConsoleSource.Unity"/>.
+    /// <see cref="ConsoleSource.Compiler"/> here is reserved for persistent, currently-present asset-import/
+    /// graph compile ERRORS only — script compile errors are sourced elsewhere (see
+    /// <see cref="ConsoleLogStore"/>'s <c>CompilationPipeline.assemblyCompilationFinished</c> subscription)
+    /// since Unity exposes those via a public, non-reflection API. Compile warnings are intentionally NOT
+    /// mirrored here at all — they already reach the console via
+    /// <see cref="UnityEngine.Application.logMessageReceivedThreaded"/> (<see cref="ConsoleLogStore.OnUnityLog"/>),
+    /// so mirroring them here too would just duplicate them as an unevictable row. All other mirrored rows
+    /// are <see cref="ConsoleSource.Unity"/>.
     ///
     /// Lives in the runtime assembly (editor-guarded) so <see cref="ConsoleLogStore"/> can call it —
     /// the runtime asmdef cannot reference the editor asmdef. Every member lookup is cached and
@@ -45,9 +48,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private const int ModeScriptingAssertion = 1 << 21;
         private const int ModeVisualScriptingError = 1 << 22;
 
-        /// <summary>Script / asset-import / graph compile ERRORS only — the persistent Compiler source.</summary>
+        /// <summary>
+        /// Asset-import / graph compile ERRORS only — the persistent Compiler source mirrored here.
+        /// Script compile errors are deliberately excluded: <see cref="ConsoleLogStore"/> sources those
+        /// directly from <see cref="UnityEditor.Compilation.CompilationPipeline.assemblyCompilationFinished"/>
+        /// instead (public API, exact file/line/message from the compiler — no reflection, no polling).
+        /// </summary>
         private const int CompileErrorMask =
-            ModeAssetImportError | ModeScriptCompileError | ModeGraphCompileError;
+            ModeAssetImportError | ModeGraphCompileError;
 
         /// <summary>
         /// Compile warnings: not classified as Compiler (not a blocker) and not mirrored at all — they
@@ -158,6 +166,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         bool isDeclassifiedWarning = !isCompilerError && (mode & CompileWarningMask) != 0;
                         if (isDeclassifiedWarning)
                             continue; // reaches the console via Application.logMessageReceivedThreaded instead
+
+                        bool isScriptCompileError = (mode & ModeScriptCompileError) != 0;
+                        if (isScriptCompileError)
+                            continue; // ConsoleLogStore mirrors these itself via CompilationPipeline instead
 
                         var level = LevelFromMode(mode, message);
                         var source = isCompilerError ? ConsoleSource.Compiler : ConsoleSource.Unity;

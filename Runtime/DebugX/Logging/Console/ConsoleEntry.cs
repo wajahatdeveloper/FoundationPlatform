@@ -6,9 +6,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// <summary>
     /// Where a console row originated. DebugX = structured pipeline, Unity = plain Debug.Log /
     /// exceptions / third-party / mirrored Editor Console rows (including compile warnings), Compiler =
-    /// persistent, currently-present script/import/graph compile ERRORS only, mirrored live from
-    /// UnityEditor.LogEntries. Compile warnings are not blockers, so they are Unity-sourced and behave
-    /// like any other clearable/evictable log row rather than being pinned to the Compiler channel.
+    /// persistent, currently-present compile ERRORS only. Script compile errors come from
+    /// UnityEditor.Compilation.CompilationPipeline.assemblyCompilationFinished (exact file/line/message,
+    /// no reflection); asset-import and graph compile errors are still mirrored live from
+    /// UnityEditor.LogEntries (no public API exists for those). Compile warnings are not blockers, so
+    /// they are Unity-sourced and behave like any other clearable/evictable log row rather than being
+    /// pinned to the Compiler channel.
     /// </summary>
     public enum ConsoleSource
     {

@@ -48,14 +48,27 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static readonly Dictionary<string, WatchEntry> _watches = new Dictionary<string, WatchEntry>();
         private static readonly List<WatchEntry> _watchList = new List<WatchEntry>();
 
-        // Editor Console mirror, rebuilt from UnityEditor.LogEntries each poll (main thread).
-        // Includes persistent Compiler (compile/import/graph) ERRORS and Unity-sourced rows that may not
-        // hit logMessageReceived (e.g. shader/native logs). Compile WARNINGS are deliberately excluded
-        // from this mirror by LogEntriesBridge — they still reach the console via OnUnityLog below, as
-        // ordinary Source=Unity rows, so they behave like any other clearable/evictable log entry.
+        // Editor Console mirror exposed to the window: merge of _bridgeCompilerEntries (asset-import /
+        // graph compile errors, from LogEntriesBridge) and the script compile errors tracked per-assembly
+        // below (from CompilationPipeline). Rebuilt in Pump() whenever either source changes.
         private static readonly List<ConsoleEntry> _compilerEntries = new List<ConsoleEntry>();
 
-        // Fast-lookup set of mirrored LogEntries messages for dedup in OnUnityLog (main thread only).
+        // Raw LogEntries mirror (asset-import / graph compile errors + other native-console-only rows
+        // such as shader/native logs). Compile WARNINGS are deliberately excluded from this mirror by
+        // LogEntriesBridge — they still reach the console via OnUnityLog below, as ordinary Source=Unity
+        // rows, so they behave like any other clearable/evictable log entry.
+        private static readonly List<ConsoleEntry> _bridgeCompilerEntries = new List<ConsoleEntry>();
+
+        // Script compile errors, keyed by assembly path — from CompilationPipeline.assemblyCompilationFinished.
+        // Replaced wholesale per assembly on each compile pass; removed once that assembly compiles clean.
+        private static readonly Dictionary<string, List<ConsoleEntry>> _scriptCompileErrorsByAssembly =
+            new Dictionary<string, List<ConsoleEntry>>();
+
+        // Set by OnAssemblyCompilationFinished (main thread); tells Pump() the merged mirror needs a
+        // rebuild even when the native LogEntries list itself hasn't changed.
+        private static bool _scriptCompilerDirty;
+
+        // Fast-lookup set of mirrored compiler-error messages for dedup in OnUnityLog (main thread only).
         private static readonly HashSet<string> _compilerMessages = new HashSet<string>();
 
         /// <summary>Bumped whenever visible state changes; the window compares this to decide when to rebuild.</summary>
@@ -108,6 +121,45 @@ namespace AetherNexus.FoundationPlatform.DebugX
             // window is open — closes the tail where a duplicate could otherwise linger until the next
             // tick happens to see a change (or, before this fix, sometimes never).
             CompilationPipeline.compilationFinished += _ => Pump();
+
+            CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+        }
+
+        /// <summary>
+        /// Authoritative script-compile-error feed: exact file/line/message straight from the compiler,
+        /// no reflection or native-console polling involved. Replaces whatever this assembly's error list
+        /// held last pass — an empty list here means the assembly now compiles clean.
+        /// </summary>
+        private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
+        {
+            List<ConsoleEntry> errors = null;
+            for (int i = 0; i < messages.Length; i++)
+            {
+                var m = messages[i];
+                if (m.type != CompilerMessageType.Error)
+                    continue;
+
+                errors ??= new List<ConsoleEntry>();
+                errors.Add(new ConsoleEntry
+                {
+                    Id = NextId(),
+                    Timestamp = DateTime.Now,
+                    Level = LogLevel.Error,
+                    Source = ConsoleSource.Compiler,
+                    Channel = "Compiler",
+                    Message = m.message,
+                    CallerFilePath = m.file,
+                    CallerLineNumber = m.line,
+                    CollapseKey = "C|" + assemblyPath + "|" + m.file + "|" + m.line + "|" + m.message
+                });
+            }
+
+            if (errors != null)
+                _scriptCompileErrorsByAssembly[assemblyPath] = errors;
+            else
+                _scriptCompileErrorsByAssembly.Remove(assemblyPath);
+
+            _scriptCompilerDirty = true;
         }
 
         /// <summary>Oldest-to-newest indexed access into the ring. Main thread only.</summary>
@@ -133,10 +185,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _count = 0;
             _logCount = _warningCount = _errorCount = 0;
             _compilerEntries.Clear();
+            _bridgeCompilerEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
+            _scriptCompilerDirty = true; // still-broken assemblies reappear next pump, same as bridge-sourced errors
             Version++;
         }
 
@@ -151,10 +205,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _count = 0;
             _logCount = _warningCount = _errorCount = 0;
             _compilerEntries.Clear();
+            _bridgeCompilerEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
+            _scriptCompilerDirty = true; // still-broken assemblies reappear next pump, same as bridge-sourced errors
             CompilerVersion++;
             Version++;
         }
@@ -313,8 +369,17 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
             if (CaptureCompilerErrors)
             {
-                if (LogEntriesBridge.Refresh(_compilerEntries))
+                bool bridgeChanged = LogEntriesBridge.Refresh(_bridgeCompilerEntries);
+                bool scriptChanged = _scriptCompilerDirty;
+                _scriptCompilerDirty = false;
+
+                if (bridgeChanged || scriptChanged)
                 {
+                    _compilerEntries.Clear();
+                    _compilerEntries.AddRange(_bridgeCompilerEntries);
+                    foreach (var kvp in _scriptCompileErrorsByAssembly)
+                        _compilerEntries.AddRange(kvp.Value);
+
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
                     _compilerMessages.Clear();
                     for (int i = 0; i < _compilerEntries.Count; i++)
@@ -331,17 +396,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
                     if (_compilerEntries.Count > 0)
                     {
-                        var compilerSet = new HashSet<string>(_compilerEntries.Count);
-                        foreach (var ce in _compilerEntries)
-                            compilerSet.Add(ce.Message ?? string.Empty);
-
                         int removed = 0;
                         int write = 0;
                         for (int read = 0; read < _count; read++)
                         {
                             var ringEntry = _ring[(_head + read) % Capacity];
                             bool match = ringEntry != null &&
-                                compilerSet.Contains(ringEntry.Message ?? string.Empty) &&
+                                _compilerMessages.Contains(ringEntry.Message ?? string.Empty) &&
                                 ringEntry.Source == ConsoleSource.Unity;
                             if (match)
                             {
