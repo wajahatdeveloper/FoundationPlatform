@@ -15,9 +15,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
         internal static UIValidationRolloutMode GetRolloutMode()
         {
-            int value = EditorPrefs.GetInt(RolloutModePrefKey, (int)UIValidationRolloutMode.WarningFirst);
+            int value = EditorPrefs.GetInt(RolloutModePrefKey, (int)UIValidationRolloutMode.Strict);
             if (value != (int)UIValidationRolloutMode.WarningFirst && value != (int)UIValidationRolloutMode.Strict)
-                return UIValidationRolloutMode.WarningFirst;
+                return UIValidationRolloutMode.Strict;
 
             return (UIValidationRolloutMode)value;
         }

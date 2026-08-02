@@ -37,16 +37,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             return config.TryClassifyHierarchyPath(assetPath, out root, out bucket, out domain, out reason);
         }
 
-        private static bool IsPathUnderRoot(string path, string root)
-        {
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            string normalizedPath = path.Replace('\\', '/');
-            string normalizedRoot = root.Replace('\\', '/').TrimEnd('/');
-            return normalizedPath.StartsWith(normalizedRoot + "/", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(normalizedPath, normalizedRoot, StringComparison.OrdinalIgnoreCase);
-        }
+        private static bool IsPathUnderRoot(string path, string root) => PathComparisonUtility.IsPathUnder(path, root);
     }
 }
 #endif

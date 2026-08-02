@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.Extensions;
 using AetherNexus.FoundationPlatform.AetherInspector;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
@@ -90,7 +93,9 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 			}
 
 			randomProviderBehaviour = (MonoBehaviour)gameObject.AddComponent(providerType);
+#if UNITY_EDITOR
 			EditorUtility.SetDirty(this);
+#endif
 		}
 
 		private static IEnumerable<ValueDropdownItem<string>> GetProviderTypeOptions()
@@ -321,10 +326,12 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 					      .Error(
 						      "AreaSpawner on {GameObjectName}: deterministic startup is in use but no IRandomProvider is assigned. Assign a deterministic random provider; refusing to fall back to UnityEngine.Random for simulation-affecting spawn positions.",
 						      gameObject.name);
+					throw new InvalidOperationException(
+						$"AreaSpawner on {gameObject.name}: deterministic startup is in use but no IRandomProvider is assigned.");
 				}
 
-				x = Random.Range(bounds.min.x, bounds.max.x);
-				z = Random.Range(bounds.min.z, bounds.max.z);
+				x = UnityEngine.Random.Range(bounds.min.x, bounds.max.x);
+				z = UnityEngine.Random.Range(bounds.min.z, bounds.max.z);
 			}
 
 			var y = bounds.center.y; // Use center Y to spawn on ground level

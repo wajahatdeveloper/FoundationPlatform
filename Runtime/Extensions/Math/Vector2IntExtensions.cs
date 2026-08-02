@@ -60,7 +60,10 @@ public static class Vector2IntExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="x">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3Int InsertX(this Vector2Int vector, int x = 0) => new(x, vector.x, vector.y);
+    public static Vector3Int InsertX(this Vector2Int vector, int x) => new(x, vector.x, vector.y);
+
+    /// <summary>Inserts a 0 value to x axis and extends vector to 3-dimensional.</summary>
+    public static Vector3Int InsertX(this Vector2Int vector) => InsertX(vector, 0);
 
     /// <summary>
     /// Inserts value to y axis and extends vector to 3-dimensional.
@@ -68,7 +71,10 @@ public static class Vector2IntExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="y">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3Int InsertY(this Vector2Int vector, int y = 0) => new(vector.x, y, vector.y);
+    public static Vector3Int InsertY(this Vector2Int vector, int y) => new(vector.x, y, vector.y);
+
+    /// <summary>Inserts a 0 value to y axis and extends vector to 3-dimensional.</summary>
+    public static Vector3Int InsertY(this Vector2Int vector) => InsertY(vector, 0);
 
     /// <summary>
     /// Inserts value to z axis and extends vector to 3-dimensional.
@@ -76,7 +82,10 @@ public static class Vector2IntExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="z">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3Int InsertZ(this Vector2Int vector, int z = 0) => new(vector.x, vector.y, z);
+    public static Vector3Int InsertZ(this Vector2Int vector, int z) => new(vector.x, vector.y, z);
+
+    /// <summary>Inserts a 0 value to z axis and extends vector to 3-dimensional.</summary>
+    public static Vector3Int InsertZ(this Vector2Int vector) => InsertZ(vector, 0);
 
     /// <summary>
     /// Gets max component info from vector.

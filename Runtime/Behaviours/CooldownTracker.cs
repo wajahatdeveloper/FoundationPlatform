@@ -53,7 +53,6 @@ namespace AetherNexus.FoundationPlatform.Behaviours
         /// the amount of duration left in the object at any given time
         public float CurrentDurationLeft;
 
-        protected WaitForSeconds _pauseOnEmptyWFS;
         protected float _emptyReachedTimestamp = 0f;
         protected CooldownStates _lastNotifiedState;
 
@@ -65,7 +64,6 @@ namespace AetherNexus.FoundationPlatform.Behaviours
         /// </summary>
         public virtual void Initialization()
         {
-            _pauseOnEmptyWFS = new WaitForSeconds(PauseOnEmptyDuration);
             CurrentDurationLeft = ConsumptionDuration;
             CooldownState = CooldownStates.Idle;
             _emptyReachedTimestamp = 0f;

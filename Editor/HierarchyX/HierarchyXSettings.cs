@@ -35,11 +35,13 @@ namespace HierarchyX {
         public Color color;
         public TintMode mode;
 
-        public LayerColor(int layer, Color color, TintMode mode = TintMode.GradientRightToLeft) {
+        public LayerColor(int layer, Color color, TintMode mode) {
             this.layer = layer;
             this.color = color;
             this.mode = mode;
         }
+
+        public LayerColor(int layer, Color color) : this(layer, color, TintMode.GradientRightToLeft) { }
     }
 
     /// <summary>
@@ -113,8 +115,8 @@ namespace HierarchyX {
         public bool missingScriptIndicator = true;
         [Tooltip("Hover-only active checkbox on the right edge of each row.")]
         public bool rowActiveToggle = true;
-        [Tooltip("Hover-only visibility/pickability toggles on the right edge. Right-click = solo.")]
-        public bool soloButtons = true;
+        [Tooltip("Hover-only visibility/pickability toggles on the right edge. Right-click = solo. Off by default: Unity's stock Hierarchy already shows equivalent hover icons via SceneVisibilityManager at the same row position.")]
+        public bool soloButtons = false;
 
         [Tooltip("Render GameObjects whose name starts with the header prefix as full-width section header bars.")]
         public bool headersEnabled = true;

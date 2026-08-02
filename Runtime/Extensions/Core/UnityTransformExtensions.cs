@@ -19,16 +19,8 @@ public static class UnityTransformExtensions
         DebugX.Logger(LogChannels.Validation).Error("[Foundation:ERROR] UnityTransformExtensions: {ParamName} is null.", name);
     }
 
-    public static void SetLayerRecursive(this GameObject o, int layer)
-    {
-        SetLayerInternal(o.transform, layer);
-    }
-
-    private static void SetLayerInternal(Transform t, int layer)
-    {
-        t.gameObject.layer = layer;
-        foreach (Transform o in t) SetLayerInternal(o, layer);
-    }
+    // Note: "set layer recursively" is GameObjectUtilityExtensions.SetLayerRecursively — kept there as
+    // the single canonical name instead of duplicating it here.
 
     public static void SetXZ(this Transform transform, float x, float z)
     {
@@ -1058,7 +1050,7 @@ public static class UnityTransformExtensions
     /// </summary>
     /// <param name="transform">Target transform.</param>
     /// <param name="useWorldSpace">Use world space?</param>
-    public static void Reset(this Transform transform, bool useWorldSpace = false)
+    public static void Reset(this Transform transform, bool useWorldSpace)
     {
         if (useWorldSpace)
             transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -1070,6 +1062,9 @@ public static class UnityTransformExtensions
 
         transform.localScale = Vector3.one;
     }
+
+    /// <summary>Resets transform position, rotation and scale in local space.</summary>
+    public static void Reset(this Transform transform) => Reset(transform, false);
 
     /// <summary>
     /// Sets sibling index to previous.
@@ -1132,7 +1127,7 @@ public static class UnityTransformExtensions
     /// <param name="transform">Target transform.</param>
     /// <param name="includeThis">Include this <paramref name="transform"/> object.</param>
     /// <returns>Sibling objects transforms.</returns>
-    public static List<Transform> GetAllSiblingObjects(this Transform transform, bool includeThis = true)
+    public static List<Transform> GetAllSiblingObjects(this Transform transform, bool includeThis)
     {
         List<Transform> siblings;
 
@@ -1164,6 +1159,9 @@ public static class UnityTransformExtensions
 
         return siblings;
     }
+
+    /// <summary>Returns all sibling objects (its transform components), including this transform.</summary>
+    public static List<Transform> GetAllSiblingObjects(this Transform transform) => GetAllSiblingObjects(transform, true);
 
     /// <summary>
     /// Gets a random child.
@@ -1269,16 +1267,7 @@ public static class UnityTransformExtensions
     /// <param name="transform">Target transform.</param>
     public static void DestroyLastChild(this Transform transform) => DestroyChild(transform, transform.childCount - 1);
 
-    /// <summary>
-    /// Sets <see cref="Transform.lossyScale"/> value.
-    /// </summary>
-    /// <param name="transform">Transform component.</param>
-    /// <param name="lossyScale">New lossyScale value.</param>
-    public static void SetLossyScale(this Transform transform, Vector3 lossyScale)
-    {
-        transform.localScale = Vector3.one;
-        var currentLossyScale = transform.lossyScale;
-        transform.localScale = new Vector3(lossyScale.x / currentLossyScale.x, lossyScale.y / currentLossyScale.y,
-            lossyScale.z / currentLossyScale.z);
-    }
+    // Note: SetLossyScale(this Transform, Vector3) lives in GameObjectUtilityExtensions.cs — kept there
+    // as the single source (single-write implementation) to avoid an ambiguous-call (CS0121) between two
+    // identical-signature overloads in this same namespace.
 }}

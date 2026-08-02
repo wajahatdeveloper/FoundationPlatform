@@ -1,3 +1,8 @@
+// Editor-only: no runtime callers found in this project, and the project's "no runtime reflection
+// outside editor tools" rule bans compiling GetMethod/GetField/GetProperty-based reflection into
+// player builds. Guarded rather than moved to an Editor asmdef so any existing `using
+// AetherNexus.FoundationPlatform.Extensions;` call sites in editor-only code keep resolving.
+#if UNITY_EDITOR
 using System;
 using UnityEngine;
 
@@ -30,4 +35,5 @@ public static class ReflectionExtensions
     }
 }
 }
+#endif
 

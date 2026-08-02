@@ -30,7 +30,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				}
 
 				result.Add(currentId);
-				var entry = FindEntryById(set, currentId);
+				var entry = set?.FindEntry(currentId);
 				if (entry == null)
 				{
 					throw new InvalidOperationException(
@@ -178,10 +178,5 @@ namespace AetherNexus.FoundationPlatform.Animation
 			}
 		}
 
-		private static AnimationSetEntry FindEntryById(AnimationSet set, string entryId)
-		{
-			if (set == null) return null;
-			return set.FindEntry(entryId);
-		}
 	}
 }

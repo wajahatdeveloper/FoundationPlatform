@@ -23,7 +23,7 @@ public static class MathExtensions
         "by", "bz"
     };
 
-    public static string ToStringAbbreviated(this BigInteger value, string format = "0.00")
+    public static string ToStringAbbreviated(this BigInteger value, string format)
     {
         // Pick the suffix using integer division on a scratch copy so the original
         // value is preserved for the fractional scaling below.
@@ -44,6 +44,9 @@ public static class MathExtensions
         string formattedValue = string.Format($"{{0:{format}}}", scaled) + abbreviations[suffixIndex];
         return formattedValue;
     }
+
+    /// <summary>Abbreviates the value using a "0.00" format.</summary>
+    public static string ToStringAbbreviated(this BigInteger value) => ToStringAbbreviated(value, "0.00");
 
     public static Quaternion ExtractRotation(this Matrix4x4 matrix)
     {
@@ -288,6 +291,10 @@ public static class MathExtensions
         return canvas.transform.TransformPoint(pos);
     }
 
+    /// <summary>
+    /// PRESENTATION-ONLY: uses UnityEngine.Random. Use an IRandomProvider-based path (e.g. MathX.RollADice/Chance
+    /// or a custom deterministic spread) in simulation code such as weapon-spread/aim-cone calculations.
+    /// </summary>
     public static Vector3 GetDirectionFromSpread(Quaternion rotation, float spreadAngle)
     {
         float angleOff = spreadAngle * Mathf.Deg2Rad;

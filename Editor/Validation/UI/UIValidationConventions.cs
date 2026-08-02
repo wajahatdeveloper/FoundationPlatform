@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using static AetherNexus.FoundationPlatform.Editor.Utilities.PathComparisonUtility;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
@@ -105,16 +106,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             return string.Equals(normalized, ConfigAssetPath, StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static bool IsPathUnder(string path, string folder)
-        {
-            if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(folder))
-                return false;
-
-            string normalizedPath = path.Replace('\\', '/');
-            string normalizedFolder = folder.Replace('\\', '/').TrimEnd('/');
-            return normalizedPath.StartsWith(normalizedFolder + "/", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(normalizedPath, normalizedFolder, StringComparison.OrdinalIgnoreCase);
-        }
+        internal static bool IsPathUnder(string path, string root) => PathComparisonUtility.IsPathUnder(path, root);
 
         internal static bool IsThirdPartyPath(string path)
         {

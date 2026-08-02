@@ -190,8 +190,11 @@ public static class StringExtensions
     /// <summary>
     /// Convert a string value to an Enum value.
     /// </summary>
-    public static T AsEnum<T>(this string source, bool ignoreCase = true) where T : Enum =>
+    public static T AsEnum<T>(this string source, bool ignoreCase) where T : Enum =>
         (T)Enum.Parse(typeof(T), source, ignoreCase);
+
+    /// <summary>Converts a string value to an Enum value, ignoring case.</summary>
+    public static T AsEnum<T>(this string source) where T : Enum => AsEnum<T>(source, true);
 
     /// <summary>
     /// Converts a hex code into corresponding color. Supports RGB and RGBA
@@ -369,17 +372,29 @@ public static class StringExtensions
     public static string FromRight(this string @string, int length) =>
         @string.Length > length ? @string.Substring(@string.Length - length) : @string;
 
-    public static float ToFloat(this string @string, NumberStyles style = NumberStyles.Any) =>
+    public static float ToFloat(this string @string, NumberStyles style) =>
         float.Parse(@string, style, CultureInfo.InvariantCulture);
 
-    public static float ToFloat(this string @string, float @default, NumberStyles style = NumberStyles.Any) =>
+    /// <summary>Parses using NumberStyles.Any.</summary>
+    public static float ToFloat(this string @string) => ToFloat(@string, NumberStyles.Any);
+
+    public static float ToFloat(this string @string, float @default, NumberStyles style) =>
         float.TryParse(@string, style, CultureInfo.InvariantCulture, out float result) ? result : @default;
 
-    public static int ToInt(this string @string, NumberStyles style = NumberStyles.Any) =>
+    /// <summary>Parses using NumberStyles.Any.</summary>
+    public static float ToFloat(this string @string, float @default) => ToFloat(@string, @default, NumberStyles.Any);
+
+    public static int ToInt(this string @string, NumberStyles style) =>
         int.Parse(@string, style, CultureInfo.InvariantCulture);
 
-    public static int ToInt(this string @string, int @default, NumberStyles style = NumberStyles.Any) =>
+    /// <summary>Parses using NumberStyles.Any.</summary>
+    public static int ToInt(this string @string) => ToInt(@string, NumberStyles.Any);
+
+    public static int ToInt(this string @string, int @default, NumberStyles style) =>
         int.TryParse(@string, style, CultureInfo.InvariantCulture, out int result) ? result : @default;
+
+    /// <summary>Parses using NumberStyles.Any.</summary>
+    public static int ToInt(this string @string, int @default) => ToInt(@string, @default, NumberStyles.Any);
 
     public static T ToEnum<T>(this string @string) where T : struct, Enum =>
         (T)Enum.Parse(typeof(T), @string, true);
@@ -391,7 +406,7 @@ public static class StringExtensions
     /// <param name="maxLength">Maximum length of the result string.</param>
     /// <param name="suffix">Suffix to append if truncation occurs. Default is "...".</param>
     /// <returns>Truncated string with suffix if needed.</returns>
-    public static string Truncate(this string @string, int maxLength, string suffix = "...")
+    public static string Truncate(this string @string, int maxLength, string suffix)
     {
         if (@string.Length <= maxLength) return @string;
         suffix ??= string.Empty;
@@ -400,6 +415,9 @@ public static class StringExtensions
         keep = System.Math.Min(keep, @string.Length);
         return @string.Substring(0, keep) + suffix;
     }
+
+    /// <summary>Truncates a string, appending "..." if truncation occurs.</summary>
+    public static string Truncate(this string @string, int maxLength) => Truncate(@string, maxLength, "...");
 
     /// <summary>
     /// Gets a ReadOnlySpan<char> representation of the string for better performance.

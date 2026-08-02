@@ -94,8 +94,8 @@ public static class GameObjectCollectionExtensions
     /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
     /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
     /// <param name="detachParent">set to parent = null.</param>
-    public static void Destroy(this IEnumerable<GameObject> source, bool useDestroyImmediate = false,
-        bool detachParent = false)
+    public static void Destroy(this IEnumerable<GameObject> source, bool useDestroyImmediate,
+        bool detachParent)
     {
         if (detachParent)
         {
@@ -114,6 +114,12 @@ public static class GameObjectCollectionExtensions
             }
         }
     }
+
+    /// <summary>Destroy every GameObject in the source collection safety(check null), without detaching the parent.</summary>
+    public static void Destroy(this IEnumerable<GameObject> source, bool useDestroyImmediate) => Destroy(source, useDestroyImmediate, false);
+
+    /// <summary>Destroy every GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+    public static void Destroy(this IEnumerable<GameObject> source) => Destroy(source, false, false);
 
     #endregion
 }

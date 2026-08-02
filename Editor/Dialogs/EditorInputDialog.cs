@@ -98,7 +98,7 @@ public class EditorInputDialog : EditorWindow
     /// <param name="okButton"></param>
     /// <param name="cancelButton"></param>
     /// <returns></returns>
-    public static void Show( string title, string description, string inputText, string okButton = "OK", string cancelButton = "Cancel", Action<string> ret = null )
+    public static void Show( string title, string description, string inputText, string okButton, string cancelButton, Action<string> ret )
     {
         var window = CreateInstance<EditorInputDialog>();
         window.titleContent = new GUIContent( title );

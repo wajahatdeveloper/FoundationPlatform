@@ -67,7 +67,10 @@ public static class Vector2Extensions
     /// <param name="vector">Target vector.</param>
     /// <param name="x">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3 InsertX(this Vector2 vector, float x = 0) => new(x, vector.x, vector.y);
+    public static Vector3 InsertX(this Vector2 vector, float x) => new(x, vector.x, vector.y);
+
+    /// <summary>Inserts a 0 value to x axis and extends vector to 3-dimensional.</summary>
+    public static Vector3 InsertX(this Vector2 vector) => InsertX(vector, 0);
 
     /// <summary>
     /// Inserts value to y axis and extends vector to 3-dimensional.
@@ -75,7 +78,10 @@ public static class Vector2Extensions
     /// <param name="vector">Target vector.</param>
     /// <param name="y">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3 InsertY(this Vector2 vector, float y = 0) => new(vector.x, y, vector.y);
+    public static Vector3 InsertY(this Vector2 vector, float y) => new(vector.x, y, vector.y);
+
+    /// <summary>Inserts a 0 value to y axis and extends vector to 3-dimensional.</summary>
+    public static Vector3 InsertY(this Vector2 vector) => InsertY(vector, 0);
 
     /// <summary>
     /// Inserts value to z axis and extends vector to 3-dimensional.
@@ -83,7 +89,10 @@ public static class Vector2Extensions
     /// <param name="vector">Target vector.</param>
     /// <param name="z">Value to set.</param>
     /// <returns>3-dimensional vector.</returns>
-    public static Vector3 InsertZ(this Vector2 vector, float z = 0) => new(vector.x, vector.y, z);
+    public static Vector3 InsertZ(this Vector2 vector, float z) => new(vector.x, vector.y, z);
+
+    /// <summary>Inserts a 0 value to z axis and extends vector to 3-dimensional.</summary>
+    public static Vector3 InsertZ(this Vector2 vector) => InsertZ(vector, 0);
 
     /// <summary>
     /// Gets max component index from vector.
@@ -441,13 +450,16 @@ public static class Vector2Extensions
         return new Vector2(x / vectors.Length, y / vectors.Length);
     }
 
-    public static bool Approximately(this Vector2 vector, Vector2 compared, float threshold = 0.1f)
+    public static bool Approximately(this Vector2 vector, Vector2 compared, float threshold)
     {
         var xDiff = Mathf.Abs(vector.x - compared.x);
         var yDiff = Mathf.Abs(vector.y - compared.y);
 
         return xDiff <= threshold && yDiff <= threshold;
     }
+
+    /// <summary>Checks approximate equality using a 0.1 threshold.</summary>
+    public static bool Approximately(this Vector2 vector, Vector2 compared) => Approximately(vector, compared, 0.1f);
 
     /// <summary>
     /// Get vector from source to destination
@@ -469,7 +481,7 @@ public static class Vector2Extensions
     public static Vector2 ScaleBy(this Vector2 source, Vector2 right) =>
         Vector2.Scale(source, right);
 
-    public static Vector2 Rotate(this Vector2 vector, float angle, Vector2 pivot = default(Vector2))
+    public static Vector2 Rotate(this Vector2 vector, float angle, Vector2 pivot)
     {
         Vector2 rotated = Quaternion.Euler(new Vector3(0f, 0f, angle)) * (vector - pivot);
         return rotated + pivot;

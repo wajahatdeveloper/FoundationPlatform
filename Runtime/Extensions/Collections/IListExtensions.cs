@@ -53,6 +53,8 @@ public static class IListExtensions
 
     /// <summary>
     /// Shuffles the list using the Fisher-Yates algorithm.
+    /// PRESENTATION-ONLY: uses UnityEngine.Random. Use the <see cref="Shuffle{T}(IList{T}, int)"/> seeded
+    /// overload (or an IRandomProvider-based path) in simulation code.
     /// </summary>
     /// <param name="list">The list to shuffle.</param>
     /// <typeparam name="T">The type of list.</typeparam>

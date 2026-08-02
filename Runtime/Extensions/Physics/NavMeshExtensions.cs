@@ -72,7 +72,7 @@ public static class NavMeshExtensions
     /// </summary>
     /// <param name="path">Path to calculate</param>
     /// <param name="distance">Distance between points on path</param>
-    public static IEnumerable<Vector3> GetPointsOnPath(this NavMeshPath path, float distance = 1)
+    public static IEnumerable<Vector3> GetPointsOnPath(this NavMeshPath path, float distance)
     {
         // Distance along the current segment at which the next sample should be placed.
         // Carried non-negatively across segments so spacing stays uniform around corners.
@@ -98,4 +98,7 @@ public static class NavMeshExtensions
             pieceTraversedDistance -= pieceLength;
         }
     }
+
+    /// <summary>Splits the path into points spaced 1 unit apart.</summary>
+    public static IEnumerable<Vector3> GetPointsOnPath(this NavMeshPath path) => GetPointsOnPath(path, 1);
 }}

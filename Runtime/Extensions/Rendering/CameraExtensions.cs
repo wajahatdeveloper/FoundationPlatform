@@ -348,12 +348,16 @@ public static class CameraExtensions
     /// <param name="maxDistance">Maximum raycast distance</param>
     /// <param name="layerMask">Layer mask</param>
     /// <returns>Raycast hit info</returns>
-    public static RaycastHit RaycastFromScreen(this Camera camera, Vector3 screenPosition, float maxDistance = Mathf.Infinity, LayerMask layerMask = default)
+    public static RaycastHit RaycastFromScreen(this Camera camera, Vector3 screenPosition, float maxDistance, LayerMask layerMask)
     {
         Ray ray = camera.ScreenPointToRay(screenPosition);
         Physics.Raycast(ray, out RaycastHit hit, maxDistance, layerMask);
         return hit;
     }
+
+    /// <summary>RaycastFromScreen using Unity's own defaults (infinite distance, all layers).</summary>
+    public static RaycastHit RaycastFromScreen(this Camera camera, Vector3 screenPosition) =>
+        RaycastFromScreen(camera, screenPosition, Mathf.Infinity, default);
 
     /// <summary>
     /// Performs a raycast from the camera through the center of the screen
@@ -362,10 +366,14 @@ public static class CameraExtensions
     /// <param name="maxDistance">Maximum raycast distance</param>
     /// <param name="layerMask">Layer mask</param>
     /// <returns>Raycast hit info</returns>
-    public static RaycastHit RaycastFromScreenCenter(this Camera camera, float maxDistance = Mathf.Infinity, LayerMask layerMask = default)
+    public static RaycastHit RaycastFromScreenCenter(this Camera camera, float maxDistance, LayerMask layerMask)
     {
         return camera.RaycastFromScreen(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f), maxDistance, layerMask);
     }
+
+    /// <summary>RaycastFromScreenCenter using Unity's own defaults (infinite distance, all layers).</summary>
+    public static RaycastHit RaycastFromScreenCenter(this Camera camera) =>
+        RaycastFromScreenCenter(camera, Mathf.Infinity, default);
 
     #endregion
 

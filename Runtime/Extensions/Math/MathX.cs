@@ -248,7 +248,7 @@ public static class MathX
     /// <param name="value"></param>
     /// <param name="possibleValues"></param>
     /// <returns></returns>
-    public static float RoundToClosest(float value, float[] possibleValues, bool pickSmallestDistance = false)
+    public static float RoundToClosest(float value, float[] possibleValues, bool pickSmallestDistance)
     {
         if (possibleValues.Length == 0)
         {
@@ -278,6 +278,9 @@ public static class MathX
 
         return closestValue;
     }
+
+    /// <summary>Rounds to the closest value, preferring the largest on a tie.</summary>
+    public static float RoundToClosest(float value, float[] possibleValues) => RoundToClosest(value, possibleValues, false);
 
     /// <summary>
     /// Returns a vector3 based on the angle in parameters
@@ -653,7 +656,7 @@ public static class MathX
         return from;
     }
 
-    public static Quaternion Slerp2D(Vector2 a, Vector2 b, float t, bool usesRight = false)
+    public static Quaternion Slerp2D(Vector2 a, Vector2 b, float t, bool usesRight)
     {
         float fa;
         float fb;
@@ -674,6 +677,9 @@ public static class MathX
 
         return Quaternion.Slerp(qa, qb, t);
     }
+
+    /// <summary>Slerps between two 2D directions measured from Vector2.up.</summary>
+    public static Quaternion Slerp2D(Vector2 a, Vector2 b, float t) => Slerp2D(a, b, t, false);
 
     public static Quaternion SlerpWithAxises(Vector3 a, Vector3 b, float t, Vector3 reference, Vector3 axis)
     {

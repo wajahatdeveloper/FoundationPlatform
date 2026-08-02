@@ -226,7 +226,7 @@ public static class GameObjectHierarchyExtensions
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
         /// <param name="detachParent">set to parent = null.</param>
-        public void Destroy(bool useDestroyImmediate = false, bool detachParent = false)
+        public void Destroy(bool useDestroyImmediate, bool detachParent)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -248,9 +248,12 @@ public static class GameObjectHierarchyExtensions
             }
         }
 
+        /// <summary>Destroy every GameObject in the source collection safety(check null), without detaching the parent.</summary>
+        public void Destroy(bool useDestroyImmediate) => Destroy(useDestroyImmediate, false);
+
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate = false)
+        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -262,6 +265,9 @@ public static class GameObjectHierarchyExtensions
                 }
             }
         }
+
+        /// <summary>Destroy every matching GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy(Func<GameObject, bool> predicate) => Destroy(predicate, false);
 
         public Enumerator GetEnumerator()
         {

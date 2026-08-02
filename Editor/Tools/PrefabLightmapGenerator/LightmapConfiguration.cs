@@ -126,10 +126,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         #region Unity Lifecycle
         private void OnValidate()
         {
-            // Ensure values are within valid ranges
-            maxLightmapsPerBatch = Mathf.Max(1, maxLightmapsPerBatch);
-            maxShaderCacheSize = Mathf.Max(1, maxShaderCacheSize);
-            maxRenderersWarningThreshold = Mathf.Max(1, maxRenderersWarningThreshold);
+            // Ensure values are within valid ranges. Guarded so a no-op OnValidate (values already
+            // in range) doesn't dirty the asset on every domain reload/scene open.
+            if (maxLightmapsPerBatch < 1) maxLightmapsPerBatch = 1;
+            if (maxShaderCacheSize < 1) maxShaderCacheSize = 1;
+            if (maxRenderersWarningThreshold < 1) maxRenderersWarningThreshold = 1;
         }
         #endregion
     }

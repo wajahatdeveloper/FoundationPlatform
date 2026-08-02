@@ -24,8 +24,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private readonly object _bufferLock = new object();
         private DateTime _lastFlushTime;
 
-        public JsonFileSink(string basePath, LogLevel minimumLevel = LogLevel.Debug,
-            bool useArrayFormat = false, long maxFileSizeMB = 10, int bufferThreshold = 50, float flushIntervalSeconds = 1f)
+        public JsonFileSink(string basePath, LogLevel minimumLevel,
+            bool useArrayFormat, long maxFileSizeMB, int bufferThreshold, float flushIntervalSeconds)
         {
             _basePath = basePath;
             MinimumLevel = minimumLevel;
@@ -35,6 +35,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _flushIntervalSeconds = flushIntervalSeconds;
             _lastFlushTime = DateTime.Now;
             OpenFile();
+        }
+
+        public JsonFileSink(string basePath, LogLevel minimumLevel)
+            : this(basePath, minimumLevel, useArrayFormat: false, maxFileSizeMB: 10, bufferThreshold: 50, flushIntervalSeconds: 1f)
+        {
         }
 
         public override void Emit(LogEvent logEvent)

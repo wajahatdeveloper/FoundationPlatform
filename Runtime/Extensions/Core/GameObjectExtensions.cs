@@ -28,13 +28,16 @@ public static class GameObjectExtensions
         for (var i = 0; i < t.Length; i++) UnityEngine.Object.Destroy(t[i]);
     }
 
-    public static bool EnableComponentIfExists<T>(this GameObject obj, bool enable = true) where T : MonoBehaviour
+    public static bool EnableComponentIfExists<T>(this GameObject obj, bool enable) where T : MonoBehaviour
     {
         var t = obj.GetComponent<T>();
         if (t == null) return false;
         t.enabled = enable;
         return true;
     }
+
+    /// <summary>Enables the component of type T if it exists.</summary>
+    public static bool EnableComponentIfExists<T>(this GameObject obj) where T : MonoBehaviour => EnableComponentIfExists<T>(obj, true);
 
     #region Traverse
 
@@ -60,7 +63,7 @@ public static class GameObjectExtensions
 
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(bool useDestroyImmediate = false)
+        public void Destroy(bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -69,9 +72,12 @@ public static class GameObjectExtensions
             }
         }
 
+        /// <summary>Destroy every GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy() => Destroy(false);
+
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate = false)
+        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -83,6 +89,9 @@ public static class GameObjectExtensions
                 }
             }
         }
+
+        /// <summary>Destroy every matching GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy(Func<GameObject, bool> predicate) => Destroy(predicate, false);
 
         public Enumerator GetEnumerator()
         {
@@ -547,7 +556,7 @@ public static class GameObjectExtensions
 
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(bool useDestroyImmediate = false)
+        public void Destroy(bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -556,9 +565,12 @@ public static class GameObjectExtensions
             }
         }
 
+        /// <summary>Destroy every GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy() => Destroy(false);
+
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate = false)
+        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -570,6 +582,9 @@ public static class GameObjectExtensions
                 }
             }
         }
+
+        /// <summary>Destroy every matching GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy(Func<GameObject, bool> predicate) => Destroy(predicate, false);
 
         public Enumerator GetEnumerator()
         {
@@ -1379,7 +1394,7 @@ public static class GameObjectExtensions
 
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(bool useDestroyImmediate = false)
+        public void Destroy(bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -1388,9 +1403,12 @@ public static class GameObjectExtensions
             }
         }
 
+        /// <summary>Destroy every GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy() => Destroy(false);
+
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate = false)
+        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -1402,6 +1420,9 @@ public static class GameObjectExtensions
                 }
             }
         }
+
+        /// <summary>Destroy every matching GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy(Func<GameObject, bool> predicate) => Destroy(predicate, false);
 
         public Enumerator GetEnumerator()
         {
@@ -1871,7 +1892,7 @@ public static class GameObjectExtensions
 
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(bool useDestroyImmediate = false)
+        public void Destroy(bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -1880,9 +1901,12 @@ public static class GameObjectExtensions
             }
         }
 
+        /// <summary>Destroy every GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy() => Destroy(false);
+
         /// <summary>Destroy every GameObject in the source collection safety(check null).</summary>
         /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
-        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate = false)
+        public void Destroy(Func<GameObject, bool> predicate, bool useDestroyImmediate)
         {
             var e = GetEnumerator();
             while (e.MoveNext())
@@ -1894,6 +1918,9 @@ public static class GameObjectExtensions
                 }
             }
         }
+
+        /// <summary>Destroy every matching GameObject in the source collection safety(check null), using Destroy (not DestroyImmediate).</summary>
+        public void Destroy(Func<GameObject, bool> predicate) => Destroy(predicate, false);
 
         public Enumerator GetEnumerator()
         {

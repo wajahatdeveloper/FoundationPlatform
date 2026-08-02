@@ -18,11 +18,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
         public override bool RequiresMainThread => true;
 
-        public UnityConsoleSink(LogLevel minimumLevel = LogLevel.Debug, bool includeCallerInfo = false)
+        public UnityConsoleSink(LogLevel minimumLevel, bool includeCallerInfo)
         {
             MinimumLevel = minimumLevel;
             _includeCallerInfo = includeCallerInfo;
         }
+
+        public UnityConsoleSink(bool includeCallerInfo) : this(LogLevel.Debug, includeCallerInfo) { }
 
         [UnityEngine.HideInCallstack]
         public override void Emit(LogEvent logEvent)

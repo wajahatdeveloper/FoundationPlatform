@@ -86,21 +86,8 @@ public static class GameObjectComponentExtensions
 
     #region AddOrGetComponent
 
-    public static T AddOrGetComponent<T>(this GameObject go) where T : Component
-    {
-        var component = go.GetComponent<T>();
-        if (component == null)
-        {
-            component = go.AddComponent<T>();
-        }
-
-        return component;
-    }
-
-    public static T GetComponentOrAdd<T>(this GameObject go) where T : Component
-    {
-        return go.AddOrGetComponent<T>();
-    }
+    // Note: the "get-or-add component" operation lives in GetOrAddComponent<T>(GameObject)/(Component)
+    // below (~line 375) — kept as the single canonical name instead of duplicating it here.
 
     public static T GetIComponent<T>(this GameObject go) where T : class
     {

@@ -61,7 +61,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		public float EffectiveSpeed => Speed;
 
 		private PlayableStateEvents _events;
-		public PlayableStateEvents Events(object owner = null)
+		public PlayableStateEvents Events()
 		{
 			if (_events == null) _events = new PlayableStateEvents(this);
 			return _events;

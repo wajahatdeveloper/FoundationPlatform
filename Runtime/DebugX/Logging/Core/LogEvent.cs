@@ -28,13 +28,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
             LogLevel level,
             string messageTemplate,
             string renderedMessage,
-            LogProperty[] properties = null,
-            string channel = null,
-            string sourceContext = null,
-            CallerInfo caller = default,
-            Exception exception = null,
-            UnityEngine.Object unityContext = null,
-            string stackTrace = null)
+            LogProperty[] properties,
+            string channel,
+            string sourceContext,
+            CallerInfo caller,
+            Exception exception,
+            UnityEngine.Object unityContext,
+            string stackTrace)
         {
             Timestamp = DateTime.Now;
             Level = level;
@@ -48,6 +48,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
             UnityContext = unityContext;
             StackTrace = stackTrace;
             FrameCount = MainThreadDispatcher.IsMainThread ? Time.frameCount : -1;
+        }
+
+        /// <summary>Convenience overload for simple channel-tagged diagnostic events (e.g. queue-overflow warnings).</summary>
+        public LogEvent(LogLevel level, string messageTemplate, string renderedMessage, string channel)
+            : this(level, messageTemplate, renderedMessage, null, channel, null, default, null, null, null)
+        {
         }
     }
 }

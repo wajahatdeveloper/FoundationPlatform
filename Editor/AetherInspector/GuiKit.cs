@@ -45,10 +45,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void EndSectionFoldoutBody() => AetherInspectorTheme.EndSectionFoldoutBody();
 
         public static bool FoldoutInSection(bool expanded, string label)
-            => AetherInspectorTheme.FoldoutInSection(expanded, label);
+            => AetherInspectorTheme.SectionFoldout(expanded, label);
 
         public static bool FoldoutInSection(bool expanded, GUIContent label)
-            => AetherInspectorTheme.FoldoutInSection(expanded, label);
+            => AetherInspectorTheme.SectionFoldout(expanded, label);
 
         public static void Title(string title) => AetherInspectorTheme.DrawTitle(title);
 

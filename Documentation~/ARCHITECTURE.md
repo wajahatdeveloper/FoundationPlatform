@@ -2,34 +2,38 @@
 
 Package id: `com.aethernexus.foundationplatform` (`Packages/com.aethernexus.foundationplatform/`).
 
-Base platform layer for the AetherNexus ecosystem. No dependencies on other AetherNexus gameplay packages — they depend on this package, not the reverse. Provides: EventBus, DebugX, CoroutineX, TweenX, patterns, animation data packaging, gizmos, extensions, and editor authoring tooling (Framework Inspector, UI Validation, Preset Automation).
+Base platform layer for the AetherNexus ecosystem. No dependencies on other AetherNexus gameplay packages — they depend on this package, not the reverse. Provides: EventBus, DebugX, CoroutineX, TweenX, patterns, animation data packaging, gizmos, extensions, and editor authoring tooling (AetherInspector, ProjectWindowX, HierarchyX, UI Validation, Preset Automation).
 
-See also: [index.md](index.md) · [TweenX](TweenX.md) · [Framework Inspector](FrameworkInspector.md)
+See also: [index.md](index.md) · [TweenX](TweenX.md) · [AetherInspector](AetherInspector.md)
 
 ---
 
 ## Namespace map
 
-Most types live under `AetherNexus.FoundationPlatform.*`. Several core messaging / coroutine APIs are **global** (no namespace) for ergonomic call sites.
+Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep a bare (no-prefix) namespace instead — noted explicitly below rather than left to guesswork.
 
 | Namespace | Folder | Notes |
 |---|---|---|
-| *(global)* | `Runtime/Messaging/EventBus/`, `Runtime/CoroutineX/`, `Runtime/Identity/` (value type) | `EventBus`, `BaseGameEvent`, `Identity`, `CoroutineX`, tween extensions |
+| `AetherNexus.FoundationPlatform.Messaging` | `Runtime/Messaging/EventBus/` | `EventBus`, `BaseGameEvent`, `DomainEvent`, `Identity`, `IIdentity`, `SubscriptionToken` — **not** global despite ergonomic call sites |
+| `AetherNexus.FoundationPlatform.CoroutineX` | `Runtime/CoroutineX/` | `CoroutineX`, `Routines`, `CoroutineXExecutor`, `CoroutineXOwner` — **not** global |
 | `AetherNexus.FoundationPlatform` | `Runtime/Patterns/` | root types such as `FragmentData` |
 | `AetherNexus.FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` |
 | `AetherNexus.FoundationPlatform.Attributes` | `Runtime/Attributes/` | `[Tag]`, `[Layer]`, `[TooltipIcon]`, run-order attributes |
 | `AetherNexus.FoundationPlatform.Behaviours` | `Runtime/Behaviours/` | small reusable MonoBehaviours |
-| `AetherNexus.FoundationPlatform.DebugX` | `Runtime/DebugX/`, `Editor/DebugX/` | logging API + editor menu items |
+| `AetherNexus.FoundationPlatform.DebugX` | `Runtime/DebugX/`, `Editor/DebugX/` | logging API + editor menu items. **Gotcha:** the class and its enclosing namespace share the name `DebugX` — see `docs/00-AgentGuide.md` §3 |
 | `AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor` | `Editor/Console/` | DebugX Console window |
-| `AetherNexus.FoundationPlatform.FrameworkInspector` | `Runtime/FrameworkInspector/` | runtime-visible attributes |
-| `AetherNexus.FoundationPlatform.FrameworkInspector.Editor` | `Editor/FrameworkInspector/` | inspector engine, `GuiKit` |
+| `AetherNexus.FoundationPlatform.AetherInspector` | `Runtime/AetherInspector/` | runtime-visible attributes |
+| `AetherNexus.FoundationPlatform.AetherInspector.Editor` | `Editor/AetherInspector/` | inspector engine, `GuiKit` |
+| `AetherNexus.FoundationPlatform.Identity` | `Runtime/Identity/`, `Editor/Identity/` | `IdentityComponent`, `IdentityFieldAttribute` — consumers of the `Identity` value type (which itself lives in `Runtime/Messaging/EventBus/`, see above) |
+| `ProjectWindowX` (bare, no prefix) | `Editor/ProjectWindowX/` | Project-window row-decoration + hover-create pipeline. `HOMAM_GEC`-gated (see below) |
+| `HierarchyX` (bare, no prefix) | `Editor/HierarchyX/` | Hierarchy-window row-decoration + docked-panel pipeline |
 | `AetherNexus.FoundationPlatform.Gizmos` | `Runtime/Gizmos/`, `Editor/Gizmos/` | scene-view gizmo drawing |
 | `AetherNexus.FoundationPlatform.TweenX` / `.TweenX.Feedbacks` / `.TweenX.EditorTools` | `Runtime/TweenX/`, `Editor/TweenX/` | tweens + Feedback player |
 | `AetherNexus.FoundationPlatform.Utilities.Menus` | `Runtime/Menus/` | `MenuPaths`, `MenuPriorities` |
-| `AetherNexus.FoundationPlatform.Editor.Utilities` (+ `.Messaging`, `.Debugging`, `.Tools`, `.Validation.UI`, …) | `Editor/Utilities/`, `Editor/Messaging/`, … | general editor helpers and windows |
-| `AetherNexus.FoundationPlatform.Editor.Tools` | `Editor/Tools/PrefabLightmapGenerator/` | lightmap baking |
+| `AetherNexus.FoundationPlatform.Editor.Utilities` (+ `.Messaging`, `.Debugging`, `.Tools`, `.Validation.UI`, …) | `Editor/Utilities/`, `Editor/Messaging/`, `Editor/StaleComponentGuard/`, `Editor/EditorEnhancerX/`, `Editor/AssetImport/`, … | general editor helpers and windows |
+| `AetherNexus.FoundationPlatform.Editor.Tools` | `Editor/Tools/`, `Editor/Tools/PrefabLightmapGenerator/` | codegen/scaffolding tools, lightmap baking (the baked-data `MonoBehaviour` itself, `PrefabLightmapData`, lives in `AetherNexus.FoundationPlatform.Tools` under `Runtime/Tools/PrefabLightmapGenerator/` so it compiles into player builds) |
 
-**Rule of thumb:** prefer `AetherNexus.FoundationPlatform.*`, with `.Editor` (or an `Editor` asm) where types are editor-only. Global APIs stay global by design.
+**Rule of thumb:** prefer `AetherNexus.FoundationPlatform.*`, with `.Editor` (or an `Editor` asm) where types are editor-only. `ProjectWindowX` and `HierarchyX` are the only two subsystems that intentionally keep a bare namespace — not an oversight, but not yet reconciled with the "prefer prefixed" rule of thumb either; treat as a known inconsistency rather than a pattern to copy for new code.
 
 ---
 
@@ -45,6 +49,8 @@ FoundationPlatform.Editor        (Editor/)
   references: FoundationPlatform.Runtime
   includePlatforms: [Editor]
 ```
+
+`ProjectWindowX.Editor`, `HierarchyX.Editor` (folder `Editor/HierarchyX/`, despite the type-side asmdef name), `EditorEnhancerX.Editor`, and `FoundationPlatform.StaleComponentGuard.Editor` additionally carry `defineConstraints: ["HOMAM_GEC"]` + `versionDefines` on `com.aethernexus.gameenginecore` — they only compile when GameEngineCore is present as a UPM package. This is a deliberate Asset-Store publishing pattern (see `docs/Notes/FoundationPlatform-PUBLISHING.md`, `docs/Notes/GameEngineCore-PUBLISHING.md` §`HOMAM_GEC` define), not a bug: no assembly *reference* to GameEngineCore exists, so the top-line "no dependencies on other AetherNexus gameplay packages" claim still holds, but these four designer-facing subsystems silently don't exist at all in a build without GameEngineCore installed.
 
 ## Event Bus
 
@@ -69,7 +75,7 @@ EventBus.Publish(myEvent);
 | `Identity` | `string`-backed value type; `Identity.Global = "__global__"`, `Identity.None` = invalid |
 | `SubscriptionToken` | opaque handle for `Unsubscribe(token)` |
 
-Debug UI (`EventBusWindow`, subscription/publish history windows) lives in `Editor/Messaging/EventBus/`.
+Debug UI (`EventBusWindow`, subscription/publish history windows) lives in `Editor/Messaging/EventBus/`. GameEngineCore-specific debug-display filtering (recognizing GameAction/RuleSystem infrastructure so it doesn't clutter publisher/subscriber names) is *not* hardcoded here — it's an optional `IRuleSystemDebugClassifier` GameEngineCore registers via `EventBus.RegisterRuleSystemClassifier(...)`, mirroring the `IEventDebugSignalEmitter` seam used for telemetry.
 
 ---
 
@@ -103,11 +109,13 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 
 **DebugX Console window** — `Editor/Console/DebugXConsoleWindow.cs` — reads structured `LogEvent`s from `ConsoleLogStore` (ring buffer fed by `EditorConsoleSink`). Supports filters, tabs, watch expressions, snippets, compile-error surfacing, export.
 
+**Known issue (deferred, not fixed):** `CallerInfoHelper`'s stack-walk reflection for caller info runs unconditionally on every log call in every build, in tension with "no runtime reflection outside editor tools." See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for the full write-up and options.
+
 ---
 
 ## CoroutineX
 
-`CoroutineX` — `Runtime/CoroutineX/CoroutineX.cs` — coroutine lifecycle with explicit ownership.
+`CoroutineX` — `Runtime/CoroutineX/CoroutineX.cs` — coroutine lifecycle with explicit ownership. First-party code (not vendored — the `DebugX` logging calls woven into its control flow are a deliberate first-party dependency, not an in-place patch of a third-party drop).
 
 | Member | Purpose |
 |---|---|
@@ -129,7 +137,7 @@ State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
 | Class | File | Behavior |
 |---|---|---|
-| `SingletonBehaviour<T>` | `Runtime/Patterns/SingletonBehaviour.cs` | `FindFirstObjectByType` lazy-init; logs error on duplicate |
+| `SingletonBehaviour<T>` | `Runtime/Patterns/SingletonBehaviour.cs` | `FindFirstObjectByType` lazy-init; logs **Info** (not Error) when a second copy is found in a newly-loaded scene — the session survivor is kept, the duplicate destroyed |
 | `PersistentSingletonBehaviour<T>` | same file | `DontDestroyOnLoad` variant |
 | `Singleton<T>` | same file | non-MonoBehaviour, thread-safe lazy-init |
 | `FragmentData<TDefinition, TPayload>` | `Runtime/Patterns/FragmentData.cs` | SO-based config: `SharedConfig` (reference to `TDefinition` SO) OR `CustomConfig` (inline `TPayload`) — pick one, not both |
@@ -146,17 +154,17 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 |---|---|---|
 | `Observable<T>` | `Runtime/Patterns/Observable.cs` | class (not struct — see Design Decisions); `Value` setter fires `OnValueChanged` / `OnValueChangedTo` / `OnValueChangedFromTo` |
 | `ObservableList<T>` | `Runtime/Patterns/ObservableList.cs` | `ItemAdded`, `ItemRemoved`, `Cleared` events |
-| `MaybeMonad<T>` | `Runtime/SupportTypes/MaybeMonad.cs` | nullable wrapper (`Some`/`None`), functional optional |
-| `CustomState` | `Runtime/SupportTypes/CustomState.cs` | state-machine support type |
+| `MaybeMonad` | `Runtime/SupportTypes/MaybeMonad.cs` | **non-generic** static class of LINQ-chain extension methods (`With`, `Return`, `If`, `Unless`, `Do`, `IfNotNull`) — not a generic `Some`/`None` optional-value wrapper |
+| `CustomState` | `Runtime/SupportTypes/CustomState.cs` | a bare `MonoBehaviour` wrapping `Dictionary<string,string> keyValuePairs`, used by `MonoBehaviourExtensions.RunOnce`/`RunOncePersistent` as a per-object "have I already fired this once" flag store — no state-machine semantics |
 | `HSL` / `HSV` | `Runtime/SupportTypes/` | color-space value types |
 
 ---
 
 ## Identity
 
-`Identity` (value type) — string-based entity/channel id. `Identity.Global` = `"__global__"`; `Identity.None` = default invalid; `IsValid` = non-empty string; implicit `string → Identity` conversion.
+`Identity` (value type, `Runtime/Messaging/EventBus/Identity.cs`, namespace `AetherNexus.FoundationPlatform.Messaging`) — string-based entity/channel id. `Identity.Global` = `"__global__"`; `Identity.None` = default invalid; `IsValid` = non-empty string; implicit `string → Identity` conversion.
 
-`IIdentity` — interface, `Identity Identity` property. `IdentityComponent` — MonoBehaviour, serialized string id, auto-generates a design-time id. Duplicate detection is design-time only (`IdentityDuplicationHandler` in `Editor/Identity/`) — there is no runtime registry, so don't rely on uniqueness being enforced at runtime.
+`IIdentity` — interface, `Identity Identity` property (also `Runtime/Messaging/EventBus/`). `IdentityComponent` (`Runtime/Identity/`, namespace `AetherNexus.FoundationPlatform.Identity`) — MonoBehaviour, serialized string id, auto-generates a design-time id via the shared `IdentityComponent.NewDesignTimeId()` helper (also used by `Editor/Identity/IdentityFieldDrawer`'s "New" button). Duplicate detection is design-time only (`IdentityDuplicationHandler` in `Editor/Identity/`) — there is no runtime registry, so don't rely on uniqueness being enforced at runtime.
 
 ---
 
@@ -165,17 +173,39 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 | Class | Purpose |
 |---|---|
 | `AnimationSet` (SO) | named animation states/clips for a character |
-| `LocomotionBlendProfile` | blend-tree config: directional mix + stance definitions |
-| `PlayableGraphBridge` | Animancer-adjacent playable-graph bridge — see the package's own invariants doc before touching |
+| `AnimationSetEntry` / `AnimationSetLink` | individual clip entry / cross-set link within an `AnimationSet` |
+| `LocomotionBlendProfile` / `LocomotionBlendStanceDefinition` | blend-tree config: directional mix + stance definitions |
+| `ILocomotionBlendLayer` | interface for a locomotion blend layer contract; implemented outside this package (e.g. GameFramework's `CharacterSystem`) |
+| `AnimatorBridgeBase` | abstract `MonoBehaviour` base every character animator bridge subclasses; owns the Animator's non-decisional passthrough properties (`Speed`, `ApplyRootMotion`, `UpdateMode`, etc. — the Animator is an output device, never polled for gameplay decisions here) |
+| `PlayableGraphBridge` | Animancer-adjacent Playables graph bridge — see [PlayableGraphBridge-Invariants.md](PlayableGraphBridge-Invariants.md) before touching layer/state weight or lifecycle logic |
+| `PlayableLayer` | one layer of the Playables graph, owns a state mixer |
+| `PlayableState` family — `ClipState`, `ControllerState`, `MixerState` / `ManualMixerState` / `LinearMixerState` / `DirectionalMixerState`, `PlayableStateEvents` | the playable-state hierarchy `PlayableGraphBridge` ticks; `ClipState`s are transient (recreated per `Play()`), `MixerState`s are long-lived and reused |
 | `AnimationSetSequenceUtility` | sequence playback utilities |
+| `AnimationSetValidationProfile` | validation-rule config consumed by `AnimationSetValidator` |
+| `AnimationEventCatalog` / `CoreAnimationEvents` | named animation-event catalog |
+| `CrossfadeSourceMode` | enum controlling crossfade source resolution |
 
-Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenerator` (strongly-typed animation state accessors), `AnimationSetValidator` (validates clip assignments), `AnimationTestBenchWindow`.
+Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenerator` (strongly-typed animation state accessors), `AnimationSetValidator` (validates clip assignments), `AnimationTestBenchWindow`, `PlayableGraphBridgeEditor`, `AnimationSetLinkPropertyDrawer`, `AnimationPreviewHelper`, `AnimatorConstantsGenerator` (see dual-mechanism note below).
+
+**Approved exception to the project's "no optional parameters" rule:** the `AnimatorBridgeBase`/
+`PlayableGraphBridge`/`MixerState` family (`CrossfadeAsync`, `PlayLoopingAnimation`, `InitializeGraph`,
+the `PlayableLayer.Play` overloads, `MixerState` constructors, etc.) uses defaulted parameters
+deliberately, mirroring TweenX's fluent-API rationale. Do not "fix" this elsewhere without the same
+explicit sign-off.
+
+**Known dual-mechanism risk (not a FoundationPlatform code defect):** `Editor/Animation/AnimatorConstantsGenerator.cs`
+code-generates Mecanim `AnimatorController` param/state hash constants into a concrete bridge subclass,
+coexisting with this package's own Playables-based AnimGraph system with no documented decision on
+which one should win. FoundationPlatform only ships the generator tool; the actual dual-usage lives in
+GameFramework's `CharacterAnimator.cs` (`Packages/com.aethernexus.gameframework/CharacterSystem/Runtime/CharacterAnimator/CharacterAnimator.cs`),
+which carries both a live Mecanim `AnimatorController` assignment and drives the Playables graph on top
+of it. The retire-or-keep call is deferred to the GameFramework package audit/fix pass.
 
 ---
 
 ## Gizmos
 
-`Runtime/Gizmos/` (drawing API) + `Editor/Gizmos/` (editor-side support). Performant scene-view gizmo drawing, originally assimilated from a vendored third-party tool.
+`Runtime/Gizmos/` (drawing API) + `Editor/Gizmos/` (editor-side support, including all `[CustomEditor]` classes — `GizmosEditor`, `GizmosHandleTextEditor`, `ColliderGizmoEditor`). Performant scene-view gizmo drawing, originally assimilated from a vendored third-party tool.
 
 ---
 
@@ -190,9 +220,10 @@ Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenera
 | `Extensions/Physics/` | Collider, Rigidbody, Physics casts |
 | `Extensions/Rendering/` | Camera, Renderer, Texture2D, graphics |
 | `Extensions/UI/` | RectTransform, Canvas, EventSystem, rich text |
-| `Extensions/Storage/` | PlayerPrefs wrapper, persistent-data adapters |
-| `Extensions/Utilities/` | Base64, file I/O, streams, reflection |
-| `Extensions/Audio/`, `Extensions/Bitwise/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Reflection/`, `Extensions/Scene/`, `Extensions/Time/`, `Extensions/Validation/` | one concern each, self-explanatory from folder name |
+| `Extensions/Storage/` | `PersistentDataHandler` (JSON-backed, canonical for new code) + `PlayerPrefsX` (legacy binary codec, kept for existing callers) |
+| `Extensions/Utilities/` | Base64, file I/O, streams |
+| `Extensions/Reflection/` | `ReflectionExtensions` (`HasMethod`/`HasField`/`HasProperty`) — editor-only (`#if UNITY_EDITOR`), no runtime callers |
+| `Extensions/Audio/`, `Extensions/Bitwise/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Scene/`, `Extensions/Time/`, `Extensions/Validation/` | one concern each, self-explanatory from folder name |
 
 ### RandomX — pluggable random with `UnityEngine.Random`'s shape
 
@@ -211,13 +242,50 @@ Two seams, both in `Runtime/Behaviours/`:
 
 The state payload is an opaque string so this package stays ignorant of any particular RNG implementation. `RandomX.Stream` / `CaptureState` / `RestoreState` throw a naming error when the installed provider only implements the smaller interface.
 
+`CollectionExtensions.GetRandom`/`Shuffle` (in `Extensions/Collections/`) and `MathExtensions.GetDirectionFromSpread` are explicitly documented as PRESENTATION-ONLY (bare `UnityEngine.Random`) — use the `IRandomProvider`-based path above for anything simulation-affecting.
+
+---
+
+## ProjectWindowX
+
+`Editor/ProjectWindowX/` (namespace `ProjectWindowX`, bare — see Namespace map) — a *mechanism-only* Project-window row-decoration + hover-create layer, `HOMAM_GEC`-gated (see Assembly definitions). Owns the single `EditorApplication.projectWindowItemOnGUI` subscription project-wide.
+
+Two `TypeCache`-discovered extension points:
+
+| Interface | Purpose |
+|---|---|
+| `IProjectWindowXPass` | contributes a row-decoration pass (zebra rows, folder icons, file-extension labels, and three more ship built-in) |
+| `IProjectWindowXContextMenu` | contributes an entry to the hover "+" create-menu |
+
+It does **not** itself implement domain/mapped-type authoring (create-domain, create-mapped-types, out-of-sync badges) — those are contributed by GameEngineCore (`Editor/ProjectWindowX/AuthoringProjectWindowXConsumers.cs`, `DomainFolderColorPass.cs`, `LevelOwnershipBadgePass.cs`) through these two registries, matching docs/09's extension pattern. Settings live under **Project Settings ▸ ProjectWindowX**.
+
+---
+
+## Hierarchy tooling (HierarchyX)
+
+`Editor/HierarchyX/` (namespace `HierarchyX`, bare — see Namespace map) — the generic, engine-agnostic Hierarchy-window enhancement layer: one draw pipeline (`HierarchyX.OnItemGUI`) layering row tint, tree lines, best-component icon, missing-script badge, tag/layer/sorting-layer mini labels, a decorator-supplied chip, hover-only row controls, an accent spine, and a row separator — plus a docked/fallback setup panel (`Panel/`) hosting accordion sections.
+
+Two `TypeCache`-discovered extension points:
+
+| Interface | Purpose |
+|---|---|
+| `IHierarchyRowDecorator` | contributes row tint/accent/chip (e.g. GameEngineCore's `DomainHierarchyDecorator`/`SessionHierarchyDecorator` for engine-concept chips) |
+| `IHierarchyPanelSection` | contributes a docked-panel accordion section (e.g. GameEngineCore's `SceneSetupPanelSection`/`GameSessionPanelSection`/`DomainsPanelSection`) |
+
+Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, versionable — not per-user `EditorPrefs`). `HierarchyXRowControls.soloButtons` (hover visibility/pickability toggles) defaults **off**: Unity's own stock Hierarchy already shows equivalent hover icons via `SceneVisibilityManager` at the same row position; only `rowActiveToggle` (genuinely new) defaults on.
+
 ---
 
 ## Editor tooling
 
 | Tool | Location | Purpose |
 |---|---|---|
-| Framework Inspector | `Editor/FrameworkInspector/` | Attribute-based inspector engine (groups, drawers, `GuiKit`) |
+| AetherInspector | `Editor/AetherInspector/` | Attribute-based inspector engine (groups, drawers, `GuiKit`) |
+| ProjectWindowX | `Editor/ProjectWindowX/` | Project-window row decoration + hover-create pipeline (see section above) |
+| HierarchyX | `Editor/HierarchyX/` | Hierarchy-window row decoration + docked panel (see section above) |
+| StaleComponentGuard | `Editor/StaleComponentGuard/` | Detects components whose serialized YAML still carries fields the current script no longer declares (renamed/removed without `[FormerlySerializedAs]`); Hierarchy row decorator + inspector badge + Project Settings panel, one sweep `EditorWindow` as last resort |
+| EditorEnhancerX | `Editor/EditorEnhancerX/` | Scene View / Hierarchy power tools: Scene View overlays, native `EditorTool` rail (duplicate-array, pivot-rotation/move tools), `[MainToolbarElement]` timescale slider, Project Settings provider |
+| AssetImport | `Editor/AssetImport/` | Asset-import plugin pipeline |
 | DebugX Console | `Editor/Console/` | Structured log console — **Window → DebugX Console...** |
 | Event Bus windows | `Editor/Messaging/EventBus/` | Debug hub — **Window → Event Bus...** |
 | Tween Debugger | `Editor/TweenX/` | Live tweens — **Window → TweenX → Tween Debugger** |
@@ -226,16 +294,16 @@ The state payload is an opaque string so this package stays ignorant of any part
 | Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
 | Game State window | `Editor/Debugging/` | World-scope live state (`IWorldDebugSection`) — **Window → Domain → Game State...** |
 | Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
-| Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities |
-| Prefab Lightmap Generator | `Editor/Tools/PrefabLightmapGenerator/` | Prefab lightmap baking |
+| Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities (plain `static class`, not an `EditorWindow`) |
+| Prefab Lightmap Generator | `Runtime/Tools/PrefabLightmapGenerator/` (baked-data component) + `Editor/Tools/PrefabLightmapGenerator/` (baking pipeline, inspector) | Prefab lightmap baking — the `PrefabLightmapData` `MonoBehaviour` compiles into player builds; only the `Lightmapping.Bake()`/`PrefabUtility`-dependent baking pipeline (`PrefabLightmapBaker`) and its custom inspector are editor-only |
 
-### Framework Inspector IMGUI theme
+### AetherInspector IMGUI theme
 
-Inspector chrome is centralized in `FrameworkInspectorTheme.cs`. `GuiKit` is the public facade for non-inspector editor windows.
+Inspector chrome is centralized in `AetherInspectorTheme.cs`. `GuiKit` is the public facade for non-inspector editor windows.
 
 - Default fields still draw through `EditorGUILayout.PropertyField`.
-- Visual harness: **Tools → Diagnostics → Framework Inspector Demo**.
-- Full attribute matrix: [FrameworkInspector.md](../DOCS/FrameworkInspector.md).
+- Visual harness: **Window → Diagnostics → AetherInspector Demo**.
+- Full attribute matrix: [AetherInspector.md](AetherInspector.md).
 
 ---
 

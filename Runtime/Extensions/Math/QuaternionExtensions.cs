@@ -65,12 +65,15 @@ public static class QuaternionExtensions
     /// <param name="to">Target position</param>
     /// <param name="up">Up vector (default: Vector3.up)</param>
     /// <returns>Rotation looking at target</returns>
-    public static Quaternion LookAt(Vector3 from, Vector3 to, Vector3 up = default)
+    public static Quaternion LookAt(Vector3 from, Vector3 to, Vector3 up)
     {
         if (up == default) up = Vector3.up;
         Vector3 direction = (to - from).normalized;
         return Quaternion.LookRotation(direction, up);
     }
+
+    /// <summary>Creates a rotation that looks at a target position, using Vector3.up.</summary>
+    public static Quaternion LookAt(Vector3 from, Vector3 to) => LookAt(from, to, default);
 
     /// <summary>
     /// Creates a rotation that looks at a target position, ignoring Y axis
@@ -225,10 +228,13 @@ public static class QuaternionExtensions
     /// <param name="rotation2">Second rotation</param>
     /// <param name="tolerance">Tolerance for comparison</param>
     /// <returns>True if approximately equal</returns>
-    public static bool Approximately(this Quaternion rotation1, Quaternion rotation2, float tolerance = 0.01f)
+    public static bool Approximately(this Quaternion rotation1, Quaternion rotation2, float tolerance)
     {
         return Quaternion.Angle(rotation1, rotation2) < tolerance;
     }
+
+    /// <summary>Checks approximate equality using a 0.01 tolerance.</summary>
+    public static bool Approximately(this Quaternion rotation1, Quaternion rotation2) => Approximately(rotation1, rotation2, 0.01f);
 
     /// <summary>
     /// Rotates around a specific axis

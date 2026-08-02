@@ -101,7 +101,7 @@ public sealed class IdentityFieldDrawer : PropertyDrawer
                     var prop = so.FindProperty(property.propertyPath);
                     if (prop != null)
                     {
-                        prop.stringValue = $"e:{System.Guid.NewGuid():N}";
+                        prop.stringValue = IdentityComponent.NewDesignTimeId();
                         so.ApplyModifiedProperties();
                     }
                 }

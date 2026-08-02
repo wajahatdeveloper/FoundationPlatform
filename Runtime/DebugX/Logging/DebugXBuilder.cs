@@ -119,11 +119,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
             );
 
             LogPipeline.Emit(logEvent);
-
-            if (level == LogLevel.Error && exception == null)
-            {
-                ExplicitErrorDedupe.RegisterExplicitFailure(allProperties);
-            }
         }
 
         private LogProperty[] MergeProperties(LogProperty[] template, List<LogProperty> builder)

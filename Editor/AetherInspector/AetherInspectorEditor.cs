@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.Attributes;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
@@ -318,6 +319,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             mm.InlineEditor = m.GetCustomAttribute<InlineEditorAttribute>();
             mm.AssetsOnly = m.GetCustomAttribute<AssetsOnlyAttribute>();
             mm.SceneObjectsOnly = m.GetCustomAttribute<SceneObjectsOnlyAttribute>();
+            mm.Layer = m.GetCustomAttribute<LayerAttribute>();
+            mm.Tag = m.GetCustomAttribute<TagAttribute>();
+            mm.TooltipIcon = m.GetCustomAttribute<TooltipIconAttribute>();
 
             // Label / Tooltip / Layout modifiers
             mm.HideLabel = m.GetCustomAttribute<HideLabelAttribute>() != null;
@@ -1617,6 +1621,23 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static void RenderField(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, int maxDepth = -1, HashSet<object> visited = null)
         {
+            // [TooltipIcon(text)] wraps the field's normal rendering (whatever branch below claims it —
+            // ValueDropdown, ToggleLeft, the default field, etc.) with a trailing help-icon, so it composes
+            // with any other attribute instead of only firing when nothing else intercepts first.
+            var tooltipIcon = e.Metadata?.TooltipIcon;
+            if (tooltipIcon != null)
+            {
+                AetherInspectorTheme.DrawWithTooltipIcon(
+                    () => RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited),
+                    tooltipIcon.Tooltip);
+                return;
+            }
+            RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited);
+        }
+
+        private static void RenderFieldCore(InspectorEntry e, object[] targets,
+            Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, int maxDepth, HashSet<object> visited)
+        {
             var mm = e.Metadata;
             var prop = e.Property;
             var target = targets[0];
@@ -1708,6 +1729,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, targets); }
                 return;
             }
+
+            // [Layer] on a string or int field → layer popup (mirrors Unity's built-in layer list;
+            // matches the retired classic LayerDrawer/StringArrayPopupDrawer's behavior).
+            if (mm.Layer != null
+                && (prop.propertyType == SerializedPropertyType.String || prop.propertyType == SerializedPropertyType.Integer)
+                && TryDrawLayerOrTagPopup(e, targets, UnityEditorInternal.InternalEditorUtility.layers))
+                return;
+
+            // [Tag] on a string or int field → tag popup (mirrors Unity's built-in tag list; matches
+            // the retired classic TagDrawer/StringArrayPopupDrawer's behavior).
+            if (mm.Tag != null
+                && (prop.propertyType == SerializedPropertyType.String || prop.propertyType == SerializedPropertyType.Integer)
+                && TryDrawLayerOrTagPopup(e, targets, UnityEditorInternal.InternalEditorUtility.tags))
+                return;
 
             // [MultiLineProperty(lines)] string → text area.
             if (mm.MultiLineProperty != null && prop.propertyType == SerializedPropertyType.String)
@@ -1897,6 +1932,50 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             InvokeOnValueChanged(e, targets);
         }
 
+        // [Layer]/[Tag]: pick-from-a-fixed-string-array popup, on either a string field (stores the
+        // picked name) or an int field (stores the picked index) — mirrors the retired classic
+        // LayerDrawer/TagDrawer/StringArrayPopupDrawer exactly, just invoked from the native dispatch.
+        private static bool TryDrawLayerOrTagPopup(InspectorEntry e, object[] targets, string[] options)
+        {
+            if (options == null || options.Length == 0) return false;
+
+            var mm = e.Metadata;
+            var prop = e.Property;
+            DrawUnityHeaders(mm);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            var rect = EditorGUILayout.GetControlRect();
+
+            if (prop.propertyType == SerializedPropertyType.String)
+            {
+                int index = Array.IndexOf(options, prop.stringValue);
+                index = Mathf.Clamp(index, 0, options.Length - 1);
+                EditorGUI.BeginChangeCheck();
+                int picked = EditorGUI.Popup(rect, lbl.text, index, options);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    string pickedValue = options[picked];
+                    if (!string.Equals(pickedValue, prop.stringValue))
+                    {
+                        prop.stringValue = pickedValue;
+                        Commit(e, targets);
+                    }
+                }
+            }
+            else
+            {
+                int index = Mathf.Clamp(prop.intValue, 0, options.Length - 1);
+                EditorGUI.BeginChangeCheck();
+                int picked = EditorGUI.Popup(rect, lbl.text, index, options);
+                if (EditorGUI.EndChangeCheck() && picked != prop.intValue)
+                {
+                    prop.intValue = picked;
+                    Commit(e, targets);
+                }
+            }
+
+            return true;
+        }
+
         private static object SafeGet(FieldInfo f, object target)
         {
             try { return f.GetValue(f.IsStatic ? null : target); } catch { return null; }
@@ -2066,7 +2145,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
                 else if (ie.DrawPreview)
                 {
-                    var tex = AssetPreview.GetAssetPreview(obj) ?? AssetPreview.GetMiniThumbnail(obj);
+                    var assetPreview = AssetPreview.GetAssetPreview(obj);
+                    var tex = assetPreview != null ? assetPreview : AssetPreview.GetMiniThumbnail(obj);
                     if (tex != null)
                     {
                         float ph = ie.PreviewHeight > 0 ? ie.PreviewHeight : 35f;
@@ -2687,7 +2767,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     return DrawIconButton(b, content, height, true);
             }
 
-            if (b.Stretch && b.ButtonAlignment == ButtonAlignment.Stretch)
+            if (b.ButtonAlignment == ButtonAlignment.Stretch)
                 return DrawIconButton(b, content, height, true);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -3251,6 +3331,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public InlineEditorAttribute InlineEditor;
         public AssetsOnlyAttribute AssetsOnly;
         public SceneObjectsOnlyAttribute SceneObjectsOnly;
+        public LayerAttribute Layer;
+        public TagAttribute Tag;
+        public TooltipIconAttribute TooltipIcon;
 
         // Label / Tooltip / Layout modifiers
         public bool HideLabel;

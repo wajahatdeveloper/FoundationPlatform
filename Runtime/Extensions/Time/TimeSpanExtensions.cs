@@ -23,16 +23,8 @@ public static class TimeSpanExtensions
     public static float ToSeconds(this TimeSpan timeSpan) =>
         (float)timeSpan.TotalSeconds;
 
-    /// <summary>
-    /// Formats a TimeSpan duration using the specified format string.
-    /// </summary>
-    /// <param name="timeSpan">The TimeSpan to format.</param>
-    /// <param name="format">Format string (default: "hh\\:mm\\:ss").</param>
-    /// <returns>Formatted duration string.</returns>
-    public static string ToFormattedString(this TimeSpan timeSpan, string format = "hh\\:mm\\:ss")
-    {
-        return timeSpan.ToString(format);
-    }
+    // Note: TimeSpan duration formatting is TimeX.FormatDuration (same folder) — kept as the single
+    // canonical name instead of duplicating it here.
 
     /// <summary>
     /// Gets a human-readable representation of the TimeSpan.

@@ -424,7 +424,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         [InfoBox("Partial support: CollapseOthersOnExpand, ShowIf/HideIf Animate, ValueDropdown AppendNextDrawer — API only.", InfoMessageType.Warning)]
         [PropertyOrder(199)]
-        public string unsupportedApiNote = "see DOCS/AetherInspector.md";
+        public string unsupportedApiNote = "see Documentation~/AetherInspector.md";
 
         // --- Fragment pattern repro (nested box paths + inline payload + private base button) ---
         [Title("Shared or Custom Value")]

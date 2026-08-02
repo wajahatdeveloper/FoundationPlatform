@@ -59,8 +59,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public ButtonStyle Style = ButtonStyle.CompactBox;
         /// <summary>Horizontal alignment of the button within its layout row.</summary>
         public ButtonAlignment ButtonAlignment = ButtonAlignment.Stretch;
-        /// <summary>Legacy flag; when true the button stretches to fill its container.</summary>
-        public bool Stretch = true;
 
         /// <summary>Default constructor.</summary>
         public ButtonAttribute() { }

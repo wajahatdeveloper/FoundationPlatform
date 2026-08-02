@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
+/// <summary>
+/// Canonical path for device-local keyed persistence in new code (JSON-backed via
+/// <see cref="IPersistentDataAdapter"/>). <see cref="PlayerPrefsX"/> is the legacy binary-codec
+/// alternative, kept for existing callers only.
+/// </summary>
 public static class PersistentDataHandler
 {
     private const string CacheInitKey = "CacheInit";

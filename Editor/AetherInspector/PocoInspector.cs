@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.Attributes;
 using UnityEditor;
 using UnityEngine;
 
@@ -315,12 +316,28 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var ic = EditorGUIUtility.IconContent(m.Button.Icon);
                 if (ic != null && ic.image != null) content.image = ic.image;
             }
-            var pseudo = new ButtonAttribute { Stretch = true, ButtonAlignment = ButtonAlignment.Stretch, Style = m.Button.Style, IconAlignment = m.Button.IconAlignment };
+            var pseudo = new ButtonAttribute { ButtonAlignment = ButtonAlignment.Stretch, Style = m.Button.Style, IconAlignment = m.Button.IconAlignment };
             if (AetherInspectorRenderer.DrawAlignedButtonPublic(pseudo, content, h) && m.Method.GetParameters().Length == 0)
                 m.Method.Invoke(m.Method.IsStatic ? null : target, null);
         }
 
         private static void DrawValue(Member m, object target, int depth, MemberMetadata metadata = null, HashSet<object> visited = null)
+        {
+            // [TooltipIcon(text)] wraps the member's normal rendering with a trailing help-icon, so it
+            // composes with whatever DrawValueCore below chooses (editable field, read-only text, nested
+            // object, …) instead of needing its own dedicated branch.
+            var tooltipIcon = m.Info.GetCustomAttribute<TooltipIconAttribute>();
+            if (tooltipIcon != null)
+            {
+                AetherInspectorTheme.DrawWithTooltipIcon(
+                    () => DrawValueCore(m, target, depth, metadata, visited),
+                    tooltipIcon.Tooltip);
+                return;
+            }
+            DrawValueCore(m, target, depth, metadata, visited);
+        }
+
+        private static void DrawValueCore(Member m, object target, int depth, MemberMetadata metadata, HashSet<object> visited)
         {
             string label = ResolveText(target, GetLabel(m.Info));
             bool hideLabel = m.Info.GetCustomAttribute<HideLabelAttribute>() != null;
@@ -396,6 +413,46 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 // Read-only display.
                 if (hideLabel) EditorGUILayout.LabelField(value?.ToString() ?? string.Empty);
                 else EditorGUILayout.LabelField(label, value?.ToString() ?? string.Empty);
+                return;
+            }
+
+            // [Layer]/[Tag] on a string or int member → popup from Unity's built-in layer/tag list
+            // (mirrors the retired classic LayerDrawer/TagDrawer/StringArrayPopupDrawer; SerializedProperty
+            // fields get the equivalent treatment via AetherInspectorEditor's TryDrawLayerOrTagPopup).
+            string[] layerOrTagOptions = m.Info.GetCustomAttribute<LayerAttribute>() != null
+                ? UnityEditorInternal.InternalEditorUtility.layers
+                : m.Info.GetCustomAttribute<TagAttribute>() != null
+                    ? UnityEditorInternal.InternalEditorUtility.tags
+                    : null;
+            if (layerOrTagOptions != null && layerOrTagOptions.Length > 0
+                && (declaredType == typeof(string) || declaredType == typeof(int)))
+            {
+                var popupLabel = hideLabel ? GUIContent.none : new GUIContent(label);
+                EditorGUI.BeginChangeCheck();
+                object popupEdited;
+                if (declaredType == typeof(string))
+                {
+                    int index = Array.IndexOf(layerOrTagOptions, value as string);
+                    index = Mathf.Clamp(index, 0, layerOrTagOptions.Length - 1);
+                    int picked = EditorGUILayout.Popup(popupLabel.text, index, layerOrTagOptions);
+                    popupEdited = layerOrTagOptions[picked];
+                }
+                else
+                {
+                    int index = Mathf.Clamp(value is int iv ? iv : 0, 0, layerOrTagOptions.Length - 1);
+                    popupEdited = EditorGUILayout.Popup(popupLabel.text, index, layerOrTagOptions);
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    try
+                    {
+                        if (m.Field != null) m.Field.SetValue(target, popupEdited);
+                        else m.Property.SetValue(target, popupEdited);
+                    }
+                    catch { }
+                    if (target is UnityEngine.Object uo1) EditorUtility.SetDirty(uo1);
+                    InvokeOnValueChanged(m.Info, target);
+                }
                 return;
             }
 

@@ -6,6 +6,13 @@ Namespace: `AetherNexus.FoundationPlatform.TweenX` (Feedbacks under `.Feedbacks`
 
 Related: [Architecture](ARCHITECTURE.md) · Debugger **Window → TweenX → Tween Debugger**
 
+**Approved exception to the project's "no optional parameters" rule:** TweenX's whole fluent API
+(`TweenPunchPosition`/`TweenShakePosition`/`TweenFlash`/`TweenBlink`, `TweenValue.*`, `TweenHandle.SetLoops`/
+`SetSnapping`/`SetRelative`, `TweenPath`, etc.) uses defaulted parameters deliberately, as a DOTween-style
+ergonomic choice for this fluent-builder surface specifically. Converting it to explicit overloads would
+explode its API surface for no safety benefit. Do not "fix" this elsewhere in the codebase without the
+same explicit sign-off.
+
 ## Quick start
 
 ```csharp

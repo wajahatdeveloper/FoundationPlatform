@@ -1,14 +1,16 @@
 using System;
-using System.Collections.Generic;
 
 namespace AetherNexus.FoundationPlatform.DebugX
 {
+	/// <summary>
+	/// Suppresses a re-log of an exception that a caller has already explicitly logged (marked via
+	/// <c>exception.Data[ExplicitlyLoggedKey] = true</c>) before it propagates further up the stack.
+	/// Scoped strictly to the exact same exception instance/chain — not a message-text match, which
+	/// would risk dropping unrelated future errors that merely share message text.
+	/// </summary>
 	internal static class ExplicitErrorDedupe
 	{
 		private const string ExplicitlyLoggedKey = "FoundationPlatform.DebugX.ExplicitlyLogged";
-
-		[ThreadStatic]
-		private static HashSet<string> s_failureMessages;
 
 		internal static bool ShouldSkipErrorLog(Exception exception)
 		{
@@ -18,49 +20,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
 				{
 					return true;
 				}
-
-				if (s_failureMessages != null && s_failureMessages.Contains(current.Message))
-				{
-					return true;
-				}
 			}
 
 			return false;
-		}
-
-		internal static void RegisterExplicitFailure(LogProperty[] properties)
-		{
-			var message = ExtractFailureMessage(properties);
-			if (string.IsNullOrEmpty(message))
-			{
-				return;
-			}
-
-			s_failureMessages ??= new HashSet<string>();
-			s_failureMessages.Add(message);
-		}
-
-		private static string ExtractFailureMessage(LogProperty[] properties)
-		{
-			if (properties == null || properties.Length == 0)
-			{
-				return null;
-			}
-
-			for (int i = 0; i < properties.Length; i++)
-			{
-				if (properties[i].Key == "Message" && properties[i].Value is string message)
-				{
-					return message;
-				}
-			}
-
-			if (properties.Length == 1 && properties[0].Value is string singleMessage)
-			{
-				return singleMessage;
-			}
-
-			return null;
 		}
 	}
 }

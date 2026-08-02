@@ -219,29 +219,10 @@ public static class UIExtensions
         rectTransform.sizeDelta = size;
     }
 
-    /// <summary>
-    /// Sets the width of a RectTransform
-    /// </summary>
-    /// <param name="rectTransform">RectTransform to modify</param>
-    /// <param name="width">Width value</param>
-    public static void SetWidth(this RectTransform rectTransform, float width)
-    {
-        Vector2 size = rectTransform.sizeDelta;
-        size.x = width;
-        rectTransform.sizeDelta = size;
-    }
-
-    /// <summary>
-    /// Sets the height of a RectTransform
-    /// </summary>
-    /// <param name="rectTransform">RectTransform to modify</param>
-    /// <param name="height">Height value</param>
-    public static void SetHeight(this RectTransform rectTransform, float height)
-    {
-        Vector2 size = rectTransform.sizeDelta;
-        size.y = height;
-        rectTransform.sizeDelta = size;
-    }
+    // Note: SetWidth/SetHeight(this RectTransform, float) live in RectTransformExtensions.cs — kept
+    // there as the single source (their SetSize-based implementation also accounts for stretched
+    // anchors correctly) to avoid an ambiguous-call (CS0121) between two identical-signature overloads
+    // in this same namespace.
 
     /// <summary>
     /// Centers a RectTransform within its parent

@@ -7,7 +7,7 @@ User-facing guides for `com.aethernexus.foundationplatform`.
 | [../README.md](../README.md) | Install, overview, quick start |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Systems, namespaces, assemblies |
 | [TweenX.md](TweenX.md) | Tweens and Feedback player |
-| [FrameworkInspector.md](FrameworkInspector.md) | Attribute inspector engine |
+| [AetherInspector.md](AetherInspector.md) | Attribute inspector engine |
 | [../SAMPLES.md](../SAMPLES.md) | Package Manager samples |
 | [../CHANGELOG.md](../CHANGELOG.md) | Version history |
 | [../LICENSE.md](../LICENSE.md) | MIT license |
@@ -21,7 +21,7 @@ User-facing guides for `com.aethernexus.foundationplatform`.
 | **Window → Event Bus...** | EventBus debug hub |
 | **Window → TweenX → Tween Debugger** | Live tween list |
 | **Window → Domain → Game State...** | World-scope live state; sections come from whichever gameplay package is installed |
-| **Tools → Diagnostics → Framework Inspector Demo** | Attribute surface harness |
+| **Window → Diagnostics → AetherInspector Demo** | Attribute surface harness |
 
 ## Debug section seams
 

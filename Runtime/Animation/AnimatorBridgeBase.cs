@@ -194,12 +194,6 @@ namespace AetherNexus.FoundationPlatform.Animation
 			_clipToSetEntry = null;
 		}
 
-		private static AnimationSetEntry FindEntryById(AnimationSet set, string entryId)
-		{
-			if (set == null) return null;
-			return set.FindEntry(entryId);
-		}
-
 		private static bool IsPlayableAnimationSetEntry(AnimationSetEntry entry)
 		{
 			if (entry == null) return false;
@@ -261,7 +255,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{primarySetName}' not found.");
 			}
 
-			AnimationSetEntry entry = FindEntryById(primary, firstEntryId);
+			AnimationSetEntry entry = primary?.FindEntry(firstEntryId);
 			if (IsPlayableAnimationSetEntry(entry))
 			{
 				PlayFromSetSequenceStrict(primarySetName, firstEntryId, onComplete);
@@ -288,12 +282,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 			AnimationSet set = FindAnimationSetByName(setName);
 			var entryId = sequenceIds[stepIndex];
-			var entry = FindEntryById(set, entryId);
+			var entry = set?.FindEntry(entryId);
 			var isTerminal = stepIndex == sequenceIds.Count - 1;
 
 			AnimationSetSequenceUtility.ValidateSequenceEntryForPlayback(entry, set.name, isTerminal);
 
-			var sourceEntry = stepIndex > 0 ? FindEntryById(set, sequenceIds[stepIndex - 1]) : null;
+			var sourceEntry = stepIndex > 0 ? set?.FindEntry(sequenceIds[stepIndex - 1]) : null;
 
 			if (sourceEntry != null && sourceEntry.mask != entry.mask)
 			{
@@ -363,7 +357,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 			if (entry.link != null && entry.link.useLinkHold && !isTerminal)
 			{
-				var events = state.Events(this);
+				var events = state.Events();
 				events.Add(entry.link.holdStartNormalizedTime, () =>
 				{
 					if (generation != _activeSequenceGeneration) return;
@@ -380,7 +374,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			}
 			else
 			{
-				state.Events(this).OnEnd = wrappedOnComplete;
+				state.Events().OnEnd = wrappedOnComplete;
 			}
 		}
 
@@ -432,12 +426,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 			{
 				if (wrappedOnComplete != null)
 				{
-					state.Events(this).OnEnd = wrappedOnComplete;
+					state.Events().OnEnd = wrappedOnComplete;
 				}
 			}
 			else
 			{
-				state.Events(this).OnEnd = () =>
+				state.Events().OnEnd = () =>
 				{
 					if (entry.transitionBack)
 					{
@@ -459,7 +453,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			AnimationSet set = FindAnimationSetByName(setName);
 			if (set == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = FindEntryById(set, entryId);
+			AnimationSetEntry entry = set?.FindEntry(entryId);
 			if (entry == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null)
@@ -492,7 +486,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			CancelActiveSetSequence();
 			AnimationSet set = FindAnimationSetByName(setName);
 			if (set == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = FindEntryById(set, entryId);
+			AnimationSetEntry entry = set?.FindEntry(entryId);
 			if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
@@ -508,7 +502,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			CancelActiveSetSequence();
 			AnimationSet set = FindAnimationSetByName(setName); if (set == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = FindEntryById(set, entryId); if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
+			AnimationSetEntry entry = set?.FindEntry(entryId); if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
 			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(startNormalizedTime));
@@ -522,7 +516,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			AssertReady();
 			AnimationSet primary = FindAnimationSetByName(primarySetName);
 			if (primary == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{primarySetName}' not found.");
-			AnimationSetEntry entry = FindEntryById(primary, entryId);
+			AnimationSetEntry entry = primary?.FindEntry(entryId);
 			if (IsPlayableAnimationSetEntry(entry))
 			{
 				return PlayFromPlayableAnimationSetEntry(primary, entry, onComplete);
@@ -530,7 +524,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 			AnimationSet fallback = FindAnimationSetByName(fallbackSetName);
 			if (fallback == null) throw new InvalidOperationException($"AnimatorBridgeBase: Fallback animation set '{fallbackSetName}' not found.");
-			entry = FindEntryById(fallback, entryId);
+			entry = fallback?.FindEntry(entryId);
 			if (!IsPlayableAnimationSetEntry(entry))
 				throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' has no valid playable entry in '{primarySetName}' or '{fallbackSetName}'.");
 			return PlayFromPlayableAnimationSetEntry(fallback, entry, onComplete);
@@ -615,7 +609,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 			var state = layer.Play(clip, transitionDuration);
 
-			state.Events(this).OnEnd = () =>
+			state.Events().OnEnd = () =>
 			{
 				if (transitionBack)
 				{

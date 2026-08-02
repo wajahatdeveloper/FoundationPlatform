@@ -92,7 +92,7 @@ public class EditorYesNoDialog : EditorWindow
     /// <param name="yesButton"></param>
     /// <param name="noButton"></param>
     /// <returns></returns>
-    public static void Show( string title, string description, Action onYes = null, Action onNo = null )
+    public static void Show( string title, string description, Action onYes, Action onNo )
     {
         var window = CreateInstance<EditorYesNoDialog>();
         window.titleContent = new GUIContent( title );
@@ -103,6 +103,9 @@ public class EditorYesNoDialog : EditorWindow
         window.onNoButton = onNo;
         window.ShowPopup();
     }
+
+    /// <summary>Convenience overload for callers that only care about the "Yes" action.</summary>
+    public static void Show( string title, string description, Action onYes ) => Show( title, description, onYes, null );
     #endregion Show()
 }
 }

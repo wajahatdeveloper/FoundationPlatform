@@ -54,7 +54,8 @@ public static class CollectionExtensions
 
 
     /// <summary>
-    /// Returns random element from collection
+    /// Returns random element from collection.
+    /// PRESENTATION-ONLY: uses UnityEngine.Random. Use an IRandomProvider-based path (e.g. RandomX) in simulation code.
     /// </summary>
     public static T GetRandom<T>(this T[] collection)
     {
@@ -64,7 +65,8 @@ public static class CollectionExtensions
     }
 
     /// <summary>
-    /// Returns random element from collection
+    /// Returns random element from collection.
+    /// PRESENTATION-ONLY: uses UnityEngine.Random. Use an IRandomProvider-based path (e.g. RandomX) in simulation code.
     /// </summary>
     public static T GetRandom<T>(this IList<T> collection)
     {
@@ -189,33 +191,9 @@ public static class CollectionExtensions
         return source.Values.ContentsMatch(check);
     }
 
-    /// <summary>
-    /// Adds a key/value pair to the IDictionary&lt;TKey,TValue&gt; if the
-    /// key does not already exist. Returns the new value, or the existing
-    /// value if the key exists.
-    /// </summary>
-    public static TValue GetOrAdd<TKey, TValue>(
-        this IDictionary<TKey, TValue> source,
-        TKey key,
-        TValue value)
-    {
-        if (!source.ContainsKey(key)) source[key] = value;
-        return source[key];
-    }
-
-    /// <summary>
-    /// Adds a key/value pair to the IDictionary&lt;TKey,TValue&gt; by using
-    /// the specified function if the key does not already exist. Returns
-    /// the new value, or the existing value if the key exists.
-    /// </summary>
-    public static TValue GetOrAdd<TKey, TValue>(
-        this IDictionary<TKey, TValue> source,
-        TKey key,
-        System.Func<TKey, TValue> valueFactory)
-    {
-        if (!source.ContainsKey(key)) source[key] = valueFactory(key);
-        return source[key];
-    }
+    // Note: the (TKey, TValue) and (TKey, Func<TKey, TValue>) GetOrAdd overloads live in
+    // IDictionaryExtensions.cs — kept there as the single source to avoid an ambiguous-call (CS0121)
+    // between two identical-signature overloads in this same namespace.
 
     /// <summary>
     /// Adds a key/value pair to the IDictionary&lt;TKey,TValue&gt; by using
@@ -268,19 +246,9 @@ public static class CollectionExtensions
         return source;
     }
 
-    /// <summary>
-    /// Shuffles a collection in place using the Knuth algorithm.
-    /// </summary>
-    public static IList<T> Shuffle<T>(this IList<T> source)
-    {
-        for (int i = 0; i < source.Count - 1; ++i)
-        {
-            var indexToSwap = UnityEngine.Random.Range(i, source.Count);
-            source.SwapInPlace(i, indexToSwap);
-        }
-
-        return source;
-    }
+    // Note: Shuffle<T>(this IList<T>) lives in IListExtensions.cs — kept there as the single source
+    // (alongside its seeded, reproducible overload) to avoid an ambiguous-call (CS0121) between two
+    // identical-signature Shuffle overloads in this same namespace.
 
     #region One Per Instance
 

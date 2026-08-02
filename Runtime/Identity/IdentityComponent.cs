@@ -50,11 +50,17 @@ public class IdentityComponent : MonoBehaviour, IIdentity
 	[ContextMenu(nameof(GenerateDesignTimeId))]
 	public void GenerateDesignTimeId()
 	{
-		_id = $"e:{Guid.NewGuid():N}";
+		_id = NewDesignTimeId();
 		#if UNITY_EDITOR
 		UnityEditor.EditorUtility.SetDirty(this);
 		#endif
 	}
+
+	/// <summary>
+	/// Shared design-time ID format, also used by IdentityFieldDrawer's "New" button so the
+	/// convention only needs to change in one place.
+	/// </summary>
+	public static string NewDesignTimeId() => $"e:{Guid.NewGuid():N}";
 
 	/// <summary>Clear identity. Safe to call from editor or runtime.</summary>
 	[ContextMenu(nameof(ClearIdentity))]

@@ -10,7 +10,7 @@ public static class MonoBehaviourExtensions
     public static void RunOnce(this MonoBehaviour behaviour, Action action)
     {
         var key = GetActionKey(action);
-        var customState = behaviour.gameObject.AddOrGetComponent<CustomState>();
+        var customState = behaviour.gameObject.GetOrAddComponent<CustomState>();
         customState.keyValuePairs.TryGetValue(key, out var value);
         if (value != null)
         {
@@ -74,7 +74,7 @@ public static class MonoBehaviourExtensions
     /// <param name="behaviour"></param>
     /// <param name="assertValue"></param>
     /// <param name="message"></param>
-    public static void Assert(this MonoBehaviour behaviour, bool assertValue, string message = "")
+    public static void Assert(this MonoBehaviour behaviour, bool assertValue, string message)
     {
         if (!assertValue)
         {
@@ -82,4 +82,7 @@ public static class MonoBehaviourExtensions
             behaviour.enabled = false;
         }
     }
+
+    /// <summary>Asserts with an empty message.</summary>
+    public static void Assert(this MonoBehaviour behaviour, bool assertValue) => Assert(behaviour, assertValue, "");
 }}

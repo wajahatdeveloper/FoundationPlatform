@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using UnityEditor;
 using UnityEngine;
 #if UNITY_EDITOR
+using UnityEditor;
 #endif
 
 namespace AetherNexus.FoundationPlatform.DebugX
@@ -38,7 +38,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 null,
                 callerInfo,
                 null,
-                context
+                context,
+                null
             );
             LogPipeline.Emit(logEvent);
         }
@@ -124,9 +125,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 stackTrace
             );
             LogPipeline.Emit(logEvent);
-
-            if (level == LogLevel.Error && exception == null)
-                ExplicitErrorDedupe.RegisterExplicitFailure(properties);
         }
 
         #endregion

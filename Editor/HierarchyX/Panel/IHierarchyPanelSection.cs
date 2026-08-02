@@ -25,11 +25,13 @@ namespace HierarchyX {
         public PanelChipStatus status;
         public string tooltip;
 
-        public PanelChip(string label, PanelChipStatus status, string tooltip = null) {
+        public PanelChip(string label, PanelChipStatus status, string tooltip) {
             this.label = label;
             this.status = status;
             this.tooltip = tooltip;
         }
+
+        public PanelChip(string label, PanelChipStatus status) : this(label, status, null) { }
     }
 
     /// <summary>

@@ -46,11 +46,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 stackTrace
             );
             LogPipeline.Emit(logEvent);
-
-            if (level == LogLevel.Error && exception == null)
-            {
-                ExplicitErrorDedupe.RegisterExplicitFailure(templateProperties);
-            }
         }
 
         #region Verbose

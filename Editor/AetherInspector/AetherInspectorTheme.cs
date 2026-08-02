@@ -331,9 +331,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
-        /// <summary>Back-compat alias — routes to <see cref="FlatHeaderLabel"/>.</summary>
-        public static GUIStyle SectionFoldoutTitle => FlatHeaderLabel;
-
         /// <summary>
         /// Layout-based flat foldout style (bold 12pt) for <c>EditorGUILayout/EditorGUI.Foldout</c>
         /// calls (list headers, nested structs) so their arrow + label match the group foldout.
@@ -709,6 +706,25 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return EditorGUI.Foldout(headerRect, expanded, label, true, FlatFoldoutStyle);
         }
 
+        /// <summary>
+        /// Runs <paramref name="drawContent"/> in a horizontal row with a trailing help-icon tooltip —
+        /// the <c>[TooltipIcon]</c> attribute's composition helper, shared by <c>RenderField</c> (serialized
+        /// fields) and <c>PocoInspector.DrawValue</c> (<c>[ShowInInspector]</c> members) so the field itself
+        /// can still go through its normal (possibly attribute-specific) rendering while gaining the icon.
+        /// </summary>
+        public static void DrawWithTooltipIcon(Action drawContent, string tooltip)
+        {
+            if (string.IsNullOrWhiteSpace(tooltip)) { drawContent(); return; }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    drawContent();
+                }
+                AetherNexus.FoundationPlatform.Editor.Utilities.AuthoringUxShared.DrawTooltipIcon(tooltip);
+            }
+        }
+
         // Compact layout indent (NestedIndentWidth) + ContainerDepth push instead of Unity's fixed
         // ~15px EditorGUI.indentLevel step, so a foldout nested under this body (chrome-free, no
         // helpBox) still cancels its own header pull / rule correctly. Exposed as a Begin/End pair
@@ -789,20 +805,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), color);
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), color);
             EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), color);
-        }
-
-        /// <summary>
-        /// Plain foldout for use inside <see cref="EditorStyles.helpBox"/> sections.
-        /// <see cref="EditorStyles.foldoutHeader"/> overlaps box borders; use this instead.
-        /// </summary>
-        public static bool FoldoutInSection(bool expanded, string label)
-        {
-            return SectionFoldout(expanded, label);
-        }
-
-        public static bool FoldoutInSection(bool expanded, GUIContent label)
-        {
-            return SectionFoldout(expanded, label);
         }
 
         public static void DrawTitle(string title) => DrawTitle(title, null);

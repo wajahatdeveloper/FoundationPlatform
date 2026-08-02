@@ -2,12 +2,10 @@
 #pragma warning disable CS0414 // Serialized/inspector-driven error flags
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Messaging;
 using UnityEditor;
-using UnityEditor.Build;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
@@ -139,62 +137,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				set => Monitoring.PlayModeRefreshInterval = value;
 			}
 
-			[Tooltip("Adds the RULESYSTEM_PRESENT scripting define symbol to the current active build target group. This enables GameAction-specific features in EventBus.")]
-			public void AddRuleSystemDefine()
-			{
-				try
-				{
-					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(
-						BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
-					var currentDefines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
-					
-					if (string.IsNullOrEmpty(currentDefines))
-					{
-						PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, "RULESYSTEM_PRESENT");
-						Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + namedBuildTarget.TargetName);
-					}
-					else
-					{
-						var defines = currentDefines.Split(';').Select(d => d.Trim()).ToList();
-						if (!defines.Contains("RULESYSTEM_PRESENT"))
-						{
-							defines.Add("RULESYSTEM_PRESENT");
-							PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, string.Join(";", defines));
-							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define added successfully to " + namedBuildTarget.TargetName);
-						}
-						else
-						{
-							Debug.Log("[EventBus Hub] RULESYSTEM_PRESENT define already exists in " + namedBuildTarget.TargetName);
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError($"[EventBus Hub] Failed to add RULESYSTEM_PRESENT define: {ex.Message}");
-				}
-			}
-
-			public bool HasRuleSystemDefine()
-			{
-				try
-				{
-					var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(
-						BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
-					var currentDefines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
-					
-					if (string.IsNullOrEmpty(currentDefines))
-						return false;
-					
-					var defines = currentDefines.Split(';').Select(d => d.Trim());
-					return defines.Contains("RULESYSTEM_PRESENT");
-				}
-				catch
-				{
-					return false;
-				}
-			}
-
-			public string RuleSystemDefineButtonLabel => HasRuleSystemDefine() ? "RULESYSTEM_PRESENT (Already Added)" : "Add RULESYSTEM_PRESENT Define";
 		}
 
 		private double _lastRefresh;
@@ -374,14 +316,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				EditorGUILayout.PropertyField(settingsProp, new GUIContent("Settings"), true);
 			}
 			_serializedThis.ApplyModifiedProperties();
-
-			using (new EditorGUI.DisabledScope(Settings != null && Settings.HasRuleSystemDefine()))
-			{
-				if (Settings != null && GUILayout.Button(Settings.RuleSystemDefineButtonLabel))
-				{
-					Settings.AddRuleSystemDefine();
-				}
-			}
 		}
 	}
 		

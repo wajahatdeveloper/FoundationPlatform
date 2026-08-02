@@ -16,10 +16,13 @@ public static class RigidbodyExtensions
     /// <param name="rigidbody">The rigidbody</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForwardForce(this Rigidbody rigidbody, float force, ForceMode mode = ForceMode.Force)
+    public static void AddForwardForce(this Rigidbody rigidbody, float force, ForceMode mode)
     {
         rigidbody.AddForce(rigidbody.transform.forward * force, mode);
     }
+
+    /// <summary>Applies force in the forward direction of the rigidbody, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddForwardForce(this Rigidbody rigidbody, float force) => AddForwardForce(rigidbody, force, ForceMode.Force);
 
     /// <summary>
     /// Applies force in the right direction of the rigidbody
@@ -27,10 +30,13 @@ public static class RigidbodyExtensions
     /// <param name="rigidbody">The rigidbody</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddRightForce(this Rigidbody rigidbody, float force, ForceMode mode = ForceMode.Force)
+    public static void AddRightForce(this Rigidbody rigidbody, float force, ForceMode mode)
     {
         rigidbody.AddForce(rigidbody.transform.right * force, mode);
     }
+
+    /// <summary>Applies force in the right direction of the rigidbody, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddRightForce(this Rigidbody rigidbody, float force) => AddRightForce(rigidbody, force, ForceMode.Force);
 
     /// <summary>
     /// Applies force in the up direction of the rigidbody
@@ -38,10 +44,13 @@ public static class RigidbodyExtensions
     /// <param name="rigidbody">The rigidbody</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddUpForce(this Rigidbody rigidbody, float force, ForceMode mode = ForceMode.Force)
+    public static void AddUpForce(this Rigidbody rigidbody, float force, ForceMode mode)
     {
         rigidbody.AddForce(rigidbody.transform.up * force, mode);
     }
+
+    /// <summary>Applies force in the up direction of the rigidbody, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddUpForce(this Rigidbody rigidbody, float force) => AddUpForce(rigidbody, force, ForceMode.Force);
 
     /// <summary>
     /// Applies force towards a target position
@@ -50,11 +59,14 @@ public static class RigidbodyExtensions
     /// <param name="targetPosition">Target position</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForceTowards(this Rigidbody rigidbody, Vector3 targetPosition, float force, ForceMode mode = ForceMode.Force)
+    public static void AddForceTowards(this Rigidbody rigidbody, Vector3 targetPosition, float force, ForceMode mode)
     {
         Vector3 direction = (targetPosition - rigidbody.position).normalized;
         rigidbody.AddForce(direction * force, mode);
     }
+
+    /// <summary>Applies force towards a target position, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddForceTowards(this Rigidbody rigidbody, Vector3 targetPosition, float force) => AddForceTowards(rigidbody, targetPosition, force, ForceMode.Force);
 
     /// <summary>
     /// Applies force away from a target position
@@ -63,11 +75,14 @@ public static class RigidbodyExtensions
     /// <param name="targetPosition">Target position</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForceAwayFrom(this Rigidbody rigidbody, Vector3 targetPosition, float force, ForceMode mode = ForceMode.Force)
+    public static void AddForceAwayFrom(this Rigidbody rigidbody, Vector3 targetPosition, float force, ForceMode mode)
     {
         Vector3 direction = (rigidbody.position - targetPosition).normalized;
         rigidbody.AddForce(direction * force, mode);
     }
+
+    /// <summary>Applies force away from a target position, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddForceAwayFrom(this Rigidbody rigidbody, Vector3 targetPosition, float force) => AddForceAwayFrom(rigidbody, targetPosition, force, ForceMode.Force);
 
     /// <summary>
     /// Applies force in a specific direction
@@ -76,10 +91,13 @@ public static class RigidbodyExtensions
     /// <param name="direction">Force direction</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForceInDirection(this Rigidbody rigidbody, Vector3 direction, float force, ForceMode mode = ForceMode.Force)
+    public static void AddForceInDirection(this Rigidbody rigidbody, Vector3 direction, float force, ForceMode mode)
     {
         rigidbody.AddForce(direction.normalized * force, mode);
     }
+
+    /// <summary>Applies force in a specific direction, using <see cref="ForceMode.Force"/>.</summary>
+    public static void AddForceInDirection(this Rigidbody rigidbody, Vector3 direction, float force) => AddForceInDirection(rigidbody, direction, force, ForceMode.Force);
 
     #endregion
 
@@ -231,10 +249,13 @@ public static class RigidbodyExtensions
     /// <param name="groundCheckDistance">Distance to check for ground</param>
     /// <param name="groundLayer">Layer mask for ground objects</param>
     /// <returns>True if grounded</returns>
-    public static bool IsGrounded(this Rigidbody rigidbody, float groundCheckDistance = 0.1f, LayerMask groundLayer = default)
+    public static bool IsGrounded(this Rigidbody rigidbody, float groundCheckDistance, LayerMask groundLayer)
     {
         return Physics.Raycast(rigidbody.position, Vector3.down, groundCheckDistance, groundLayer);
     }
+
+    /// <summary>Checks if the rigidbody is grounded using a raycast, using a 0.1 check distance against all layers.</summary>
+    public static bool IsGrounded(this Rigidbody rigidbody) => IsGrounded(rigidbody, 0.1f, default);
 
     /// <summary>
     /// Checks if the rigidbody is grounded using a sphere cast
@@ -244,10 +265,13 @@ public static class RigidbodyExtensions
     /// <param name="radius">Radius of the sphere cast</param>
     /// <param name="groundLayer">Layer mask for ground objects</param>
     /// <returns>True if grounded</returns>
-    public static bool IsGroundedSphere(this Rigidbody rigidbody, float groundCheckDistance = 0.1f, float radius = 0.5f, LayerMask groundLayer = default)
+    public static bool IsGroundedSphere(this Rigidbody rigidbody, float groundCheckDistance, float radius, LayerMask groundLayer)
     {
         return Physics.SphereCast(rigidbody.position, radius, Vector3.down, out _, groundCheckDistance, groundLayer);
     }
+
+    /// <summary>Checks if the rigidbody is grounded using a sphere cast, using a 0.1 check distance, 0.5 radius, against all layers.</summary>
+    public static bool IsGroundedSphere(this Rigidbody rigidbody) => IsGroundedSphere(rigidbody, 0.1f, 0.5f, default);
 
     /// <summary>
     /// Gets the ground normal using a raycast
@@ -256,7 +280,7 @@ public static class RigidbodyExtensions
     /// <param name="groundCheckDistance">Distance to check for ground</param>
     /// <param name="groundLayer">Layer mask for ground objects</param>
     /// <returns>Ground normal vector</returns>
-    public static Vector3 GetGroundNormal(this Rigidbody rigidbody, float groundCheckDistance = 0.1f, LayerMask groundLayer = default)
+    public static Vector3 GetGroundNormal(this Rigidbody rigidbody, float groundCheckDistance, LayerMask groundLayer)
     {
         if (Physics.Raycast(rigidbody.position, Vector3.down, out RaycastHit hit, groundCheckDistance, groundLayer))
         {
@@ -264,6 +288,9 @@ public static class RigidbodyExtensions
         }
         return Vector3.up;
     }
+
+    /// <summary>Gets the ground normal using a raycast, using a 0.1 check distance against all layers.</summary>
+    public static Vector3 GetGroundNormal(this Rigidbody rigidbody) => GetGroundNormal(rigidbody, 0.1f, default);
 
     #endregion
 
@@ -295,10 +322,13 @@ public static class RigidbodyExtensions
     /// <param name="rigidbody">The rigidbody</param>
     /// <param name="threshold">Speed threshold</param>
     /// <returns>True if moving</returns>
-    public static bool IsMoving(this Rigidbody rigidbody, float threshold = 0.01f)
+    public static bool IsMoving(this Rigidbody rigidbody, float threshold)
     {
         return rigidbody.linearVelocity.magnitude > threshold;
     }
+
+    /// <summary>Checks if the rigidbody is moving, using a 0.01 speed threshold.</summary>
+    public static bool IsMoving(this Rigidbody rigidbody) => IsMoving(rigidbody, 0.01f);
 
     /// <summary>
     /// Checks if the rigidbody is rotating
@@ -306,10 +336,13 @@ public static class RigidbodyExtensions
     /// <param name="rigidbody">The rigidbody</param>
     /// <param name="threshold">Angular speed threshold</param>
     /// <returns>True if rotating</returns>
-    public static bool IsRotating(this Rigidbody rigidbody, float threshold = 0.01f)
+    public static bool IsRotating(this Rigidbody rigidbody, float threshold)
     {
         return rigidbody.angularVelocity.magnitude > threshold;
     }
+
+    /// <summary>Checks if the rigidbody is rotating, using a 0.01 angular speed threshold.</summary>
+    public static bool IsRotating(this Rigidbody rigidbody) => IsRotating(rigidbody, 0.01f);
 
     /// <summary>
     /// Resets the rigidbody to its initial state
@@ -350,10 +383,13 @@ public static class Rigidbody2DExtensions
     /// <param name="rigidbody2D">The rigidbody2D</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForwardForce(this Rigidbody2D rigidbody2D, float force, ForceMode2D mode = ForceMode2D.Force)
+    public static void AddForwardForce(this Rigidbody2D rigidbody2D, float force, ForceMode2D mode)
     {
         rigidbody2D.AddForce(rigidbody2D.transform.right * force, mode);
     }
+
+    /// <summary>Applies force in the forward direction of the rigidbody2D, using <see cref="ForceMode2D.Force"/>.</summary>
+    public static void AddForwardForce(this Rigidbody2D rigidbody2D, float force) => AddForwardForce(rigidbody2D, force, ForceMode2D.Force);
 
     /// <summary>
     /// Applies force in the up direction of the rigidbody2D
@@ -361,10 +397,13 @@ public static class Rigidbody2DExtensions
     /// <param name="rigidbody2D">The rigidbody2D</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddUpForce(this Rigidbody2D rigidbody2D, float force, ForceMode2D mode = ForceMode2D.Force)
+    public static void AddUpForce(this Rigidbody2D rigidbody2D, float force, ForceMode2D mode)
     {
         rigidbody2D.AddForce(rigidbody2D.transform.up * force, mode);
     }
+
+    /// <summary>Applies force in the up direction of the rigidbody2D, using <see cref="ForceMode2D.Force"/>.</summary>
+    public static void AddUpForce(this Rigidbody2D rigidbody2D, float force) => AddUpForce(rigidbody2D, force, ForceMode2D.Force);
 
     /// <summary>
     /// Applies force towards a target position
@@ -373,11 +412,14 @@ public static class Rigidbody2DExtensions
     /// <param name="targetPosition">Target position</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForceTowards(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force, ForceMode2D mode = ForceMode2D.Force)
+    public static void AddForceTowards(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force, ForceMode2D mode)
     {
         Vector2 direction = (targetPosition - rigidbody2D.position).normalized;
         rigidbody2D.AddForce(direction * force, mode);
     }
+
+    /// <summary>Applies force towards a target position, using <see cref="ForceMode2D.Force"/>.</summary>
+    public static void AddForceTowards(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force) => AddForceTowards(rigidbody2D, targetPosition, force, ForceMode2D.Force);
 
     /// <summary>
     /// Applies force away from a target position
@@ -386,11 +428,14 @@ public static class Rigidbody2DExtensions
     /// <param name="targetPosition">Target position</param>
     /// <param name="force">Force magnitude</param>
     /// <param name="mode">Force mode</param>
-    public static void AddForceAwayFrom(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force, ForceMode2D mode = ForceMode2D.Force)
+    public static void AddForceAwayFrom(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force, ForceMode2D mode)
     {
         Vector2 direction = (rigidbody2D.position - targetPosition).normalized;
         rigidbody2D.AddForce(direction * force, mode);
     }
+
+    /// <summary>Applies force away from a target position, using <see cref="ForceMode2D.Force"/>.</summary>
+    public static void AddForceAwayFrom(this Rigidbody2D rigidbody2D, Vector2 targetPosition, float force) => AddForceAwayFrom(rigidbody2D, targetPosition, force, ForceMode2D.Force);
 
     #endregion
 
@@ -508,10 +553,13 @@ public static class Rigidbody2DExtensions
     /// <param name="groundCheckDistance">Distance to check for ground</param>
     /// <param name="groundLayer">Layer mask for ground objects</param>
     /// <returns>True if grounded</returns>
-    public static bool IsGrounded(this Rigidbody2D rigidbody2D, float groundCheckDistance = 0.1f, LayerMask groundLayer = default)
+    public static bool IsGrounded(this Rigidbody2D rigidbody2D, float groundCheckDistance, LayerMask groundLayer)
     {
         return Physics2D.Raycast(rigidbody2D.position, Vector2.down, groundCheckDistance, groundLayer);
     }
+
+    /// <summary>Checks if the rigidbody2D is grounded using a raycast, using a 0.1 check distance against all layers.</summary>
+    public static bool IsGrounded(this Rigidbody2D rigidbody2D) => IsGrounded(rigidbody2D, 0.1f, default);
 
     /// <summary>
     /// Checks if the rigidbody2D is grounded using a circle cast
@@ -521,10 +569,13 @@ public static class Rigidbody2DExtensions
     /// <param name="radius">Radius of the circle cast</param>
     /// <param name="groundLayer">Layer mask for ground objects</param>
     /// <returns>True if grounded</returns>
-    public static bool IsGroundedCircle(this Rigidbody2D rigidbody2D, float groundCheckDistance = 0.1f, float radius = 0.5f, LayerMask groundLayer = default)
+    public static bool IsGroundedCircle(this Rigidbody2D rigidbody2D, float groundCheckDistance, float radius, LayerMask groundLayer)
     {
         return Physics2D.CircleCast(rigidbody2D.position, radius, Vector2.down, groundCheckDistance, groundLayer);
     }
+
+    /// <summary>Checks if the rigidbody2D is grounded using a circle cast, using a 0.1 check distance, 0.5 radius, against all layers.</summary>
+    public static bool IsGroundedCircle(this Rigidbody2D rigidbody2D) => IsGroundedCircle(rigidbody2D, 0.1f, 0.5f, default);
 
     #endregion
 
@@ -556,10 +607,13 @@ public static class Rigidbody2DExtensions
     /// <param name="rigidbody2D">The rigidbody2D</param>
     /// <param name="threshold">Speed threshold</param>
     /// <returns>True if moving</returns>
-    public static bool IsMoving(this Rigidbody2D rigidbody2D, float threshold = 0.01f)
+    public static bool IsMoving(this Rigidbody2D rigidbody2D, float threshold)
     {
         return rigidbody2D.linearVelocity.magnitude > threshold;
     }
+
+    /// <summary>Checks if the rigidbody2D is moving, using a 0.01 speed threshold.</summary>
+    public static bool IsMoving(this Rigidbody2D rigidbody2D) => IsMoving(rigidbody2D, 0.01f);
 
     /// <summary>
     /// Checks if the rigidbody2D is rotating
@@ -567,10 +621,13 @@ public static class Rigidbody2DExtensions
     /// <param name="rigidbody2D">The rigidbody2D</param>
     /// <param name="threshold">Angular speed threshold</param>
     /// <returns>True if rotating</returns>
-    public static bool IsRotating(this Rigidbody2D rigidbody2D, float threshold = 0.01f)
+    public static bool IsRotating(this Rigidbody2D rigidbody2D, float threshold)
     {
         return Mathf.Abs(rigidbody2D.angularVelocity) > threshold;
     }
+
+    /// <summary>Checks if the rigidbody2D is rotating, using a 0.01 angular speed threshold.</summary>
+    public static bool IsRotating(this Rigidbody2D rigidbody2D) => IsRotating(rigidbody2D, 0.01f);
 
     /// <summary>
     /// Resets the rigidbody2D to its initial state

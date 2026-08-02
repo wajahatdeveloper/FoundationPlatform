@@ -419,19 +419,25 @@ public static class RectExtensions
         return rects;
     }
 
-    public static Rect SplitVerticalAndCombine(this Rect rect, int count, int start, int length = 1)
+    public static Rect SplitVerticalAndCombine(this Rect rect, int count, int start, int length)
     {
         float height = rect.height / count;
 
         return new Rect(rect.x, rect.y + height * start, rect.width, height * length);
     }
 
-    public static Rect SplitHorizontalAndCombine(this Rect rect, int count, int start, int length = 1)
+    /// <summary>Splits the rect vertically and combines a single slice (length 1).</summary>
+    public static Rect SplitVerticalAndCombine(this Rect rect, int count, int start) => SplitVerticalAndCombine(rect, count, start, 1);
+
+    public static Rect SplitHorizontalAndCombine(this Rect rect, int count, int start, int length)
     {
         float width = rect.width / count;
 
         return new Rect(rect.x + width * start, rect.y, width * length, rect.height);
     }
+
+    /// <summary>Splits the rect horizontally and combines a single slice (length 1).</summary>
+    public static Rect SplitHorizontalAndCombine(this Rect rect, int count, int start) => SplitHorizontalAndCombine(rect, count, start, 1);
 
     #endregion
 }}

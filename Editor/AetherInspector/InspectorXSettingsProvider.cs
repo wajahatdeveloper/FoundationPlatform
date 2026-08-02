@@ -56,18 +56,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Nested Drawers", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for [ShowInInspector] and [InlineProperty] nested drawers. Clamped to 1-50."));
+            EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for nested object drawers (PocoInspector, InlineProperty, engine-attributed nested objects). Prevents stack overflow on deeply nested or circular references. Range: 1-50."));
+            EditorGUILayout.HelpBox("Increase if you have deeply nested attributed objects. Decrease to catch circular references earlier. Range: 1-50.", MessageType.None);
 
             if (EditorGUI.EndChangeCheck())
             {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 InspectorXSettings.instance.SaveNow();
             }
-
-            EditorGUILayout.Space(8);
-            EditorGUILayout.LabelField("Nested Drawers", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for nested object drawers (PocoInspector, InlineProperty, engine-attributed nested objects). Prevents stack overflow on deeply nested or circular references."));
-            EditorGUILayout.HelpBox("Increase if you have deeply nested attributed objects. Decrease to catch circular references earlier. Range: 1-50.", MessageType.None);
 
             EditorGUILayout.Space(8);
             using (new EditorGUILayout.HorizontalScope())

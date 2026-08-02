@@ -12,10 +12,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// </summary>
     public sealed class EditorConsoleSink : LogSinkBase
     {
-        public EditorConsoleSink(LogLevel minimumLevel = LogLevel.Verbose)
+        public EditorConsoleSink(LogLevel minimumLevel)
         {
             MinimumLevel = minimumLevel;
         }
+
+        public EditorConsoleSink() : this(LogLevel.Verbose) { }
 
         public override void Emit(LogEvent logEvent)
         {

@@ -2,6 +2,8 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Tools;
+using AetherNexus.FoundationPlatform.Editor.Tools;
 
 namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
 {
@@ -257,7 +259,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
             if (GUILayout.Button("Bake All Prefab Lightmaps", GUILayout.Height(30)))
             {
                 // Call the public static method directly
-                PrefabLightmapData.GenerateLightmapInfo();
+                PrefabLightmapBaker.GenerateLightmapInfo();
             }
         }
         #endregion

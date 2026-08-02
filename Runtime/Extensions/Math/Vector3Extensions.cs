@@ -306,7 +306,10 @@ public static class VectorExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="x">Target vector.</param>
     /// <returns><see cref="Vector3"/> vector.</returns>
-    public static Vector4 InsertX(this Vector3 vector, float x = 0) => new(x, vector.x, vector.y, vector.z);
+    public static Vector4 InsertX(this Vector3 vector, float x) => new(x, vector.x, vector.y, vector.z);
+
+    /// <summary>Inserts a 0 value to x axis and extends vector to 4-dimensional.</summary>
+    public static Vector4 InsertX(this Vector3 vector) => InsertX(vector, 0);
 
     /// <summary>
     /// Inserts value to y axis and extends vector to 4-dimensional.
@@ -314,7 +317,10 @@ public static class VectorExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="y">Target vector.</param>
     /// <returns><see cref="Vector4"/> vector.</returns>
-    public static Vector4 InsertY(this Vector3 vector, float y = 0) => new(vector.x, y, vector.y, vector.z);
+    public static Vector4 InsertY(this Vector3 vector, float y) => new(vector.x, y, vector.y, vector.z);
+
+    /// <summary>Inserts a 0 value to y axis and extends vector to 4-dimensional.</summary>
+    public static Vector4 InsertY(this Vector3 vector) => InsertY(vector, 0);
 
     /// <summary>
     /// Inserts value to z axis and extends vector to 4-dimensional.
@@ -322,7 +328,10 @@ public static class VectorExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="z">Target vector.</param>
     /// <returns><see cref="Vector4"/> vector.</returns>
-    public static Vector4 InsertZ(this Vector3 vector, float z = 0) => new(vector.x, vector.y, z, vector.z);
+    public static Vector4 InsertZ(this Vector3 vector, float z) => new(vector.x, vector.y, z, vector.z);
+
+    /// <summary>Inserts a 0 value to z axis and extends vector to 4-dimensional.</summary>
+    public static Vector4 InsertZ(this Vector3 vector) => InsertZ(vector, 0);
 
     /// <summary>
     /// Inserts value to w axis and extends vector to 4-dimensional.
@@ -330,7 +339,10 @@ public static class VectorExtensions
     /// <param name="vector">Target vector.</param>
     /// <param name="w">Target vector.</param>
     /// <returns><see cref="Vector4"/> vector.</returns>
-    public static Vector4 InsertW(this Vector3 vector, float w = 0) => new(vector.x, vector.y, vector.z, w);
+    public static Vector4 InsertW(this Vector3 vector, float w) => new(vector.x, vector.y, vector.z, w);
+
+    /// <summary>Inserts a 0 value to w axis and extends vector to 4-dimensional.</summary>
+    public static Vector4 InsertW(this Vector3 vector) => InsertW(vector, 0);
 
     private static void Compare(Vector3 vector, ref int index, int compareIndex, int result)
     {
@@ -832,7 +844,7 @@ public static class VectorExtensions
 
     #region Approximately
 
-    public static bool Approximately(this Vector3 vector, Vector3 compared, float threshold = 0.1f)
+    public static bool Approximately(this Vector3 vector, Vector3 compared, float threshold)
     {
         var xDiff = Mathf.Abs(vector.x - compared.x);
         var yDiff = Mathf.Abs(vector.y - compared.y);
@@ -840,6 +852,9 @@ public static class VectorExtensions
 
         return xDiff <= threshold && yDiff <= threshold && zDiff <= threshold;
     }
+
+    /// <summary>Checks approximate equality using a 0.1 threshold.</summary>
+    public static bool Approximately(this Vector3 vector, Vector3 compared) => Approximately(vector, compared, 0.1f);
 
     #endregion
 
@@ -1270,8 +1285,11 @@ public static class VectorExtensions
         return vector;
     }
 
-    public static bool NearlyEquals(this Vector3 lhs, Vector3 rhs, double inaccuracy = 9.99999943962493E-11) =>
+    public static bool NearlyEquals(this Vector3 lhs, Vector3 rhs, double inaccuracy) =>
         Vector3.SqrMagnitude(lhs - rhs) < inaccuracy;
+
+    /// <summary>Checks near-equality using a 9.99999943962493E-11 inaccuracy threshold.</summary>
+    public static bool NearlyEquals(this Vector3 lhs, Vector3 rhs) => NearlyEquals(lhs, rhs, 9.99999943962493E-11);
 
     public static Vector3 MidPointTo(this Vector3 origin, Vector3 destination) => new Vector3(
         (origin.x + destination.x) / 2,
@@ -1651,8 +1669,11 @@ public static class VectorExtensions
     /// <param name="vector2Int">Vector2Int to convert.</param>
     /// <param name="z">Z value (default: 0).</param>
     /// <returns>Vector3 representation.</returns>
-    public static Vector3 ToVector3(this Vector2Int vector2Int, float z = 0f) =>
+    public static Vector3 ToVector3(this Vector2Int vector2Int, float z) =>
         new Vector3(vector2Int.x, vector2Int.y, z);
+
+    /// <summary>Converts Vector2Int to Vector3 with a 0 Z value.</summary>
+    public static Vector3 ToVector3(this Vector2Int vector2Int) => ToVector3(vector2Int, 0f);
 
     /// <summary>
     /// Converts Vector2Int to Vector3 using X and Z components.
@@ -1660,8 +1681,11 @@ public static class VectorExtensions
     /// <param name="vector2Int">Vector2Int to convert.</param>
     /// <param name="y">Y value (default: 0).</param>
     /// <returns>Vector3 representation.</returns>
-    public static Vector3 ToVector3XZ(this Vector2Int vector2Int, float y = 0f) =>
+    public static Vector3 ToVector3XZ(this Vector2Int vector2Int, float y) =>
         new Vector3(vector2Int.x, y, vector2Int.y);
+
+    /// <summary>Converts Vector2Int to Vector3 using X and Z components, with a 0 Y value.</summary>
+    public static Vector3 ToVector3XZ(this Vector2Int vector2Int) => ToVector3XZ(vector2Int, 0f);
 
 #if UNITY_MATHEMATICS
     /// <summary>
@@ -1689,7 +1713,7 @@ public static class VectorExtensions
     /// <param name="z">Z component.</param>
     /// <param name="validateNaN">Whether to validate for NaN values.</param>
     /// <returns>Vector3 with validated components.</returns>
-    public static Vector3 CreateValidated(float x, float y, float z, bool validateNaN = true)
+    public static Vector3 CreateValidated(float x, float y, float z, bool validateNaN)
     {
         if (validateNaN && (float.IsNaN(x) || float.IsNaN(y) || float.IsNaN(z)))
         {
@@ -1698,4 +1722,7 @@ public static class VectorExtensions
         }
         return new Vector3(x, y, z);
     }
+
+    /// <summary>Creates a Vector3, validating for NaN values.</summary>
+    public static Vector3 CreateValidated(float x, float y, float z) => CreateValidated(x, y, z, true);
 }}

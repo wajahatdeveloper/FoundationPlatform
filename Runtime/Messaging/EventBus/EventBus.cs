@@ -41,6 +41,10 @@ public static class EventBus
 	// Optional debug signal emitter (registered by GameEngineCore if available)
 	private static IEventDebugSignalEmitter _debugSignalEmitter;
 
+	// Optional rule-system infrastructure classifier for debug-display filtering (registered by
+	// GameEngineCore if its rule system is present). Replaces a hardcoded GameEngineCore class-name list.
+	private static IRuleSystemDebugClassifier _ruleSystemClassifier;
+
 	// Reusable buffers for safe iteration without ToArray allocation. Indexed by recursion depth.
 	private static readonly List<List<PrioritizedCallback>> _invokeBuffers = new();
 	private static int _invokeDepth;
@@ -257,50 +261,15 @@ public static class EventBus
 
 	#if RULESYSTEM_PRESENT
 	/// <summary>
-	/// Check if a type is a GameAction infrastructure class (not a user rule class).
+	/// Check if a type is GameAction/RuleSystem infrastructure (not a user rule class), for
+	/// debug-display filtering. Delegates to an optionally-registered <see cref="IRuleSystemDebugClassifier"/>
+	/// (see <see cref="RegisterRuleSystemClassifier"/>) instead of hardcoding GameEngineCore class
+	/// names in this foundation-layer file.
 	/// </summary>
 	public static bool IsRuleSystemClass(Type type)
 	{
 		if (type == null) return false;
-		
-		// GameAction infrastructure lives under AetherNexus.GameEngineCore.
-		if (type.Namespace != "AetherNexus.GameEngineCore")
-			return false;
-		
-		// List of GameAction infrastructure classes to filter out
-		var infrastructureClassNames = new HashSet<string>
-		{
-			"GameActionPipeline",
-			"RuleRegistry",
-			"ValidationContext",
-			"RuleDebug",
-			"RulePriority",
-			"RuleCategories",
-			"RuleFeature",
-			"IRuleAction",
-			"GameActionCommitted",
-			"GameActionValidationEvent",
-			"GameActionException",
-			"RulesBootstrap",
-			"RuleSetSubscriptionHelper",
-			"StandaloneRuleSet",
-			"AsyncFlowVisualizerWindow"
-		};
-		
-		// Check if it's an infrastructure class
-		if (infrastructureClassNames.Contains(type.Name))
-			return true;
-		
-		// Check if it's the base RuleHandler class itself (not user rules that inherit from it)
-		// User rules inherit from RuleHandler but are not in GameAction namespace
-		if (type.Name == "RuleSetBehaviour" && type.Namespace == "AetherNexus.GameEngineCore")
-		{
-			// This is the base class, not a user rule
-			return true;
-		}
-		
-		// Check if it's in the Core namespace (infrastructure)
-		return false;
+		return _ruleSystemClassifier?.IsInfrastructureClass(type) ?? false;
 	}
 	#endif
 
@@ -1377,7 +1346,11 @@ public static class EventBus
 
 				if (hasSpecific || hasGlobal)
 				{
-					#if UNITY_EDITOR || DEVELOPMENT_BUILD
+					// UNITY_EDITOR only (not DEVELOPMENT_BUILD): InvokeSubscribersTracking below calls
+					// GetActualClassName/IsRuleSystemClass/ExtractRuleMethodName, which are only defined
+					// under UNITY_EDITOR. A device dev-build (DEVELOPMENT_BUILD without UNITY_EDITOR)
+					// falls through to the plain InvokeSubscribers in the #else below instead.
+					#if UNITY_EDITOR
 					if (_monitoringEnabled && (_enableEventHistory || _loggingLevel >= LoggingLevel.Minimal))
 					{
 						var subscriberDetails = new List<SubscriberDetail>();
@@ -1512,7 +1485,9 @@ public static class EventBus
 		}
 	}
 
-	#if UNITY_EDITOR || DEVELOPMENT_BUILD
+	// UNITY_EDITOR only (not DEVELOPMENT_BUILD): unconditionally calls GetActualClassName, which is
+	// only defined under UNITY_EDITOR — see the narrowed call site above.
+	#if UNITY_EDITOR
 	private static void InvokeSubscribersTracking<T>(List<PrioritizedCallback> list, T evt, Type eventType, Identity channel, string publisherType, string publisherMethod, EventCategory eventCategory, List<SubscriberDetail> subscriberDetails) where T : BaseGameEvent
 	{
 		var buffer = RentInvokeBuffer();
@@ -1634,7 +1609,9 @@ public static class EventBus
 				}
 				catch (Exception ex)
 				{
-					#if UNITY_EDITOR || DEVELOPMENT_BUILD
+					// UNITY_EDITOR only (not DEVELOPMENT_BUILD): GetActualClassName is only defined
+					// under UNITY_EDITOR. The #else below is the DEVELOPMENT_BUILD-only-without-editor path.
+					#if UNITY_EDITOR
 					var prov = evt.Provenance;
 					var handlerType = GetActualClassName(callbackWrapper.Callback, callbackWrapper.Target);
 					var methodName = callbackWrapper.Callback?.Method?.Name ?? "Unknown";
@@ -1960,6 +1937,16 @@ public static class EventBus
 	public static void RegisterDebugSignalEmitter(IEventDebugSignalEmitter emitter)
 	{
 		_debugSignalEmitter = emitter;
+	}
+
+	/// <summary>
+	/// Register a rule-system infrastructure classifier for debug-display filtering, mirroring
+	/// <see cref="RegisterDebugSignalEmitter"/>'s seam. If no classifier is registered,
+	/// <see cref="IsRuleSystemClass"/> treats nothing as infrastructure.
+	/// </summary>
+	public static void RegisterRuleSystemClassifier(IRuleSystemDebugClassifier classifier)
+	{
+		_ruleSystemClassifier = classifier;
 	}
 
 }

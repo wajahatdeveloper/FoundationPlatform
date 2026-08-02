@@ -60,7 +60,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 expanded = settings.DisplayMode != ListDisplayMode.Collapsed;
             }
-            expanded = AetherInspectorTheme.FoldoutInSection(expanded, header);
+            expanded = AetherInspectorTheme.SectionFoldout(expanded, header);
             s_foldouts[fKey] = expanded;
             if (!expanded) return;
 

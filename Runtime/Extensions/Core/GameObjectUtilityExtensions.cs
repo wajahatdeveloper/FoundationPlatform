@@ -167,7 +167,7 @@ public static class GameObjectUtilityExtensions
     /// <param name="go"></param>
     /// <param name="layer">OPTIONAL. If omitted, it uses the layer of the calling GameObject, which is the most common/intuitive case (for me, at least). But you can specify a layer and it'll hand you the collision mask for that layer instead.</param>
     /// <returns></returns>
-    public static int GetCollisionMask(this GameObject go, int layer = -1)
+    public static int GetCollisionMask(this GameObject go, int layer)
     {
         // get the layer if one was not sent
         if (layer == -1)
@@ -180,6 +180,9 @@ public static class GameObjectUtilityExtensions
 
         return mask;
     }
+
+    /// <summary>Returns the collision mask of the game object, using its own layer.</summary>
+    public static int GetCollisionMask(this GameObject go) => GetCollisionMask(go, -1);
 
     #endregion
 
@@ -282,22 +285,8 @@ public static class GameObjectUtilityExtensions
     }
 
     //recursive calls
-    private static void InternalMoveToLayer(Transform root, int layer)
-    {
-        root.gameObject.layer = layer;
-        foreach (Transform child in root)
-            InternalMoveToLayer(child, layer);
-    }
-
-    /// <summary>
-    /// Move root and all children to the specified layer
-    /// </summary>
-    /// <param name="root"></param>
-    /// <param name="layer"></param>
-    public static void MoveToLayer(this GameObject root, int layer)
-    {
-        InternalMoveToLayer(root.transform, layer);
-    }
+    // Note: "move to layer recursively" is SetLayerRecursively (above) — kept as the single canonical
+    // name instead of duplicating it here.
 
     /// <summary>
     /// is the object's layer in the specified layermask
@@ -318,7 +307,7 @@ public static class GameObjectUtilityExtensions
     /// <summary>Destroy this GameObject safety(check null).</summary>
     /// <param name="useDestroyImmediate">If in EditMode, should be true or pass !Application.isPlaying.</param>
     /// <param name="detachParent">set to parent = null.</param>
-    public static void Destroy(this GameObject self, bool useDestroyImmediate = false, bool detachParent = false)
+    public static void Destroy(this GameObject self, bool useDestroyImmediate, bool detachParent)
     {
         if (self == null) return;
 
@@ -336,6 +325,12 @@ public static class GameObjectUtilityExtensions
             GameObject.Destroy(self);
         }
     }
+
+    /// <summary>Destroy this GameObject safety(check null), without detaching its parent.</summary>
+    public static void Destroy(this GameObject self, bool useDestroyImmediate) => Destroy(self, useDestroyImmediate, false);
+
+    /// <summary>Destroy this GameObject safety(check null), using Destroy (not DestroyImmediate) and without detaching its parent.</summary>
+    public static void Destroy(this GameObject self) => Destroy(self, false, false);
 
     public static void DestroySelf(this GameObject @this)
     {
@@ -355,7 +350,7 @@ public static class GameObjectUtilityExtensions
     /// <param name="tag">Tag of the searched object</param>
     /// <param name="maxDistance">Max distance that will be searched</param>
     /// <returns>Returns a single GameObject or null</returns>
-    public static T FindNearestByTag<T>(this GameObject obj, string tag, float maxDistance = float.PositiveInfinity)
+    public static T FindNearestByTag<T>(this GameObject obj, string tag, float maxDistance)
         where T : MonoBehaviour
     {
         var objects = GameObject.FindGameObjectsWithTag(tag);
@@ -375,6 +370,9 @@ public static class GameObjectUtilityExtensions
         return null;
     }
 
+    /// <summary>Finds the closest gameobject with an unbounded search distance.</summary>
+    public static T FindNearestByTag<T>(this GameObject obj, string tag) where T : MonoBehaviour => FindNearestByTag<T>(obj, tag, float.PositiveInfinity);
+
     /// <summary>
     /// Finde the closest gameobject of the current one based on it's Type
     /// </summary>
@@ -382,7 +380,7 @@ public static class GameObjectUtilityExtensions
     /// <param name="obj">Object wich is searching</param>
     /// <param name="maxDistance">Max distance that will be searched</param>
     /// <returns>Returns a single GameObject or null</returns>
-    public static T FindNearestByType<T>(this GameObject obj, float maxDistance = float.PositiveInfinity)
+    public static T FindNearestByType<T>(this GameObject obj, float maxDistance)
         where T : MonoBehaviour
     {
         var objects = GameObject.FindObjectsByType<T>(FindObjectsSortMode.None);
@@ -401,6 +399,9 @@ public static class GameObjectUtilityExtensions
         return null;
     }
 
+    /// <summary>Finds the closest gameobject with an unbounded search distance.</summary>
+    public static T FindNearestByType<T>(this GameObject obj) where T : MonoBehaviour => FindNearestByType<T>(obj, float.PositiveInfinity);
+
     /// <summary>
     /// Searchs on a list of GameObjects wich one it's closest to <see cref="obj"/>
     /// </summary>
@@ -409,7 +410,7 @@ public static class GameObjectUtilityExtensions
     /// <param name="objects">Object list to be filtered</param>
     /// <param name="maxDistance">Max distance that will be searched</param>
     /// <returns>Returns the closests GameObject of obj or null</returns>
-    public static T FindNearests<T>(this GameObject obj, List<T> objects, float maxDistance = float.PositiveInfinity)
+    public static T FindNearests<T>(this GameObject obj, List<T> objects, float maxDistance)
         where T : MonoBehaviour
     {
         if (objects.Count == 0)
@@ -436,6 +437,9 @@ public static class GameObjectUtilityExtensions
 
         return nearestObject;
     }
+
+    /// <summary>Searches with an unbounded search distance.</summary>
+    public static T FindNearests<T>(this GameObject obj, List<T> objects) where T : MonoBehaviour => FindNearests<T>(obj, objects, float.PositiveInfinity);
 
     /// <summary>
     /// Sets the lossy scale of the source Transform.

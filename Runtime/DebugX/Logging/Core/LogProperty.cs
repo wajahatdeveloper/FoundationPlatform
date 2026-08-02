@@ -19,12 +19,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
         public readonly object Value;
         public readonly PropertyType Type;
 
-        public LogProperty(string key, object value, PropertyType type = PropertyType.Scalar)
+        public LogProperty(string key, object value, PropertyType type)
         {
             Key = key;
             Value = value;
             Type = type;
         }
+
+        public LogProperty(string key, object value) : this(key, value, PropertyType.Scalar) { }
     }
 }
 

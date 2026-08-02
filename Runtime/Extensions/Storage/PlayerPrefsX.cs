@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
+/// <summary>
+/// Legacy binary-array PlayerPrefs codec. Kept for existing callers/back-compat; new code should use
+/// <see cref="PersistentDataHandler"/> (JSON-backed) instead.
+/// </summary>
 public class PlayerPrefsX
 {
     private static int endianDiff1;
