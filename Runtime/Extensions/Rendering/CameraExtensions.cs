@@ -103,11 +103,14 @@ public static class CameraExtensions
     /// <param name="camera">Camera to modify</param>
     /// <param name="target">Target position to look at</param>
     /// <param name="up">Up vector (default: Vector3.up)</param>
-    public static void LookAt(this Camera camera, Vector3 target, Vector3 up = default)
+    public static void LookAt(this Camera camera, Vector3 target, Vector3 up)
     {
         if (up == default) up = Vector3.up;
         camera.transform.LookAt(target, up);
     }
+
+    /// <summary>Looks at a target position, using Vector3.up.</summary>
+    public static void LookAt(this Camera camera, Vector3 target) => LookAt(camera, target, default);
 
     /// <summary>
     /// Looks at a target transform
@@ -115,11 +118,14 @@ public static class CameraExtensions
     /// <param name="camera">Camera to modify</param>
     /// <param name="target">Target transform to look at</param>
     /// <param name="up">Up vector (default: Vector3.up)</param>
-    public static void LookAt(this Camera camera, Transform target, Vector3 up = default)
+    public static void LookAt(this Camera camera, Transform target, Vector3 up)
     {
         if (target == null) return;
         camera.LookAt(target.position, up);
     }
+
+    /// <summary>Looks at a target transform, using Vector3.up.</summary>
+    public static void LookAt(this Camera camera, Transform target) => LookAt(camera, target, default);
 
     #endregion
 
@@ -133,7 +139,7 @@ public static class CameraExtensions
     /// <param name="speed">Movement speed</param>
     /// <param name="smoothTime">Smooth time for movement</param>
     /// <returns>Coroutine for smooth movement</returns>
-    public static IEnumerator MoveTo(this Camera camera, Vector3 target, float speed = 1f, float smoothTime = 0f)
+    public static IEnumerator MoveTo(this Camera camera, Vector3 target, float speed, float smoothTime)
     {
         Vector3 startPosition = camera.transform.position;
         float elapsed = 0f;
@@ -158,6 +164,9 @@ public static class CameraExtensions
         camera.transform.position = target;
     }
 
+    /// <summary>Moves the camera towards a target position, using a speed of 1 and no fixed smooth time.</summary>
+    public static IEnumerator MoveTo(this Camera camera, Vector3 target) => MoveTo(camera, target, 1f, 0f);
+
     /// <summary>
     /// Smoothly rotates the camera towards a target rotation
     /// </summary>
@@ -166,7 +175,7 @@ public static class CameraExtensions
     /// <param name="speed">Rotation speed</param>
     /// <param name="smoothTime">Smooth time for rotation</param>
     /// <returns>Coroutine for smooth rotation</returns>
-    public static IEnumerator RotateTo(this Camera camera, Quaternion target, float speed = 1f, float smoothTime = 0f)
+    public static IEnumerator RotateTo(this Camera camera, Quaternion target, float speed, float smoothTime)
     {
         Quaternion startRotation = camera.transform.rotation;
         float elapsed = 0f;
@@ -191,6 +200,9 @@ public static class CameraExtensions
         camera.transform.rotation = target;
     }
 
+    /// <summary>Smoothly rotates the camera towards a target rotation, using a speed of 1 and no fixed smooth time.</summary>
+    public static IEnumerator RotateTo(this Camera camera, Quaternion target) => RotateTo(camera, target, 1f, 0f);
+
     /// <summary>
     /// Smoothly moves and rotates the camera to look at a target
     /// </summary>
@@ -200,7 +212,7 @@ public static class CameraExtensions
     /// <param name="speed">Movement speed</param>
     /// <param name="smoothTime">Smooth time</param>
     /// <returns>Coroutine for smooth movement and rotation</returns>
-    public static IEnumerator MoveAndLookAt(this Camera camera, Vector3 targetPosition, Vector3 targetLookAt, float speed = 1f, float smoothTime = 0f)
+    public static IEnumerator MoveAndLookAt(this Camera camera, Vector3 targetPosition, Vector3 targetLookAt, float speed, float smoothTime)
     {
         Vector3 startPosition = camera.transform.position;
         Quaternion startRotation = camera.transform.rotation;
@@ -230,6 +242,9 @@ public static class CameraExtensions
         camera.transform.position = targetPosition;
         camera.transform.rotation = targetRotation;
     }
+
+    /// <summary>Smoothly moves and rotates the camera to look at a target, using a speed of 1 and no fixed smooth time.</summary>
+    public static IEnumerator MoveAndLookAt(this Camera camera, Vector3 targetPosition, Vector3 targetLookAt) => MoveAndLookAt(camera, targetPosition, targetLookAt, 1f, 0f);
 
     #endregion
 
@@ -292,10 +307,13 @@ public static class CameraExtensions
     /// <param name="screenPosition">Screen position</param>
     /// <param name="distance">Distance from camera</param>
     /// <returns>World position</returns>
-    public static Vector3 ScreenToWorldPoint(this Camera camera, Vector3 screenPosition, float distance = 10f)
+    public static Vector3 ScreenToWorldPoint(this Camera camera, Vector3 screenPosition, float distance)
     {
         return camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, distance));
     }
+
+    /// <summary>Converts a screen position to world position, using a distance of 10 from the camera.</summary>
+    public static Vector3 ScreenToWorldPoint(this Camera camera, Vector3 screenPosition) => ScreenToWorldPoint(camera, screenPosition, 10f);
 
     /// <summary>
     /// Converts a screen position to world position at a specific plane
@@ -386,10 +404,13 @@ public static class CameraExtensions
     /// <param name="viewportPosition">Viewport position (0-1)</param>
     /// <param name="distance">Distance from camera</param>
     /// <returns>World position</returns>
-    public static Vector3 ViewportToWorldPoint(this Camera camera, Vector3 viewportPosition, float distance = 10f)
+    public static Vector3 ViewportToWorldPoint(this Camera camera, Vector3 viewportPosition, float distance)
     {
         return camera.ViewportToWorldPoint(new Vector3(viewportPosition.x, viewportPosition.y, distance));
     }
+
+    /// <summary>Converts a viewport position to world position, using a distance of 10 from the camera.</summary>
+    public static Vector3 ViewportToWorldPoint(this Camera camera, Vector3 viewportPosition) => ViewportToWorldPoint(camera, viewportPosition, 10f);
 
     /// <summary>
     /// Checks if a world position is visible in the camera's viewport
@@ -445,16 +466,19 @@ public static class CameraExtensions
     /// <param name="camera">Camera to get bounds from</param>
     /// <param name="distance">Distance from camera</param>
     /// <returns>Viewport bounds</returns>
-    public static Bounds GetViewportBounds(this Camera camera, float distance = 10f)
+    public static Bounds GetViewportBounds(this Camera camera, float distance)
     {
         Vector3 bottomLeft = camera.ViewportToWorldPoint(new Vector3(0f, 0f, distance));
         Vector3 topRight = camera.ViewportToWorldPoint(new Vector3(1f, 1f, distance));
-        
+
         Vector3 center = (bottomLeft + topRight) * 0.5f;
         Vector3 size = topRight - bottomLeft;
-        
+
         return new Bounds(center, size);
     }
+
+    /// <summary>Gets the camera's viewport bounds in world space, using a distance of 10 from the camera.</summary>
+    public static Bounds GetViewportBounds(this Camera camera) => GetViewportBounds(camera, 10f);
 
     /// <summary>
     /// Resets the camera to its default state
@@ -495,12 +519,16 @@ public static class CameraExtensions
     public static Vector3 WorldPointOffsetByDepth(this Camera camera,
         Vector3 source,
         float distanceFromCamera,
-        Camera.MonoOrStereoscopicEye eye = Camera.MonoOrStereoscopicEye.Mono)
+        Camera.MonoOrStereoscopicEye eye)
     {
         var screenPoint = camera.WorldToScreenPoint(source, eye);
         return camera.ScreenToWorldPoint(screenPoint.SetZ(distanceFromCamera),
             eye);
     }
+
+    /// <summary>Offsets a world point by depth, using the mono eye.</summary>
+    public static Vector3 WorldPointOffsetByDepth(this Camera camera, Vector3 source, float distanceFromCamera) =>
+        WorldPointOffsetByDepth(camera, source, distanceFromCamera, Camera.MonoOrStereoscopicEye.Mono);
 
     #endregion
 }}

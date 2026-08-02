@@ -297,13 +297,16 @@ public static class ColorExtensions
         return new Color(color.r, color.g, color.b, a);
     }
 
-    public static string ColorToHex(this Color color, bool includeAlpha = false)
+    public static string ColorToHex(this Color color, bool includeAlpha)
     {
         Color32 color32 = color;
         var result = color32.r.ToString("X2") + color32.g.ToString("X2") + color32.b.ToString("X2");
         if (includeAlpha) result += color32.a.ToString("X2");
         return result;
     }
+
+    /// <summary>Converts to hex without the alpha channel.</summary>
+    public static string ColorToHex(this Color color) => ColorToHex(color, false);
 
     public static Color HexToColor(this string inputHexString)
     {
@@ -333,7 +336,7 @@ public static class ColorExtensions
         return HSL.FromColor(color);
     }
 
-    public static Color MakeRandomColor(this Color color, float minClamp = 0.5f)
+    public static Color MakeRandomColor(this Color color, float minClamp)
     {
         var randCol = UnityEngine.Random.onUnitSphere * 3;
         randCol.x = Mathf.Clamp(randCol.x, minClamp, 1f);
@@ -342,6 +345,9 @@ public static class ColorExtensions
 
         return new Color(randCol.x, randCol.y, randCol.z, 1f);
     }
+
+    /// <summary>Makes a random color, clamped to a 0.5 minimum per channel.</summary>
+    public static Color MakeRandomColor(this Color color) => MakeRandomColor(color, 0.5f);
 
     /// <summary>
     /// Direct speedup of <seealso cref="Color.Lerp"/>

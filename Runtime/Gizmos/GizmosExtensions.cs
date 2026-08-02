@@ -13,7 +13,7 @@ public static class GizmosExtensions {
 	/// <param name="center"></param>
 	/// <param name="size"></param>
 	/// <param name="rotation"></param>
-	public static void DrawWireCube(Vector3 center, Vector3 size, Quaternion rotation = default(Quaternion)) {
+	public static void DrawWireCube(Vector3 center, Vector3 size, Quaternion rotation) {
 		var old = Gizmos.matrix;
 		if (rotation.Equals(default(Quaternion)))
 			rotation = Quaternion.identity;
@@ -22,7 +22,10 @@ public static class GizmosExtensions {
 		Gizmos.matrix = old;
 	}
 
-	public static void DrawArrow(Vector3 from, Vector3 to, float arrowHeadLength = 0.25f, float arrowHeadAngle = 20.0f) {
+	/// <summary>Draws a wire cube with no rotation.</summary>
+	public static void DrawWireCube(Vector3 center, Vector3 size) => DrawWireCube(center, size, default);
+
+	public static void DrawArrow(Vector3 from, Vector3 to, float arrowHeadLength, float arrowHeadAngle) {
 		Gizmos.DrawLine(from, to);
 		var direction = to - from;
 		var right = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 180 + arrowHeadAngle, 0) * new Vector3(0, 0, 1);
@@ -31,7 +34,10 @@ public static class GizmosExtensions {
 		Gizmos.DrawLine(to, to + left * arrowHeadLength);
 	}
 
-	public static void DrawWireSphere(Vector3 center, float radius, Quaternion rotation = default(Quaternion)) {
+	/// <summary>Draws an arrow using a 0.25 head length and 20 degree head angle.</summary>
+	public static void DrawArrow(Vector3 from, Vector3 to) => DrawArrow(from, to, 0.25f, 20.0f);
+
+	public static void DrawWireSphere(Vector3 center, float radius, Quaternion rotation) {
 		var old = Gizmos.matrix;
 		if (rotation.Equals(default(Quaternion)))
 			rotation = Quaternion.identity;
@@ -40,7 +46,10 @@ public static class GizmosExtensions {
 		Gizmos.matrix = old;
 	}
 
-	
+	/// <summary>Draws a wire sphere with no rotation.</summary>
+	public static void DrawWireSphere(Vector3 center, float radius) => DrawWireSphere(center, radius, default);
+
+
 	/// <summary>
 	/// Draws a flat wire circle (up)
 	/// </summary>
@@ -48,9 +57,12 @@ public static class GizmosExtensions {
 	/// <param name="radius"></param>
 	/// <param name="segments"></param>
 	/// <param name="rotation"></param>
-	public static void DrawWireCircle(Vector3 center, float radius, int segments = 20, Quaternion rotation = default(Quaternion)) {
+	public static void DrawWireCircle(Vector3 center, float radius, int segments, Quaternion rotation) {
 		DrawWireArc(center,radius,360,segments,rotation);
 	}
+
+	/// <summary>Draws a flat wire circle (up) using 20 segments and no rotation.</summary>
+	public static void DrawWireCircle(Vector3 center, float radius) => DrawWireCircle(center, radius, 20, default);
 
     /// <summary>
     /// Draws an arc with a rotation around the center
@@ -60,7 +72,7 @@ public static class GizmosExtensions {
     /// <param name="angle">angle in degrees</param>
     /// <param name="segments">number of segments</param>
     /// <param name="rotation">rotation around the center</param>
-    public static void DrawWireArc(Vector3 center, float radius, float angle, int segments = 20, Quaternion rotation = default(Quaternion))
+    public static void DrawWireArc(Vector3 center, float radius, float angle, int segments, Quaternion rotation)
 	{
 		
 		var old = Gizmos.matrix;
@@ -77,6 +89,8 @@ public static class GizmosExtensions {
 		Gizmos.matrix = old;
 	}
 
+	/// <summary>Draws an arc using 20 segments and no rotation.</summary>
+	public static void DrawWireArc(Vector3 center, float radius, float angle) => DrawWireArc(center, radius, angle, 20, default);
 
 	/// <summary>
 	/// Draws an arc with a rotation around an arbitraty center of rotation
@@ -137,13 +151,13 @@ public static class GizmosExtensions {
 	/// <param name="radius"></param>
 	/// <param name="height"></param>
 	/// <param name="rotation"></param>
-	public static void DrawWireCylinder(Vector3 center, float radius, float height, Quaternion rotation = default(Quaternion)) {
+	public static void DrawWireCylinder(Vector3 center, float radius, float height, Quaternion rotation) {
 		var old = Gizmos.matrix;
 		if (rotation.Equals(default(Quaternion)))
 			rotation = Quaternion.identity;
 		Gizmos.matrix = Matrix4x4.TRS(center,rotation,Vector3.one);
 		var half = height / 2;
-		
+
 		//draw the 4 outer lines
 		Gizmos.DrawLine( Vector3.right * radius - Vector3.up * half,  Vector3.right * radius + Vector3.up * half);
 		Gizmos.DrawLine( - Vector3.right * radius - Vector3.up * half,  -Vector3.right * radius + Vector3.up * half);
@@ -156,6 +170,9 @@ public static class GizmosExtensions {
 		Gizmos.matrix = old;
 	}
 
+	/// <summary>Draws a wire cylinder face up with no rotation.</summary>
+	public static void DrawWireCylinder(Vector3 center, float radius, float height) => DrawWireCylinder(center, radius, height, default);
+
 	/// <summary>
 	/// Draws a wire capsule face up
 	/// </summary>
@@ -163,7 +180,7 @@ public static class GizmosExtensions {
 	/// <param name="radius"></param>
 	/// <param name="height"></param>
 	/// <param name="rotation"></param>
-	public static void DrawWireCapsule(Vector3 center, float radius, float height, Quaternion rotation = default(Quaternion))
+	public static void DrawWireCapsule(Vector3 center, float radius, float height, Quaternion rotation)
 	{
 		if (rotation.Equals(default(Quaternion)))
 			rotation = Quaternion.identity;
@@ -190,7 +207,10 @@ public static class GizmosExtensions {
 		Gizmos.matrix = old;
 
 	}
-	
+
+	/// <summary>Draws a wire capsule face up with no rotation.</summary>
+	public static void DrawWireCapsule(Vector3 center, float radius, float height) => DrawWireCapsule(center, radius, height, default);
+
 	        public static void DrawLineExtended(Vector3 startPoint, Vector3 endPoint, float thickness)
         {
             Vector3 position = (startPoint + endPoint) / 2;

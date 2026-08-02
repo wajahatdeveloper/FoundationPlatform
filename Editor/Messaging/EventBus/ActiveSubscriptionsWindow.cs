@@ -44,7 +44,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			Repaint();
 		}
 
-		public static void ShowWindowWithFilter(string eventType = null, string subscriberType = null, string target = null)
+		/// <summary>Shows the window with no filters applied.</summary>
+		public static void ShowWindowWithFilter() => ShowWindowWithFilter(null, null, null);
+
+		public static void ShowWindowWithFilter(string eventType, string subscriberType, string target)
 		{
 			var win = GetWindow<ActiveSubscriptionsWindow>("Active Subscriptions");
 			win.minSize = new Vector2(800, 400);
@@ -424,7 +427,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 						if (SelectedRow != null && isRuleHandler && !string.IsNullOrEmpty(SelectedRow.Target))
 						{
 							var handlerType = SelectedRow.Target.Split('.')[0];
-							EditorToolNavigation.NavigateToRuleExplorer(handlerType: handlerType);
+							EditorToolNavigation.NavigateToRuleExplorerByHandlerType(handlerType);
 						}
 					}
 				}

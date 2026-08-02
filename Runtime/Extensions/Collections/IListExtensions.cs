@@ -100,7 +100,7 @@ public static class IListExtensions
     /// <param name="list">The list to rotate.</param>
     /// <param name="count">The amount of times to move to the left.</param>
     /// <typeparam name="T">The type of list.</typeparam>
-    public static void RotateLeft<T>(this IList<T> list, int count = 1)
+    public static void RotateLeft<T>(this IList<T> list, int count)
     {
         if (list == null)
             throw new ArgumentNullException(nameof(list));
@@ -116,13 +116,16 @@ public static class IListExtensions
         }
     }
 
+    /// <summary>Moves all items of a list one position to the left.</summary>
+    public static void RotateLeft<T>(this IList<T> list) => RotateLeft(list, 1);
+
     /// <summary>
     /// Moves all items of a list to the right.
     /// </summary>
     /// <param name="list">The list to rotate.</param>
     /// <param name="count">The amount of times to move to the right.</param>
     /// <typeparam name="T">The type of list.</typeparam>
-    public static void RotateRight<T>(this IList<T> list, int count = 1)
+    public static void RotateRight<T>(this IList<T> list, int count)
     {
         if (list == null)
             throw new ArgumentNullException(nameof(list));
@@ -138,6 +141,9 @@ public static class IListExtensions
             list.Insert(0, last);
         }
     }
+
+    /// <summary>Moves all items of a list one position to the right.</summary>
+    public static void RotateRight<T>(this IList<T> list) => RotateRight(list, 1);
 
     /// <summary>
     /// Removes null entries from a list.
@@ -711,10 +717,13 @@ public static class IListExtensions
         return @this[WrapIndex(index, @this.Count)];
     }
 
-    public static T AtWrappedOrDefault<T>(this IList<T> @this, int index, T defaultValue = default(T))
+    public static T AtWrappedOrDefault<T>(this IList<T> @this, int index, T defaultValue)
     {
         return @this.Count > 0 ? @this[WrapIndex(index, @this.Count)] : defaultValue;
     }
+
+    /// <summary>Gets the wrapped-index item, or default(T) if the list is empty.</summary>
+    public static T AtWrappedOrDefault<T>(this IList<T> @this, int index) => AtWrappedOrDefault(@this, index, default(T));
 
     public static void SetAtWrapped<T>(this IList<T> @this, int index, T value)
     {

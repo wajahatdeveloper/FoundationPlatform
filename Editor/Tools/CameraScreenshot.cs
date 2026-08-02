@@ -14,7 +14,7 @@ public static class CameraScreenshot
     private static readonly string screenshotsRoot =
         Path.Combine(Path.GetDirectoryName(Application.dataPath) ?? string.Empty, "Screenshots");
 
-    public static void Take(Camera sourceCamera = null)
+    public static void Take(Camera sourceCamera)
     {
         Camera camera = sourceCamera;
         if (camera == null)
@@ -82,6 +82,9 @@ public static class CameraScreenshot
             }
         }
     }
+
+    /// <summary>Takes a screenshot using the main or last active scene view camera.</summary>
+    public static void Take() => Take(null);
 
     [MenuItem(MenuPaths.Utilities.TakeScreenshot, false, MenuPriorities.Utilities)]
     private static void TakeScreenshot()

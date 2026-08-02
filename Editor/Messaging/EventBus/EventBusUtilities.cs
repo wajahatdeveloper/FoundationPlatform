@@ -113,12 +113,15 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 	
 	public static class EditorToolNavigation
 	{
-		public static void NavigateToEventBusHub(string eventTypeName = null, string searchTerm = null)
+		public static void NavigateToEventBusHub(string eventTypeName, string searchTerm)
 		{
 			EventBusWindow.OpenHistoryTab(eventTypeName, null, searchTerm);
 		}
 
-		public static void NavigateToHistoryWindow(string eventType = null, string publisher = null, string searchTerm = null)
+		/// <summary>Navigates with no event type or search term.</summary>
+		public static void NavigateToEventBusHub() => NavigateToEventBusHub(null, null);
+
+		public static void NavigateToHistoryWindow(string eventType, string publisher, string searchTerm)
 		{
 			var sharedState = EventBusSharedState.Instance;
 			var context = new NavigationContext
@@ -134,7 +137,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			EventBusWindow.OpenHistoryTab(eventType, publisher, searchTerm);
 		}
 
-		public static void NavigateToSubscribersWindow(string eventType = null, string subscriberType = null, string target = null)
+		/// <summary>Navigates to the history window filtered by event type only.</summary>
+		public static void NavigateToHistoryWindow(string eventType) => NavigateToHistoryWindow(eventType, null, null);
+
+		public static void NavigateToSubscribersWindow(string eventType, string subscriberType, string target)
 		{
 			var sharedState = EventBusSharedState.Instance;
 			var context = new NavigationContext
@@ -150,7 +156,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			EventBusWindow.OpenSubscribersTab(eventType, subscriberType, target);
 		}
 
-		public static void NavigateToSubscriptionsWindow(string eventType = null, string subscriberType = null)
+		/// <summary>Navigates to the subscribers window filtered by event type only.</summary>
+		public static void NavigateToSubscribersWindowByEventType(string eventType) => NavigateToSubscribersWindow(eventType, null, null);
+
+		/// <summary>Navigates to the subscribers window filtered by subscriber type only.</summary>
+		public static void NavigateToSubscribersWindowBySubscriberType(string subscriberType) => NavigateToSubscribersWindow(null, subscriberType, null);
+
+		public static void NavigateToSubscriptionsWindow(string eventType, string subscriberType)
 		{
 			var sharedState = EventBusSharedState.Instance;
 			var context = new NavigationContext
@@ -164,7 +176,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 			EventBusWindow.OpenSubscriptionsTab(eventType, subscriberType);
 		}
-		public static void NavigateToRuleExplorer(string ruleName = null, string handlerType = null)
+
+		/// <summary>Navigates to the subscriptions window filtered by event type only.</summary>
+		public static void NavigateToSubscriptionsWindowByEventType(string eventType) => NavigateToSubscriptionsWindow(eventType, null);
+
+		/// <summary>Navigates to the subscriptions window filtered by subscriber type only.</summary>
+		public static void NavigateToSubscriptionsWindowBySubscriberType(string subscriberType) => NavigateToSubscriptionsWindow(null, subscriberType);
+
+		public static void NavigateToRuleExplorer(string ruleName, string handlerType)
 		{
 			// Search through all assemblies to find RuleExplorerWindow
 			System.Type windowType = null;
@@ -216,8 +235,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				}
 			}
 		}
+
+		/// <summary>Navigates to the rule explorer filtered by handler type only.</summary>
+		public static void NavigateToRuleExplorerByHandlerType(string handlerType) => NavigateToRuleExplorer(null, handlerType);
 	}
-	
+
 	public static class EventBusHubFormatting
 	{
 		// Cache resolved (and negative) type lookups to avoid re-scanning all

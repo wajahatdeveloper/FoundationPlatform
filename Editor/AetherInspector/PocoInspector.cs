@@ -42,7 +42,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void DrawSingleMember(object target, MemberInfo mi)
             => DrawSingleMember(target, mi, null, null);
 
-        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata, HashSet<object> visited = null)
+        /// <summary>Draws the member with no visited-set tracking.</summary>
+        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata)
+            => DrawSingleMember(target, mi, metadata, null);
+
+        internal static void DrawSingleMember(object target, MemberInfo mi, MemberMetadata metadata, HashSet<object> visited)
         {
             var m = MakeMember(mi, 0);
             try

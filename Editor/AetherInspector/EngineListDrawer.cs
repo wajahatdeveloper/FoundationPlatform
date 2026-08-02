@@ -20,13 +20,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private readonly LinkedList<LruEntry> _list;
         private readonly Action<TKey, TValue> _onEvict;
 
-        public LruCache(int capacity, Action<TKey, TValue> onEvict = null)
+        public LruCache(int capacity, Action<TKey, TValue> onEvict)
         {
             _capacity = Math.Max(1, capacity);
             _map = new Dictionary<TKey, LinkedListNode<LruEntry>>();
             _list = new LinkedList<LruEntry>();
             _onEvict = onEvict;
         }
+
+        /// <summary>Creates a cache with no eviction callback.</summary>
+        public LruCache(int capacity) : this(capacity, null) { }
 
         public bool TryGetValue(TKey key, out TValue value)
         {

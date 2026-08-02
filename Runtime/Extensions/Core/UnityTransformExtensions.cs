@@ -484,61 +484,88 @@ public static class UnityTransformExtensions
     }
 
     public static void SetPosition(this Transform transform, Vector3 position,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.position = transform.position.SetValues(position, vectorAxesMask);
     }
 
+    /// <summary>Sets position on all axes.</summary>
+    public static void SetPosition(this Transform transform, Vector3 position) => SetPosition(transform, position, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetPosition(this Transform transform, float position,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.SetPosition(new Vector3(position, position, position), vectorAxesMask);
     }
 
+    /// <summary>Sets position on all axes.</summary>
+    public static void SetPosition(this Transform transform, float position) => SetPosition(transform, position, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalPosition(this Transform transform, Vector3 position,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.localPosition = transform.localPosition.SetValues(position, vectorAxesMask);
     }
 
+    /// <summary>Sets local position on all axes.</summary>
+    public static void SetLocalPosition(this Transform transform, Vector3 position) => SetLocalPosition(transform, position, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalPosition(this Transform transform, float position,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.SetLocalPosition(new Vector3(position, position, position), vectorAxesMask);
     }
 
+    /// <summary>Sets local position on all axes.</summary>
+    public static void SetLocalPosition(this Transform transform, float position) => SetLocalPosition(transform, position, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetEulerAngles(this Transform transform, Vector3 angles,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.eulerAngles = transform.eulerAngles.SetValues(angles, vectorAxesMask);
     }
 
+    /// <summary>Sets euler angles on all axes.</summary>
+    public static void SetEulerAngles(this Transform transform, Vector3 angles) => SetEulerAngles(transform, angles, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetEulerAngles(this Transform transform, float angle,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.SetEulerAngles(new Vector3(angle, angle, angle), vectorAxesMask);
     }
 
+    /// <summary>Sets euler angles on all axes.</summary>
+    public static void SetEulerAngles(this Transform transform, float angle) => SetEulerAngles(transform, angle, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalEulerAngles(this Transform transform, Vector3 angles,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.localEulerAngles = transform.localEulerAngles.SetValues(angles, vectorAxesMask);
     }
 
+    /// <summary>Sets local euler angles on all axes.</summary>
+    public static void SetLocalEulerAngles(this Transform transform, Vector3 angles) => SetLocalEulerAngles(transform, angles, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalEulerAngles(this Transform transform, float angle,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.SetLocalEulerAngles(new Vector3(angle, angle, angle), vectorAxesMask);
     }
 
+    /// <summary>Sets local euler angles on all axes.</summary>
+    public static void SetLocalEulerAngles(this Transform transform, float angle) => SetLocalEulerAngles(transform, angle, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalScale(this Transform transform, Vector3 scale,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.localScale = transform.localScale.SetValues(scale, vectorAxesMask);
     }
 
+    /// <summary>Sets local scale on all axes.</summary>
+    public static void SetLocalScale(this Transform transform, Vector3 scale) => SetLocalScale(transform, scale, VectorExtensions.VectorAxesMask.XYZ);
+
     public static void SetLocalScale(this Transform transform, float scale,
-        VectorExtensions.VectorAxesMask vectorAxesMask = VectorExtensions.VectorAxesMask.XYZ)
+        VectorExtensions.VectorAxesMask vectorAxesMask)
     {
         transform.SetLocalScale(new Vector3(scale, scale, scale), vectorAxesMask);
     }

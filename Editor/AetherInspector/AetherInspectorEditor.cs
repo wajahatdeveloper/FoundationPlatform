@@ -139,12 +139,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         }
 
         private static readonly GUIContent s_tempContent = new GUIContent();
-        internal static GUIContent TempContent(string text, string tooltip = null)
+        internal static GUIContent TempContent(string text, string tooltip)
         {
             s_tempContent.text = text;
             s_tempContent.tooltip = tooltip;
             return s_tempContent;
         }
+
+        /// <summary>Gets a temp GUIContent with no tooltip.</summary>
+        internal static GUIContent TempContent(string text) => TempContent(text, null);
 
         internal static TypeMetadata GetOrCreateMetadata(Type type)
         {
@@ -2176,10 +2179,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // rendering of an attributed nested object.
         // preResolvedTargets: when non-null (list→element handoff), use as nested scope directly —
         // do not re-walk e.Property's root path against already-nested list owners.
+        /// <summary>Draws the nested object with no label override and no pre-resolved targets.</summary>
         internal static void DrawNestedObject(InspectorEntry e, object[] targets,
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, bool inline,
-            GUIContent labelOverride = null, int maxDepth = -1, HashSet<object> visited = null,
-            object[] preResolvedTargets = null)
+            int maxDepth, HashSet<object> visited) =>
+            DrawNestedObject(e, targets, foldouts, tabs, inline, null, maxDepth, visited, null);
+
+        internal static void DrawNestedObject(InspectorEntry e, object[] targets,
+            Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, bool inline,
+            GUIContent labelOverride, int maxDepth, HashSet<object> visited,
+            object[] preResolvedTargets)
         {
             if (maxDepth < 0) maxDepth = InspectorXSettings.instance.maxNestedDepth;
 

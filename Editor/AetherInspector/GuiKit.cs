@@ -10,7 +10,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
     /// </summary>
     public static class GuiKit
     {
-        public static void BeginBox(string label = null) => AetherInspectorTheme.BeginBox(label);
+        public static void BeginBox(string label) => AetherInspectorTheme.BeginBox(label);
+
+        /// <summary>Begins a box with no label.</summary>
+        public static void BeginBox() => AetherInspectorTheme.BeginBox();
 
         public static void EndBox() => AetherInspectorTheme.EndBox();
 
@@ -20,9 +23,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// so <c>[FoldoutGroup]</c> / section headers drawn inside stay within the box instead of hanging
         /// over its left border. See <see cref="AetherInspectorTheme.ContainerScope"/>.
         /// </summary>
-        public static AetherInspectorTheme.ContainerScope Container(GUIStyle style = null,
+        public static AetherInspectorTheme.ContainerScope Container(GUIStyle style,
             params GUILayoutOption[] options)
             => new AetherInspectorTheme.ContainerScope(style, options);
+
+        /// <summary>Begins a container with no style.</summary>
+        public static AetherInspectorTheme.ContainerScope Container() => Container(null);
 
         public static void BeginBoxHeader() => AetherInspectorTheme.BeginBoxHeader();
 
@@ -52,22 +58,33 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         public static void Title(string title) => AetherInspectorTheme.DrawTitle(title);
 
-        public static void Title(string title, string subtitle, TextAlignment textAlignment = TextAlignment.Left,
-            bool horizontalLine = true, bool boldLabel = true)
+        public static void Title(string title, string subtitle) => AetherInspectorTheme.DrawTitle(title, subtitle);
+
+        public static void Title(string title, string subtitle, TextAlignment textAlignment,
+            bool horizontalLine, bool boldLabel)
             => AetherInspectorTheme.DrawTitle(title, subtitle, textAlignment, horizontalLine, boldLabel);
 
-        public static void InfoBox(string message, InfoMessageType type = InfoMessageType.Info)
+        public static void InfoBox(string message, InfoMessageType type)
             => AetherInspectorTheme.DrawInfoBox(message, type);
 
-        public static void ValidationBox(string message, InfoMessageType type = InfoMessageType.Error)
+        /// <summary>Draws an info box using InfoMessageType.Info.</summary>
+        public static void InfoBox(string message) => AetherInspectorTheme.DrawInfoBox(message);
+
+        public static void ValidationBox(string message, InfoMessageType type)
             => AetherInspectorTheme.DrawValidationBox(message, type);
+
+        /// <summary>Draws a validation box using InfoMessageType.Error.</summary>
+        public static void ValidationBox(string message) => AetherInspectorTheme.DrawValidationBox(message);
 
         public static int Toolbar(int selected, string[] labels)
             => AetherInspectorTheme.Toolbar(selected, labels);
 
         /// <summary>Themed tag/chip pill with optional "×" remove button. See <see cref="AetherInspectorTheme.DrawTagPill"/>.</summary>
-        public static void TagPill(Rect rect, GUIContent content, Color accent, Action onRemove = null)
+        public static void TagPill(Rect rect, GUIContent content, Color accent, Action onRemove)
             => AetherInspectorTheme.DrawTagPill(rect, content, accent, onRemove);
+
+        /// <summary>Draws a tag pill with no remove button.</summary>
+        public static void TagPill(Rect rect, GUIContent content, Color accent) => TagPill(rect, content, accent, null);
 
         /// <summary>Fallback accent for a tag/chip with no metadata color.</summary>
         public static Color TagAccentFallback => AetherInspectorTheme.TagChipAccentFallback;
@@ -91,8 +108,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// See <see cref="AetherInspectorTheme.SectionHeaderRow"/>.
         /// </summary>
         public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
-            out Rect[] trailingRects, float buttonSize = 20f)
+            out Rect[] trailingRects, float buttonSize)
             => AetherInspectorTheme.SectionHeaderRow(rect, label, expanded, trailingButtons, out trailingRects, buttonSize);
+
+        /// <summary>Rect-based flat section header, using a 20px button size.</summary>
+        public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
+            out Rect[] trailingRects) => AetherInspectorTheme.SectionHeaderRow(rect, label, expanded, trailingButtons, out trailingRects);
     }
 }
 #endif

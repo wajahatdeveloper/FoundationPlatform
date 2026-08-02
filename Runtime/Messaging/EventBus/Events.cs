@@ -24,12 +24,18 @@ public class GamePaused : BaseGameEvent
     [EventData]
     public bool IsManualPause { get; set; }
     
-    public GamePaused(float pauseTime, string pauseReason = "Manual", bool isManualPause = true)
+    public GamePaused(float pauseTime, string pauseReason, bool isManualPause)
     {
         PauseTime = pauseTime;
         PauseReason = pauseReason;
         IsManualPause = isManualPause;
     }
+
+    /// <summary>Creates a manual pause event.</summary>
+    public GamePaused(float pauseTime, string pauseReason) : this(pauseTime, pauseReason, true) { }
+
+    /// <summary>Creates a manual pause event.</summary>
+    public GamePaused(float pauseTime) : this(pauseTime, "Manual", true) { }
 }
 
 /// <summary>
@@ -46,10 +52,13 @@ public class GameResumed : BaseGameEvent
     [EventData]
     public string ResumeReason { get; set; }
     
-    public GameResumed(float resumeTime, float pauseDuration, string resumeReason = "Manual")
+    public GameResumed(float resumeTime, float pauseDuration, string resumeReason)
     {
         ResumeTime = resumeTime;
         PauseDuration = pauseDuration;
         ResumeReason = resumeReason;
     }
+
+    /// <summary>Creates a manual resume event.</summary>
+    public GameResumed(float resumeTime, float pauseDuration) : this(resumeTime, pauseDuration, "Manual") { }
 }}

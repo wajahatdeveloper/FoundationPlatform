@@ -145,7 +145,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			}
 		}
 
-		public void DrawTableGUI(TData[] data, float maxHeight = float.MaxValue, float rowHeight = -1)
+		/// <summary>Draws with no height cap and auto row height.</summary>
+		public void DrawTableGUI(TData[] data) => DrawTableGUI(data, float.MaxValue, -1);
+
+		/// <summary>Draws with auto row height.</summary>
+		public void DrawTableGUI(TData[] data, float maxHeight) => DrawTableGUI(data, maxHeight, -1);
+
+		public void DrawTableGUI(TData[] data, float maxHeight, float rowHeight)
 {
     if (_multiColumnHeader == null || _columnResized)
         ReBuild();

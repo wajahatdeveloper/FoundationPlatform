@@ -139,7 +139,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         [UnityEngine.HideInCallstack]
-        internal static void ProcessLogEvent(LogEvent logEvent, bool backgroundOnly = false)
+        internal static void ProcessLogEvent(LogEvent logEvent, bool backgroundOnly)
         {
             if (!_isInitialized || _sinks.Length == 0)
             {
@@ -158,6 +158,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 LogQueue.EnqueueMainThreadAction(() => EmitToSinks(_mainThreadSinks, logEvent));
             }
         }
+
+        [UnityEngine.HideInCallstack]
+        internal static void ProcessLogEvent(LogEvent logEvent) => ProcessLogEvent(logEvent, false);
 
         [UnityEngine.HideInCallstack]
         private static void EmitToSinks(ILogSink[] sinks, LogEvent logEvent)

@@ -71,7 +71,7 @@ public static class EditorX
 	/// <summary>
 		/// Draw line with arrows showing direction
 		/// </summary>
-		public static void DrawDirectionalLine(Vector3 fromPos, Vector3 toPos, float screenSpaceSize = 3, float arrowsDensity = .5f)
+		public static void DrawDirectionalLine(Vector3 fromPos, Vector3 toPos, float screenSpaceSize, float arrowsDensity)
 		{
 			var arrowSize = screenSpaceSize / 4;
 
@@ -89,10 +89,13 @@ public static class EditorX
 			}
 		}
 
+		/// <summary>Draws directional lines with a 0.5 arrows density.</summary>
+		public static void DrawDirectionalLine(Vector3 fromPos, Vector3 toPos, float screenSpaceSize) => DrawDirectionalLine(fromPos, toPos, screenSpaceSize, .5f);
+
 		/// <summary>
 		/// Draw arrow in position to direction
 		/// </summary>
-		public static void DrawTinyArrow(Vector3 position, Vector3 direction, float headLength = 0.25f, float headAngle = 20.0f)
+		public static void DrawTinyArrow(Vector3 position, Vector3 direction, float headLength, float headAngle)
 		{
 			var lookRotation = Quaternion.LookRotation(direction);
 			var rightVector = new Vector3(0, 0, 1);
@@ -101,6 +104,9 @@ public static class EditorX
 			Handles.DrawLine(position, position + right * headLength);
 			Handles.DrawLine(position, position + left * headLength);
 		}
+
+		/// <summary>Draws a tiny arrow with a 20 degree head angle.</summary>
+		public static void DrawTinyArrow(Vector3 position, Vector3 direction, float headLength) => DrawTinyArrow(position, direction, headLength, 20.0f);
 
 
 		/// <summary>
@@ -121,13 +127,16 @@ public static class EditorX
 		/// <summary>
 		/// Draw flying path of height prom pointA to pointB
 		/// </summary>
-		public static void DrawFlyPath(Vector3 pointA, Vector3 pointB, float height = 3)
+		public static void DrawFlyPath(Vector3 pointA, Vector3 pointB, float height)
 		{
 			var color = Handles.color;
 			var pointAOffset = new Vector3(pointA.x, pointA.y + height, pointA.z);
 			var pointBOffset = new Vector3(pointB.x, pointB.y + height, pointB.z);
 			Handles.DrawBezier(pointA, pointB, pointAOffset, pointBOffset, color, null, 3);
 		}
+
+		/// <summary>Draws a flying path with a height of 3.</summary>
+		public static void DrawFlyPath(Vector3 pointA, Vector3 pointB) => DrawFlyPath(pointA, pointB, 3);
 	
     	#region Hierarchy Management
 
@@ -232,7 +241,7 @@ public static class EditorX
 		/// Get Prefab path in Asset Database
 		/// </summary>
 		/// <returns>Null if not a prefab</returns>
-		public static string GetPrefabPath(GameObject gameObject, bool withAssetName = true)
+		public static string GetPrefabPath(GameObject gameObject, bool withAssetName)
 		{
 			if (gameObject == null) return null;
 
@@ -242,6 +251,9 @@ public static class EditorX
 
 			return !withAssetName ? Path.GetDirectoryName(assetPath) : assetPath;
 		}
+
+		/// <summary>Gets the prefab path including the asset name.</summary>
+		public static string GetPrefabPath(GameObject gameObject) => GetPrefabPath(gameObject, true);
 
 		public static bool IsPrefabInstance(this GameObject go)
 		{

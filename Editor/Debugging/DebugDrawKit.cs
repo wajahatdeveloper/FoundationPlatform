@@ -23,14 +23,17 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		private const float LabelWidth = 190f;
 
 		/// <summary>Labeled horizontal bar: [label][====fill====][F2 value]. fill01 is clamped 0..1.</summary>
-		public static void Bar(string label, float fill01, float rawValue, bool highlight = false)
+		public static void Bar(string label, float fill01, float rawValue, bool highlight)
 		{
 			Bar(label, fill01, rawValue.ToString("F2"), highlight, null);
 		}
 
+		/// <summary>Draws with no highlight.</summary>
+		public static void Bar(string label, float fill01, float rawValue) => Bar(label, fill01, rawValue, false);
+
 		/// <summary>As <see cref="Bar(string,float,float,bool)"/> but with free-form value text and an
 		/// optional explicit fill color (ignored when <paramref name="highlight"/> is true).</summary>
-		public static void Bar(string label, float fill01, string valueText, bool highlight = false, Color? fill = null)
+		public static void Bar(string label, float fill01, string valueText, bool highlight, Color? fill)
 		{
 			if (ActiveRecorder != null)
 			{
@@ -48,6 +51,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			EditorGUI.DrawRect(filled, highlight ? BarHighlight : fill ?? BarFill);
 			EditorGUI.LabelField(valueRect, valueText);
 		}
+
+		/// <summary>Draws with no fill color override.</summary>
+		public static void Bar(string label, float fill01, string valueText, bool highlight) => Bar(label, fill01, valueText, highlight, null);
+
+		/// <summary>Draws with no highlight and no fill color override.</summary>
+		public static void Bar(string label, float fill01, string valueText) => Bar(label, fill01, valueText, false, null);
 
 		/// <summary>Cooldown / effect-duration bar: fills as time remains, shows "ready" at zero.</summary>
 		public static void Timeline(string label, float remaining, float total)
@@ -99,7 +108,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			EditorGUILayout.EndHorizontal();
 		}
 
-		public static void Label(string text, GUIStyle style = null)
+		public static void Label(string text, GUIStyle style)
 		{
 			if (ActiveRecorder != null)
 			{
@@ -114,6 +123,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				EditorGUILayout.LabelField(text);
 			}
 		}
+
+		/// <summary>Draws using the default label style.</summary>
+		public static void Label(string text) => Label(text, null);
 
 		/// <summary>A 12x12 color swatch followed by its label — one legend entry.</summary>
 		public static void LegendSwatch(string label, Color color)

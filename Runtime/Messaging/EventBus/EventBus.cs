@@ -925,10 +925,16 @@ public static class EventBus
 	/// Subscribe to an event with optional priority and channel identity.
 	/// When channel is not valid, uses Identity.Global.
 	/// </summary>
-	public static void Subscribe<T>(Action<T> callback, int priority = 0, Identity channel = default) where T : BaseGameEvent
+	public static void Subscribe<T>(Action<T> callback, int priority, Identity channel) where T : BaseGameEvent
 	{
 		SubscribeInternal(callback, priority, channel, false, out _);
 	}
+
+	/// <summary>Subscribes with priority 0.</summary>
+	public static void Subscribe<T>(Action<T> callback, Identity channel) where T : BaseGameEvent => Subscribe(callback, 0, channel);
+
+	/// <summary>Subscribes with priority 0 to the global channel.</summary>
+	public static void Subscribe<T>(Action<T> callback) where T : BaseGameEvent => Subscribe(callback, 0, default);
 
 	/// <summary>
 	/// Subscribe and return a token for reliable unsubscribe via token.Dispose().
@@ -938,11 +944,17 @@ public static class EventBus
 	/// deliberately ignore token-based entries (TokenId &gt; 0), so if the token is lost the
 	/// subscriber leaks until Clear() is called. Retain the token for the subscriber's lifetime.
 	/// </summary>
-	public static SubscriptionToken SubscribeWithToken<T>(Action<T> callback, int priority = 0, Identity channel = default) where T : BaseGameEvent
+	public static SubscriptionToken SubscribeWithToken<T>(Action<T> callback, int priority, Identity channel) where T : BaseGameEvent
 	{
 		SubscribeInternal(callback, priority, channel, true, out var token);
 		return token;
 	}
+
+	/// <summary>Subscribes with priority 0.</summary>
+	public static SubscriptionToken SubscribeWithToken<T>(Action<T> callback, Identity channel) where T : BaseGameEvent => SubscribeWithToken(callback, 0, channel);
+
+	/// <summary>Subscribes with priority 0 to the global channel.</summary>
+	public static SubscriptionToken SubscribeWithToken<T>(Action<T> callback) where T : BaseGameEvent => SubscribeWithToken(callback, 0, default);
 
 	private static void SubscribeInternal<T>(Action<T> callback, int priority, Identity channel, bool withToken, out SubscriptionToken token) where T : BaseGameEvent
 	{
@@ -1049,7 +1061,7 @@ public static class EventBus
 	/// <summary>
 	/// Unsubscribe from an event. With no channel, removes from global channel only.
 	/// </summary>
-	public static void Unsubscribe<T>(Action<T> callback, Identity channel = default) where T : BaseGameEvent
+	public static void Unsubscribe<T>(Action<T> callback, Identity channel) where T : BaseGameEvent
 	{
 		if (callback == null) return;
 		if (!channel.IsValid) channel = Identity.Global;
@@ -1064,6 +1076,9 @@ public static class EventBus
 				_subscribers.Remove(eventType);
 		}
 	}
+
+	/// <summary>Unsubscribes from the global channel.</summary>
+	public static void Unsubscribe<T>(Action<T> callback) where T : BaseGameEvent => Unsubscribe(callback, default);
 
 	/// <summary>
 	/// Unsubscribe from an event across all channels (explicit opt-in).
@@ -1709,18 +1724,21 @@ public static class EventBus
 	/// <summary>
 	/// Get subscriber count for an event type.
 	/// </summary>
-	public static int GetSubscriberCount<T>(Identity channel = default) where T : BaseGameEvent
+	public static int GetSubscriberCount<T>(Identity channel) where T : BaseGameEvent
 	{
 		if (_subscribers.TryGetValue(typeof(T), out var channels))
 		{
 			if (channel.IsValid)
 				return channels.TryGetValue(channel, out var list) ? list.Count : 0;
-			
+
 			// Total count across all channels if None provided
 			return channels.Values.Sum(l => l.Count);
 		}
 		return 0;
 	}
+
+	/// <summary>Gets the total subscriber count across all channels.</summary>
+	public static int GetSubscriberCount<T>() where T : BaseGameEvent => GetSubscriberCount<T>(default);
 
 	#if UNITY_EDITOR
 	/// <summary>
@@ -1919,8 +1937,8 @@ public static class EventBus
 	/// Configure monitoring behavior without introducing hard type dependencies.
 	/// Intended to be called by an optional monitor component.
 	/// </summary>
-	public static void ConfigureMonitoring(bool enabled, int maxPublishDepth = 10, bool stopOnDepthExceeded = true,
-		bool warnAtPercentage = true, int warningThresholdPercent = 75, bool enableEventHistory = false)
+	public static void ConfigureMonitoring(bool enabled, int maxPublishDepth, bool stopOnDepthExceeded,
+		bool warnAtPercentage, int warningThresholdPercent, bool enableEventHistory)
 	{
 		_monitoringEnabled = enabled;
 		_maxPublishDepth = Mathf.Max(1, maxPublishDepth);
@@ -1929,6 +1947,13 @@ public static class EventBus
 		_warningThresholdPercent = Mathf.Clamp(warningThresholdPercent, 0, 100);
 		_enableEventHistory = enableEventHistory;
 	}
+
+	/// <summary>Configures monitoring, using a max publish depth of 10, stop-on-exceeded, percentage warnings at 75%.</summary>
+	public static void ConfigureMonitoring(bool enabled, bool enableEventHistory) =>
+		ConfigureMonitoring(enabled, 10, true, true, 75, enableEventHistory);
+
+	/// <summary>Configures monitoring, using a max publish depth of 10, stop-on-exceeded, percentage warnings at 75%, event history disabled.</summary>
+	public static void ConfigureMonitoring(bool enabled) => ConfigureMonitoring(enabled, 10, true, true, 75, false);
 
 	/// <summary>
 	/// Register a debug signal emitter for optional integration with GameEngineCore's DebugSignalBus.

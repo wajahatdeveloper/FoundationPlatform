@@ -27,7 +27,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			window.Show();
 		}
 
-		public static void OpenHistoryTab(string eventType = null, string publisher = null, string searchTerm = null)
+		/// <summary>Opens the history tab with no filters applied.</summary>
+		public static void OpenHistoryTab() => OpenHistoryTab(null, null, null);
+
+		public static void OpenHistoryTab(string eventType, string publisher, string searchTerm)
 		{
 			var window = GetWindow<EventBusWindow>("Event Bus");
 			window.minSize = new Vector2(1024, 600);
@@ -52,7 +55,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			}
 		}
 
-		public static void OpenSubscribersTab(string eventType = null, string subscriberType = null, string target = null)
+		/// <summary>Opens the subscribers tab with no filters applied.</summary>
+		public static void OpenSubscribersTab() => OpenSubscribersTab(null, null, null);
+
+		public static void OpenSubscribersTab(string eventType, string subscriberType, string target)
 		{
 			var window = GetWindow<EventBusWindow>("Event Bus");
 			window.minSize = new Vector2(1024, 600);
@@ -77,7 +83,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			}
 		}
 
-		public static void OpenSubscriptionsTab(string eventType = null, string subscriberType = null)
+		/// <summary>Opens the subscriptions tab with no filters applied.</summary>
+		public static void OpenSubscriptionsTab() => OpenSubscriptionsTab(null, null);
+
+		public static void OpenSubscriptionsTab(string eventType, string subscriberType)
 		{
 			var window = GetWindow<EventBusWindow>("Event Bus");
 			window.minSize = new Vector2(1024, 600);

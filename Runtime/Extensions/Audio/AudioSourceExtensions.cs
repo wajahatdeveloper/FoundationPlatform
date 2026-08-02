@@ -26,13 +26,16 @@ public static class AudioSourceExtensions
     /// <summary>
     /// Plays an audio clip with optional volume and pitch
     /// </summary>
-    public static void PlayClip(this AudioSource audioSource, AudioClip clip, float volume = 1f, float pitch = 1f)
+    public static void PlayClip(this AudioSource audioSource, AudioClip clip, float volume, float pitch)
     {
         audioSource.clip = clip;
         audioSource.volume = volume;
         audioSource.pitch = pitch;
         audioSource.Play();
     }
+
+    /// <summary>Plays an audio clip at volume 1 and pitch 1.</summary>
+    public static void PlayClip(this AudioSource audioSource, AudioClip clip) => PlayClip(audioSource, clip, 1f, 1f);
 
     /// <summary>
     /// Fades the volume to a target value over time

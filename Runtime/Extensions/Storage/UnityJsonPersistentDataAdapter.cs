@@ -88,7 +88,7 @@ public class UnityJsonPersistentDataAdapter : IPersistentDataAdapter
         }
     }
 
-    public T GetData<T>(string key, T defaultValue = default)
+    public T GetData<T>(string key, T defaultValue)
     {
         EnsureInitialized();
 

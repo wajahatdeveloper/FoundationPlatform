@@ -121,10 +121,13 @@ public static class PersistentDataHandler
         adapter.SetData(key, value);
     }
 
-    public static T GetData<T>(string key, T defaultValue = default)
+    public static T GetData<T>(string key, T defaultValue)
     {
         EnsureInitialized();
         return adapter.GetData(key, defaultValue);
     }
+
+    /// <summary>Gets data using the default value of T.</summary>
+    public static T GetData<T>(string key) => GetData(key, default(T));
 }
 }

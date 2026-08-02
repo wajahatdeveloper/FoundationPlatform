@@ -540,7 +540,7 @@ public sealed class CoroutineX
     /// <param name="rerunIfCompleted">Is it necessary to automatically restart the Coroutine if it has been completed?</param>
     /// <returns>The Coroutine.</returns>
     /// <exception cref="PlayControlException"></exception>
-    public CoroutineX Run(bool rerunIfCompleted = true)
+    public CoroutineX Run(bool rerunIfCompleted)
     {
         if (IsRunning) {return this;}
 
@@ -581,6 +581,9 @@ public sealed class CoroutineX
 
         return this;
     }
+
+    /// <summary>Starts the Coroutine, rerunning it automatically if already completed.</summary>
+    public CoroutineX Run() => Run(true);
 
     private IEnumerator RunEnumerator()
     {

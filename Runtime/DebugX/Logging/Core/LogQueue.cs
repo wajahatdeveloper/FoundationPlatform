@@ -73,7 +73,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
             }
         }
 
-        public static void Enqueue(LogEvent logEvent, bool backgroundOnly = false)
+        public static void Enqueue(LogEvent logEvent, bool backgroundOnly)
         {
             // Prevent queue overflow using an approximate, atomically-tracked size.
             // Drop oldest items until we are back under the cap; the drop is reported via a
@@ -95,6 +95,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
             Interlocked.Increment(ref _approxCount);
             _workSignal.Release();
         }
+
+        /// <summary>Enqueues for both background and main-thread sinks.</summary>
+        public static void Enqueue(LogEvent logEvent) => Enqueue(logEvent, false);
 
         public static void EnqueueMainThreadAction(System.Action action)
         {

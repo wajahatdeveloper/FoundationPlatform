@@ -39,7 +39,7 @@ public static class GameObjectCollectionExtensions
 
     /// <summary>Returns a collection of GameObjects that contains the descendant GameObjects of every GameObject in the source collection.</summary>
     public static IEnumerable<GameObject> Descendants(this IEnumerable<GameObject> source,
-        Func<Transform, bool> descendIntoChildren = null)
+        Func<Transform, bool> descendIntoChildren)
     {
         foreach (var item in source)
         {
@@ -51,9 +51,12 @@ public static class GameObjectCollectionExtensions
         }
     }
 
+    /// <summary>Returns descendants of every GameObject in the source collection, descending into all children.</summary>
+    public static IEnumerable<GameObject> Descendants(this IEnumerable<GameObject> source) => Descendants(source, null);
+
     /// <summary>Returns a collection of GameObjects that contains every GameObject in the source collection, and the descendent GameObjects of every GameObject in the source collection.</summary>
     public static IEnumerable<GameObject> DescendantsAndSelf(this IEnumerable<GameObject> source,
-        Func<Transform, bool> descendIntoChildren = null)
+        Func<Transform, bool> descendIntoChildren)
     {
         foreach (var item in source)
         {
@@ -64,6 +67,9 @@ public static class GameObjectCollectionExtensions
             }
         }
     }
+
+    /// <summary>Returns every GameObject in the source collection plus descendants, descending into all children.</summary>
+    public static IEnumerable<GameObject> DescendantsAndSelf(this IEnumerable<GameObject> source) => DescendantsAndSelf(source, null);
 
     /// <summary>Returns a collection of the child GameObjects of every GameObject in the source collection.</summary>
     public static IEnumerable<GameObject> Children(this IEnumerable<GameObject> source)

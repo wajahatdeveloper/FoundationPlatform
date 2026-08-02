@@ -6,10 +6,13 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class InvokeExtension
 {
-    public static void Invoke(this MonoBehaviour me, Action theDelegate, float time, bool realtime = false)
+    public static void Invoke(this MonoBehaviour me, Action theDelegate, float time, bool realtime)
     {
         me.StartCoroutine(ExecuteAfterTime(theDelegate, time, realtime));
     }
+
+    /// <summary>Invokes the delegate after time seconds, using scaled time.</summary>
+    public static void Invoke(this MonoBehaviour me, Action theDelegate, float time) => Invoke(me, theDelegate, time, false);
 
     private static IEnumerator ExecuteAfterTime(Action theDelegate, float delay, bool realtime = false)
     {

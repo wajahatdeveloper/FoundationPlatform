@@ -166,17 +166,23 @@ public static class GameObjectHierarchyExtensions
 
     /// <summary>Returns a collection of the descendant GameObjects.</summary>
     public static GameObjectExtensions.DescendantsEnumerable Descendants(this GameObject origin,
-                                                                         Func<Transform, bool> descendIntoChildren = null)
+                                                                         Func<Transform, bool> descendIntoChildren)
     {
         return new GameObjectExtensions.DescendantsEnumerable(origin, false, descendIntoChildren);
     }
 
+    /// <summary>Returns a collection of the descendant GameObjects, descending into all children.</summary>
+    public static GameObjectExtensions.DescendantsEnumerable Descendants(this GameObject origin) => Descendants(origin, null);
+
     /// <summary>Returns a collection of GameObjects that contain this GameObject, and all descendant GameObjects of this GameObject.</summary>
     public static GameObjectExtensions.DescendantsEnumerable DescendantsAndSelf(this GameObject origin,
-                                                                                Func<Transform, bool> descendIntoChildren = null)
+                                                                                Func<Transform, bool> descendIntoChildren)
     {
         return new GameObjectExtensions.DescendantsEnumerable(origin, true, descendIntoChildren);
     }
+
+    /// <summary>Returns this GameObject and all descendant GameObjects, descending into all children.</summary>
+    public static GameObjectExtensions.DescendantsEnumerable DescendantsAndSelf(this GameObject origin) => DescendantsAndSelf(origin, null);
 
     /// <summary>Returns a collection of the sibling GameObjects before this GameObject.</summary>
     public static GameObjectExtensions.BeforeSelfEnumerable BeforeSelf(this GameObject origin)

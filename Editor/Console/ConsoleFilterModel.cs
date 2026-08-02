@@ -140,7 +140,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         /// Rebuilds (or incrementally extends) the filtered row list from the store.
         /// Pass allowIncremental=false whenever the caller re-orders rows afterwards (active sort).
         /// </summary>
-        public void Build(List<RowRef> outRows, bool allowIncremental = false)
+        public void Build(List<RowRef> outRows, bool allowIncremental)
         {
             EnsureSearchParsed();
             SyncExcludedSet();
@@ -150,6 +150,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
             BuildFull(outRows);
         }
+
+        /// <summary>Rebuilds without incremental extension.</summary>
+        public void Build(List<RowRef> outRows) => Build(outRows, false);
 
         private void SyncExcludedSet()
         {

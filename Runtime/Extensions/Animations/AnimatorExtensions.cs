@@ -12,7 +12,7 @@ public static class AnimatorExtensions
     /// <summary>
     /// 获取动画组件切换进度
     /// </summary>
-    public static float GetCrossFadeProgress(this Animator @this, int layer = 0)
+    public static float GetCrossFadeProgress(this Animator @this, int layer)
     {
         if (@this.GetNextAnimatorStateInfo(layer).shortNameHash == 0)
         {
@@ -21,6 +21,9 @@ public static class AnimatorExtensions
 
         return @this.GetCurrentAnimatorStateInfo(layer).normalizedTime % 1;
     }
+
+    /// <summary>Gets the cross-fade progress on layer 0.</summary>
+    public static float GetCrossFadeProgress(this Animator @this) => GetCrossFadeProgress(@this, 0);
 
     public static bool HasParameter(this Animator animator, string name)
     {
@@ -97,7 +100,7 @@ public static class AnimatorExtensions
     /// <summary>
     /// Waits for the current state to finish
     /// </summary>
-    public static IEnumerator WaitForCurrentStateToFinish(this Animator animator, int layerIndex = 0)
+    public static IEnumerator WaitForCurrentStateToFinish(this Animator animator, int layerIndex)
     {
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
         // For looping states normalizedTime exceeds 1; take only the fractional remainder so the
@@ -106,11 +109,14 @@ public static class AnimatorExtensions
         yield return new WaitForSeconds(stateInfo.length * (1f - fraction));
     }
 
+    /// <summary>Waits for the current state to finish on layer 0.</summary>
+    public static IEnumerator WaitForCurrentStateToFinish(this Animator animator) => WaitForCurrentStateToFinish(animator, 0);
+
     /// <summary>
     /// Waits for a specific state to finish. Gives up after <paramref name="timeoutSeconds"/>
     /// (real time) if the state never becomes current, so a mistyped/skipped state cannot hang the coroutine forever.
     /// </summary>
-    public static IEnumerator WaitForStateToFinish(this Animator animator, string stateName, int layerIndex = 0, float timeoutSeconds = 5f)
+    public static IEnumerator WaitForStateToFinish(this Animator animator, string stateName, int layerIndex, float timeoutSeconds)
     {
         int stateHash = Animator.StringToHash(stateName);
         float deadline = Time.realtimeSinceStartup + timeoutSeconds;
@@ -122,6 +128,9 @@ public static class AnimatorExtensions
         }
         yield return animator.WaitForCurrentStateToFinish(layerIndex);
     }
+
+    /// <summary>Waits for a specific state to finish on layer 0, giving up after 5 seconds.</summary>
+    public static IEnumerator WaitForStateToFinish(this Animator animator, string stateName) => WaitForStateToFinish(animator, stateName, 0, 5f);
 
     #endregion
 }}

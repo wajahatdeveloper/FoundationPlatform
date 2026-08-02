@@ -245,7 +245,7 @@ public static class Texture2DExtensions
     /// <param name="texture"></param>
     /// <param name="clearColor"> </param>
     /// <param name="makeNoLongerReadable"> </param>
-    public static void ClearMipMapBorders(this Texture2D texture, Color clearColor, bool makeNoLongerReadable = false)
+    public static void ClearMipMapBorders(this Texture2D texture, Color clearColor, bool makeNoLongerReadable)
     {
         var mipCount = texture.mipmapCount;
 
@@ -284,16 +284,22 @@ public static class Texture2DExtensions
         texture.Apply(false, makeNoLongerReadable);
     }
 
+    /// <summary>Sets a 1 pixel border of the texture on all mipmap levels to the clear color, keeping it readable.</summary>
+    public static void ClearMipMapBorders(this Texture2D texture, Color clearColor) => ClearMipMapBorders(texture, clearColor, false);
+
     /// <summary>
     /// sets a 1 pixel border of the texture on all mipmap levels to clear white
     /// </summary>
     /// <param name="texture"></param>
     /// <param name="makeNoLongerReadable"></param>
-    public static void ClearMipMapBorders(this Texture2D texture, bool makeNoLongerReadable = false)
+    public static void ClearMipMapBorders(this Texture2D texture, bool makeNoLongerReadable)
     {
         var clear = new Color(1, 1, 1, 0);
         ClearMipMapBorders(texture, clear, makeNoLongerReadable);
     }
+
+    /// <summary>Sets a 1 pixel border of the texture on all mipmap levels to clear white, keeping it readable.</summary>
+    public static void ClearMipMapBorders(this Texture2D texture) => ClearMipMapBorders(texture, false);
 
     /// <summary>
     /// Rotates <see cref="Texture2D"/> pixels to a specified angle.

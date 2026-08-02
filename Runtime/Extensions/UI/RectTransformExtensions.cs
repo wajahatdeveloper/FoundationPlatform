@@ -284,7 +284,7 @@ public static class RectTransformExtensions
     /// Sets the position of the RectTransform relative to the parent's Left side, regardless of anchor setting.
     /// </summary>
     /// <param name="left">Sets the position of the RectTransform relative to the parent's Left side.</param>
-    public static void MoveLeft(this RectTransform rt, float left = 0)
+    public static void MoveLeft(this RectTransform rt, float left)
     {
         float xmin = rt.GetParent().rect.xMin;
         float center = rt.anchorMax.x - rt.anchorMin.x;
@@ -292,11 +292,14 @@ public static class RectTransformExtensions
         rt.anchoredPosition = new Vector2(xmin + (xmin * anchorFactor) + left - (center * xmin), rt.anchoredPosition.y);
     }
 
+    /// <summary>Sets the position of the RectTransform relative to the parent's Left side.</summary>
+    public static void MoveLeft(this RectTransform rt) => MoveLeft(rt, 0);
+
     /// <summary>
     /// Sets the position of the RectTransform relative to the parent's Right side, regardless of anchor setting.
     /// </summary>
     /// <param name="right">Sets the position of the RectTransform relative to the parent's Right side.</param>
-    public static void MoveRight(this RectTransform rt, float right = 0)
+    public static void MoveRight(this RectTransform rt, float right)
     {
         float xmax = rt.GetParent().rect.xMax;
         float center = rt.anchorMax.x - rt.anchorMin.x;
@@ -305,11 +308,14 @@ public static class RectTransformExtensions
             new Vector2(xmax - (xmax * anchorFactor) - right + (center * xmax), rt.anchoredPosition.y);
     }
 
+    /// <summary>Sets the position of the RectTransform relative to the parent's Right side.</summary>
+    public static void MoveRight(this RectTransform rt) => MoveRight(rt, 0);
+
     /// <summary>
     /// Sets the position of the RectTransform relative to the parent's Top side, regardless of anchor setting.
     /// </summary>
     /// <param name="top">Sets the position of the RectTransform relative to the parent's Top side.</param>
-    public static void MoveTop(this RectTransform rt, float top = 0)
+    public static void MoveTop(this RectTransform rt, float top)
     {
         float ymax = rt.GetParent().rect.yMax;
         float center = rt.anchorMax.y - rt.anchorMin.y;
@@ -317,11 +323,14 @@ public static class RectTransformExtensions
         rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, ymax - (ymax * anchorFactor) - top + (center * ymax));
     }
 
+    /// <summary>Sets the position of the RectTransform relative to the parent's Top side.</summary>
+    public static void MoveTop(this RectTransform rt) => MoveTop(rt, 0);
+
     /// <summary>
     /// Sets the position of the RectTransform relative to the parent's Bottom side, regardless of anchor setting.
     /// </summary>
     /// <param name="bottom">Sets the position of the RectTransform relative to the parent's Bottom side.</param>
-    public static void MoveBottom(this RectTransform rt, float bottom = 0)
+    public static void MoveBottom(this RectTransform rt, float bottom)
     {
         float ymin = rt.GetParent().rect.yMin;
         float center = rt.anchorMax.y - rt.anchorMin.y;
@@ -329,6 +338,9 @@ public static class RectTransformExtensions
         rt.anchoredPosition =
             new Vector2(rt.anchoredPosition.x, ymin + (ymin * anchorFactor) + bottom - (center * ymin));
     }
+
+    /// <summary>Sets the position of the RectTransform relative to the parent's Bottom side.</summary>
+    public static void MoveBottom(this RectTransform rt) => MoveBottom(rt, 0);
 
 
     //Moves the RectTransform to align the child left edge with the parent left edge, etc.
@@ -345,37 +357,49 @@ public static class RectTransformExtensions
     /// Moves the RectTransform to align the child left edge with the parent left edge.
     /// </summary>
     /// <param name="distance">The distance to the parent left edge.</param>
-    public static void MoveLeftInside(this RectTransform rt, float distance = 0)
+    public static void MoveLeftInside(this RectTransform rt, float distance)
     {
         rt.MoveLeft(distance + rt.GetWidth() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the child left edge with the parent left edge.</summary>
+    public static void MoveLeftInside(this RectTransform rt) => MoveLeftInside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the child left edge with the parent right edge.
     /// </summary>
     /// <param name="distance">The distance to the parent right edge.</param>
-    public static void MoveRightInside(this RectTransform rt, float distance = 0)
+    public static void MoveRightInside(this RectTransform rt, float distance)
     {
         rt.MoveRight(distance + rt.GetWidth() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the child left edge with the parent right edge.</summary>
+    public static void MoveRightInside(this RectTransform rt) => MoveRightInside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the child left edge with the parent left top.
     /// </summary>
     /// <param name="distance">The distance to the parent top edge.</param>
-    public static void MoveTopInside(this RectTransform rt, float distance = 0)
+    public static void MoveTopInside(this RectTransform rt, float distance)
     {
         rt.MoveTop(distance + rt.GetHeight() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the child left edge with the parent left top.</summary>
+    public static void MoveTopInside(this RectTransform rt) => MoveTopInside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the child left edge with the parent bottom edge.
     /// </summary>
     /// <param name="distance">The distance to the parent bottom edge.</param>
-    public static void MoveBottomInside(this RectTransform rt, float distance = 0)
+    public static void MoveBottomInside(this RectTransform rt, float distance)
     {
         rt.MoveBottom(distance + rt.GetHeight() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the child left edge with the parent bottom edge.</summary>
+    public static void MoveBottomInside(this RectTransform rt) => MoveBottomInside(rt, 0);
 
 
     //Moves the RectTransform to align the child right edge with the parent left edge, etc
@@ -393,37 +417,49 @@ public static class RectTransformExtensions
     /// </summary>
     /// <param name="rt"></param>
     /// <param name="distance">The distance between the edges</param>
-    public static void MoveLeftOutside(this RectTransform rt, float distance = 0)
+    public static void MoveLeftOutside(this RectTransform rt, float distance)
     {
         rt.MoveLeft(distance - rt.GetWidth() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the right edge with the parent left edge.</summary>
+    public static void MoveLeftOutside(this RectTransform rt) => MoveLeftOutside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the left edge with the parent right edge.
     /// </summary>
     /// <param name="distance">The distance between the edges</param>
-    public static void MoveRightOutside(this RectTransform rt, float distance = 0)
+    public static void MoveRightOutside(this RectTransform rt, float distance)
     {
         rt.MoveRight(distance - rt.GetWidth() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the left edge with the parent right edge.</summary>
+    public static void MoveRightOutside(this RectTransform rt) => MoveRightOutside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the bottom edge with the parent top edge.
     /// </summary>
     /// <param name="distance">The distance between the edges</param>
-    public static void MoveTopOutside(this RectTransform rt, float distance = 0)
+    public static void MoveTopOutside(this RectTransform rt, float distance)
     {
         rt.MoveTop(distance - rt.GetHeight() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the bottom edge with the parent top edge.</summary>
+    public static void MoveTopOutside(this RectTransform rt) => MoveTopOutside(rt, 0);
 
     /// <summary>
     /// Moves the RectTransform to align the top edge with the parent bottom edge.
     /// </summary>
     /// <param name="distance">The distance between the edges</param>
-    public static void MoveBottomOutside(this RectTransform rt, float distance = 0)
+    public static void MoveBottomOutside(this RectTransform rt, float distance)
     {
         rt.MoveBottom(distance - rt.GetHeight() / 2);
     }
+
+    /// <summary>Moves the RectTransform to align the top edge with the parent bottom edge.</summary>
+    public static void MoveBottomOutside(this RectTransform rt) => MoveBottomOutside(rt, 0);
 
 
     /// <summary>
@@ -1155,8 +1191,8 @@ public static class RectTransformExtensions
     public static void SetAnchor(
         this RectTransform transform,
         RectAnchor anchor,
-        bool setPivot = false,
-        bool setPosition = false)
+        bool setPivot,
+        bool setPosition)
     {
         if (transform == null)
             throw new ArgumentNullException(nameof(transform));
@@ -1170,6 +1206,9 @@ public static class RectTransformExtensions
         if (setPosition)
             transform.anchoredPosition = Vector2.zero;
     }
+
+    /// <summary>Sets the anchor without adjusting pivot or position.</summary>
+    public static void SetAnchor(this RectTransform transform, RectAnchor anchor) => SetAnchor(transform, anchor, false, false);
 
     /// <summary>
     /// Returns the world rectangle of a rectangle transform.

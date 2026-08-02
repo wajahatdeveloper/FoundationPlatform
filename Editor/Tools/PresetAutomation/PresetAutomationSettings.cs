@@ -66,7 +66,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 		/// Attempts to find the settings asset at the default path. Optionally creates it if missing.
 		/// IMPORTANT: Do not create during import/modification callbacks; pass createIfMissing=false there.
 		/// </summary>
-		public static PresetAutomationSettings FindOrCreateSettingsAsset(bool createIfMissing = true)
+		public static PresetAutomationSettings FindOrCreateSettingsAsset(bool createIfMissing)
 		{
 			#if UNITY_EDITOR
 			const string defaultPath = PresetAutomationConstants.DefaultSettingsAssetPath;
@@ -98,6 +98,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 			return null;
 			#endif
 		}
+
+		/// <summary>Finds or creates the settings asset, creating it if missing.</summary>
+		public static PresetAutomationSettings FindOrCreateSettingsAsset() => FindOrCreateSettingsAsset(true);
 	}
 
 	public static class PresetAutomationSettingsMenu

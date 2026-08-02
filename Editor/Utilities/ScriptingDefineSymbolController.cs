@@ -84,13 +84,16 @@ public static class ScriptingDefineSymbolController
 	/// Reimports scripts from the specified asset path. If path is null or empty, only refreshes the asset database.
 	/// </summary>
 	/// <param name="assetPath">Optional asset path to reimport. If null or empty, only refreshes the asset database.</param>
-	public static void ReimportScripts(string assetPath = null)
+	public static void ReimportScripts(string assetPath)
 	{
 		if (!string.IsNullOrEmpty(assetPath))
 		{
 			AssetDatabase.ImportAsset(assetPath);
 		}
 	}
+
+	/// <summary>Refreshes the asset database without reimporting a specific path.</summary>
+	public static void ReimportScripts() => ReimportScripts(null);
 
 	public static void ReloadScript()
 	{

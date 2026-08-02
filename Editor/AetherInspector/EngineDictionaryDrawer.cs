@@ -24,8 +24,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return false;
         }
 
+        /// <summary>Draws using the header text as the foldout key.</summary>
         public static void Draw(object dictionary, DictionaryDrawerSettingsAttribute settings, GUIContent label,
-            bool memberReadOnly, string foldoutKey = null)
+            bool memberReadOnly) => Draw(dictionary, settings, label, memberReadOnly, null);
+
+        public static void Draw(object dictionary, DictionaryDrawerSettingsAttribute settings, GUIContent label,
+            bool memberReadOnly, string foldoutKey)
         {
             if (dictionary == null)
             {

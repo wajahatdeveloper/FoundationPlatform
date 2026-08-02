@@ -369,7 +369,7 @@ public static class ColorX
     }
 
     public static Color Colorize(this Color originalColor, Color targetColor, ColoringMode coloringMode,
-        float lerpAmount = 1.0f)
+        float lerpAmount)
     {
         Color resultColor = Color.white;
         switch (coloringMode)
@@ -402,4 +402,8 @@ public static class ColorX
 
         return Color.Lerp(originalColor, resultColor, lerpAmount);
     }
+
+    /// <summary>Colorizes with a full (1.0) lerp amount.</summary>
+    public static Color Colorize(this Color originalColor, Color targetColor, ColoringMode coloringMode) =>
+        Colorize(originalColor, targetColor, coloringMode, 1.0f);
 }}

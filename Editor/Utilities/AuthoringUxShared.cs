@@ -107,7 +107,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             GUI.Label(rect, content, GUIStyle.none);
         }
 
-        public static void DrawTooltipIcon(string tooltip, float size = 16f)
+        public static void DrawTooltipIcon(string tooltip, float size)
         {
             if (string.IsNullOrWhiteSpace(tooltip))
                 return;
@@ -115,5 +115,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             GUIContent content = new GUIContent(HelpIcon, tooltip);
             GUILayout.Label(content, GUIStyle.none, GUILayout.Width(size), GUILayout.Height(size));
         }
+
+        /// <summary>Draws the tooltip icon at a size of 16.</summary>
+        public static void DrawTooltipIcon(string tooltip) => DrawTooltipIcon(tooltip, 16f);
     }
 }

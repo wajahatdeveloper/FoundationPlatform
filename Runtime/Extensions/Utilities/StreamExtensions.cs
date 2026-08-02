@@ -30,7 +30,7 @@ public static class StreamExts
     /// <param name="this">????</param>
     /// <param name="closeAfter">?????</param>
     /// <returns>???</returns>
-    public static List<string> ReadAllLines(this StreamReader @this, bool closeAfter = true)
+    public static List<string> ReadAllLines(this StreamReader @this, bool closeAfter)
     {
         var stringList = new List<string>();
         string str;
@@ -48,6 +48,9 @@ public static class StreamExts
         return stringList;
     }
 
+    /// <summary>Reads all lines and closes the reader afterwards.</summary>
+    public static List<string> ReadAllLines(this StreamReader @this) => ReadAllLines(@this, true);
+
     /// <summary>
     /// ???????;
     /// </summary>
@@ -55,7 +58,7 @@ public static class StreamExts
     /// <param name="encoding">??</param>
     /// <param name="closeAfter">?????</param>
     /// <returns>???</returns>
-    public static List<string> ReadAllLines(this FileStream @this, Encoding encoding, bool closeAfter = true)
+    public static List<string> ReadAllLines(this FileStream @this, Encoding encoding, bool closeAfter)
     {
         var stringList = new List<string>();
         string str;
@@ -76,6 +79,9 @@ public static class StreamExts
         return stringList;
     }
 
+    /// <summary>Reads all lines and closes the stream afterwards.</summary>
+    public static List<string> ReadAllLines(this FileStream @this, Encoding encoding) => ReadAllLines(@this, encoding, true);
+
     /// <summary>
     /// ??????;
     /// </summary>
@@ -83,7 +89,7 @@ public static class StreamExts
     /// <param name="encoding">??</param>
     /// <param name="closeAfter">?????</param>
     /// <returns>????</returns>
-    public static string ReadAllText(this FileStream @this, Encoding encoding, bool closeAfter = true)
+    public static string ReadAllText(this FileStream @this, Encoding encoding, bool closeAfter)
     {
         var sr = new StreamReader(@this, encoding);
         var text = sr.ReadToEnd();
@@ -98,6 +104,9 @@ public static class StreamExts
         return text;
     }
 
+    /// <summary>Reads all text and closes the stream afterwards.</summary>
+    public static string ReadAllText(this FileStream @this, Encoding encoding) => ReadAllText(@this, encoding, true);
+
     /// <summary>
     /// ??????;
     /// </summary>
@@ -105,7 +114,7 @@ public static class StreamExts
     /// <param name="content">??</param>
     /// <param name="encoding">??</param>
     /// <param name="closeAfter">?????</param>
-    public static void WriteAllText(this FileStream @this, string content, Encoding encoding, bool closeAfter = true)
+    public static void WriteAllText(this FileStream @this, string content, Encoding encoding, bool closeAfter)
     {
         var sw = new StreamWriter(@this, encoding);
         @this.SetLength(0);
@@ -119,6 +128,9 @@ public static class StreamExts
         }
     }
 
+    /// <summary>Writes all text and closes the stream afterwards.</summary>
+    public static void WriteAllText(this FileStream @this, string content, Encoding encoding) => WriteAllText(@this, content, encoding, true);
+
 
     /// <summary>
     /// ????????????
@@ -126,7 +138,7 @@ public static class StreamExts
     /// <param name="this">?</param>
     /// <param name="dest">????</param>
     /// <param name="bufferSize">?????,??8MB</param>
-    public static void CopyToFile(this Stream @this, string dest, int bufferSize = 1024 * 8 * 1024)
+    public static void CopyToFile(this Stream @this, string dest, int bufferSize)
     {
         using (var fsWrite = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.ReadWrite))
         {
@@ -139,19 +151,25 @@ public static class StreamExts
         }
     }
 
+    /// <summary>Copies to the destination file, using an 8MB buffer.</summary>
+    public static void CopyToFile(this Stream @this, string dest) => CopyToFile(@this, dest, 1024 * 8 * 1024);
+
     /// <summary>
     /// ????????????(????)
     /// </summary>
     /// <param name="this">?</param>
     /// <param name="dest">????</param>
     /// <param name="bufferSize">?????,??8MB</param>
-    public static async Task CopyToFileAsync(this Stream @this, string dest, int bufferSize = 1024 * 1024 * 8)
+    public static async Task CopyToFileAsync(this Stream @this, string dest, int bufferSize)
     {
         using (var fsWrite = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.ReadWrite))
         {
             await @this.CopyToAsync(fsWrite, bufferSize).ConfigureAwait(false);
         }
     }
+
+    /// <summary>Copies to the destination file asynchronously, using an 8MB buffer.</summary>
+    public static Task CopyToFileAsync(this Stream @this, string dest) => CopyToFileAsync(@this, dest, 1024 * 1024 * 8);
 
     /// <summary>
     /// ?????????

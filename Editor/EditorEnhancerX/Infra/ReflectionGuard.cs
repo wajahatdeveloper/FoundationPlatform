@@ -21,7 +21,7 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
             return type;
         }
 
-        public MethodInfo Method(Type type, string name, BindingFlags flags, Type[] parameters = null) {
+        public MethodInfo Method(Type type, string name, BindingFlags flags, Type[] parameters) {
             if (type == null) { Available = false; return null; }
             var method = parameters == null
                 ? type.GetMethod(name, flags)
@@ -29,6 +29,9 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
             if (method == null) Available = false;
             return method;
         }
+
+        /// <summary>Resolves a method by name only (no parameter-type overload matching).</summary>
+        public MethodInfo Method(Type type, string name, BindingFlags flags) => Method(type, name, flags, null);
 
         public FieldInfo Field(Type type, string name, BindingFlags flags) {
             if (type == null) { Available = false; return null; }

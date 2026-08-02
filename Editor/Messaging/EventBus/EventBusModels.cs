@@ -226,7 +226,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 					EventType = TypeName
 				};
 				sharedState.NavigationContext = context;
-				EditorToolNavigation.NavigateToSubscribersWindow(eventType: TypeName);
+				EditorToolNavigation.NavigateToSubscribersWindowByEventType(TypeName);
 			}
 		}
 
@@ -243,7 +243,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 					EventType = TypeName
 				};
 				sharedState.NavigationContext = context;
-				EditorToolNavigation.NavigateToSubscriptionsWindow(eventType: TypeName);
+				EditorToolNavigation.NavigateToSubscriptionsWindowByEventType(TypeName);
 			}
 		}
 	}
@@ -395,7 +395,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 					SubscriberType = Target
 				};
 				sharedState.NavigationContext = context;
-				EditorToolNavigation.NavigateToSubscriptionsWindow(subscriberType: Target);
+				EditorToolNavigation.NavigateToSubscriptionsWindowBySubscriberType(Target);
 			}
 		}
 	}
@@ -499,7 +499,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 					SubscriberType = SubscriberType
 				};
 				sharedState.NavigationContext = context;
-				EditorToolNavigation.NavigateToSubscribersWindow(subscriberType: SubscriberType);
+				EditorToolNavigation.NavigateToSubscribersWindowBySubscriberType(SubscriberType);
 			}
 		}
 		

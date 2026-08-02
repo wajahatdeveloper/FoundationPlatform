@@ -120,7 +120,7 @@ public static class FadeExtensions
     }
 
     public static IEnumerator FadeCanvasGroup(this CanvasGroup target, float duration, float targetAlpha,
-        bool unscaled = true)
+        bool unscaled)
     {
         if (target == null)
             yield break;
@@ -150,4 +150,8 @@ public static class FadeExtensions
 
         target.alpha = targetAlpha;
     }
+
+    /// <summary>Fades using unscaled time.</summary>
+    public static IEnumerator FadeCanvasGroup(this CanvasGroup target, float duration, float targetAlpha) =>
+        FadeCanvasGroup(target, duration, targetAlpha, true);
 }}

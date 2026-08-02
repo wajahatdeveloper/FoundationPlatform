@@ -672,7 +672,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
     public static class DataFolderMappingExemptionResolver
     {
-        public static IReadOnlyList<string> DiscoverExemptRootFolders(DataFolderMappingConfig config = null)
+        public static IReadOnlyList<string> DiscoverExemptRootFolders(DataFolderMappingConfig config)
         {
             string[] markerGuids = AssetDatabase.FindAssets("t:DataFolderExemptionMarker", new[] { "Assets" });
             var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -692,7 +692,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             return new List<string>(roots);
         }
 
-        public static bool IsPathUnderExemptScope(string assetPath, IReadOnlyList<string> exemptRootFolders = null)
+        /// <summary>Discovers exempt root folders with no config.</summary>
+        public static IReadOnlyList<string> DiscoverExemptRootFolders() => DiscoverExemptRootFolders(null);
+
+        public static bool IsPathUnderExemptScope(string assetPath, IReadOnlyList<string> exemptRootFolders)
         {
             if (string.IsNullOrEmpty(assetPath))
                 return false;
@@ -700,6 +703,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             IReadOnlyList<string> roots = exemptRootFolders ?? DiscoverExemptRootFolders();
             return DataFolderMappingPathUtility.IsPathUnderAnyFolder(assetPath, roots);
         }
+
+        /// <summary>Checks the path against freshly-discovered exempt root folders.</summary>
+        public static bool IsPathUnderExemptScope(string assetPath) => IsPathUnderExemptScope(assetPath, null);
 
         private static readonly Dictionary<Type, string> s_typeScriptPathCache = new();
 
@@ -731,11 +737,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             return false;
         }
 
-        public static bool IsTypeScriptUnderExemptScope(Type type, IReadOnlyList<string> exemptRootFolders = null)
+        public static bool IsTypeScriptUnderExemptScope(Type type, IReadOnlyList<string> exemptRootFolders)
         {
             return TryGetTypeScriptPath(type, out string scriptPath)
                    && IsPathUnderExemptScope(scriptPath, exemptRootFolders);
         }
+
+        /// <summary>Checks against freshly-discovered exempt root folders.</summary>
+        public static bool IsTypeScriptUnderExemptScope(Type type) => IsTypeScriptUnderExemptScope(type, null);
 
         public static string ToAssetsRelativePath(string path)
         {

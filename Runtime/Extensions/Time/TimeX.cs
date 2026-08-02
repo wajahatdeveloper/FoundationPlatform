@@ -17,8 +17,8 @@ public class TimeX
     /// <param name="displaySeconds"></param>
     /// <param name="displayHundredths"></param>
     /// <returns></returns>
-    public static string FloatToTimeString(float t, bool displayHours = false, bool displayMinutes = true,
-        bool displaySeconds = true, bool displayMilliseconds = false)
+    public static string FloatToTimeString(float t, bool displayHours, bool displayMinutes,
+        bool displaySeconds, bool displayMilliseconds)
     {
         int intTime = (int)t;
         int hours = intTime / 3600;
@@ -62,6 +62,9 @@ public class TimeX
             ", displayMinutes=" + displayMinutes + ", displaySeconds=" + displaySeconds +
             ", displayMilliseconds=" + displayMilliseconds + ").");
     }
+
+    /// <summary>Formats as minutes:seconds.</summary>
+    public static string FloatToTimeString(float t) => FloatToTimeString(t, false, true, true, false);
 
     /// <summary>
     /// Takes a hh:mm:ss:SSS string and turns it into a float value expressed in seconds
@@ -136,10 +139,13 @@ public class TimeX
     /// <param name="duration">The duration to format.</param>
     /// <param name="format">Format string (default: "hh\\:mm\\:ss").</param>
     /// <returns>Formatted duration string.</returns>
-    public static string FormatDuration(System.TimeSpan duration, string format = "hh\\:mm\\:ss")
+    public static string FormatDuration(System.TimeSpan duration, string format)
     {
         return duration.ToString(format);
     }
+
+    /// <summary>Formats using "hh\:mm\:ss".</summary>
+    public static string FormatDuration(System.TimeSpan duration) => FormatDuration(duration, "hh\\:mm\\:ss");
 
 
     /// <summary>
@@ -147,10 +153,13 @@ public class TimeX
     /// </summary>
     /// <param name="format">Format string (default: "yyyy-MM-dd HH:mm:ss").</param>
     /// <returns>Current time as formatted string.</returns>
-    public static string GetCurrentTimeString(string format = "yyyy-MM-dd HH:mm:ss")
+    public static string GetCurrentTimeString(string format)
     {
         return System.DateTime.Now.ToString(format);
     }
+
+    /// <summary>Formats using "yyyy-MM-dd HH:mm:ss".</summary>
+    public static string GetCurrentTimeString() => GetCurrentTimeString("yyyy-MM-dd HH:mm:ss");
 
     /// <summary>
     /// Gets the current time as a formatted string with milliseconds.

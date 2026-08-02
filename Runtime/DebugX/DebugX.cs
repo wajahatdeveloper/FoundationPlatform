@@ -311,7 +311,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
         #region Debug Draw
 
-        public static void DrawString(string text, Vector3 worldPos, Color? colour = null)
+        public static void DrawString(string text, Vector3 worldPos, Color? colour)
         {
             #if UNITY_EDITOR
             var defaultColor = GUI.color;
@@ -329,11 +329,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
             #endif
         }
 
+        /// <summary>Draws string using the scene view's default GUI color.</summary>
+        public static void DrawString(string text, Vector3 worldPos) => DrawString(text, worldPos, null);
+
         /// <summary>
         /// Draw directional arrow
         /// </summary>
-        public static void DrawArrowRay(Vector3 position, Vector3 direction, float headLength = 0.25f,
-                                        float headAngle = 20.0f)
+        public static void DrawArrowRay(Vector3 position, Vector3 direction, float headLength,
+                                        float headAngle)
         {
             #if UNITY_EDITOR
             var rightVector = new Vector3(0, 0, 1);
@@ -346,6 +349,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
             UnityEngine.Debug.DrawRay(position + direction, left * headLength);
             #endif
         }
+
+        /// <summary>Draws directional arrow using a 0.25 head length and 20 degree head angle.</summary>
+        public static void DrawArrowRay(Vector3 position, Vector3 direction) => DrawArrowRay(position, direction, 0.25f, 20.0f);
 
         /// <summary>
         /// Draw XYZ dimensional RGB cross

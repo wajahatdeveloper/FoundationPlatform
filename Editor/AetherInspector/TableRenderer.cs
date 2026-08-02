@@ -111,7 +111,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // ---------------------------------------------------------------- value (reflection) mode
 
         /// <summary>Read-only-friendly grid over a live list (reflection). Used by monitoring windows.</summary>
-        public static void DrawValueTable(IList list, Type elementType, string title = null)
+        /// <summary>Draws using the element type's name as the title.</summary>
+        public static void DrawValueTable(IList list, Type elementType) => DrawValueTable(list, elementType, null);
+
+        public static void DrawValueTable(IList list, Type elementType, string title)
         {
             var cols = GetColumns(elementType);
             if (!string.IsNullOrEmpty(title))

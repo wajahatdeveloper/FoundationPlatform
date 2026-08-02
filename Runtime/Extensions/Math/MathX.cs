@@ -447,7 +447,7 @@ public static class MathX
     /// <param name="usesRight">When determining field of view, assign to 'true' if 'transform.right' is considered the front. Otherwise it will use 'transform.forward'.</param>
     /// <returns></returns>
     public static bool Detection2D(Transform transform, LayerMask detectionLayerMask, float detectionRange,
-        float detectionFOV, LayerMask detectionSightlineLayerMask, out Transform target, bool usesRight = false)
+        float detectionFOV, LayerMask detectionSightlineLayerMask, out Transform target, bool usesRight)
     {
         Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, detectionRange, detectionLayerMask);
         if (cols != null && cols.Length > 0)
@@ -471,6 +471,11 @@ public static class MathX
         target = null;
         return false;
     }
+
+    /// <summary>Detects using the forward direction.</summary>
+    public static bool Detection2D(Transform transform, LayerMask detectionLayerMask, float detectionRange,
+        float detectionFOV, LayerMask detectionSightlineLayerMask, out Transform target) =>
+        Detection2D(transform, detectionLayerMask, detectionRange, detectionFOV, detectionSightlineLayerMask, out target, false);
 
     #endregion
 
@@ -562,7 +567,7 @@ public static class MathX
 
     public static bool Detection3DAll(Transform transform, LayerMask detectionLayerMask, float detectionRange,
         float detectionFOV, LayerMask detectionSightlineLayerMask, out List<Transform> targets, Vector3 deltaPos,
-        bool usesRight = false)
+        bool usesRight)
     {
         Vector3 refPos = transform.position + (transform.rotation * deltaPos);
         Collider[] cols = Physics.OverlapSphere(refPos, detectionRange, detectionLayerMask);
@@ -592,12 +597,22 @@ public static class MathX
         return found;
     }
 
+    /// <summary>Detects using the forward direction.</summary>
     public static bool Detection3DAll(Transform transform, LayerMask detectionLayerMask, float detectionRange,
-        float detectionFOV, LayerMask detectionSightlineLayerMask, out List<Transform> targets, bool usesRight = false)
+        float detectionFOV, LayerMask detectionSightlineLayerMask, out List<Transform> targets, Vector3 deltaPos) =>
+        Detection3DAll(transform, detectionLayerMask, detectionRange, detectionFOV, detectionSightlineLayerMask, out targets, deltaPos, false);
+
+    public static bool Detection3DAll(Transform transform, LayerMask detectionLayerMask, float detectionRange,
+        float detectionFOV, LayerMask detectionSightlineLayerMask, out List<Transform> targets, bool usesRight)
     {
         return Detection3DAll(transform, detectionLayerMask, detectionRange, detectionFOV, detectionSightlineLayerMask,
             out targets, Vector3.zero, usesRight);
     }
+
+    /// <summary>Detects using the forward direction, with no positional offset.</summary>
+    public static bool Detection3DAll(Transform transform, LayerMask detectionLayerMask, float detectionRange,
+        float detectionFOV, LayerMask detectionSightlineLayerMask, out List<Transform> targets) =>
+        Detection3DAll(transform, detectionLayerMask, detectionRange, detectionFOV, detectionSightlineLayerMask, out targets, false);
 
     #endregion
 

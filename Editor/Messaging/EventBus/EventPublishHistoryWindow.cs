@@ -50,7 +50,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			DrawContent();
 		}
 
-		public static void ShowWindowWithFilter(string eventType = null, string publisher = null, string searchTerm = null)
+		/// <summary>Shows the window with no filters applied.</summary>
+		public static void ShowWindowWithFilter() => ShowWindowWithFilter(null, null, null);
+
+		public static void ShowWindowWithFilter(string eventType, string publisher, string searchTerm)
 		{
 			var win = GetWindow<EventPublishHistoryWindow>(WINDOW_TITLE);
 			win.minSize = new Vector2(1024, 600);
@@ -961,7 +964,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 						var ruleHandler = SelectedRow.GetFirstRuleHandler();
 						if (!string.IsNullOrEmpty(ruleHandler))
 						{
-							EditorToolNavigation.NavigateToRuleExplorer(handlerType: ruleHandler);
+							EditorToolNavigation.NavigateToRuleExplorerByHandlerType(ruleHandler);
 						}
 					}
 				}

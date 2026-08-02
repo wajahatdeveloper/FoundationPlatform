@@ -26,7 +26,7 @@ public interface IPersistentDataAdapter
     /// <summary>
     /// Load data with the specified key, returning defaultValue if not found.
     /// </summary>
-    T GetData<T>(string key, T defaultValue = default);
+    T GetData<T>(string key, T defaultValue);
 
     /// <summary>
     /// Check if the storage file exists.

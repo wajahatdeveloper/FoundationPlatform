@@ -214,7 +214,7 @@ public static class EditorGUIX
 		/// <summary>
 		/// Draw Line within GUILayout
 		/// </summary>
-		public static void DrawLine(Color color, bool withSpace = false)
+		public static void DrawLine(Color color, bool withSpace)
 		{
 			if (withSpace) EditorGUILayout.Space();
 
@@ -225,6 +225,9 @@ public static class EditorGUIX
 
 			if (withSpace) EditorGUILayout.Space();
 		}
+
+		/// <summary>Draws a line with no surrounding space.</summary>
+		public static void DrawLine(Color color) => DrawLine(color, false);
 
 		/// <summary>
 		/// Draw line within Rect and get Rect back with offset
@@ -257,7 +260,7 @@ public static class EditorGUIX
 		/// <summary>
 		/// Draw background Line within GUILayout
 		/// </summary>
-		public static void DrawBackgroundLine(Color color, int yOffset = 0)
+		public static void DrawBackgroundLine(Color color, int yOffset)
 		{
 			var defColor = GUI.color;
 			GUI.color = color;
@@ -268,10 +271,13 @@ public static class EditorGUIX
 			GUI.color = defColor;
 		}
 
+		/// <summary>Draws a background line with no Y offset.</summary>
+		public static void DrawBackgroundLine(Color color) => DrawBackgroundLine(color, 0);
+
 		/// <summary>
 		/// Draw background Line of height
 		/// </summary>
-		public static void DrawBackgroundBox(Color color, int height, int yOffset = 0)
+		public static void DrawBackgroundBox(Color color, int height, int yOffset)
 		{
 			var defColor = GUI.color;
 			GUI.color = color;
@@ -281,6 +287,9 @@ public static class EditorGUIX
 			GUI.DrawTexture(rect, EditorGUIUtility.whiteTexture);
 			GUI.color = defColor;
 		}
+
+		/// <summary>Draws a background box with no Y offset.</summary>
+		public static void DrawBackgroundBox(Color color, int height) => DrawBackgroundBox(color, height, 0);
 
 		#endregion
 
@@ -400,8 +409,8 @@ public static class EditorGUIX
 		/// <param name="allowExternal">Allow to drag external files and import as unity assets</param>
 		/// <param name="externalImportFolder">Path relative to Assets folder</param>
 		/// <returns>Received objects. Null if none received</returns>
-		public static T[] DropArea<T>(string areaText, float height, bool allowExternal = false,
-			string externalImportFolder = null) where T : Object
+		public static T[] DropArea<T>(string areaText, float height, bool allowExternal,
+			string externalImportFolder) where T : Object
 		{
 			Event currentEvent = Event.current;
 			Rect dropArea = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
@@ -476,6 +485,9 @@ public static class EditorGUIX
 
 			return result.Count > 0 ? result.OrderBy(o => o.name).ToArray() : null;
 		}
+
+		/// <summary>Drop area with no external-file import support.</summary>
+		public static T[] DropArea<T>(string areaText, float height) where T : Object => DropArea<T>(areaText, height, false, null);
 
 
 		/// <summary>

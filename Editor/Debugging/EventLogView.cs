@@ -15,7 +15,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		private readonly List<string> _entries = new();
 		private readonly int _maxEntries;
 
-		public EventLogView(int maxEntries = 40) => _maxEntries = maxEntries;
+		public EventLogView(int maxEntries) => _maxEntries = maxEntries;
+
+		/// <summary>Keeps the 40 most recent entries.</summary>
+		public EventLogView() : this(40) { }
 
 		public void Push(string entry)
 		{
@@ -28,7 +31,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 
 		public void Clear() => _entries.Clear();
 
-		public void Draw(string title, string emptyHint = "(none yet)")
+		public void Draw(string title, string emptyHint)
 		{
 			EditorGUILayout.Space();
 			EditorGUILayout.BeginHorizontal();
@@ -51,6 +54,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				EditorGUILayout.LabelField(entry, EditorStyles.miniLabel);
 			}
 		}
+
+		/// <summary>Draws using the default "(none yet)" empty hint.</summary>
+		public void Draw(string title) => Draw(title, "(none yet)");
 	}
 }
 #endif

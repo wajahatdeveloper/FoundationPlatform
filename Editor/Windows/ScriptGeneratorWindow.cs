@@ -50,7 +50,7 @@ public class ScriptGeneratorWindow : EditorWindow
 		string defaultNamespace,
 		Func<GenerationContext, string> buildCode,
 		Func<GenerationContext, string> validate,
-		Action<string> onGenerated = null)
+		Action<string> onGenerated)
 	{
 		if (buildCode == null)
 			throw new ArgumentNullException(nameof(buildCode));
@@ -71,6 +71,17 @@ public class ScriptGeneratorWindow : EditorWindow
 		window._previewText = buildCode(window.CurrentContext());
 		window.ShowUtility();
 	}
+
+	/// <summary>Shows the window with no post-generation callback.</summary>
+	public static void Show(
+		string title,
+		string defaultFolder,
+		string defaultFileName,
+		string defaultClassName,
+		string defaultNamespace,
+		Func<GenerationContext, string> buildCode,
+		Func<GenerationContext, string> validate) =>
+		Show(title, defaultFolder, defaultFileName, defaultClassName, defaultNamespace, buildCode, validate, null);
 
 	[MenuItem(MenuPaths.WindowUtilities.ScriptGenerator, priority = 1105)]
 	private static void OpenFromMenu()

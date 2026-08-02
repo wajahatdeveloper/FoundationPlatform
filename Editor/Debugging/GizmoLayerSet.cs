@@ -37,11 +37,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		public GizmoLayerSet(string prefPrefix) => _prefix = prefPrefix;
 
 		/// <summary>Declare a layer. Fluent, so sets can be built inline.</summary>
-		public GizmoLayerSet Add(string key, string label, bool defaultValue = true)
+		public GizmoLayerSet Add(string key, string label, bool defaultValue)
 		{
 			_layers.Add(new Layer(key, label, defaultValue));
 			return this;
 		}
+
+		/// <summary>Declares a layer defaulting to visible.</summary>
+		public GizmoLayerSet Add(string key, string label) => Add(key, label, true);
 
 		public bool this[string key] => Get(key);
 
@@ -51,7 +54,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 
 		/// <summary>Draws every layer as a mini-button toggle in a horizontal row. Invokes
 		/// <paramref name="onChanged"/> after any flip (typically <c>SceneView.RepaintAll</c>).</summary>
-		public void DrawToolbar(Action onChanged = null)
+		public void DrawToolbar(Action onChanged)
 		{
 			EditorGUILayout.BeginHorizontal();
 			foreach (var layer in _layers)
@@ -67,6 +70,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 
 			EditorGUILayout.EndHorizontal();
 		}
+
+		/// <summary>Draws the toolbar with no change callback.</summary>
+		public void DrawToolbar() => DrawToolbar(null);
 
 		private bool DefaultOf(string key)
 		{

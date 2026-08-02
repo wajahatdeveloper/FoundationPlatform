@@ -744,13 +744,17 @@ public static class IEnumerableExtensions
     /// The <c>interspersed</c> variable, when iterated over, will yield the sequence 1, 0, 0, 2, 0, 0, 3, 0, 0, 4.
     /// </example>
     public static IEnumerable<TSource> Intersperse<TSource>(this IEnumerable<TSource> source, TSource separator,
-        int count = 1)
+        int count)
     {
         ThrowIf.Argument.IsNull(source, "source");
         ThrowIf.Argument.IsZeroOrNegative(count, "count");
 
         return IntersperseIterator(source, separator, count);
     }
+
+    /// <summary>Intersperses a single separator between elements.</summary>
+    public static IEnumerable<TSource> Intersperse<TSource>(this IEnumerable<TSource> source, TSource separator) =>
+        Intersperse(source, separator, 1);
 
     private static IEnumerable<TSource> IntersperseIterator<TSource>(IEnumerable<TSource> source, TSource separator,
         int count)

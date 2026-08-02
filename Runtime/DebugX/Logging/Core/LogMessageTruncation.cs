@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
         /// <summary>
         /// Truncates from the bottom at newline boundaries so length ≤ maxLength. Appends suffix when content was cut.
         /// </summary>
-        public static string TruncateFromBottom(string value, int maxLength = MaxFixedStringLength)
+        public static string TruncateFromBottom(string value, int maxLength)
         {
             if (value == null || value.Length <= maxLength)
                 return value;
@@ -35,5 +35,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
             return value.Substring(0, cutFrom) + TruncatedSuffix;
         }
+
+        /// <summary>Truncates using MaxFixedStringLength.</summary>
+        public static string TruncateFromBottom(string value) => TruncateFromBottom(value, MaxFixedStringLength);
     }
 }

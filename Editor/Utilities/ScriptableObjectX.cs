@@ -37,7 +37,7 @@ using AetherNexus.FoundationPlatform.DebugX;
 		/// <summary>
 		/// Create ScriptableObject asset of name in folder
 		/// </summary>
-		public static T CreateAsset<T>(string name, string folder = "Assets") where T : ScriptableObject
+		public static T CreateAsset<T>(string name, string folder) where T : ScriptableObject
 		{
 			if (string.IsNullOrEmpty(name))
 			{
@@ -61,6 +61,9 @@ using AetherNexus.FoundationPlatform.DebugX;
 
 			return instance;
 		}
+
+		/// <summary>Creates the asset in the Assets root folder.</summary>
+		public static T CreateAsset<T>(string name) where T : ScriptableObject => CreateAsset<T>(name, "Assets");
 
 		public static T CreateAssetWithFolderDialog<T>(string filename) where T : ScriptableObject
 		{

@@ -632,12 +632,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             private readonly EditorGUILayout.VerticalScope _scope;
 
-            public ContainerScope(GUIStyle style = null, params GUILayoutOption[] options)
+            public ContainerScope(GUIStyle style, params GUILayoutOption[] options)
             {
                 _scope = new EditorGUILayout.VerticalScope(style ?? EditorStyles.helpBox,
                     options ?? Array.Empty<GUILayoutOption>());
                 PushContainer();
             }
+
+            /// <summary>Begins a container with no style.</summary>
+            public ContainerScope() : this(null) { }
 
             public void Dispose()
             {
@@ -658,12 +661,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUILayout.EndVertical();
         }
 
-        public static void BeginBox(string label = null)
+        public static void BeginBox(string label)
         {
             BeginSection();
             if (!string.IsNullOrEmpty(label))
                 EditorGUILayout.LabelField(label, SectionTitle);
         }
+
+        /// <summary>Begins a box with no label.</summary>
+        public static void BeginBox() => BeginBox(null);
 
         public static void EndBox() => EndSection();
 
@@ -755,7 +761,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// index 0 is the rightmost button.
         /// </summary>
         public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
-            out Rect[] trailingRects, float buttonSize = 20f)
+            out Rect[] trailingRects, float buttonSize)
         {
             const float gap = 2f;
             const float buttonHeight = 16f;
@@ -775,6 +781,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var foldRect = HeaderRect(new Rect(rect.x, rect.y, foldWidth, rect.height));
             return EditorGUI.Foldout(foldRect, expanded, label, true, FlatFoldoutStyle);
         }
+
+        /// <summary>Rect-based flat section header, using a 20px button size.</summary>
+        public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
+            out Rect[] trailingRects) => SectionHeaderRow(rect, label, expanded, trailingButtons, out trailingRects, 20f);
 
         /// <summary>
         /// Themed tag/chip pill: <see cref="TagChipBackground"/> fill, accent stripe, <see cref="TagChipOutline"/>
@@ -809,8 +819,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         public static void DrawTitle(string title) => DrawTitle(title, null);
 
-        public static void DrawTitle(string title, string subtitle, TextAlignment textAlignment = TextAlignment.Left,
-            bool horizontalLine = true, bool boldLabel = true)
+        /// <summary>Draws a title, using left alignment, a horizontal rule, and a bold label.</summary>
+        public static void DrawTitle(string title, string subtitle) => DrawTitle(title, subtitle, TextAlignment.Left, true, true);
+
+        public static void DrawTitle(string title, string subtitle, TextAlignment textAlignment,
+            bool horizontalLine, bool boldLabel)
         {
             EditorGUILayout.Space(HeaderSpacing);
             var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
@@ -825,11 +838,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUILayout.Space(2f);
         }
 
-        public static void DrawInfoBox(string message, InfoMessageType type = InfoMessageType.Info)
+        public static void DrawInfoBox(string message, InfoMessageType type)
         {
             bool dummy = true;
             DrawInfoBox(message, type, ref dummy, collapsible: false);
         }
+
+        /// <summary>Draws an info box using InfoMessageType.Info.</summary>
+        public static void DrawInfoBox(string message) => DrawInfoBox(message, InfoMessageType.Info);
 
         /// <summary>Themed callout matching AetherInspector chrome.</summary>
         public static void DrawInfoBox(string message, InfoMessageType type, ref bool expanded, bool collapsible)
@@ -903,8 +919,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return text + "...";
         }
 
-        public static void DrawValidationBox(string message, InfoMessageType type = InfoMessageType.Error)
+        public static void DrawValidationBox(string message, InfoMessageType type)
             => DrawInfoBox(message, type);
+
+        /// <summary>Draws a validation box using InfoMessageType.Error.</summary>
+        public static void DrawValidationBox(string message) => DrawValidationBox(message, InfoMessageType.Error);
 
         /// <summary>Skin-aware toolbar for tab groups.</summary>
         public static int Toolbar(int selected, string[] labels)
