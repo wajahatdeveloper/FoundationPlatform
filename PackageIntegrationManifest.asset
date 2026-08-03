@@ -23,7 +23,7 @@ MonoBehaviour:
   - TypeScript: {fileID: 11500000, guid: ded7978ee7d2d3b41bf146451d719e74, type: 3}
     AuthoringTier: 0
     StructuredPatterns:
-    - ConcretePrefix: Assets/Data
+    - ConcretePrefix: Assets/Content
       Tokens:
       - Kind: 1
         Literal: 
@@ -33,7 +33,7 @@ MonoBehaviour:
         Literal: AnimationSets
       - Kind: 2
         Literal: 
-    - ConcretePrefix: Assets/Data
+    - ConcretePrefix: Assets/Content
       Tokens:
       - Kind: 1
         Literal: 
@@ -46,28 +46,28 @@ MonoBehaviour:
   - TypeScript: {fileID: 11500000, guid: d7a8815d52f8769449dc7ba77a897fa8, type: 3}
     AuthoringTier: 0
     StructuredPatterns:
-    - ConcretePrefix: Assets/Data/Domains/Characters
+    - ConcretePrefix: Assets/Content/Domains/Characters
       Tokens:
       - Kind: 2
         Literal: 
   - TypeScript: {fileID: 11500000, guid: 2313b7a704dc7174e9512e23f9be9667, type: 3}
     AuthoringTier: 0
     StructuredPatterns:
-    - ConcretePrefix: Assets/Data/Domains/Characters
+    - ConcretePrefix: Assets/Content/Domains/Characters
       Tokens:
       - Kind: 2
         Literal: 
   - TypeScript: {fileID: 11500000, guid: 644adc2d3ba1cf2499db5acb428e9c3a, type: 3}
     AuthoringTier: 2
     StructuredPatterns:
-    - ConcretePrefix: Assets/Data/Global/Authoring
+    - ConcretePrefix: Assets/Content/Global/Authoring
       Tokens:
       - Kind: 2
         Literal:
   - TypeScript: {fileID: 11500000, guid: 86b3f2ba540e9fa45849d617ce311d33, type: 3}
     AuthoringTier: 2
     StructuredPatterns:
-    - ConcretePrefix: Assets/Data/Global/Authoring
+    - ConcretePrefix: Assets/Content/Global/Authoring
       Tokens:
       - Kind: 2
         Literal:
