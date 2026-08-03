@@ -94,7 +94,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             if (token == "***")
             {
                 // Unbounded pattern - matches anywhere in the project
-                // This is like ** but without the Assets/Data constraint
+                // This is like ** but without the Assets/Content constraint
                 if (patternIndex == patternSegments.Length - 1)
                     return true;
 

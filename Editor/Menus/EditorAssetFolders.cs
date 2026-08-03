@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
     /// </summary>
     public static class EditorAssetFolders
     {
-        /// <summary>Recursively creates a project folder (e.g. "Assets/Data/Domains/.../Presets").</summary>
+        /// <summary>Recursively creates a project folder (e.g. "Assets/Content/Domains/.../Presets").</summary>
         public static void EnsureFolder(string folder)
         {
             if (string.IsNullOrEmpty(folder)) return;

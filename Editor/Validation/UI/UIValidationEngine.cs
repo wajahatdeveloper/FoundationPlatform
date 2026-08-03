@@ -290,7 +290,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
         private static void ValidatePrefabPath(string path, UIValidationResult result)
         {
-            if (!UIValidationConventions.IsPathUnder(path, "Assets/Data/UI/Prefabs"))
+            if (!UIValidationConventions.IsPathUnder(path, "Assets/Content/UI/Prefabs"))
                 return;
 
             bool insideAllowedFolder = false;

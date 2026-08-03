@@ -5,7 +5,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     public static class HierarchyPathPolicy
     {
-        public const string DataRoot = "Assets/Data";
+        public const string DataRoot = "Assets/Content";
         public const string ScriptsRoot = "Assets/Scripts";
 
         public static bool IsUnderDataRoot(string path)

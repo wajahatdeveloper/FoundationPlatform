@@ -22,7 +22,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         internal const string UserScriptsDomainsUiRoot = "Assets/Scripts/DomainScripts/UI";
         internal const string UserScriptsDomainsUiOrchestration = "Assets/Scripts/DomainScripts/UI/Orchestration";
         internal const string UserScriptsScenesRoot = "Assets/Scripts/Scenes";
-        internal const string UserDataUiRoot = "Assets/Data/UI";
+        internal const string UserDataUiRoot = "Assets/Content/UI";
 
         internal static readonly string[] UserScriptLayerFolders =
         {
@@ -36,14 +36,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
         internal static readonly string[] UserPrefabLayerFolders =
         {
-            "Assets/Data/UI/Prefabs/UIElements",
-            "Assets/Data/UI/Prefabs/Widgets",
-            "Assets/Data/UI/Prefabs/Panels"
+            "Assets/Content/UI/Prefabs/UIElements",
+            "Assets/Content/UI/Prefabs/Widgets",
+            "Assets/Content/UI/Prefabs/Panels"
         };
 
         internal static readonly string[] UserConfigFolders =
         {
-            "Assets/Data/UI/Configs"
+            "Assets/Content/UI/Configs"
         };
 
         internal static readonly string[] ThirdPartyAllowlistPrefixes =
@@ -63,9 +63,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
         internal static readonly Dictionary<UILayer, string> PrefabLayerFolderByLayer = new()
         {
-            { UILayer.UIElement, "Assets/Data/UI/Prefabs/UIElements" },
-            { UILayer.Widget, "Assets/Data/UI/Prefabs/Widgets" },
-            { UILayer.Panel, "Assets/Data/UI/Prefabs/Panels" }
+            { UILayer.UIElement, "Assets/Content/UI/Prefabs/UIElements" },
+            { UILayer.Widget, "Assets/Content/UI/Prefabs/Widgets" },
+            { UILayer.Panel, "Assets/Content/UI/Prefabs/Panels" }
         };
 
         internal static readonly Dictionary<UILayer, string[]> SuffixesByLayer = new()

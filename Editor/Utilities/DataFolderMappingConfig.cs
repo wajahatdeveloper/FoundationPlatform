@@ -31,11 +31,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
     [CreateAssetMenu(fileName = "DataFolderMappingConfig", menuName = "Foundation/Data Folder Mapping Config")]
     public class DataFolderMappingConfig : ScriptableObject
     {
-        public const string DefaultAssetPath = "Assets/Data/Global/Authoring/DataFolderMappingConfig.asset";
-        public const string CentralAuthoringProjectConfigAssetPath = "Assets/Data/Global/Authoring/CentralAuthoringProjectConfig.asset";
-        private const string DataDomainsRoot = "Assets/Data/Domains";
-        private const string DataSharedRoot = "Assets/Data/Shared";
-        private const string DataGlobalRoot = "Assets/Data/Global";
+        public const string DefaultAssetPath = "Assets/Content/Global/Authoring/DataFolderMappingConfig.asset";
+        public const string CentralAuthoringProjectConfigAssetPath = "Assets/Content/Global/Authoring/CentralAuthoringProjectConfig.asset";
+        private const string DataDomainsRoot = "Assets/Content/Domains";
+        private const string DataSharedRoot = "Assets/Content/Shared";
+        private const string DataGlobalRoot = "Assets/Content/Global";
 
         [SerializeField]
         [InspectorName("Hierarchy Domains")]
@@ -331,7 +331,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
                 return TryClassifyScriptsHierarchyPath(segments, out bucket, out domain, out reason);
             }
 
-            reason = "Asset path must be under Assets/Data or Assets/Scripts.";
+            reason = "Asset path must be under Assets/Content or Assets/Scripts.";
             return false;
         }
 
