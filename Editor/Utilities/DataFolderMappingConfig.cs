@@ -33,9 +33,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
     {
         public const string DefaultAssetPath = "Assets/Content/Global/Authoring/DataFolderMappingConfig.asset";
         public const string CentralAuthoringProjectConfigAssetPath = "Assets/Content/Global/Authoring/CentralAuthoringProjectConfig.asset";
-        private const string DataDomainsRoot = "Assets/Content/Domains";
-        private const string DataSharedRoot = "Assets/Content/Shared";
-        private const string DataGlobalRoot = "Assets/Content/Global";
+        private const string ContentDomainsRoot = "Assets/Content/Domains";
+        private const string ContentSharedRoot = "Assets/Content/Shared";
+        private const string ContentGlobalRoot = "Assets/Content/Global";
 
         [SerializeField]
         [InspectorName("Hierarchy Domains")]
@@ -62,9 +62,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         [Button(ButtonSizes.Medium)]
         private void PopulateFromFileSystemState()
         {
-            domains = GetTopLevelFolderNames(DataDomainsRoot);
-            dataSharedSubfolders = GetTopLevelFolderNames(DataSharedRoot);
-            dataGlobalSubfolders = GetTopLevelFolderNames(DataGlobalRoot);
+            domains = GetTopLevelFolderNames(ContentDomainsRoot);
+            dataSharedSubfolders = GetTopLevelFolderNames(ContentSharedRoot);
+            dataGlobalSubfolders = GetTopLevelFolderNames(ContentGlobalRoot);
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
