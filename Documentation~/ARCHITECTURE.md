@@ -257,7 +257,7 @@ Two `TypeCache`-discovered extension points:
 | `IProjectWindowXPass` | contributes a row-decoration pass (zebra rows, folder icons, file-extension labels, and three more ship built-in) |
 | `IProjectWindowXContextMenu` | contributes an entry to the hover "+" create-menu |
 
-It does **not** itself implement domain/mapped-type authoring (create-domain, create-mapped-types, out-of-sync badges) — those are contributed by GameEngineCore (`Editor/ProjectWindowX/AuthoringProjectWindowXConsumers.cs`, `DomainFolderColorPass.cs`, `LevelOwnershipBadgePass.cs`) through these two registries, matching docs/09's extension pattern. Settings live under **Project Settings ▸ ProjectWindowX**.
+It does **not** itself implement domain/mapped-type authoring (create-domain, create-mapped-types, out-of-sync badges) — those are contributed by GameEngineCore (`Editor/ProjectWindowX/AuthoringProjectWindowXConsumers.cs`, `DomainFolderColorPass.cs`, `LevelOwnershipBadgePass.cs`) through these two registries, matching docs/09's extension pattern. Settings live under **Project Settings ▸ ProjectWindowX**. Packages append extra settings blocks via `ProjectWindowXSettingsExtras.Register` (same pattern as HierarchyX's `HierarchyXSettingsExtras`) without ProjectWindowX referencing those packages.
 
 ---
 
@@ -272,7 +272,7 @@ Two `TypeCache`-discovered extension points:
 | `IHierarchyRowDecorator` | contributes row tint/accent/chip (e.g. GameEngineCore's `DomainHierarchyDecorator`/`SessionHierarchyDecorator` for engine-concept chips) |
 | `IHierarchyPanelSection` | contributes a docked-panel accordion section (e.g. GameEngineCore's `SceneSetupPanelSection`/`GameSessionPanelSection`/`DomainsPanelSection`) |
 
-Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, versionable — not per-user `EditorPrefs`). `HierarchyXRowControls.soloButtons` (hover visibility/pickability toggles) defaults **off**: Unity's own stock Hierarchy already shows equivalent hover icons via `SceneVisibilityManager` at the same row position; only `rowActiveToggle` (genuinely new) defaults on.
+Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, versionable — not per-user `EditorPrefs`). Packages append extra settings blocks via `HierarchyXSettingsExtras.Register` (e.g. Stale Component Guard, GameEngineCore engine-concept colours) without HierarchyX referencing those packages. `HierarchyXRowControls.soloButtons` (hover visibility/pickability toggles) defaults **off**: Unity's own stock Hierarchy already shows equivalent hover icons via `SceneVisibilityManager` at the same row position; only `rowActiveToggle` (genuinely new) defaults on.
 
 ---
 

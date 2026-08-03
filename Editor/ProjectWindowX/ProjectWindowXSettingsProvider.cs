@@ -1,9 +1,49 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
 namespace ProjectWindowX {
+    /// <summary>
+    /// Draw hooks for packages that extend Project Settings ▸ ProjectWindowX without ProjectWindowX
+    /// referencing them (avoids circular asmdefs). Call <see cref="Register"/> from
+    /// <c>[InitializeOnLoadMethod]</c> in the contributing assembly.
+    /// </summary>
+    public static class ProjectWindowXSettingsExtras {
+        private static readonly List<(string Title, Action Drawer)> drawers = new List<(string, Action)>();
+
+        public static void Register(string title, Action drawer) {
+            if (drawer == null)
+                throw new ArgumentNullException(nameof(drawer));
+            if (string.IsNullOrEmpty(title))
+                throw new ArgumentException("Title is required.", nameof(title));
+            for (var i = 0; i < drawers.Count; i++) {
+                if (drawers[i].Title == title) {
+                    drawers[i] = (title, drawer);
+                    return;
+                }
+            }
+            drawers.Add((title, drawer));
+        }
+
+        internal static void DrawAll() {
+            for (var i = 0; i < drawers.Count; i++) {
+                EditorGUILayout.Space(8);
+                EditorGUILayout.LabelField(drawers[i].Title, EditorStyles.boldLabel);
+                drawers[i].Drawer();
+            }
+        }
+
+        internal static void CollectKeywords(HashSet<string> keywords) {
+            for (var i = 0; i < drawers.Count; i++) {
+                var title = drawers[i].Title;
+                if (!string.IsNullOrEmpty(title))
+                    keywords.Add(title.ToLowerInvariant());
+            }
+        }
+    }
+
     /// <summary>
     /// Draws ProjectWindowX settings under Project Settings ▸ ProjectWindowX.
     /// Project-scoped (stored in ProjectSettings/), with JSON export/import.
@@ -15,14 +55,16 @@ namespace ProjectWindowX {
 
         [SettingsProvider]
         public static SettingsProvider Create() {
+            var keywords = new HashSet<string> {
+                "project", "folder", "icon", "extension", "zebra", "row",
+                "create", "script", "material", "shader", "template",
+                "authoring", "drift", "badge", "context", "menu"
+            };
+            ProjectWindowXSettingsExtras.CollectKeywords(keywords);
             return new SettingsProvider("Project/ProjectWindowX", SettingsScope.Project) {
                 label = "ProjectWindowX",
                 guiHandler = OnGUI,
-                keywords = new HashSet<string> {
-                    "project", "folder", "icon", "extension", "zebra", "row",
-                    "create", "script", "material", "shader", "template",
-                    "authoring", "drift", "badge", "context", "menu"
-                }
+                keywords = keywords
             };
         }
 
@@ -80,6 +122,8 @@ namespace ProjectWindowX {
                 ProjectWindowXSettings.instance.SaveNow();
                 EditorApplication.RepaintProjectWindow();
             }
+
+            ProjectWindowXSettingsExtras.DrawAll();
 
             Space();
             using (new EditorGUILayout.HorizontalScope()) {
