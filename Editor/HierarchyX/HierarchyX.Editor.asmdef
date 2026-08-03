@@ -1,7 +1,9 @@
 {
     "name": "HierarchyX.Editor",
     "rootNamespace": "AetherNexus.FoundationPlatform",
-    "references": [],
+    "references": [
+        "ProjectWindowX.Editor"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
@@ -11,9 +13,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "HOMAM_GEC"
-    ],
+    "defineConstraints": [],
     "versionDefines": [
         {
             "name": "com.aethernexus.gameenginecore",

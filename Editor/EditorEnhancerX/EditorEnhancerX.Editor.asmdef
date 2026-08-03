@@ -14,9 +14,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "HOMAM_GEC"
-    ],
+    "defineConstraints": [],
     "versionDefines": [
         {
             "name": "com.aethernexus.gameenginecore",

@@ -108,7 +108,7 @@ namespace ProjectWindowX {
         private static void BuildFolderRulesList() {
             var prop = serialized.FindProperty("folderIconRules");
             folderRulesList = new ReorderableList(serialized, prop, true, true, true, true) {
-                elementHeight = EditorGUIUtility.singleLineHeight * 2f + 8f
+                elementHeight = EditorGUIUtility.singleLineHeight * 4f + 20f
             };
 
             folderRulesList.drawHeaderCallback = rect =>
@@ -116,19 +116,30 @@ namespace ProjectWindowX {
 
             folderRulesList.drawElementCallback = (rect, index, active, focused) => {
                 var element = prop.GetArrayElementAtIndex(index);
-                var line = EditorGUIUtility.singleLineHeight;
-                rect.y += 2f;
+                float line = EditorGUIUtility.singleLineHeight;
+                float indent = 14f;
+                rect.y += 3f;
+                rect.x += indent;
+                float usableWidth = rect.width - indent;
 
-                var pathRect = new Rect(rect.x, rect.y, rect.width - 110f, line);
-                var childrenRect = new Rect(rect.x + rect.width - 106f, rect.y, 106f, line);
-                var iconNameRect = new Rect(rect.x, rect.y + line + 4f, rect.width * 0.5f - 4f, line);
-                var iconTexRect = new Rect(rect.x + rect.width * 0.5f, rect.y + line + 4f, rect.width * 0.5f, line);
+                // Row 1 — folder path (60%) + apply-to-children toggle (20%) + apply-to-hierarchy toggle (20%)
+                var pathRect  = new Rect(rect.x,                          rect.y, usableWidth * 0.6f - 4f, line);
+                var childRect = new Rect(rect.x + usableWidth * 0.6f,     rect.y, usableWidth * 0.2f,     line);
+                var hierRect  = new Rect(rect.x + usableWidth * 0.8f + 2f, rect.y, usableWidth * 0.2f,  line);
+                EditorGUI.PropertyField(pathRect,  element.FindPropertyRelative("folderPath"), GUIContent.none);
+                EditorGUI.PropertyField(childRect, element.FindPropertyRelative("applyToChildren"), new GUIContent("Apply To Children"));
+                EditorGUI.PropertyField(hierRect,  element.FindPropertyRelative("applyToHierarchy"),
+                    new GUIContent("Apply To Hierarchy", "Also render this icon in the Hierarchy window for assets from this folder."));
 
-                EditorGUI.PropertyField(pathRect, element.FindPropertyRelative("folderPath"), GUIContent.none);
-                var children = element.FindPropertyRelative("applyToChildren");
-                children.boolValue = EditorGUI.ToggleLeft(childrenRect, "Children", children.boolValue);
-                EditorGUI.PropertyField(iconNameRect, element.FindPropertyRelative("builtinIconName"), GUIContent.none);
-                EditorGUI.PropertyField(iconTexRect, element.FindPropertyRelative("customIcon"), GUIContent.none);
+                // Row 2 — builtin icon name (full width, labelled)
+                var iconNameRect = new Rect(rect.x, rect.y + line + 4f, usableWidth, line);
+                EditorGUI.PropertyField(iconNameRect, element.FindPropertyRelative("builtinIconName"),
+                    new GUIContent("Built-in Icon"));
+
+                // Row 3 — custom texture (full width, labelled)
+                var texRect = new Rect(rect.x, rect.y + (line + 4f) * 2f, usableWidth, line);
+                EditorGUI.PropertyField(texRect, element.FindPropertyRelative("customIcon"),
+                    new GUIContent("Custom Texture"));
             };
         }
 

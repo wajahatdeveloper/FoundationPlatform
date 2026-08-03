@@ -27,6 +27,7 @@ namespace ProjectWindowX {
         public sealed class FolderIconRule {
             public string folderPath = "Assets/";   // project-relative folder path
             public bool applyToChildren;
+            public bool applyToHierarchy;
             public string builtinIconName = "";     // EditorGUIUtility.IconContent name; wins when set
             public Texture2D customIcon;            // used when builtinIconName empty
         }

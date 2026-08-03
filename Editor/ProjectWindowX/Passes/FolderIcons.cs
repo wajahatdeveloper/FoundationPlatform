@@ -7,9 +7,19 @@ namespace ProjectWindowX {
     /// Draws custom icons over Project window folders based on settings rules
     /// (exact path or path-with-children). Works in list and grid modes.
     /// </summary>
-    internal static class FolderIcons {
+    public static class FolderIcons {
 
         private static readonly Dictionary<string, Texture> builtinCache = new Dictionary<string, Texture>();
+        private static readonly Dictionary<string, string> builtinNameMap = new Dictionary<string, string> {
+            { "Scene Icon", "SceneAsset Icon" },
+            { "d_Scene Icon", "d_SceneAsset Icon" },
+            { "Animation Icon", "AnimationClip Icon" },
+            { "d_Animation Icon", "d_AnimationClip Icon" },
+            { "Audio Icon", "AudioClip Icon" },
+            { "d_Audio Icon", "d_AudioClip Icon" },
+            { "AudioMixer Icon", "Audio Mixer" },
+            { "d_AudioMixer Icon", "d_Audio Mixer" },
+        };
 
         internal static void Draw(ProjectWindowX.RowContext ctx, Rect rect, bool listMode, ProjectWindowXSettings s) {
             if (Event.current.type != EventType.Repaint)
@@ -30,10 +40,19 @@ namespace ProjectWindowX {
             GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
         }
 
-        private static Texture Resolve(string path, ProjectWindowXSettings s) {
+        public static Texture Resolve(string path, ProjectWindowXSettings s) {
+            if (TryResolve(path, s, out var icon, out _))
+                return icon;
+            return null;
+        }
+
+        public static bool TryResolve(string path, ProjectWindowXSettings s, out Texture icon, out string matchedFolderPath) {
             var rules = s.folderIconRules;
-            if (rules == null)
-                return null;
+            if (rules == null) {
+                icon = null;
+                matchedFolderPath = null;
+                return false;
+            }
 
             for (var i = 0; i < rules.Count; i++) {
                 var rule = rules[i];
@@ -46,15 +65,26 @@ namespace ProjectWindowX {
                 if (!match)
                     continue;
 
-                if (!string.IsNullOrEmpty(rule.builtinIconName))
-                    return Builtin(rule.builtinIconName);
-                if (rule.customIcon != null)
-                    return rule.customIcon;
+                if (!string.IsNullOrEmpty(rule.builtinIconName)) {
+                    icon = Builtin(rule.builtinIconName);
+                    matchedFolderPath = rule.folderPath;
+                    return true;
+                }
+                if (rule.customIcon != null) {
+                    icon = rule.customIcon;
+                    matchedFolderPath = rule.folderPath;
+                    return true;
+                }
             }
-            return null;
+
+            icon = null;
+            matchedFolderPath = null;
+            return false;
         }
 
         private static Texture Builtin(string name) {
+            if (builtinNameMap.TryGetValue(name, out var mapped))
+                name = mapped;
             if (builtinCache.TryGetValue(name, out var tex))
                 return tex;
             var content = EditorGUIUtility.IconContent(name);

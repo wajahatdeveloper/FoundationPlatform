@@ -2,7 +2,6 @@
     "name": "ProjectWindowX.Editor",
     "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -11,14 +10,13 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "HOMAM_GEC"
-    ],
+    "defineConstraints": [],
     "versionDefines": [
         {
             "name": "com.aethernexus.gameenginecore",
             "expression": "",
             "define": "HOMAM_GEC"
         }
-    ]
+    ],
+    "noEngineReferences": false
 }

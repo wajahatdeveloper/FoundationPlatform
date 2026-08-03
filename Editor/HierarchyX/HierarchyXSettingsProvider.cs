@@ -53,6 +53,25 @@ namespace HierarchyX {
         private static SerializedObject serialized;
         private static ReorderableList layerColorsList;
 
+        [UnityEditor.InitializeOnLoad]
+        internal static class HierarchyXFolderIconsSettingsHook {
+            static HierarchyXFolderIconsSettingsHook() {
+                HierarchyXSettingsExtras.Register("Folder Icons", DrawFolderIconsSection);
+            }
+
+            private static void DrawFolderIconsSection() {
+                var s = HierarchyXSettings.Instance;
+                EditorGUILayout.PropertyField(
+                    new SerializedObject(s).FindProperty("folderIcons"),
+                    new GUIContent("Enable Folder Icons"));
+                if (s.folderIcons)
+                    EditorGUILayout.HelpBox(
+                        "Folder icon rules are managed under Project Settings ▸ ProjectWindowX. " +
+                        "Check 'Apply to Hierarchy' on a rule to include it here.",
+                        MessageType.Info);
+            }
+        }
+
         [SettingsProvider]
         public static SettingsProvider Create() {
             var keywords = new HashSet<string> {
@@ -60,7 +79,8 @@ namespace HierarchyX {
                 "badge", "chip", "decorator", "domain", "placement",
                 "focus", "double-click", "2d", "frame", "recttransform",
                 "middle-click", "active", "toggle",
-                "stale", "component", "guard", "orphan"
+                "stale", "component", "guard", "orphan",
+                "folder", "icon"
             };
             HierarchyXSettingsExtras.CollectKeywords(keywords);
             return new SettingsProvider("Project/HierarchyX", SettingsScope.Project) {

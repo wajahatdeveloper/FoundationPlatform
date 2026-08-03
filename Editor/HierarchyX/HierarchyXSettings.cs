@@ -111,6 +111,8 @@ namespace HierarchyX {
 
         [Tooltip("Replace the generic GameObject icon with the icon of the row's most distinctive component. Prefab roots keep the prefab icon.")]
         public bool bestIcons = true;
+        [Tooltip("Draw assigned folder icons next to hierarchy rows whose asset path matches a ProjectWindowX folder icon rule with 'Apply to Hierarchy' enabled.")]
+        public bool folderIcons = false;
         [Tooltip("Show a red error badge on rows with missing (null) scripts.")]
         public bool missingScriptIndicator = true;
         [Tooltip("Hover-only active checkbox on the right edge of each row.")]
