@@ -314,8 +314,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string InstallGizmoIcons   = Root + "Install Gizmo Icons";
 			public const string RegistryRefresh     = Root + "Rebuild All Generated Registries";
 			public const string PackageRebuild      = Root + "Rebuild Package Integrations";
-			public const string PackageAudit        = Root + "Audit Package Manifest Coverage";
-			public const string PackagePopulate     = Root + "Populate Package Manifest Defaults";
 			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
 			public const string NetworkValidateSetup = Root + "Network/Validate Setup";
 		}
