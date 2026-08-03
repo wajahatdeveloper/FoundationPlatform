@@ -36,6 +36,16 @@ namespace ProjectWindowX {
         // Hover "+" create-actions button
         public bool contextActions = true;
 
+        // Docked context panel (Content Areas, …)
+        [Tooltip("Dock a collapsible context panel to the bottom of the Project window (above Unity's status bar).")]
+        public bool panelEnabled = true;
+        [Tooltip("Whether the docked panel is currently collapsed to its header bar.")]
+        public bool panelCollapsed = false;
+        [Tooltip("Show the aggregated section status chips in the panel status bar / collapsed strip.")]
+        public bool panelStatusChips = true;
+        [Tooltip("Id of the expanded accordion section. Empty = all sections collapsed (default).")]
+        public string panelExpandedSectionId = "";
+
         // Authoring (GEC / Central Authoring consumers)
         public bool authoringContextMenus = true;
         public bool driftBadges = true;

@@ -107,6 +107,13 @@ namespace ProjectWindowX {
             EditorGUILayout.HelpBox("Hovering a row shows a \"+\" button with create actions (script, material, shader, folder, animator, custom editor...).", MessageType.None);
 
             Space();
+            EditorGUILayout.LabelField("Context Panel", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("panelEnabled"), new GUIContent("Docked Panel"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("panelCollapsed"), new GUIContent("Collapsed"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("panelStatusChips"), new GUIContent("Status Chips"));
+            EditorGUILayout.HelpBox("Docks above Unity's Project status bar; spans one- and two-column layouts.", MessageType.None);
+
+            Space();
             EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("authoringContextMenus"), new GUIContent("Authoring Context Menus"));
             var drift = serialized.FindProperty("driftBadges");
