@@ -282,7 +282,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		public static class DomainWindow
 		{
 			private const string Root = Window + "Domain/";
-			public const string GasDebugger        = Root + "GAS/GAS Debugger...";
+			public const string GasDebugger        = Root + "GAS/Ability System Debugger...";
 			public const string GasTagManager      = Root + "GAS/Gameplay Tag Manager...";
 			public const string AiAuthor           = Root + "AI/AI Author...";
 			public const string AiDebugger         = Root + "AI/AI Debugger...";
