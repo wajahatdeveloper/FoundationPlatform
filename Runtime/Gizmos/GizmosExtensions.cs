@@ -26,12 +26,28 @@ public static class GizmosExtensions {
 	public static void DrawWireCube(Vector3 center, Vector3 size) => DrawWireCube(center, size, default);
 
 	public static void DrawArrow(Vector3 from, Vector3 to, float arrowHeadLength, float arrowHeadAngle) {
-		Gizmos.DrawLine(from, to);
+		DrawArrow(from, to, arrowHeadLength, arrowHeadAngle, 0f);
+	}
+
+	public static void DrawArrow(Vector3 from, Vector3 to, float arrowHeadLength, float arrowHeadAngle, float width) {
 		var direction = to - from;
+		if (direction.sqrMagnitude < 1e-8f)
+			return;
+
 		var right = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 180 + arrowHeadAngle, 0) * new Vector3(0, 0, 1);
 		var left = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 180 - arrowHeadAngle, 0) * new Vector3(0, 0, 1);
-		Gizmos.DrawLine(to, to + right * arrowHeadLength);
-		Gizmos.DrawLine(to, to + left * arrowHeadLength);
+
+		if (width <= 0f)
+		{
+			Gizmos.DrawLine(from, to);
+			Gizmos.DrawLine(to, to + right * arrowHeadLength);
+			Gizmos.DrawLine(to, to + left * arrowHeadLength);
+			return;
+		}
+
+		DrawLineExtended(from, to, width);
+		DrawLineExtended(to, to + right * arrowHeadLength, width);
+		DrawLineExtended(to, to + left * arrowHeadLength, width);
 	}
 
 	/// <summary>Draws an arrow using a 0.25 head length and 20 degree head angle.</summary>

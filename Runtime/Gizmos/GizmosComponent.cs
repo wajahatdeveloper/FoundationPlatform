@@ -1,12 +1,16 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace AetherNexus.FoundationPlatform.Gizmos
 {
+    public enum GizmoVisibility
+    {
+        Always,
+        SelectedOnly
+    }
 
     public class GizmosComponent : MonoBehaviour
     {
-
         public static readonly string[] Type = new string[] {
             "Cube",
             "Frustum",
@@ -22,12 +26,23 @@ namespace AetherNexus.FoundationPlatform.Gizmos
             "CameraOrthographic",
             "LineExtended",
             "CubeExtended",
-            "WireCubeExtended"
+            "WireCubeExtended",
+            "HandleText"
         };
 
         public string type = "Cube";
-        public Color color =  Color.red;
-        public bool active = true;
+        public Color color = Color.red;
+        [FormerlySerializedAs("active")]
+        public bool drawGizmo = true;
+        public GizmoVisibility visibility = GizmoVisibility.Always;
+
+        public bool drawFacingArrow;
+        public Color facingArrowColor = Color.white;
+        public Vector3 facingArrowOffset = Vector3.zero;
+        public float facingArrowLength = 1.2f;
+        public float facingArrowWidth;
+        public float facingArrowHeadLength = 0.25f;
+        public float facingArrowHeadAngle = 20f;
 
         //Cube
         public bool positionIsCenterCube = true;
@@ -80,7 +95,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
         public Vector3 wireMeshRotation;
         public Vector3 wireMeshScale = Vector3.one;
         public int subWireMeshIndex = -1;
-        //Sphere
+        //WireSphere
         public bool positionIsCenterWireSphere = true;
         public Vector3 wireSphereCenter = Vector3.zero;
         public float radiusWS = 1f;
@@ -102,11 +117,57 @@ namespace AetherNexus.FoundationPlatform.Gizmos
         public Vector3 positionWCE = Vector3.zero;
         public Vector3 rotationWCE = Vector3.zero;
         public Vector3 scaleWCE = Vector3.one;
-
+        //HandleText
+        public string handleText = string.Empty;
+        public bool positionIsCenterHandleText = true;
+        public Vector3 handleTextCenter = Vector3.zero;
+        public Vector3 handleTextOffset = Vector3.zero;
+        public Color handleTextColor = Color.white;
+        public int handleTextFontSize = 12;
+        public bool handleTextBold;
+        public bool handleTextItalic;
+        public TextAnchor handleTextAlignment = TextAnchor.MiddleCenter;
+        public bool handleTextBackground;
+        public Color handleTextBackgroundColor = new Color(0f, 0f, 0f, 0.5f);
+        public bool handleTextShadow;
+        public Color handleTextShadowColor = new Color(0f, 0f, 0f, 0.8f);
+        public Vector2 handleTextShadowOffset = new Vector2(1f, -1f);
 
         void OnDrawGizmos()
         {
-            if (!active)
+            if (visibility != GizmoVisibility.Always)
+                return;
+            DrawAll();
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            if (visibility != GizmoVisibility.SelectedOnly)
+                return;
+            DrawAll();
+        }
+
+        void DrawAll()
+        {
+            if (drawGizmo)
+                DrawGizmo();
+            if (drawFacingArrow)
+                DrawFacingArrow();
+        }
+
+        void DrawFacingArrow()
+        {
+            UnityEngine.Gizmos.color = facingArrowColor;
+            Vector3 from = transform.position + facingArrowOffset;
+            Vector3 to = from + transform.forward * facingArrowLength;
+            GizmosExtensions.DrawArrow(from, to, facingArrowHeadLength, facingArrowHeadAngle, facingArrowWidth);
+            UnityEngine.Gizmos.color = Color.white;
+        }
+
+        void DrawGizmo()
+        {
+            // HandleText is drawn by GizmosEditor.DrawHandleTextGizmo (needs UnityEditor.Handles).
+            if (type == "HandleText")
                 return;
 
             UnityEngine.Gizmos.color = color;
@@ -126,7 +187,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                         UnityEngine.Gizmos.DrawFrustum(this.transform.position, fov, maxRange, minRange, aspect);
                     break;
                 case "GUITexture":
-                    if(texture != null)
+                    if (texture != null)
                         UnityEngine.Gizmos.DrawGUITexture(screenRect, texture, mat);
                     break;
                 case "Icon":
@@ -138,9 +199,8 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                 case "Line":
                     if (!useTwoTransforms)
                         UnityEngine.Gizmos.DrawLine(fromV, toV);
-                    else
-                        if(fromTr != null && toTr != null)
-                            UnityEngine.Gizmos.DrawLine(fromTr.position, toTr.position);
+                    else if (fromTr != null && toTr != null)
+                        UnityEngine.Gizmos.DrawLine(fromTr.position, toTr.position);
                     break;
                 case "Mesh":
                     if (!transformIsMeshTransform)
@@ -149,7 +209,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                         UnityEngine.Gizmos.DrawMesh(mesh, subMeshIndex, this.transform.position, this.transform.rotation, this.transform.localScale);
                     break;
                 case "Ray":
-                        UnityEngine.Gizmos.DrawRay(fromR, directionR);
+                    UnityEngine.Gizmos.DrawRay(fromR, directionR);
                     break;
                 case "Sphere":
                     if (positionIsCenterSphere)
@@ -181,9 +241,8 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                 case "LineExtended":
                     if (!useTwoTransformsLE)
                         GizmosExtensions.DrawLineExtended(startPointLE, endPointLE, thickness);
-                    else
-                        if (fromTrLE != null && toTrLE != null)
-                            GizmosExtensions.DrawLineExtended(fromTrLE.position, toTrLE.position, thickness);
+                    else if (fromTrLE != null && toTrLE != null)
+                        GizmosExtensions.DrawLineExtended(fromTrLE.position, toTrLE.position, thickness);
                     break;
                 case "CubeExtended":
                     GizmosExtensions.DrawCubeExtended(positionCE, Quaternion.Euler(rotationCE.x, rotationCE.y, rotationCE.z), scaleCE);
@@ -200,10 +259,8 @@ namespace AetherNexus.FoundationPlatform.Gizmos
         {
             for (int i = 0; i < Type.Length; i++)
             {
-                if(type == Type[i])
-                {
+                if (type == Type[i])
                     return i;
-                }
             }
             return 0;
         }

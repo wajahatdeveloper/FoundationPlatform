@@ -207,7 +207,7 @@ GameFramework's `CharacterAnimator.cs` uses both: an assigned `AnimatorControlle
 
 ## Gizmos
 
-`Runtime/Gizmos/` (drawing API) + `Editor/Gizmos/` (editor-side support, including all `[CustomEditor]` classes — `GizmosEditor`, `GizmosHandleTextEditor`, `ColliderGizmoEditor`). Performant scene-view gizmo drawing, originally assimilated from a vendored third-party tool.
+`Runtime/Gizmos/` (drawing API) + `Editor/Gizmos/` (editor-side support, including all `[CustomEditor]` classes — `GizmosEditor`, `ColliderGizmoEditor`). Performant scene-view gizmo drawing, originally assimilated from a vendored third-party tool. `GizmosComponent` covers shape types plus `HandleText` labels, shared Always / SelectedOnly visibility, `drawGizmo` for the shape path, and an optional facing-arrow overlay.
 
 ---
 

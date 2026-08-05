@@ -7,9 +7,18 @@ namespace AetherNexus.FoundationPlatform.Gizmos
     [CanEditMultipleObjects]
     public class GizmosEditor : UnityEditor.Editor
     {
-        SerializedProperty active;
+        SerializedProperty drawGizmo;
         SerializedProperty type;
         SerializedProperty color;
+        SerializedProperty visibility;
+
+        SerializedProperty drawFacingArrow;
+        SerializedProperty facingArrowColor;
+        SerializedProperty facingArrowOffset;
+        SerializedProperty facingArrowLength;
+        SerializedProperty facingArrowWidth;
+        SerializedProperty facingArrowHeadLength;
+        SerializedProperty facingArrowHeadAngle;
 
         SerializedProperty positionIsCenterCube;
         SerializedProperty cubeCenter;
@@ -84,11 +93,37 @@ namespace AetherNexus.FoundationPlatform.Gizmos
         SerializedProperty rotationWCE;
         SerializedProperty scaleWCE;
 
+        SerializedProperty handleText;
+        SerializedProperty positionIsCenterHandleText;
+        SerializedProperty handleTextCenter;
+        SerializedProperty handleTextOffset;
+        SerializedProperty handleTextColor;
+        SerializedProperty handleTextFontSize;
+        SerializedProperty handleTextBold;
+        SerializedProperty handleTextItalic;
+        SerializedProperty handleTextAlignment;
+        SerializedProperty handleTextBackground;
+        SerializedProperty handleTextBackgroundColor;
+        SerializedProperty handleTextShadow;
+        SerializedProperty handleTextShadowColor;
+        SerializedProperty handleTextShadowOffset;
+
+        static Texture2D s_BackgroundTex;
+
         void OnEnable()
         {
-            active = serializedObject.FindProperty("active");
+            drawGizmo = serializedObject.FindProperty("drawGizmo");
             type = serializedObject.FindProperty("type");
             color = serializedObject.FindProperty("color");
+            visibility = serializedObject.FindProperty("visibility");
+
+            drawFacingArrow = serializedObject.FindProperty("drawFacingArrow");
+            facingArrowColor = serializedObject.FindProperty("facingArrowColor");
+            facingArrowOffset = serializedObject.FindProperty("facingArrowOffset");
+            facingArrowLength = serializedObject.FindProperty("facingArrowLength");
+            facingArrowWidth = serializedObject.FindProperty("facingArrowWidth");
+            facingArrowHeadLength = serializedObject.FindProperty("facingArrowHeadLength");
+            facingArrowHeadAngle = serializedObject.FindProperty("facingArrowHeadAngle");
 
             positionIsCenterCube = serializedObject.FindProperty("positionIsCenterCube");
             cubeCenter = serializedObject.FindProperty("cubeCenter");
@@ -162,6 +197,21 @@ namespace AetherNexus.FoundationPlatform.Gizmos
             positionWCE = serializedObject.FindProperty("positionWCE");
             rotationWCE = serializedObject.FindProperty("rotationWCE");
             scaleWCE = serializedObject.FindProperty("scaleWCE");
+
+            handleText = serializedObject.FindProperty("handleText");
+            positionIsCenterHandleText = serializedObject.FindProperty("positionIsCenterHandleText");
+            handleTextCenter = serializedObject.FindProperty("handleTextCenter");
+            handleTextOffset = serializedObject.FindProperty("handleTextOffset");
+            handleTextColor = serializedObject.FindProperty("handleTextColor");
+            handleTextFontSize = serializedObject.FindProperty("handleTextFontSize");
+            handleTextBold = serializedObject.FindProperty("handleTextBold");
+            handleTextItalic = serializedObject.FindProperty("handleTextItalic");
+            handleTextAlignment = serializedObject.FindProperty("handleTextAlignment");
+            handleTextBackground = serializedObject.FindProperty("handleTextBackground");
+            handleTextBackgroundColor = serializedObject.FindProperty("handleTextBackgroundColor");
+            handleTextShadow = serializedObject.FindProperty("handleTextShadow");
+            handleTextShadowColor = serializedObject.FindProperty("handleTextShadowColor");
+            handleTextShadowOffset = serializedObject.FindProperty("handleTextShadowOffset");
         }
 
         static int GetTypeIndex(string typeName)
@@ -179,13 +229,14 @@ namespace AetherNexus.FoundationPlatform.Gizmos
             serializedObject.Update();
 
             EditorGUILayout.Separator();
-            EditorGUILayout.PropertyField(active, new GUIContent("Enable"));
+            EditorGUILayout.PropertyField(drawGizmo, new GUIContent("Draw Gizmo"));
+            EditorGUILayout.PropertyField(visibility);
             EditorGUILayout.Separator();
 
-            bool showDisabledHelp = !active.hasMultipleDifferentValues && !active.boolValue;
-            bool showGizmoFields = active.hasMultipleDifferentValues || active.boolValue;
+            bool showShapeHelp = !drawGizmo.hasMultipleDifferentValues && !drawGizmo.boolValue;
+            bool showShapeFields = drawGizmo.hasMultipleDifferentValues || drawGizmo.boolValue;
 
-            if (showGizmoFields)
+            if (showShapeFields)
             {
                 EditorGUI.BeginChangeCheck();
                 EditorGUI.showMixedValue = type.hasMultipleDifferentValues;
@@ -334,16 +385,171 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                             EditorGUILayout.PropertyField(rotationWCE);
                             EditorGUILayout.PropertyField(scaleWCE);
                             break;
+                        case 15://HandleText
+                            EditorGUILayout.PropertyField(handleText, new GUIContent("Text"));
+                            EditorGUILayout.PropertyField(positionIsCenterHandleText, new GUIContent("Position is the center"));
+                            if (positionIsCenterHandleText.hasMultipleDifferentValues || !positionIsCenterHandleText.boolValue)
+                                EditorGUILayout.PropertyField(handleTextCenter, new GUIContent("Center"));
+                            EditorGUILayout.PropertyField(handleTextOffset, new GUIContent("Offset"));
+                            EditorGUILayout.PropertyField(handleTextColor, new GUIContent("Text Color"));
+                            EditorGUILayout.PropertyField(handleTextFontSize, new GUIContent("Font Size"));
+                            EditorGUILayout.PropertyField(handleTextBold, new GUIContent("Bold"));
+                            EditorGUILayout.PropertyField(handleTextItalic, new GUIContent("Italic"));
+                            EditorGUILayout.PropertyField(handleTextAlignment, new GUIContent("Alignment"));
+                            EditorGUILayout.PropertyField(handleTextBackground, new GUIContent("Background"));
+                            if (handleTextBackground.hasMultipleDifferentValues || handleTextBackground.boolValue)
+                                EditorGUILayout.PropertyField(handleTextBackgroundColor, new GUIContent("Background Color"));
+                            EditorGUILayout.PropertyField(handleTextShadow, new GUIContent("Shadow"));
+                            if (handleTextShadow.hasMultipleDifferentValues || handleTextShadow.boolValue)
+                            {
+                                EditorGUILayout.PropertyField(handleTextShadowColor, new GUIContent("Shadow Color"));
+                                EditorGUILayout.PropertyField(handleTextShadowOffset, new GUIContent("Shadow Offset"));
+                            }
+                            break;
                     }
 
                     EditorGUILayout.EndVertical();
                 }
             }
 
-            if (showDisabledHelp)
-                EditorGUILayout.HelpBox("GizmosComponent is disabled", MessageType.Info, true);
+            if (showShapeHelp)
+                EditorGUILayout.HelpBox("Shape gizmo hidden; facing arrow can still draw if enabled.", MessageType.Info, true);
+
+            EditorGUILayout.Separator();
+            EditorGUILayout.PropertyField(drawFacingArrow, new GUIContent("Draw Facing Arrow"));
+            if (drawFacingArrow.hasMultipleDifferentValues || drawFacingArrow.boolValue)
+            {
+                EditorGUILayout.BeginVertical("box");
+                EditorGUILayout.PropertyField(facingArrowColor, new GUIContent("Arrow Color"));
+                EditorGUILayout.PropertyField(facingArrowOffset, new GUIContent("Offset"));
+                EditorGUILayout.PropertyField(facingArrowLength, new GUIContent("Length"));
+                EditorGUILayout.PropertyField(facingArrowWidth, new GUIContent("Width"));
+                EditorGUILayout.PropertyField(facingArrowHeadLength, new GUIContent("Head Length"));
+                EditorGUILayout.PropertyField(facingArrowHeadAngle, new GUIContent("Head Angle"));
+                EditorGUILayout.EndVertical();
+            }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        [DrawGizmo(GizmoType.Selected | GizmoType.NonSelected | GizmoType.Active | GizmoType.Pickable)]
+        static void DrawHandleTextGizmo(GizmosComponent component, GizmoType gizmoType)
+        {
+            if (component == null || !component.drawGizmo || component.type != "HandleText")
+                return;
+
+            bool selected = (gizmoType & (GizmoType.Selected | GizmoType.Active)) != 0;
+            if (component.visibility == GizmoVisibility.SelectedOnly && !selected)
+                return;
+
+            if (string.IsNullOrEmpty(component.handleText))
+                return;
+
+            Vector3 pos = (component.positionIsCenterHandleText
+                ? component.transform.position
+                : component.handleTextCenter) + component.handleTextOffset;
+
+            FontStyle fontStyle = FontStyle.Normal;
+            if (component.handleTextBold && component.handleTextItalic)
+                fontStyle = FontStyle.BoldAndItalic;
+            else if (component.handleTextBold)
+                fontStyle = FontStyle.Bold;
+            else if (component.handleTextItalic)
+                fontStyle = FontStyle.Italic;
+
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = component.handleTextFontSize,
+                fontStyle = fontStyle,
+                alignment = component.handleTextAlignment,
+                normal = { textColor = component.handleTextColor }
+            };
+
+            bool needsGui = component.handleTextBackground || component.handleTextShadow;
+            if (!needsGui)
+            {
+                Handles.Label(pos, component.handleText, style);
+                return;
+            }
+
+            EnsureBackgroundTex();
+            Handles.BeginGUI();
+            Vector2 guiPos = HandleUtility.WorldToGUIPoint(pos);
+            if (component.handleTextShadow)
+            {
+                var shadowStyle = new GUIStyle(style)
+                {
+                    normal = { textColor = component.handleTextShadowColor }
+                };
+                DrawHandleTextGui(
+                    guiPos + component.handleTextShadowOffset,
+                    component.handleText,
+                    shadowStyle,
+                    false,
+                    Color.clear);
+            }
+
+            DrawHandleTextGui(
+                guiPos,
+                component.handleText,
+                style,
+                component.handleTextBackground,
+                component.handleTextBackgroundColor);
+            Handles.EndGUI();
+        }
+
+        static void EnsureBackgroundTex()
+        {
+            if (s_BackgroundTex != null)
+                return;
+            s_BackgroundTex = new Texture2D(1, 1);
+            s_BackgroundTex.SetPixel(0, 0, Color.white);
+            s_BackgroundTex.Apply();
+            s_BackgroundTex.hideFlags = HideFlags.HideAndDontSave;
+        }
+
+        static void DrawHandleTextGui(Vector2 guiPos, string text, GUIStyle style, bool drawBackground, Color backgroundColor)
+        {
+            Vector2 size = style.CalcSize(new GUIContent(text));
+            Rect rect = new Rect(guiPos.x, guiPos.y, size.x, size.y);
+
+            switch (style.alignment)
+            {
+                case TextAnchor.UpperCenter:
+                case TextAnchor.MiddleCenter:
+                case TextAnchor.LowerCenter:
+                    rect.x -= size.x * 0.5f;
+                    break;
+                case TextAnchor.UpperRight:
+                case TextAnchor.MiddleRight:
+                case TextAnchor.LowerRight:
+                    rect.x -= size.x;
+                    break;
+            }
+
+            switch (style.alignment)
+            {
+                case TextAnchor.MiddleLeft:
+                case TextAnchor.MiddleCenter:
+                case TextAnchor.MiddleRight:
+                    rect.y -= size.y * 0.5f;
+                    break;
+                case TextAnchor.LowerLeft:
+                case TextAnchor.LowerCenter:
+                case TextAnchor.LowerRight:
+                    rect.y -= size.y;
+                    break;
+            }
+
+            if (drawBackground)
+            {
+                Color prev = GUI.color;
+                GUI.color = backgroundColor;
+                GUI.DrawTexture(rect, s_BackgroundTex);
+                GUI.color = prev;
+            }
+
+            GUI.Label(rect, text, style);
         }
     }
 }
