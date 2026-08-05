@@ -4,8 +4,8 @@ using UnityEngine;
 // Core Game Events
 // ============================================================================
 // These are the actual events used by the game systems.
-// To create EventChannel ScriptableObjects for these, use:
-// Tools → EventBus → Generate Event Channel
+// To generate a new BaseGameEvent C# class (not a ScriptableObject), use:
+// Window → Utilities → Create Event Channel...
 // ============================================================================
 
 /// <summary>

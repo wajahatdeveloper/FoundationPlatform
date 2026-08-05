@@ -9,7 +9,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
     public class EventChannelGenerator : EditorWindow
     {
         private string _eventName = "MyEvent";
-        private string _menuPath = "Events";
         private string _targetFolder = "Assets/Scripts";
         private bool _includeParameterlessConstructor = true;
         
@@ -30,7 +29,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
             EditorGUILayout.Space(10);
             
             EditorGUILayout.HelpBox(
-                "This tool generates a BaseGameEvent-derived event class.\n\n" +
+                "This tool writes a BaseGameEvent-derived C# class to disk (not a ScriptableObject).\n\n" +
                 "Example: Enter 'PlayerDied' and this will create:\n" +
                 "• PlayerDiedEvent : BaseGameEvent\n\n" +
                 "Use EventBus.Publish/Subscribe directly for raising and subscribing.",
@@ -46,7 +45,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
             EditorGUILayout.LabelField("Configuration", EditorStyles.boldLabel);
             
             _eventName = EditorGUILayout.TextField("Event Name (without 'Event')", _eventName);
-            _menuPath = EditorGUILayout.TextField("Create Menu Path", _menuPath);
             
             EditorGUILayout.BeginHorizontal();
             _targetFolder = EditorGUILayout.TextField("Target Folder", _targetFolder);
@@ -117,15 +115,6 @@ public class {eventClassName} : BaseGameEvent
             return code;
         }
         
-        private string FormatMenuName(string name)
-        {
-            // Convert "PlayerDied" to "Player Died"
-            var formatted = System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2");
-            // Remove "Event" suffix if present
-            formatted = formatted.Replace(" Event", "");
-            return formatted;
-        }
-        
         private void GenerateEventChannel()
         {
             if (string.IsNullOrWhiteSpace(_eventName))
@@ -166,11 +155,10 @@ public class {eventClassName} : BaseGameEvent
             }
             
             EditorUtility.DisplayDialog("Success", 
-                $"Event channel generated!\n\n" +
+                $"Event class written.\n\n" +
                 $"File: {fileName}\n" +
                 $"Location: {_targetFolder}\n\n" +
-                "After Unity compiles, you can create the ScriptableObject asset:\n" +
-                $"Create → {_menuPath} → {FormatMenuName(_eventName)}", 
+                "After Unity compiles, raise/subscribe with EventBus.Publish / EventBus.Subscribe.", 
                 "OK");
         }
     }

@@ -57,7 +57,7 @@ public static class EventBus
 	}
 
 	// Lightweight event publish stack for circular dependency detection (editor/dev only)
-	#if UNITY_EDITOR || DEVELOPMENT_BUILD
+	#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 	private static Stack<PublishRecord> _publishStack = new();
 	private static List<EventHistoryEntry> _eventHistory = new();
 	private static List<SubscriptionHistoryEntry> _subscriptionHistory = new();
@@ -176,7 +176,7 @@ public static class EventBus
 		public string ErrorMessage;     // Error if execution failed (null if succeeded)
 	}
 
-	#if UNITY_EDITOR || DEVELOPMENT_BUILD
+	#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 	private struct PublishRecord
 	{
 		public Type EventType;
@@ -685,7 +685,7 @@ public static class EventBus
 	}
 	#endif
 
-	#if UNITY_EDITOR || DEVELOPMENT_BUILD
+	#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 	private static void InitProvenance<T>(T evt, string originalPublisherType, string originalPublisherMethod, string member, string file, int line) where T : BaseGameEvent
 	{
 		if (evt == null) return;
@@ -1119,7 +1119,7 @@ public static class EventBus
 		}
 	}
 
-	#if UNITY_EDITOR || DEVELOPMENT_BUILD
+	#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 	/// <summary>
 	/// Serialize event properties marked with [EventData] attribute.
 	/// </summary>
@@ -1239,7 +1239,7 @@ public static class EventBus
 			return;
 		}
 		if (!channel.IsValid) channel = evt.Identity.IsValid ? evt.Identity : Identity.Global;
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		InitProvenance(evt, null, null, member, file, line);
 		#endif
 		PublishInternal(evt, null, null, channel);
@@ -1265,7 +1265,7 @@ public static class EventBus
 			return;
 		}
 		if (!channel.IsValid) channel = evt.Identity.IsValid ? evt.Identity : Identity.Global;
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		InitProvenance(evt, originalPublisherType, originalPublisherMethod, member, file, line);
 		#endif
 		PublishInternal(evt, originalPublisherType, originalPublisherMethod, channel);
@@ -1279,7 +1279,7 @@ public static class EventBus
 	{
 		var eventType = typeof(T);
 
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		if (evt is DomainEvent)
 		{
 			var isRestoring = _domainRestoreModeDepth > 0;
@@ -1292,7 +1292,7 @@ public static class EventBus
 		}
 		#endif
 
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		if (_monitoringEnabled)
 		{
 			// Circular dependency detection / depth control
@@ -1329,7 +1329,7 @@ public static class EventBus
 			string publisherMethod = "Unknown";
 			if (_monitoringEnabled && _enableEventHistory)
 			{
-				#if UNITY_EDITOR || DEVELOPMENT_BUILD
+				#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 				if (evt.Provenance != null)
 				{
 					publisherType = evt.Provenance.PublisherType;
@@ -1493,7 +1493,7 @@ public static class EventBus
 		}
 		finally
 		{
-			#if UNITY_EDITOR || DEVELOPMENT_BUILD
+			#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 			if (_monitoringEnabled && _publishStack.Count > 0)
 				_publishStack.Pop();
 			#endif
@@ -1545,7 +1545,7 @@ public static class EventBus
 				bool executed = false;
 				string errorMessage = null;
 
-				#if UNITY_EDITOR || DEVELOPMENT_BUILD
+				#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 				_executionStack.Push(evt);
 				#endif
 				try
@@ -1557,7 +1557,7 @@ public static class EventBus
 				{
 					executed = false;
 					errorMessage = ex.Message;
-					#if UNITY_EDITOR || DEVELOPMENT_BUILD
+					#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 					var prov = evt.Provenance;
 					if (prov != null)
 					{
@@ -1579,7 +1579,7 @@ public static class EventBus
 					DebugX.Logger(LogChannels.Framework).Error("[EventBus] Error invoking callback for {EventType} on channel {Channel}: {Exception}", FormatTypeName(eventType), channel, ex);
 					#endif
 				}
-				#if UNITY_EDITOR || DEVELOPMENT_BUILD
+				#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 				finally
 				{
 					_executionStack.Pop();
@@ -1615,7 +1615,7 @@ public static class EventBus
 			for (int i = 0; i < buffer.Count; i++)
 			{
 				var callbackWrapper = buffer[i];
-				#if UNITY_EDITOR || DEVELOPMENT_BUILD
+				#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 				_executionStack.Push(evt);
 				#endif
 				try
@@ -1655,7 +1655,7 @@ public static class EventBus
 					DebugX.Logger(LogChannels.Framework).Error("[EventBus] Error invoking callback for {EventType}: {Exception}", FormatTypeName(eventType), ex);
 					#endif
 				}
-				#if UNITY_EDITOR || DEVELOPMENT_BUILD
+				#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 				finally
 				{
 					_executionStack.Pop();
@@ -1712,7 +1712,7 @@ public static class EventBus
 			_invokeDepth = 0;
 			_invokeBuffers.Clear();
 		}
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_publishStack.Clear();
 		_eventHistory.Clear();
 		_subscriptionHistory.Clear();
@@ -1838,7 +1838,7 @@ public static class EventBus
 	/// </summary>
 	public static List<string> GetCurrentPublishStack()
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		// Stack enumerates in LIFO order (most recent first), but we need FIFO order (oldest first) for display
 		var stackArray = _publishStack.ToArray();
 		Array.Reverse(stackArray);
@@ -1853,7 +1853,7 @@ public static class EventBus
 	/// </summary>
 	public static List<EventHistoryEntry> GetEventHistory()
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		return new List<EventHistoryEntry>(_eventHistory);
 		#else
 		return new List<EventHistoryEntry>();
@@ -1865,7 +1865,7 @@ public static class EventBus
 	/// </summary>
 	public static void ClearEventHistory()
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_eventHistory.Clear();
 		#endif
 	}
@@ -1875,7 +1875,7 @@ public static class EventBus
 	/// </summary>
 	public static void SetMaxHistoryEntries(int maxEntries)
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_maxHistoryEntries = Mathf.Max(10, maxEntries);
 		#endif
 	}
@@ -1885,7 +1885,7 @@ public static class EventBus
 	/// </summary>
 	public static List<SubscriptionHistoryEntry> GetSubscriptionHistory()
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		return new List<SubscriptionHistoryEntry>(_subscriptionHistory);
 		#else
 		return new List<SubscriptionHistoryEntry>();
@@ -1897,7 +1897,7 @@ public static class EventBus
 	/// </summary>
 	public static void ClearSubscriptionHistory()
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_subscriptionHistory.Clear();
 		#endif
 	}
@@ -1907,7 +1907,7 @@ public static class EventBus
 	/// </summary>
 	public static void SetMaxSubscriptionHistoryEntries(int maxEntries)
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_maxSubscriptionHistoryEntries = Mathf.Max(10, maxEntries);
 		#endif
 	}
@@ -1917,7 +1917,7 @@ public static class EventBus
 	/// </summary>
 	public static void SetLoggingLevel(LoggingLevel level)
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_loggingLevel = level;
 		#endif
 	}
@@ -1927,7 +1927,7 @@ public static class EventBus
 	/// </summary>
 	public static void EnableSubscriptionTracking(bool enable)
 	{
-		#if UNITY_EDITOR || DEVELOPMENT_BUILD
+		#if UNITY_EDITOR || (DEVELOPMENT_BUILD && EVENTBUS_DEBUG_REFLECTION)
 		_enableSubscriptionTracking = enable;
 		#endif
 	}

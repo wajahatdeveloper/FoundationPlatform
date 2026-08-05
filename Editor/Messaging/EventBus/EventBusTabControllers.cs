@@ -7,6 +7,24 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
+	internal static class EventBusTabCacheHelpers
+	{
+		public static bool ShouldSkipRebuild(int lastSourceCount, int currentSourceCount, bool filterChanged, out bool sourceChanged)
+		{
+			sourceChanged = lastSourceCount == -1 || lastSourceCount != currentSourceCount;
+			return !sourceChanged && !filterChanged;
+		}
+
+		public static bool SearchChanged(string current, string last) =>
+			(current ?? string.Empty) != last;
+
+		public static bool SortChanged<T>(T sortBy, T lastSortBy, bool sortDesc, bool lastSortDesc) where T : struct =>
+			!EqualityComparer<T>.Default.Equals(sortBy, lastSortBy) || sortDesc != lastSortDesc;
+
+		public static bool ContainsIgnoreCase(string haystack, string needle) =>
+			(haystack?.IndexOf(needle, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
+	}
+
 	public class HistoryTabController
 	{
 		public HistoryTabToolbar Toolbar { get; }
@@ -48,23 +66,15 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			// The window's ApplyMonitoring will handle enabling monitoring if needed
 			
 			var currentEventBusCount = hist.Count;
-			var eventBusHistoryChanged = _lastEventBusHistoryCount == -1 || _lastEventBusHistoryCount != currentEventBusCount;
-			
-			// Check if any filters or sort have changed - if so, we need to rebuild the filtered result
-			var hasFilterChanged = HasHistorySortChanged() || 
-			                       HasCategoryFilterChanged() || 
-			                       HasTimeRangeFilterChanged() || 
+			var hasFilterChanged = HasHistorySortChanged() ||
+			                       HasCategoryFilterChanged() ||
+			                       HasTimeRangeFilterChanged() ||
 			                       HasSubscriberFilterChanged() ||
 			                       HasSearchChanged();
-			
-			// If EventBus history hasn't changed and filters haven't changed, return null (no rebuild needed)
-			if (!eventBusHistoryChanged && !hasFilterChanged)
-			{
-				// Return null to indicate no rebuild needed - existing list should be kept
-				return null;
-			}
 
-			// Rebuild the full cache if EventBus history has changed
+			if (EventBusTabCacheHelpers.ShouldSkipRebuild(_lastEventBusHistoryCount, currentEventBusCount, hasFilterChanged, out var eventBusHistoryChanged))
+				return null;
+
 			if (eventBusHistoryChanged)
 			{
 				_lastEventBusHistoryCount = currentEventBusCount;
@@ -85,11 +95,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			if (!string.IsNullOrEmpty(Toolbar.Search))
 			{
 				var s = Toolbar.Search;
-				list = list.Where(r => 
-					(r.TypeName?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 || 
-					(r.Publisher?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Data?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Channel?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0).ToList();
+				list = list.Where(r =>
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.TypeName, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Publisher, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Data, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Channel, s)).ToList();
 			}
 			
 			// Apply time range filter
@@ -354,31 +364,16 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		}
 		#endif
 
-		private bool HasHistorySortChanged()
-		{
-			return Toolbar.SortBy != _lastHistorySortBy || Toolbar.SortDesc != _lastHistorySortDesc;
-		}
+		private bool HasHistorySortChanged() =>
+			EventBusTabCacheHelpers.SortChanged(Toolbar.SortBy, _lastHistorySortBy, Toolbar.SortDesc, _lastHistorySortDesc);
 
-		private bool HasCategoryFilterChanged()
-		{
-			return Toolbar.CategoryFilter != _lastCategoryFilter;
-		}
+		private bool HasCategoryFilterChanged() => Toolbar.CategoryFilter != _lastCategoryFilter;
 
-		private bool HasTimeRangeFilterChanged()
-		{
-			return Toolbar.TimeRange != _lastTimeRange;
-		}
+		private bool HasTimeRangeFilterChanged() => Toolbar.TimeRange != _lastTimeRange;
 
-		private bool HasSubscriberFilterChanged()
-		{
-			return Toolbar.SubscriberFilter != _lastSubscriberFilter;
-		}
+		private bool HasSubscriberFilterChanged() => Toolbar.SubscriberFilter != _lastSubscriberFilter;
 
-		private bool HasSearchChanged()
-		{
-			var currentSearch = Toolbar.Search ?? string.Empty;
-			return currentSearch != _lastSearch;
-		}
+		private bool HasSearchChanged() => EventBusTabCacheHelpers.SearchChanged(Toolbar.Search, _lastSearch);
 	}
 
 	public class SubscribersTabController
@@ -408,16 +403,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				return new List<SubscriberRow>();
 			}
 
-			// Calculate total subscriber count from EventBus
 			var currentEventBusCount = info.Sum(kv => kv.Value?.Count ?? 0);
-			var eventBusSubscribersChanged = _lastEventBusSubscribersCount == -1 || _lastEventBusSubscribersCount != currentEventBusCount;
-
 			var hasFilterChanged = HasSubscribersSortChanged() || HasSearchChanged();
 
-			if (!eventBusSubscribersChanged && !hasFilterChanged)
-			{
+			if (EventBusTabCacheHelpers.ShouldSkipRebuild(_lastEventBusSubscribersCount, currentEventBusCount, hasFilterChanged, out var eventBusSubscribersChanged))
 				return null;
-			}
 
 			if (eventBusSubscribersChanged)
 			{
@@ -440,11 +430,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				var s = Toolbar.Search;
 				list = list.Where(r =>
-					(r.EventType?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Target?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Method?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Context?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.Channel?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.EventType, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Target, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Method, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Context, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.Channel, s)
 				).ToList();
 			}
 
@@ -537,16 +527,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				.ToList();
 		}
 
-		private bool HasSubscribersSortChanged()
-		{
-			return Toolbar.SortBy != _lastSubscribersSortBy || Toolbar.SortDesc != _lastSubscribersSortDesc;
-		}
+		private bool HasSubscribersSortChanged() =>
+			EventBusTabCacheHelpers.SortChanged(Toolbar.SortBy, _lastSubscribersSortBy, Toolbar.SortDesc, _lastSubscribersSortDesc);
 
-		private bool HasSearchChanged()
-		{
-			var currentSearch = Toolbar.Search ?? string.Empty;
-			return currentSearch != _lastSearch;
-		}
+		private bool HasSearchChanged() => EventBusTabCacheHelpers.SearchChanged(Toolbar.Search, _lastSearch);
 	}
 
 	public class SubscriptionsTabController
@@ -575,14 +559,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			}
 
 			var currentEventBusCount = subHist.Count;
-			var eventBusSubscriptionsChanged = _lastEventBusSubscriptionsCount == -1 || _lastEventBusSubscriptionsCount != currentEventBusCount;
-
 			var hasFilterChanged = HasSubscriptionsSortChanged() || HasSearchChanged();
 
-			if (!eventBusSubscriptionsChanged && !hasFilterChanged)
-			{
+			if (EventBusTabCacheHelpers.ShouldSkipRebuild(_lastEventBusSubscriptionsCount, currentEventBusCount, hasFilterChanged, out var eventBusSubscriptionsChanged))
 				return null;
-			}
 
 			if (eventBusSubscriptionsChanged)
 			{
@@ -605,9 +585,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				var s = Toolbar.Search;
 				list = list.Where(r =>
-					(r.EventType?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.SubscriberType?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-					(r.MethodName?.IndexOf(s, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.EventType, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.SubscriberType, s) ||
+					EventBusTabCacheHelpers.ContainsIgnoreCase(r.MethodName, s)
 				).ToList();
 			}
 
@@ -696,16 +676,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				.ToList();
 		}
 
-		private bool HasSubscriptionsSortChanged()
-		{
-			return Toolbar.SortBy != _lastSubscriptionsSortBy || Toolbar.SortDesc != _lastSubscriptionsSortDesc;
-		}
+		private bool HasSubscriptionsSortChanged() =>
+			EventBusTabCacheHelpers.SortChanged(Toolbar.SortBy, _lastSubscriptionsSortBy, Toolbar.SortDesc, _lastSubscriptionsSortDesc);
 
-		private bool HasSearchChanged()
-		{
-			var currentSearch = Toolbar.Search ?? string.Empty;
-			return currentSearch != _lastSearch;
-		}
+		private bool HasSearchChanged() => EventBusTabCacheHelpers.SearchChanged(Toolbar.Search, _lastSearch);
 	}
 }
 #endif

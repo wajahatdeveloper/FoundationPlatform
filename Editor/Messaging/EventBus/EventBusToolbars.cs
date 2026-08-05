@@ -8,6 +8,32 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
+	internal static class EventBusToolbarHelpers
+	{
+		public static void ApplySearch(string historyKey, string value, Action<string> setSearch, Action refresh)
+		{
+			setSearch(value);
+			if (!string.IsNullOrWhiteSpace(value))
+			{
+				SearchHistoryManager.AddSearchTerm(historyKey, value);
+				EventBusSharedState.Instance.SharedSearchTerm = value;
+			}
+			refresh?.Invoke();
+		}
+
+		public static void ClearSearch(Action<string> setSearch, Action refresh)
+		{
+			setSearch(string.Empty);
+			EventBusSharedState.Instance.SharedSearchTerm = string.Empty;
+			refresh?.Invoke();
+		}
+
+		public static Action ResolveRefresh(Action primary, Action fallback)
+		{
+			return primary ?? fallback;
+		}
+	}
+
 	[Serializable]
 	public class HistoryTabToolbar
 	{
@@ -39,17 +65,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public string SearchField
 		{
 			get => Search;
-			set 
-			{ 
-				Search = value;
-				if (!string.IsNullOrWhiteSpace(value))
-				{
-					SearchHistoryManager.AddSearchTerm("History", value);
-					var sharedState = EventBusSharedState.Instance;
-					sharedState.SharedSearchTerm = value;
-				}
-				EventPublishHistoryWindow.RequestRefresh?.Invoke(); 
-			}
+			set => EventBusToolbarHelpers.ApplySearch("History", value, v => Search = v, EventPublishHistoryWindow.RequestRefresh);
 		}
 		
 		[HorizontalGroup("historyToolbar", Width = 0.11f, MarginLeft = 10)]
@@ -174,6 +190,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[HideInInspector]
 		public SubscriberRow SelectedRow;
 
+		private static Action RefreshAction =>
+			EventBusToolbarHelpers.ResolveRefresh(ActiveSubscriptionsWindow.RequestRefresh, EventPublishHistoryWindow.RequestRefresh);
+
 		[HorizontalGroup("subscribersToolbar")]
 		[ShowInInspector]
 		[LabelText("Search:"), LabelWidth(EventBusConstants.LABEL_WIDTH_SEARCH)]
@@ -181,18 +200,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public string SearchField
 		{
 			get => Search;
-			set 
-			{ 
-				Search = value;
-				if (!string.IsNullOrWhiteSpace(value))
-				{
-					SearchHistoryManager.AddSearchTerm("Subscribers", value);
-					var sharedState = EventBusSharedState.Instance;
-					sharedState.SharedSearchTerm = value;
-				}
-				var refresh = ActiveSubscriptionsWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-				refresh?.Invoke(); 
-			}
+			set => EventBusToolbarHelpers.ApplySearch("Subscribers", value, v => Search = v, RefreshAction);
 		}
 
 		[HorizontalGroup("subscribersToolbar")]
@@ -201,14 +209,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[ShowIf("@!string.IsNullOrEmpty(Search)")]
 		[LabelText("")]
 		[HideLabel]
-		private void ClearSearch()
-		{
-			Search = string.Empty;
-			var sharedState = EventBusSharedState.Instance;
-			sharedState.SharedSearchTerm = string.Empty;
-			var refresh = ActiveSubscriptionsWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
-		}
+		private void ClearSearch() => EventBusToolbarHelpers.ClearSearch(v => Search = v, RefreshAction);
 
 		[HideInInspector]
 		public string SortBySelected
@@ -221,8 +222,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				{
 					SortBy = newSortBy;
 					SortDesc = false;
-					var refresh = ActiveSubscriptionsWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-					refresh?.Invoke();
+					RefreshAction?.Invoke();
 				}
 			}
 		}
@@ -247,8 +247,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public void ToggleSortOrder()
 		{
 			SortDesc = !SortDesc;
-			var refresh = ActiveSubscriptionsWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
+			RefreshAction?.Invoke();
 		}
 
 		[HideInInspector]
@@ -299,11 +298,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[Button(ButtonSizes.Small), LabelText("Refresh")]
 		[PropertyOrder(-95)]
 		[Tooltip("Refresh the subscribers list")]
-		public void Refresh()
-		{
-			var refresh = ActiveSubscriptionsWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
-		}
+		public void Refresh() => RefreshAction?.Invoke();
 
 	}
 
@@ -322,6 +317,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[HideInInspector]
 		public SubscriptionRow SelectedRow;
 
+		private static Action RefreshAction =>
+			EventBusToolbarHelpers.ResolveRefresh(SubscriptionHistoryWindow.RequestRefresh, EventPublishHistoryWindow.RequestRefresh);
+
 		[HorizontalGroup("subscriptionsToolbar")]
 		[ShowInInspector]
 		[LabelText("Search:"), LabelWidth(EventBusConstants.LABEL_WIDTH_SEARCH)]
@@ -329,18 +327,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public string SearchField
 		{
 			get => Search;
-			set 
-			{ 
-				Search = value;
-				if (!string.IsNullOrWhiteSpace(value))
-				{
-					SearchHistoryManager.AddSearchTerm("Subscriptions", value);
-					var sharedState = EventBusSharedState.Instance;
-					sharedState.SharedSearchTerm = value;
-				}
-				var refresh = SubscriptionHistoryWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-				refresh?.Invoke(); 
-			}
+			set => EventBusToolbarHelpers.ApplySearch("Subscriptions", value, v => Search = v, RefreshAction);
 		}
 
 		[HorizontalGroup("subscriptionsToolbar")]
@@ -349,14 +336,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[ShowIf("@!string.IsNullOrEmpty(Search)")]
 		[LabelText("")]
 		[HideLabel]
-		private void ClearSearch()
-		{
-			Search = string.Empty;
-			var sharedState = EventBusSharedState.Instance;
-			sharedState.SharedSearchTerm = string.Empty;
-			var refresh = SubscriptionHistoryWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
-		}
+		private void ClearSearch() => EventBusToolbarHelpers.ClearSearch(v => Search = v, RefreshAction);
 
 		[HideInInspector]
 		public string SortBySelected
@@ -369,8 +349,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				{
 					SortBy = newSortBy;
 					SortDesc = true;
-					var refresh = SubscriptionHistoryWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-					refresh?.Invoke();
+					RefreshAction?.Invoke();
 				}
 			}
 		}
@@ -395,8 +374,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public void ToggleSortOrder()
 		{
 			SortDesc = !SortDesc;
-			var refresh = SubscriptionHistoryWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
+			RefreshAction?.Invoke();
 		}
 
 		[HideInInspector]
@@ -447,11 +425,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		[Button(ButtonSizes.Small), LabelText("Refresh")]
 		[PropertyOrder(-93)]
 		[Tooltip("Refresh the subscription history")]
-		public void Refresh()
-		{
-			var refresh = SubscriptionHistoryWindow.RequestRefresh ?? EventPublishHistoryWindow.RequestRefresh;
-			refresh?.Invoke();
-		}
+		public void Refresh() => RefreshAction?.Invoke();
 
 		[HorizontalGroup("subscriptionsToolbar")]
 		[Button(ButtonSizes.Small), LabelText("Clear")]
@@ -461,4 +435,3 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 	}
 }
 #endif
-
