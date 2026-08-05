@@ -14,7 +14,7 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 
 | Namespace | Folder | Notes |
 |---|---|---|
-| `AetherNexus.FoundationPlatform.Messaging` | `Runtime/Messaging/EventBus/` | `EventBus`, `BaseGameEvent`, `DomainEvent`, `Identity`, `IIdentity`, `SubscriptionToken` — **not** global despite ergonomic call sites |
+| `AetherNexus.FoundationPlatform.Messaging` | `Runtime/Messaging/EventBus/`, `Runtime/Identity/Identity.cs` | `EventBus`, `BaseGameEvent`, `DomainEvent`, `Identity`, `IIdentity`, `SubscriptionToken` — **not** global despite ergonomic call sites. `Identity` value type lives on disk under `Runtime/Identity/`; `IIdentity` stays in EventBus |
 | `AetherNexus.FoundationPlatform.CoroutineX` | `Runtime/CoroutineX/` | `CoroutineX`, `Routines`, `CoroutineXExecutor`, `CoroutineXOwner` — **not** global |
 | `AetherNexus.FoundationPlatform` | `Runtime/Patterns/` | root types such as `FragmentData` |
 | `AetherNexus.FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` |
@@ -24,7 +24,7 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 | `AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor` | `Editor/Console/` | DebugX Console window |
 | `AetherNexus.FoundationPlatform.AetherInspector` | `Runtime/AetherInspector/` | runtime-visible attributes |
 | `AetherNexus.FoundationPlatform.AetherInspector.Editor` | `Editor/AetherInspector/` | inspector engine, `GuiKit` |
-| `AetherNexus.FoundationPlatform.Identity` | `Runtime/Identity/`, `Editor/Identity/` | `IdentityComponent`, `IdentityFieldAttribute` — consumers of the `Identity` value type (which itself lives in `Runtime/Messaging/EventBus/`, see above) |
+| `AetherNexus.FoundationPlatform.Identity` | `Runtime/Identity/`, `Editor/Identity/` | `IdentityComponent`, `IdentityFieldAttribute` — consumers of the `Identity` value type. Same `Runtime/Identity/` folder also holds `Identity.cs` (Messaging namespace — see above) |
 | `ProjectWindowX` (bare, no prefix) | `Editor/ProjectWindowX/` | Project-window row-decoration + hover-create pipeline. `HOMAM_GEC`-gated (see below) |
 | `HierarchyX` (bare, no prefix) | `Editor/HierarchyX/` | Hierarchy-window row-decoration + docked-panel pipeline |
 | `AetherNexus.FoundationPlatform.Gizmos` | `Runtime/Gizmos/`, `Editor/Gizmos/` | scene-view gizmo drawing |
@@ -166,7 +166,7 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 
 ## Identity
 
-`Identity` (value type, `Runtime/Messaging/EventBus/Identity.cs`, namespace `AetherNexus.FoundationPlatform.Messaging`) — string-based entity/channel id. `Identity.Global` = `"__global__"`; `Identity.None` = default invalid; `IsValid` = non-empty string; implicit `string → Identity` conversion.
+`Identity` (value type, `Runtime/Identity/Identity.cs`, namespace `AetherNexus.FoundationPlatform.Messaging`) — string-based entity/channel id. `Identity.Global` = `"__global__"`; `Identity.None` = default invalid; `IsValid` = non-empty string; implicit `string → Identity` conversion.
 
 `IIdentity` — interface, `Identity Identity` property (also `Runtime/Messaging/EventBus/`). `IdentityComponent` (`Runtime/Identity/`, namespace `AetherNexus.FoundationPlatform.Identity`) — MonoBehaviour, serialized string id, auto-generates a design-time id via the shared `IdentityComponent.NewDesignTimeId()` helper (also used by `Editor/Identity/IdentityFieldDrawer`'s "New" button). Duplicate detection is design-time only (`IdentityDuplicationHandler` in `Editor/Identity/`) — there is no runtime registry, so don't rely on uniqueness being enforced at runtime.
 
