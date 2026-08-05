@@ -27,7 +27,8 @@ namespace ProjectWindowX {
             }
         }
 
-        private static string StatusGlyph(PanelChipStatus status) {
+        /// <summary>Shared glyph for status chips — HierarchyX forwards here to keep one palette.</summary>
+        public static string StatusGlyph(PanelChipStatus status) {
             switch (status) {
                 case PanelChipStatus.Ok: return "✓";
                 case PanelChipStatus.Warning: return "!";
@@ -112,7 +113,8 @@ namespace ProjectWindowX {
             }
 
             var settings = ProjectWindowXSettings.instance;
-            NormalizeExpandedId(sections, settings);
+            var single = sections.Count == 1;
+            NormalizeExpandedId(sections, settings, single);
 
             var needsScroll = maxHeight > 0f && lastMeasuredHeight > maxHeight;
             if (needsScroll)
@@ -121,10 +123,11 @@ namespace ProjectWindowX {
             EditorGUILayout.BeginVertical();
             for (var i = 0; i < sections.Count; i++) {
                 var section = sections[i];
-                var expanded = string.Equals(settings.panelExpandedSectionId, section.Id, System.StringComparison.Ordinal);
+                var expanded = single
+                    || string.Equals(settings.panelExpandedSectionId, section.Id, System.StringComparison.Ordinal);
 
-                var newExpanded = DrawSectionHeader(section, expanded, out var headerRect);
-                if (newExpanded != expanded) {
+                var newExpanded = DrawSectionHeader(section, expanded, single, out var headerRect);
+                if (!single && newExpanded != expanded) {
                     settings.panelExpandedSectionId = newExpanded ? section.Id : string.Empty;
                     settings.SaveNow();
                     expanded = newExpanded;
@@ -132,7 +135,7 @@ namespace ProjectWindowX {
 
                 if (!string.IsNullOrEmpty(PendingRevealId) && section.Id == PendingRevealId
                     && Event.current.type == EventType.Repaint) {
-                    scroll.y = Mathf.Max(0f, headerRect.y);
+                    scroll.y = single ? 0f : Mathf.Max(0f, headerRect.y);
                     PendingRevealId = null;
                 }
 
@@ -157,22 +160,36 @@ namespace ProjectWindowX {
         }
 
         /// <summary>
-        /// Keep at most one expanded id, and drop stale ids. Empty id = all collapsed (default).
+        /// Accordion defaults match HierarchyX: a lone section always shows its body; with 2+ sections,
+        /// empty <see cref="ProjectWindowXSettings.panelExpandedSectionId"/> expands the first by Order.
+        /// Stale ids are cleared.
         /// </summary>
-        private static void NormalizeExpandedId(IReadOnlyList<IProjectPanelSection> sections, ProjectWindowXSettings settings) {
-            if (string.IsNullOrEmpty(settings.panelExpandedSectionId))
+        private static void NormalizeExpandedId(IReadOnlyList<IProjectPanelSection> sections, ProjectWindowXSettings settings, bool single) {
+            if (single) {
+                var onlyId = sections[0].Id;
+                if (!string.Equals(settings.panelExpandedSectionId, onlyId, System.StringComparison.Ordinal)) {
+                    settings.panelExpandedSectionId = onlyId;
+                    settings.SaveNow();
+                }
                 return;
+            }
+
+            if (string.IsNullOrEmpty(settings.panelExpandedSectionId)) {
+                settings.panelExpandedSectionId = sections[0].Id;
+                settings.SaveNow();
+                return;
+            }
 
             for (var i = 0; i < sections.Count; i++) {
                 if (string.Equals(sections[i].Id, settings.panelExpandedSectionId, System.StringComparison.Ordinal))
                     return;
             }
 
-            settings.panelExpandedSectionId = string.Empty;
+            settings.panelExpandedSectionId = sections[0].Id;
             settings.SaveNow();
         }
 
-        private static bool DrawSectionHeader(IProjectPanelSection section, bool expanded, out Rect headerRect) {
+        private static bool DrawSectionHeader(IProjectPanelSection section, bool expanded, bool hideFoldout, out Rect headerRect) {
             IEnumerable<PanelAction> actions = null;
             try {
                 actions = section.GetToolbarActions();
@@ -188,7 +205,12 @@ namespace ProjectWindowX {
             var buttonsWidth = actionCount > 0 ? actionCount * (HeaderButtonSize + HeaderButtonGap) : 0f;
             var labelRect = new Rect(rect.x + 2f, rect.y, Mathf.Max(0f, rect.width - buttonsWidth - 4f), rect.height);
 
-            var newExpanded = EditorGUI.Foldout(labelRect, expanded, section.Title, true, titleStyle);
+            var newExpanded = expanded;
+            if (hideFoldout) {
+                GUI.Label(labelRect, section.Title, titleStyle);
+            } else {
+                newExpanded = EditorGUI.Foldout(labelRect, expanded, section.Title, true, titleStyle);
+            }
 
             if (actionCount > 0) {
                 var bx = rect.xMax - 2f;

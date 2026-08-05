@@ -184,6 +184,12 @@ namespace HierarchyX {
             Space();
             EditorGUILayout.LabelField("Rows", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("bestIcons"), new GUIContent("Best Component Icons"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("rowIconSize"), new GUIContent("Row Icon Size"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("rowIconOffsetX"), new GUIContent("Row Icon Offset X"));
+            if (serialized.FindProperty("bestIcons").boolValue || HierarchyXSettings.Instance.folderIcons)
+                EditorGUILayout.HelpBox(
+                    "One Unity icon slot per row: folder rule (Apply to Hierarchy) wins over best-component; otherwise Unity's stock icon stays. Opaque backing erases the stock icon when replacing.",
+                    MessageType.None);
             EditorGUILayout.PropertyField(serialized.FindProperty("missingScriptIndicator"), new GUIContent("Missing Script Badge"));
             EditorGUILayout.PropertyField(serialized.FindProperty("rowActiveToggle"), new GUIContent("Active Toggle (Hover)"));
             EditorGUILayout.PropertyField(serialized.FindProperty("soloButtons"), new GUIContent("Vis/Pick Toggles (Hover)"));

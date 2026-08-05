@@ -8,9 +8,11 @@ namespace AetherNexus.FoundationPlatform.Editor
 {
 	/// <summary>
 	/// Removes leftover PlayerSettings <c>HOMAM_GEC</c> when Game Engine Core is not a registered
-	/// UPM package. Gated FP/UIWidgets asmdefs use <c>defineConstraints</c> + <c>versionDefines</c>;
-	/// a stale PlayerSettings symbol would keep them compiling and break hard refs to GEC after uninstall.
-	/// Does not add the symbol — presence gating is versionDefines-only.
+	/// UPM package. FP's ProjectWindowX/HierarchyX/EditorEnhancerX/StaleComponentGuard asmdefs compile
+	/// unconditionally (empty <c>defineConstraints</c>); they only use <c>versionDefines</c> so the
+	/// symbol is available for optional <c>#if HOMAM_GEC</c> guards. UIWidgets' GEC-integration editor
+	/// asmdef still gates on the symbol via <c>defineConstraints</c> — a stale PlayerSettings entry
+	/// would keep that assembly compiling after GEC uninstall. Does not add the symbol.
 	/// </summary>
 	[InitializeOnLoad]
 	internal static class HomamGecOrphanDefineCleaner

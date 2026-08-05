@@ -21,6 +21,13 @@ namespace ProjectWindowX {
             { "d_AudioMixer Icon", "d_Audio Mixer" },
         };
 
+        /// <summary>Bumped when folder-icon rules change so HierarchyX can invalidate its row cache.</summary>
+        public static int RulesVersion { get; private set; }
+
+        public static void NotifyRulesChanged() {
+            RulesVersion++;
+        }
+
         internal static void Draw(ProjectWindowX.RowContext ctx, Rect rect, bool listMode, ProjectWindowXSettings s) {
             if (Event.current.type != EventType.Repaint)
                 return;
@@ -47,6 +54,18 @@ namespace ProjectWindowX {
         }
 
         public static bool TryResolve(string path, ProjectWindowXSettings s, out Texture icon, out string matchedFolderPath) {
+            return TryResolve(path, s, false, out icon, out matchedFolderPath);
+        }
+
+        /// <summary>
+        /// Hierarchy-side resolve: same path matching as <see cref="TryResolve"/> but only rules with
+        /// <c>applyToHierarchy</c> set. Project-window callers keep using <see cref="TryResolve"/>.
+        /// </summary>
+        public static bool TryResolveForHierarchy(string path, ProjectWindowXSettings s, out Texture icon, out string matchedFolderPath) {
+            return TryResolve(path, s, true, out icon, out matchedFolderPath);
+        }
+
+        private static bool TryResolve(string path, ProjectWindowXSettings s, bool forHierarchy, out Texture icon, out string matchedFolderPath) {
             var rules = s.folderIconRules;
             if (rules == null) {
                 icon = null;
@@ -57,6 +76,8 @@ namespace ProjectWindowX {
             for (var i = 0; i < rules.Count; i++) {
                 var rule = rules[i];
                 if (rule == null || string.IsNullOrEmpty(rule.folderPath))
+                    continue;
+                if (forHierarchy && !rule.applyToHierarchy)
                     continue;
 
                 var rulePath = rule.folderPath.TrimEnd('/');

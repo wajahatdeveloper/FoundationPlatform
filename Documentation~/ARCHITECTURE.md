@@ -25,8 +25,8 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 | `AetherNexus.FoundationPlatform.AetherInspector` | `Runtime/AetherInspector/` | runtime-visible attributes |
 | `AetherNexus.FoundationPlatform.AetherInspector.Editor` | `Editor/AetherInspector/` | inspector engine, `GuiKit` |
 | `AetherNexus.FoundationPlatform.Identity` | `Runtime/Identity/`, `Editor/Identity/` | `IdentityComponent`, `IdentityFieldAttribute` — consumers of the `Identity` value type. Same `Runtime/Identity/` folder also holds `Identity.cs` (Messaging namespace — see above) |
-| `ProjectWindowX` (bare, no prefix) | `Editor/ProjectWindowX/` | Project-window row-decoration + hover-create pipeline. `HOMAM_GEC`-gated (see below) |
-| `HierarchyX` (bare, no prefix) | `Editor/HierarchyX/` | Hierarchy-window row-decoration + docked-panel pipeline |
+| `ProjectWindowX` (bare, no prefix) | `Editor/ProjectWindowX/` | Project-window row-decoration + hover-create + docked panel pipeline (compiles unconditionally — see Assembly definitions) |
+| `HierarchyX` (bare, no prefix) | `Editor/HierarchyX/` | Hierarchy-window row-decoration + docked-panel pipeline; asmdef references `ProjectWindowX.Editor` for shared `FolderIcons.TryResolve` |
 | `AetherNexus.FoundationPlatform.Gizmos` | `Runtime/Gizmos/`, `Editor/Gizmos/` | scene-view gizmo drawing |
 | `AetherNexus.FoundationPlatform.TweenX` / `.TweenX.Feedbacks` / `.TweenX.EditorTools` | `Runtime/TweenX/`, `Editor/TweenX/` | tweens + Feedback player |
 | `AetherNexus.FoundationPlatform.Utilities.Menus` | `Runtime/Menus/` | `MenuPaths`, `MenuPriorities` |
@@ -50,7 +50,7 @@ FoundationPlatform.Editor        (Editor/)
   includePlatforms: [Editor]
 ```
 
-`ProjectWindowX.Editor`, `HierarchyX.Editor` (folder `Editor/HierarchyX/`, despite the type-side asmdef name), `EditorEnhancerX.Editor`, and `FoundationPlatform.StaleComponentGuard.Editor` additionally carry `defineConstraints: ["HOMAM_GEC"]` + `versionDefines` on `com.aethernexus.gameenginecore` — they only compile when GameEngineCore is present as a UPM package. This is a deliberate Asset-Store publishing pattern (see `docs/Notes/FoundationPlatform-PUBLISHING.md`, `docs/Notes/GameEngineCore-PUBLISHING.md` §`HOMAM_GEC` define), not a bug: no assembly *reference* to GameEngineCore exists, so the top-line "no dependencies on other AetherNexus gameplay packages" claim still holds, but these four designer-facing subsystems silently don't exist at all in a build without GameEngineCore installed.
+`ProjectWindowX.Editor`, `HierarchyX.Editor` (folder `Editor/HierarchyX/`, despite the type-side asmdef name), `EditorEnhancerX.Editor`, and `FoundationPlatform.StaleComponentGuard.Editor` compile **unconditionally** (`defineConstraints` empty). They still carry `versionDefines` on `com.aethernexus.gameenginecore` so the `HOMAM_GEC` symbol is available for optional `#if` guards (none in this package today). `HierarchyX.Editor` references `ProjectWindowX.Editor` so Hierarchy folder-icon rows can reuse `FolderIcons.TryResolve`. No assembly *reference* to GameEngineCore exists — the top-line "no dependencies on other AetherNexus gameplay packages" claim holds, and these designer-facing subsystems remain present even without GameEngineCore installed. (`HomamGecOrphanDefineCleaner` only strips a stale PlayerSettings `HOMAM_GEC` symbol after GEC uninstall; it does not gate these asmdefs.)
 
 ## Event Bus
 
@@ -250,22 +250,23 @@ The state payload is an opaque string so this package stays ignorant of any part
 
 ## ProjectWindowX
 
-`Editor/ProjectWindowX/` (namespace `ProjectWindowX`, bare — see Namespace map) — a *mechanism-only* Project-window row-decoration + hover-create layer, `HOMAM_GEC`-gated (see Assembly definitions). Owns the single `EditorApplication.projectWindowItemOnGUI` subscription project-wide.
+`Editor/ProjectWindowX/` (namespace `ProjectWindowX`, bare — see Namespace map) — a *mechanism-only* Project-window row-decoration + hover-create + docked-panel layer (compiles unconditionally — see Assembly definitions). Owns the single `EditorApplication.projectWindowItemOnGUI` subscription project-wide. Plus a docked/fallback context panel (`Panel/`) hosting accordion sections (`ProjectPanelHost` footer above Unity's Project status strip; `ProjectPanelWindow` last-resort companion when docking is unavailable).
 
-Two `TypeCache`-discovered extension points:
+Three `TypeCache`-discovered extension points:
 
 | Interface | Purpose |
 |---|---|
-| `IProjectWindowXPass` | contributes a row-decoration pass (zebra rows, folder icons, file-extension labels, and three more ship built-in) |
+| `IProjectWindowXPass` | contributes a row-decoration pass (zebra rows, folder icons, file-extension labels, context-actions — each pass is one class implementing the interface) |
 | `IProjectWindowXContextMenu` | contributes an entry to the hover "+" create-menu |
+| `IProjectPanelSection` | contributes a docked-panel accordion section (e.g. GameEngineCore's `ContentAreasProjectPanelSection`) |
 
-It does **not** itself implement domain/mapped-type authoring (create-domain, create-mapped-types, out-of-sync badges) — those are contributed by GameEngineCore (`Editor/ProjectWindowX/AuthoringProjectWindowXConsumers.cs`, `DomainFolderColorPass.cs`, `LevelOwnershipBadgePass.cs`) through these two registries, matching docs/09's extension pattern. Settings live under **Project Settings ▸ ProjectWindowX**. Packages append extra settings blocks via `ProjectWindowXSettingsExtras.Register` (same pattern as HierarchyX's `HierarchyXSettingsExtras`) without ProjectWindowX referencing those packages.
+`PanelChip` / `PanelAction` are declared in both `ProjectWindowX` and `HierarchyX` (intentional dual public API — HierarchyX consumers stay on Hierarchy types; shared draw helpers live beside each panel). It does **not** itself implement domain/mapped-type authoring (create-domain, create-mapped-types, out-of-sync badges) — those are contributed by GameEngineCore through these registries, matching docs/09's extension pattern. Settings live under **Project Settings ▸ ProjectWindowX**. Packages append extra settings blocks via `ProjectWindowXSettingsExtras.Register` (same pattern as HierarchyX's `HierarchyXSettingsExtras`) without ProjectWindowX referencing those packages.
 
 ---
 
 ## Hierarchy tooling (HierarchyX)
 
-`Editor/HierarchyX/` (namespace `HierarchyX`, bare — see Namespace map) — the generic, engine-agnostic Hierarchy-window enhancement layer: one draw pipeline (`HierarchyX.OnItemGUI`) layering row tint, tree lines, best-component icon, missing-script badge, tag/layer/sorting-layer mini labels, a decorator-supplied chip, hover-only row controls, an accent spine, and a row separator — plus a docked/fallback setup panel (`Panel/`) hosting accordion sections.
+`Editor/HierarchyX/` (namespace `HierarchyX`, bare — see Namespace map) — the generic, engine-agnostic Hierarchy-window enhancement layer: one draw pipeline (`HierarchyX.OnItemGUI`) layering row tint, tree lines, a **single Unity icon slot** (folder rule with Apply-to-Hierarchy wins over best-component icon; otherwise Unity's stock icon; opaque backing + `rowIconSize` / `rowIconOffsetX` settings), missing-script badge, tag/layer/sorting-layer mini labels, a decorator-supplied chip, hover-only row controls, an accent spine, and a row separator — plus a docked/fallback setup panel (`Panel/`) hosting accordion sections. HierarchyX.Editor references ProjectWindowX.Editor for `FolderIcons.TryResolveForHierarchy`.
 
 Two `TypeCache`-discovered extension points:
 
@@ -283,7 +284,7 @@ Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, ver
 | Tool | Location | Purpose |
 |---|---|---|
 | AetherInspector | `Editor/AetherInspector/` | Attribute-based inspector engine (groups, drawers, `GuiKit`) |
-| ProjectWindowX | `Editor/ProjectWindowX/` | Project-window row decoration + hover-create pipeline (see section above) |
+| ProjectWindowX | `Editor/ProjectWindowX/` | Project-window row decoration + hover-create + docked panel (see section above) |
 | HierarchyX | `Editor/HierarchyX/` | Hierarchy-window row decoration + docked panel (see section above) |
 | StaleComponentGuard | `Editor/StaleComponentGuard/` | Detects components whose serialized YAML still carries fields the current script no longer declares (renamed/removed without `[FormerlySerializedAs]`); Hierarchy row decorator + inspector badge + Project Settings panel, one sweep `EditorWindow` as last resort |
 | EditorEnhancerX | `Editor/EditorEnhancerX/` | Scene View / Hierarchy power tools: Scene View overlays, native `EditorTool` rail (duplicate-array, pivot-rotation/move tools), `[MainToolbarElement]` timescale slider, Project Settings provider |
@@ -292,10 +293,21 @@ Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, ver
 | Event Bus windows | `Editor/Messaging/EventBus/` | Debug hub — **Window → Event Bus...** |
 | Tween Debugger | `Editor/TweenX/` | Live tweens — **Window → TweenX → Tween Debugger** |
 | UI Validation | `Editor/Validation/UI/` | UI hierarchy/naming conventions (asset postprocessor) |
+| DataPathPolicy | `Editor/Validation/DataPathPolicy/` | Read-only asset-path classification / glob matching for authoring surfaces |
+| MenuItemDuplicatePathValidator | `Editor/Validation/MenuItemDuplicatePathValidator.cs` | `[InitializeOnLoad]` guard against duplicate `[MenuItem]` paths |
+| PackageIntegration | `Editor/PackageIntegration/` | Orphan `HOMAM_GEC` PlayerSettings define cleanup (`HomamGecOrphanDefineCleaner`) |
 | Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import |
 | Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
 | Game State window | `Editor/Debugging/` | World-scope live state (`IWorldDebugSection`) — **Window → Domain → Game State...** |
 | Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
+| AutoBinder | `Editor/Windows/AutoBinderWindow.cs` | Generate serialized-field binding snippets |
+| Script Generator | `Editor/Windows/ScriptGeneratorWindow.cs` | Scaffold script snippets from templates |
+| MonoBehaviour Script Duplicator | `Editor/Tools/MonoBehaviourScriptDuplicator.cs` (+ `ScriptReplacerWindow`) | Duplicate / replace MonoBehaviour scripts with serialized-field remapping |
+| Code-Aware Rename | `Editor/Tools/CodeAwareRename.cs` | Rename types/symbols with reference updates |
+| Clipboard To Script | `Editor/Tools/ClipboardToScript.cs` | Paste clipboard text into a new script asset |
+| Camera Screenshot | `Editor/Tools/CameraScreenshot.cs` | Capture Scene/Game camera frames to disk |
+| Package2Folder | `Editor/Tools/Package2Folder.cs` | Extract a UPM package into a project folder |
+| EditorGUIX Image String Converter | `Editor/Tools/EditorGUIX_ImageStringConverter/` | Convert images to/from embeddable string payloads for editor UI |
 | Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities (plain `static class`, not an `EditorWindow`) |
 | Prefab Lightmap Generator | `Runtime/Tools/PrefabLightmapGenerator/` (baked-data component) + `Editor/Tools/PrefabLightmapGenerator/` (baking pipeline, inspector) | Prefab lightmap baking — the `PrefabLightmapData` `MonoBehaviour` compiles into player builds; only the `Lightmapping.Bake()`/`PrefabUtility`-dependent baking pipeline (`PrefabLightmapBaker`) and its custom inspector are editor-only |
 

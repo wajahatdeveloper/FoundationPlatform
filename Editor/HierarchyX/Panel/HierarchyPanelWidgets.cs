@@ -8,8 +8,9 @@ namespace HierarchyX {
     /// IMGUI primitives for the Hierarchy docked setup panel (status pills) plus the shared body
     /// renderer used by both the docked footer (<see cref="HierarchyPanelHost"/>) and the fallback
     /// companion window. <see cref="HierarchyX"/>'s asmdef has no game dependencies, so the widget
-    /// kit is intentionally small and self-contained (AuthoringUxShared lives in another assembly
-    /// and has no chip primitive).
+    /// kit is intentionally small. Status chip colors/glyphs are shared with
+    /// <see cref="ProjectWindowX.ProjectPanelWidgets"/> (HierarchyX.Editor references ProjectWindowX.Editor).
+    /// <see cref="PanelChip"/> / <see cref="PanelAction"/> remain HierarchyX types for public API stability.
     /// </summary>
     public static class HierarchyPanelWidgets {
 
@@ -30,21 +31,11 @@ namespace HierarchyX {
         public static string PendingRevealId;
 
         public static Color StatusColor(PanelChipStatus status) {
-            switch (status) {
-                case PanelChipStatus.Ok:      return new Color(0.35f, 0.72f, 0.40f);
-                case PanelChipStatus.Warning: return new Color(0.90f, 0.70f, 0.22f);
-                case PanelChipStatus.Error:   return new Color(0.85f, 0.34f, 0.34f);
-                default:                      return new Color(0.55f, 0.55f, 0.55f);
-            }
+            return ProjectWindowX.ProjectPanelWidgets.StatusColor((ProjectWindowX.PanelChipStatus)(int)status);
         }
 
         private static string StatusGlyph(PanelChipStatus status) {
-            switch (status) {
-                case PanelChipStatus.Ok:      return "✓"; // ✓
-                case PanelChipStatus.Warning: return "!";
-                case PanelChipStatus.Error:   return "✕"; // ✕
-                default:                      return "•"; // •
-            }
+            return ProjectWindowX.ProjectPanelWidgets.StatusGlyph((ProjectWindowX.PanelChipStatus)(int)status);
         }
 
         private static void EnsureStyles() {

@@ -109,10 +109,16 @@ namespace HierarchyX {
         [Tooltip("Accordion state: section ids that are currently collapsed (at most one section is ever expanded at a time).")]
         public List<string> panelCollapsedSections = new List<string>();
 
-        [Tooltip("Replace the generic GameObject icon with the icon of the row's most distinctive component. Prefab roots keep the prefab icon.")]
+        [Tooltip("Replace the generic GameObject icon with the icon of the row's most distinctive component. Prefab roots keep the prefab icon. When a folder icon also matches, the folder icon wins.")]
         public bool bestIcons = true;
-        [Tooltip("Draw assigned folder icons next to hierarchy rows whose asset path matches a ProjectWindowX folder icon rule with 'Apply to Hierarchy' enabled.")]
+        [Tooltip("Fill Unity's row icon slot from a ProjectWindowX folder-icon rule that has 'Apply to Hierarchy' enabled. Wins over best-component icons when both resolve.")]
         public bool folderIcons = false;
+        [Tooltip("Size of the replacement row icon in pixels (clamped to row height).")]
+        [Range(8f, 24f)]
+        public float rowIconSize = 16f;
+        [Tooltip("Horizontal offset from Unity's default icon origin when drawing a replacement icon.")]
+        [Range(-8f, 8f)]
+        public float rowIconOffsetX = 0f;
         [Tooltip("Show a red error badge on rows with missing (null) scripts.")]
         public bool missingScriptIndicator = true;
         [Tooltip("Hover-only active checkbox on the right edge of each row.")]

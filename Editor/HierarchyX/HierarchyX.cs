@@ -94,7 +94,6 @@ namespace HierarchyX {
 
                 DrawTree(rect, go, s);
                 HierarchyXBestIcon.Draw(rect, go, s);
-                HierarchyXFolderIcons.Draw(rect, go, s);
                 var extraInset = HierarchyXMissingScript.Draw(rect, go, s, 0f);
                 DrawBadgeAndMiniLabels(rect, go, s, hasDeco ? rowDeco : default, extraInset);
                 HierarchyXRowControls.Draw(rect, go, s);

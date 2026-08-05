@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace ProjectWindowX {
-    /// <summary>Registered pass wrapping <see cref="FolderIcons"/>.</summary>
+    /// <summary>Registered pass for custom folder icons (resolve API lives on <see cref="FolderIcons"/>).</summary>
     public sealed class FolderIconsPass : IProjectWindowXPass {
         public string Id => "projectwindowx.folder-icons";
         public int Order => 100;

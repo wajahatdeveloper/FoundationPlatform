@@ -43,7 +43,7 @@ namespace ProjectWindowX {
         public bool panelCollapsed = false;
         [Tooltip("Show the aggregated section status chips in the panel status bar / collapsed strip.")]
         public bool panelStatusChips = true;
-        [Tooltip("Id of the expanded accordion section. Empty = all sections collapsed (default).")]
+        [Tooltip("Id of the expanded accordion section. Empty is normalized to the first section by Order (matches HierarchyX). A single registered section always shows its body.")]
         public string panelExpandedSectionId = "";
 
         // Authoring (GEC / Central Authoring consumers)
@@ -55,6 +55,7 @@ namespace ProjectWindowX {
 
         public void SaveNow() {
             Save(true);
+            FolderIcons.NotifyRulesChanged();
         }
 
         public void ExportToJson(string path) {
@@ -64,6 +65,7 @@ namespace ProjectWindowX {
         public void ImportFromJson(string path) {
             JsonUtility.FromJsonOverwrite(System.IO.File.ReadAllText(path), this);
             Save(true);
+            FolderIcons.NotifyRulesChanged();
         }
 
         public void ResetToDefaults() {
@@ -73,6 +75,7 @@ namespace ProjectWindowX {
             DestroyImmediate(fresh);
             hideFlags = flags;
             Save(true);
+            FolderIcons.NotifyRulesChanged();
         }
     }
 }

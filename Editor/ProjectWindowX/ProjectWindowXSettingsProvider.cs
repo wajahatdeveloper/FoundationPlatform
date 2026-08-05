@@ -58,7 +58,7 @@ namespace ProjectWindowX {
             var keywords = new HashSet<string> {
                 "project", "folder", "icon", "extension", "zebra", "row",
                 "create", "script", "material", "shader", "template",
-                "authoring", "drift", "badge", "context", "menu"
+                "authoring", "drift", "sync", "out of sync", "badge", "context", "menu"
             };
             ProjectWindowXSettingsExtras.CollectKeywords(keywords);
             return new SettingsProvider("Project/ProjectWindowX", SettingsScope.Project) {
@@ -127,6 +127,7 @@ namespace ProjectWindowX {
             if (EditorGUI.EndChangeCheck()) {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 ProjectWindowXSettings.instance.SaveNow();
+                FolderIcons.NotifyRulesChanged();
                 EditorApplication.RepaintProjectWindow();
             }
 
