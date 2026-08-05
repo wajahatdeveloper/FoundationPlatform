@@ -1,11 +1,14 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  One block of <i>world-scope</i> live state — the counterpart to <see cref="IEntityDebugSection"/>,
 	///  which answers "what's up with this object?".
@@ -79,7 +82,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				}
 				catch (Exception e)
 				{
-					Debug.LogError($"[GameStateWindow] Failed to instantiate section '{type.FullName}': {e.Message}");
+					DebugX.Logger(LogChannels.Editor).Error("[GameStateWindow] Failed to instantiate section '{TypeFullName}': {Message}", type.FullName, e.Message);
 				}
 			}
 

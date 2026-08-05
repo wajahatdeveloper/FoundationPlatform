@@ -11,7 +11,9 @@ namespace AetherNexus.FoundationPlatform.Animation
         public AnimationMixerPlayable Mixer { get; private set; }
         protected List<PlayableState> _children = new List<PlayableState>();
 
-        public MixerState(PlayableGraph graph, int childCount = 0)
+        public MixerState(PlayableGraph graph) : this(graph, 0) {}
+
+        public MixerState(PlayableGraph graph, int childCount)
         {
             Mixer = AnimationMixerPlayable.Create(graph, childCount);
             Playable = Mixer;
@@ -64,7 +66,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 
     public class ManualMixerState : MixerState
     {
-        public ManualMixerState(PlayableGraph graph, int childCount = 0) : base(graph, childCount) {}
+        public ManualMixerState(PlayableGraph graph) : this(graph, 0) {}
+
+        public ManualMixerState(PlayableGraph graph, int childCount) : base(graph, childCount) {}
     }
 
     public class LinearMixerState : MixerState
@@ -72,7 +76,9 @@ namespace AetherNexus.FoundationPlatform.Animation
         public float Parameter { get; set; }
         public float[] Thresholds { get; set; }
 
-        public LinearMixerState(PlayableGraph graph, int childCount = 0) : base(graph, childCount) {}
+        public LinearMixerState(PlayableGraph graph) : this(graph, 0) {}
+
+        public LinearMixerState(PlayableGraph graph, int childCount) : base(graph, childCount) {}
 
         public override void Update(float deltaTime)
         {
@@ -122,7 +128,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         private float[] _weightsBuffer;
 
-        public DirectionalMixerState(PlayableGraph graph, int childCount = 0) : base(graph, childCount)
+        public DirectionalMixerState(PlayableGraph graph) : this(graph, 0) {}
+
+        public DirectionalMixerState(PlayableGraph graph, int childCount) : base(graph, childCount)
         {
             _weightsBuffer = new float[Mathf.Max(childCount, 9)];
         }

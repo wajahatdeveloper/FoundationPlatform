@@ -109,7 +109,7 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 
 **DebugX Console window** — `Editor/Console/DebugXConsoleWindow.cs` — reads structured `LogEvent`s from `ConsoleLogStore` (ring buffer fed by `EditorConsoleSink`). Supports filters, tabs, watch expressions, snippets, compile-error surfacing, export.
 
-**Known issue (deferred, not fixed):** `CallerInfoHelper`'s stack-walk reflection for caller info runs unconditionally on every log call in every build, in tension with "no runtime reflection outside editor tools." See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for the full write-up and options.
+**Deliberate carve-out — caller-info reflection:** `CallerInfoHelper` and `MessageTemplateParser` use cached `StackTrace`/`MethodBase` reflection on every log call in all builds so file/line/member attribution reaches sinks. This is an intentional trade-off (not a silent violation of the no-runtime-reflection rule). The Unity-stack-extractor fallback remains editor-gated. See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for rationale and future options if attribution is ever threaded via `[CallerMemberName]` instead.
 
 ---
 
@@ -130,6 +130,10 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
 `CoroutineXExecutor` — `DontDestroyOnLoad` singleton, dispatches unowned coroutines. `CoroutineXOwner` — auto-added to owned GameObjects, stops coroutines on deactivate.
+
+**`RunAsync` / `WaitForCompletionAsync`:** first-party `Task` helpers collocated in `CoroutineX.cs` for bridge scenarios — not vendor drift.
+
+**UniTask coexistence:** `Runtime/ThirdParty/UniTask/` and CoroutineX are both present by design. Pick the substrate that fits the call site (yield/coroutine lifecycle vs async/await); neither is a defect in the other.
 
 ---
 
@@ -187,19 +191,15 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 
 Editor tools (`Editor/Animation/`, `Editor/AnimGraph/`): `AnimationSetCodeGenerator` (strongly-typed animation state accessors), `AnimationSetValidator` (validates clip assignments), `AnimationTestBenchWindow`, `PlayableGraphBridgeEditor`, `AnimationSetLinkPropertyDrawer`, `AnimationPreviewHelper`, `AnimatorConstantsGenerator` (see dual-mechanism note below).
 
-**Approved exception to the project's "no optional parameters" rule:** the `AnimatorBridgeBase`/
-`PlayableGraphBridge`/`MixerState` family (`CrossfadeAsync`, `PlayLoopingAnimation`, `InitializeGraph`,
-the `PlayableLayer.Play` overloads, `MixerState` constructors, etc.) uses defaulted parameters
-deliberately, mirroring TweenX's fluent-API rationale. Do not "fix" this elsewhere without the same
-explicit sign-off.
+**Intentional dual mechanism — Mecanim hash tooling + Playables runtime:** `Editor/Animation/AnimatorConstantsGenerator.cs`
+code-generates Mecanim `AnimatorController` param/state hash constants into a concrete bridge subclass.
+This is **intentional** editor tooling for Mecanim hash constants — not legacy to retire from this package.
+Runtime playback is owned by the Playables AnimGraph (`PlayableGraphBridge`, `AnimationSet` entries).
+GameFramework's `CharacterAnimator.cs` uses both: an assigned `AnimatorController` (for generated hash constants and Mecanim wiring) and the Playables graph for actual clip playback. That dual use is expected.
 
-**Known dual-mechanism risk (not a FoundationPlatform code defect):** `Editor/Animation/AnimatorConstantsGenerator.cs`
-code-generates Mecanim `AnimatorController` param/state hash constants into a concrete bridge subclass,
-coexisting with this package's own Playables-based AnimGraph system with no documented decision on
-which one should win. FoundationPlatform only ships the generator tool; the actual dual-usage lives in
-GameFramework's `CharacterAnimator.cs` (`Packages/com.aethernexus.gameframework/CharacterSystem/Runtime/CharacterAnimator/CharacterAnimator.cs`),
-which carries both a live Mecanim `AnimatorController` assignment and drives the Playables graph on top
-of it. The retire-or-keep call is deferred to the GameFramework package audit/fix pass.
+**Consumer watch items:**
+- `TryGetCurrentSetAndEntry` is an ungated reverse-lookup helper — do not use it to drive gameplay decisions.
+- `onComplete` / `PlayableStateEvents.OnEnd` callbacks are presentation boundaries — must not write authoritative simulation state.
 
 ---
 
@@ -304,6 +304,7 @@ Inspector chrome is centralized in `AetherInspectorTheme.cs`. `GuiKit` is the pu
 - Default fields still draw through `EditorGUILayout.PropertyField`.
 - Visual harness: **Window → Diagnostics → AetherInspector Demo**.
 - Full attribute matrix: [AetherInspector.md](AetherInspector.md).
+- Reflection/IMGUI empty-catch sites and `ObjectSelectorPopupX` scope: see [AetherInspector.md](AetherInspector.md) § Implementation notes.
 
 ---
 

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEngine;
@@ -7,6 +8,8 @@ using UnityEngine.UIElements;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  Scene-View overlay that folds the project's per-entity debugger detail panes into the scene,
 	///  beside the object they describe. Auto-shows (<see cref="ITransientOverlay"/>) whenever the
@@ -161,7 +164,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 					if (!string.IsNullOrEmpty(result))
 					{
 						EditorGUIUtility.systemCopyBuffer = result;
-						Debug.Log($"Copied debug info for entity '{go.name}' to clipboard!");
+						DebugX.Logger(LogChannels.Editor).Info("Copied debug info for entity '{EntityName}' to clipboard!", go.name);
 					}
 				}
 			}

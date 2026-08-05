@@ -1,11 +1,14 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  One collapsible detail block in the <see cref="EntityDebuggerOverlay"/> — the in-context
 	///  counterpart to a <see cref="FrameworkDebuggerWindow{TEntity}"/>'s detail pane. A section knows
@@ -87,7 +90,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				}
 				catch (Exception e)
 				{
-					Debug.LogError($"[EntityDebuggerOverlay] Failed to instantiate section '{type.FullName}': {e.Message}");
+					DebugX.Logger(LogChannels.Editor).Error("[EntityDebuggerOverlay] Failed to instantiate section '{TypeFullName}': {Message}", type.FullName, e.Message);
 				}
 			}
 

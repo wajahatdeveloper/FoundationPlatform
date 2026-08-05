@@ -52,5 +52,6 @@ Unity-compile-verified pass.
    IL2CPP/AOT — just with a real per-call perf cost) and document that decision here and in
    `ARCHITECTURE.md`'s Logging (DebugX) section instead of changing code.
 
-No code changes have been made for this issue as part of the audit-remediation pass this doc was written
-during — it is deferred, not fixed.
+**Status (audit closure):** Option 3 accepted. Documented in `Documentation~/ARCHITECTURE.md` § Logging
+(DebugX) and `docs/00-AgentGuide.md` §3. No code change planned unless a dedicated caller-info refactor
+is scheduled.

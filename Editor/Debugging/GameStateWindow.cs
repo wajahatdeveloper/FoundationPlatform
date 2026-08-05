@@ -2,12 +2,15 @@
 using System.Text;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
+using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  The world-scope diagnostics window: session, players, lifecycle stages, subsystems, level, RNG, and
 	///  the action pipeline, all reading live state.
@@ -206,7 +209,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 					if (!string.IsNullOrEmpty(result))
 					{
 						EditorGUIUtility.systemCopyBuffer = result;
-						Debug.Log($"Copied '{section.Title}' state to clipboard.");
+						DebugX.Logger(LogChannels.Editor).Info("Copied '{SectionTitle}' state to clipboard.", section.Title);
 					}
 				}
 			}

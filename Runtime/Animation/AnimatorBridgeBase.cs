@@ -65,7 +65,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		protected virtual void Awake()
 		{
 			if (animancer == null) { animancer = GetComponent<PlayableGraphBridge>(); }
-			animator = GetComponent<Animator>();
+			if (animator == null) { animator = GetComponent<Animator>(); }
 			if (animator == null)
 			{
 				throw new MissingComponentException(
@@ -388,7 +388,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 			}
 		}
 
-		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime = 0f)
+		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete)
+		{
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, 0f);
+		}
+
+		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime)
 		{
 			if (entry.clip.IsLooping && onComplete != null)
 			{
@@ -588,8 +593,13 @@ namespace AetherNexus.FoundationPlatform.Animation
 			return false;
 		}
 
-		public virtual IEnumerator CrossfadeAsync(AnimationClip clip, AnimationClipInfo clipInfo, AnimationMask mask, ActionData[] actions = null,
-		                                          int layerIndex = -1, bool transitionBack = true)
+		public virtual IEnumerator CrossfadeAsync(AnimationClip clip, AnimationClipInfo clipInfo, AnimationMask mask)
+		{
+			return CrossfadeAsync(clip, clipInfo, mask, null, -1, true);
+		}
+
+		public virtual IEnumerator CrossfadeAsync(AnimationClip clip, AnimationClipInfo clipInfo, AnimationMask mask, ActionData[] actions,
+		                                          int layerIndex, bool transitionBack)
 		{
 			AssertReady();
 			int resolvedLayer;
@@ -620,7 +630,17 @@ namespace AetherNexus.FoundationPlatform.Animation
 			yield return state;
 		}
 
-		public virtual void PlayLoopingAnimation(AnimationClip clip, AnimationMask mask, bool isActAsAnimatorOutput = false, float transitionIn = 0.1f)
+		public virtual void PlayLoopingAnimation(AnimationClip clip, AnimationMask mask)
+		{
+			PlayLoopingAnimation(clip, mask, false, 0.1f);
+		}
+
+		public virtual void PlayLoopingAnimation(AnimationClip clip, AnimationMask mask, bool isActAsAnimatorOutput)
+		{
+			PlayLoopingAnimation(clip, mask, isActAsAnimatorOutput, 0.1f);
+		}
+
+		public virtual void PlayLoopingAnimation(AnimationClip clip, AnimationMask mask, bool isActAsAnimatorOutput, float transitionIn)
 		{
 			AssertReady();
 			var loopLayerIndex = mask == AnimationMask.FullBody ? AnimLayer.Locomotion : AnimLayer.LoopingOverride;

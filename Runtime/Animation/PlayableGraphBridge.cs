@@ -34,7 +34,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public void InitializeGraph() => InitializeGraph(GetComponent<Animator>());
 
-        public void InitializeGraph(Animator animator, int initialLayerCount = 3)
+        public void InitializeGraph(Animator animator) => InitializeGraph(animator, 3);
+
+        public void InitializeGraph(Animator animator, int initialLayerCount)
         {
             if (Graph.IsValid()) Graph.Destroy();
 
@@ -176,7 +178,9 @@ namespace AetherNexus.FoundationPlatform.Animation
             _layerFadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
         }
 
-        public ClipState Play(ClipTransitionData transition, float fadeDuration = -1f)
+        public ClipState Play(ClipTransitionData transition) => Play(transition, -1f);
+
+        public ClipState Play(ClipTransitionData transition, float fadeDuration)
         {
             var state = new ClipState(_bridge.Graph, transition.Clip);
             state.Speed = transition.Speed;
@@ -206,13 +210,17 @@ namespace AetherNexus.FoundationPlatform.Animation
             }
         }
 
-        public ClipState Play(AnimationClip clip, float fadeDuration = 0.25f)
+        public ClipState Play(AnimationClip clip) => Play(clip, 0.25f);
+
+        public ClipState Play(AnimationClip clip, float fadeDuration)
         {
             var state = new ClipState(_bridge.Graph, clip);
             return Play(state, fadeDuration) as ClipState;
         }
 
-        public PlayableState Play(PlayableState state, float fadeDuration = 0.25f)
+        public PlayableState Play(PlayableState state) => Play(state, 0.25f);
+
+        public PlayableState Play(PlayableState state, float fadeDuration)
         {
             if (state == null || !state.IsValid)
                 throw new ArgumentException(

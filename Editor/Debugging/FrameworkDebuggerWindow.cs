@@ -1,10 +1,13 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.DebugX;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  Base class for the project's "single pane" debugger windows (see the AI Debugger). Provides the
 	///  shared skeleton — an optional gizmo toggle toolbar, an auto-refreshing color-coded entity list
@@ -258,7 +261,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 					if (!string.IsNullOrEmpty(result))
 					{
 						EditorGUIUtility.systemCopyBuffer = result;
-						Debug.Log($"Copied debug info for entity '{_selected.name}' to clipboard!");
+						DebugX.Logger(LogChannels.Editor).Info("Copied debug info for entity '{EntityName}' to clipboard!", _selected.name);
 					}
 				}
 			}

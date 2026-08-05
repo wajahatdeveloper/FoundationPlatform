@@ -10,6 +10,8 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
+	using DebugX = DebugX.DebugX;
+	
 	/// <summary>
 	///  Spawner script for spawning units within an adjustable area.
 	///  Attached to spawn area GameObjects (one for player, one for enemy, etc.).
@@ -86,7 +88,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 			var providerType = System.Type.GetType(selectedProviderType);
 			if (providerType == null)
 			{
-				FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+				DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 				      .Error("AreaSpawner on {GameObjectName}: Could not resolve provider type '{ProviderType}'.",
 				             gameObject.name, selectedProviderType);
 				return;
@@ -117,7 +119,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 				_randomProvider = randomProviderBehaviour as IRandomProvider;
 				if (_randomProvider == null)
 				{
-					FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+					DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 					      .Error(
 						      "AreaSpawner on {GameObjectName}: randomProviderBehaviour does not implement IRandomProvider.",
 						      gameObject.name);
@@ -199,7 +201,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 		{
 			if (unitPrefab == null)
 			{
-				FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+				DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 				      .Error("AreaSpawner on {GameObjectName}: Unit prefab is not assigned!", gameObject.name);
 				return new List<GameObject>();
 			}
@@ -211,7 +213,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 			{
 				if (!TryFindSpawnPosition(placedPositions, out var position))
 				{
-					FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+					DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 					      .Error(
 						      "AreaSpawner on {GameObjectName}: Could not find a clear spawn position for unit {Index} after {Attempts} attempts.",
 						      gameObject.name, i + 1, MaxSpawnPlacementAttempts);
@@ -238,7 +240,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 				spawned.Add(instance);
 			}
 
-			FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Default).WithContext(gameObject)
+			DebugX.Builder(LogChannels.Default).WithContext(gameObject)
 			      .Info("AreaSpawner on {GameObjectName}: Spawned {Count} units", gameObject.name, count);
 			return spawned;
 		}
@@ -266,7 +268,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 
 			if (spawnTransformOverride == null)
 			{
-				FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+				DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 				      .Error("AreaSpawner on {GameObjectName}: spawnTransformOverride is not assigned.", gameObject.name);
 				return areaPosition;
 			}
@@ -322,7 +324,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 				// UnityEngine.Random (which would make spawns non-deterministic with no diagnostic).
 				if (SceneSpawnReadyGate.UsesDeterministicStartup)
 				{
-					FoundationPlatform.DebugX.DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
+					DebugX.Builder(LogChannels.Validation).WithContext(gameObject)
 					      .Error(
 						      "AreaSpawner on {GameObjectName}: deterministic startup is in use but no IRandomProvider is assigned. Assign a deterministic random provider; refusing to fall back to UnityEngine.Random for simulation-affecting spawn positions.",
 						      gameObject.name);

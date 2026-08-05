@@ -90,8 +90,14 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         [UnityEngine.HideInCallstack]
+        private static void WriteStructured(LogLevel level, string messageTemplate, object[] propertyValues)
+        {
+            WriteStructured(level, messageTemplate, propertyValues, null);
+        }
+
+        [UnityEngine.HideInCallstack]
         private static void WriteStructured(LogLevel level, string messageTemplate, object[] propertyValues,
-                                            System.Exception exception = null)
+                                            System.Exception exception)
         {
             if (!LogPipeline.ShouldEmit(level, null))
                 return;
@@ -191,6 +197,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
         [System.ThreadStatic] private static StringBuilder _stringBuilder;
 
+        [UnityEngine.HideInCallstack]
         public static void LogArray<T>(T[] toLog)
         {
             if (!LogPipeline.ShouldEmit(LogLevel.Information, null))
@@ -206,9 +213,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
                   .Append(": ").Append(toLog[i]);
             }
 
-            UnityEngine.Debug.Log(sb.ToString());
+            EmitLogArray(sb.ToString());
         }
 
+        [UnityEngine.HideInCallstack]
         public static void LogArray<T>(IList<T> toLog)
         {
             if (!LogPipeline.ShouldEmit(LogLevel.Information, null))
@@ -226,7 +234,26 @@ namespace AetherNexus.FoundationPlatform.DebugX
                           toLog[i]);
             }
 
-            UnityEngine.Debug.Log(sb.ToString());
+            EmitLogArray(sb.ToString());
+        }
+
+        [UnityEngine.HideInCallstack]
+        private static void EmitLogArray(string renderedMessage)
+        {
+            var callerInfo = CallerInfoHelper.GetCallerInfo();
+            var logEvent = new LogEvent(
+                LogLevel.Information,
+                renderedMessage,
+                renderedMessage,
+                null,
+                null,
+                null,
+                callerInfo,
+                null,
+                null,
+                null
+            );
+            LogPipeline.Emit(logEvent);
         }
 
         #endregion

@@ -82,3 +82,9 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 | `PocoInspector` | Reflection drawer for non-serialized members |
 | `AetherInspectorReflectedDrawer` | PropertyDrawer base for nested serializable types |
 | `EngineListDrawer` / `EngineDictionaryDrawer` / `TableRenderer` | Collection renderers |
+
+## Implementation notes (audit closure)
+
+**Empty `catch { }` at reflection/IMGUI sites:** intentional IMGUI robustness carve-out. Reflection-based member resolution and dynamic layout can throw on edge-case types or Unity version quirks; swallowing at the draw site keeps the Inspector usable. This is **not** the project's simulation fail-fast pattern — do not copy this style into authoritative data paths.
+
+**`ObjectSelectorPopupX`:** scoped, type-filtered, opt-in object picker for inline editors — not a general second asset browser. Complies with designer-surface priority (docs/13): use ProjectWindowX/HierarchyX for browsing; use this only where an attribute-driven inline pick is required.
