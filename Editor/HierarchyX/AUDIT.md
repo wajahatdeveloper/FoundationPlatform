@@ -1,75 +1,262 @@
-# HierarchyX — Architecture Audit
+# HierarchyX — Architecture Audit (re-audit after fixes)
 
 ## Context
 
-HierarchyX (`Packages/com.aethernexus.foundationplatform/Editor/HierarchyX/`, namespace `HierarchyX`, assembly `FoundationPlatform.Editor`) is the generic, engine-agnostic Hierarchy-window enhancement layer: one draw pipeline (`HierarchyX.OnItemGUI`) that layers row tint, tree lines, best-component icon, missing-script badge, mini labels (tag/layer/sorting layer), a decorator-supplied chip, hover-only row controls, a row accent spine, and a row separator — plus a docked/fallback setup panel (`Panel/`) that hosts accordion sections. It exposes exactly two extensibility seams, both `TypeCache`-auto-discovered: `IHierarchyRowDecorator` (row tint/accent/chip) and `IHierarchyPanelSection` (docked panel sections). `FoundationPlatform.Editor` only references `FoundationPlatform.Runtime` (confirmed via its `.asmdef`), so it cannot reach `GameEngineCore` — the actual designer-facing content (engine concept chips, Scene Setup / Game Session / Domain Managers / Scene State panel sections) is contributed from `com.aethernexus.gameenginecore` through these two seams, not implemented in this package. That package is scope for a separate audit pass; this audit verified the GameEngineCore-side chip implementation only far enough to answer this doc's explicit checklist items (glyphs, classification mechanism), not as a full audit of that package.
+Re-audit of the original `AUDIT.md` findings (written at commit `d714482`, "Audit") against the current
+state of `Packages/com.aethernexus.foundationplatform/Editor/HierarchyX/` at `HEAD`. Scope and subsystem
+description are unchanged from the original audit — see that document's Context for the full pipeline
+description; this pass focuses on **what changed** (`git diff d714482 HEAD -- Editor/HierarchyX/`,
+`Editor/ProjectWindowX/`, `Documentation~/ARCHITECTURE.md`) and re-verifies every original finding.
 
-**In-flight settings change**: `ProjectSettings/HierarchyXSettings.asset` shows as modified in git status. Inspected via `git diff` — the only change is a reorder of `panelCollapsedSections` (the `GameEngineCore.Domains` entry moved to the end of the collapsed-sections list). This is the normal side effect of expanding/collapsing an accordion section in the docked panel (or a `HierarchyPanelHost.RevealSection` hand-off) being saved back to the project-settings asset; it is not a partial edit, and code review below found no mechanism by which `HierarchyXSettings` writes itself unprompted (see Codebase Gotchas). Treated as benign for this audit, but flagged per instructions since it is an uncommitted change touching this subsystem's own settings asset.
+**Diff scope actually touched between `d714482` and `HEAD` under `Editor/HierarchyX/`:**
+`HierarchyX.Editor.asmdef` (reference + `defineConstraints` change), `HierarchyX.cs` (one new call site),
+`HierarchyXFolderIcons.cs` (**new**, 56 lines), `HierarchyXSettings.cs` (+1 field), `HierarchyXSettingsProvider.cs`
+(+1 settings-extras hook, +2 search keywords). No other file in this package changed.
 
-## Findings
+**Important process note discovered during this re-audit**: three of the original audit's findings —
+`soloButtons` defaulting to `true`, the missing HierarchyX section in `ARCHITECTURE.md`, and the
+`LayerColor`/`PanelChip` optional-parameter constructors — were **already fixed at commit `d714482` itself**
+(verified via `git show d714482:<file>` vs. its parent `d714482^`: `soloButtons` changed `true`→`false`,
+the "## Hierarchy tooling (HierarchyX)" section was added to `ARCHITECTURE.md`, and both types already had
+explicit non-optional overloads, all in the same "Audit" commit that wrote the original `AUDIT.md`). The
+original `AUDIT.md`'s prose was never updated to reflect its own commit's changes, so it described a
+"before" state that no longer matched the tree it was committed alongside. This re-audit reports the
+**current, HEAD** status of each finding — which for these three is "fixed," but not because of anything
+in the `d714482..HEAD` window; that window left them untouched (i.e. still fixed).
 
-### Designer Surface Priority
+## Status of original findings
 
-No findings. The two documented capabilities (row decorations, docked panel sections) are both genuinely mechanized in this package:
-- Row decorations: `HierarchyX.OnItemGUI` (`HierarchyX.cs:57-106`) composes tint (`ColorSort`), tree lines, best icon, missing-script badge, mini-labels, decorator chip (`DrawBadgeAndMiniLabels`/`DrawRowBadge`), row controls, and an accent spine (`DrawRowAccent`) in one ordered pass per row.
-- Docked panel sections: `HierarchyPanelHost` (`Panel/HierarchyPanelHost.cs`) docks a collapsible IMGUI footer to Unity's built-in `SceneHierarchyWindow` (reflection quarantined to this one file) and renders whatever `IHierarchyPanelSection`s are registered, accordion-style, via `HierarchyPanelWidgets.DrawSections`; `HierarchyPanelWindow` is the documented fallback for Unity versions where the internal type can't be resolved.
-- Cross-checked (out of this package, for verification only): `com.aethernexus.gameenginecore/Editor/HierarchyPanel/{SceneSetupPanelSection,GameSessionPanelSection,DomainsPanelSection,SceneStatePanelSection,PawnSetupPanelSection}.cs` exist and implement `IHierarchyPanelSection`, and `Editor/DomainHierarchyBridge/{DomainHierarchyDecorator,SessionHierarchyDecorator}.cs` implement `IHierarchyRowDecorator` for engine-concept chips and session/possession rows. No gap between docs/09's described capability and what actually renders.
+| # | Original finding | Status at HEAD | Evidence |
+|---|---|---|---|
+| 1 | Designer Surface Priority — no findings | No longer applicable to re-check (nothing in this area changed) | No diff in `HierarchyX.cs`'s pipeline ordering except the one new `HierarchyXFolderIcons.Draw` call (see new finding below) |
+| 2 | Engine Concept Chip System — no findings (GameEngineCore scope) | Unchanged / out of scope | No diff touches decorator/chip files |
+| 3 | **Warning**: `HierarchyXRowControls.soloButtons` defaults `true`, duplicating Unity's Scene-Visibility hover icons | **Fixed** | `Editor/HierarchyX/HierarchyXSettings.cs:121` — `public bool soloButtons = false;` at `HEAD`. Confirmed already `false` at the audit's own base commit `d714482` (`git show d714482^:...HierarchyXSettings.cs` shows `true`; `git show d714482:...` shows `false` — the flip happened in the same commit that wrote the original audit). `Documentation~/ARCHITECTURE.md` (current, and already at `d714482`) states explicitly: "`HierarchyXRowControls.soloButtons` (hover visibility/pickability toggles) defaults **off**: Unity's own stock Hierarchy already shows equivalent hover icons... only `rowActiveToggle` (genuinely new) defaults on." No regression between `d714482` and `HEAD` — value unchanged, code in `HierarchyXRowControls.cs` untouched by this diff. |
+| 4 | Designer Vocabulary Compliance — no findings | Unchanged | Only new strings added are the Folder Icons toggle/HelpBox (checked fresh below — compliant) |
+| 5 | Ownership — no findings | Unchanged | Still exactly one `hierarchyWindowItemOnGUI` subscriber; new `HierarchyXFolderIcons.Draw` call is inline in the existing pass, not a second pipeline |
+| 6 | Auto-Discovery Consistency — no findings | Unchanged | Not touched by this diff |
+| 7 | **Info**: manual `Register`/`Unregister` escape hatches unused | Unchanged / still applicable | Not touched by this diff; still zero callers |
+| 8 | **Info**: `LayerColor`/`PanelChip` optional-parameter constructors violate docs/00 §2 | **Fixed** | `HierarchyXSettings.cs:38,44` — `LayerColor(int,Color,TintMode)` and a separate `LayerColor(int,Color) : this(..., TintMode.GradientRightToLeft)`, no optional parameter. `Panel/IHierarchyPanelSection.cs:28,34` — `PanelChip(string,PanelChipStatus,string)` and `PanelChip(string,PanelChipStatus) : this(..., null)`, likewise two explicit overloads, no default parameter value. Both already in this exact shape at `d714482` (`git show d714482:<file>` matches `HEAD` byte-for-byte on these lines) — fixed before/at the original audit's own commit, not in the window since. |
+| 9 | **Warning**: `Documentation~/ARCHITECTURE.md` never mentions HierarchyX | **Fixed** (as of `d714482`; still present at `HEAD`) | `git show HEAD:Documentation~/ARCHITECTURE.md` has a full "## Hierarchy tooling (HierarchyX)" section (lines 264-276 at HEAD): namespace, one-line pipeline summary, a table with both `IHierarchyRowDecorator`/`IHierarchyPanelSection` extension points and their real consumers, the `ProjectSettings/HierarchyXSettings.asset` location, and the `soloButtons`-defaults-off note. Also listed in the "Editor tooling" table (`| HierarchyX | Editor/HierarchyX/ | ... |`) and the namespace map. `git diff d714482 HEAD -- Documentation~/ARCHITECTURE.md` shows this section already existed at `d714482` and was only *extended* since (one sentence added about `HierarchyXSettingsExtras.Register`, matching the new Folder Icons settings hook — see below). |
+| 10 | Codebase Gotchas — no findings | Unchanged for pre-existing files; re-checked fresh for the new file (see below) | — |
 
-### Engine Concept Chip System
+**Net result: every one of the original audit's three actionable findings (#3, #8, #9) is fixed at HEAD.**
+None were fixed *by* the `d714482..HEAD` diff under review — they were already fixed in the commit that
+introduced the audit document itself. The `d714482..HEAD` window's only substantive change to this
+package is the new Folder Icons feature, audited fresh below, plus one related cross-package doc-drift
+regression it exposed (asmdef `defineConstraints`).
 
-No findings in this package's scope — chip glyph/classification logic is not implemented here (it lives in GameEngineCore, correctly, per the assembly boundary). Verified out-of-band since the checklist explicitly asked for it:
-- `com.aethernexus.gameenginecore/Editor/Domains/EngineConceptIntrospection.cs:73-111` classifies purely from base type (`DomainTypeIntrospection.IsDomainManager`/`IsDomainEntity`, `SubsystemBase`), with `[EngineConceptAttribute]` (`Runtime/Systems/Domains/EngineConcept.cs`) as the only override path — matching docs/04's "classification is derived from the base type, so it cannot drift out of sync with a rename" exactly. No hardcoded string-based classification found.
-- `EngineConceptPresentation.ChipLabel` (`Editor/Domains/EngineConceptPresentation.cs:47-68`) contains all seven documented glyphs verbatim: `◈ DOMAIN MANAGER`, `◈ DOMAIN ENTITY`, `◆ CONTROL LAYER`, `▲ ARBITER`, `▣ SHARED STATE`, `■ INFRASTRUCTURE`, `● ENTITY COMPONENT`. No stale variants found.
-- HierarchyX's own side of the contract (`HierarchyRowDecoration.badgeText`/`badgeColor`, `IHierarchyRowDecorator.TryDecorate`) is plain string/color data with no knowledge of engine concepts — correctly generic.
+## New findings (this diff window)
 
-### Unique-Only UI Rule
+### `HierarchyXFolderIcons.cs` — what it does
 
-- **Warning** — `HierarchyXRowControls.soloButtons` (default `true`) redraws Unity's own built-in Scene-Visibility hover icons (visibility eye + pickability lock) using the same public `SceneVisibilityManager` API Unity's stock Hierarchy already uses to show equivalent hover icons at the row's right edge (`Editor/HierarchyX/HierarchyXRowControls.cs:45-90`, `IconRect` at line 93). The comment at the top of the file even notes it "Uses only the public SceneVisibilityManager API" — i.e. it is a deliberate re-implementation of a feature Unity ships out of the box, not new capability. Why it matters: check #3 in this audit exists specifically to catch duplication of Unity's own default Hierarchy chrome, and two independent per-row hover icons driven by the same manager at the same screen position risk visually overlapping/double-rendering and add a second place a designer has to learn the same click/right-click contract Unity already teaches natively.
+New internal static class, hooked into the main draw pipeline at `HierarchyX.cs:97`
+(`HierarchyXFolderIcons.Draw(rect, go, s);`, immediately after `HierarchyXBestIcon.Draw` and before
+`HierarchyXMissingScript.Draw`). Gated by a new `HierarchyXSettings.folderIcons` bool (default `false`,
+`HierarchyXSettings.cs:114`). When enabled, for every hierarchy row it resolves an asset path for the
+row's `GameObject` (`ResolveAssetPath`: direct `AssetDatabase.GetAssetPath(go)`, then
+`PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go)`, then a walk up `transform.parent` retrying
+`AssetDatabase.GetAssetPath` on each ancestor), and if a path is found, calls the pre-existing
+`ProjectWindowX.FolderIcons.TryResolve(path, ProjectWindowXSettings.instance, out icon, out matchedFolder)`
+(`Editor/ProjectWindowX/Passes/FolderIcons.cs:49-83`) to look up a matching folder-icon rule and draws the
+resulting icon at a fixed 16×16 rect on the row, plus an invisible tooltip label.
 
-No other findings — tree lines, odd/even + per-layer row tint, best-component icon replacement, tag/layer/sorting-layer mini labels, missing-script badge, header bars, and hover-highlight-in-Scene-View are all genuine additions Unity's stock Hierarchy does not provide.
+Enabling this required `HierarchyX.Editor.asmdef` to add a hard reference to `ProjectWindowX.Editor`
+(previously `"references": []`) and to drop `"defineConstraints": ["HOMAM_GEC"]` entirely (see the asmdef
+finding below) — this is the mechanism by which a HierarchyX row can now consult ProjectWindowX's rule
+table without a runtime type-name lookup.
 
-### Designer Vocabulary Compliance
+### Bug — `applyToHierarchy` opt-in flag is defined, surfaced in UI, and documented, but never enforced
 
-No findings. Grepped every visible label/tooltip/HelpBox string in this package's scope for the docs/14 stale-jargon list (`Drift`, `GAS` bare, `ASC`, `MMC`, `Tier-1`/`Tier-2`, bare `Registry`/`Definition` in menu text, `Payload`/`Fragment`/`Subsystem` in Title/InfoBox prose) — none appear. `HierarchyXSettingsProvider`'s search keyword list (`"stale", "orphan", "guard", "component"`, line 63) is plain search-index vocabulary, not designer-facing prose, and doesn't use "drift" either.
+**Severity: high (functional bug, contradicts its own doc comment and its own Settings UI copy).**
 
-### Ownership
+`ProjectWindowXSettings.FolderIconRule.applyToHierarchy` (`Editor/ProjectWindowX/ProjectWindowXSettings.cs:30`)
+is a new per-rule bool, editable via a checkbox in the Project Settings ▸ ProjectWindowX rule list
+(`ProjectWindowXSettingsProvider.cs:182`, `EditorGUI.PropertyField(hierRect, element.FindPropertyRelative("applyToHierarchy"), ...)`).
+`HierarchyXFolderIcons.cs`'s own XML doc comment says it draws icons "on hierarchy rows whose asset path
+... matches a rule with `applyToHierarchy = true`," and the settings HelpBox it registers says: "Check
+'Apply to Hierarchy' on a rule to include it here" (`HierarchyXSettingsProvider.cs`, new
+`HierarchyXFolderIconsSettingsHook.DrawFolderIconsSection`).
 
-No findings. Exactly one subscriber to `EditorApplication.hierarchyWindowItemOnGUI` (`HierarchyX.cs:38-39`) drives every row pass in a fixed, documented order — there is no second, competing draw pipeline in this package. The decorator/panel-section extensibility points are themselves single-registry: every contributor found across the codebase (`StaleComponentDecorator` in this same package's `Editor/StaleComponentGuard/`, plus `DomainHierarchyDecorator`, `SessionHierarchyDecorator`, `CharacterRigDecorator`, `ItemRigDecorator` in other packages) registers into the one `HierarchyXRegistry`/`HierarchyXPanelRegistry`, ordered by `Order` — additive contributions to one pipeline, not parallel pipelines.
+But `FolderIcons.TryResolve` — the only method `HierarchyXFolderIcons.Draw` calls to resolve an icon
+(`Editor/HierarchyX/HierarchyXFolderIcons.cs:20`) — never reads `applyToHierarchy` at all
+(`Editor/ProjectWindowX/Passes/FolderIcons.cs:57-78`: the loop tests only `rule.folderPath`,
+`rule.applyToChildren`, `rule.builtinIconName`, `rule.customIcon`). A project-wide grep for
+`applyToHierarchy` (`grep -rn applyToHierarchy Editor/`) shows exactly three hits: the field declaration,
+the settings-UI checkbox that writes it, and the doc-comment that claims it's read — **no code path reads
+it**. Practical consequence: turning on `HierarchyXSettings.folderIcons` shows the icon for **every**
+configured folder-icon rule whose path matches (with `applyToChildren` true) on Hierarchy rows, regardless
+of whether that rule's "Apply to Hierarchy" checkbox is on or off — the opt-in the UI advertises does
+nothing.
 
-### Auto-Discovery Consistency
+### Bug — folder icon draws directly on top of the best-component icon at the identical rect, with no opaque backing
 
-No findings. `HierarchyXRegistry.EnsureDiscovered()` (`HierarchyXRowDecorator.cs:127-147`) and `HierarchyXPanelRegistry.EnsureDiscovered()` (`Panel/HierarchyXPanelRegistry.cs:55-74`) both use `TypeCache.GetTypesDerivedFrom<T>()` + `Activator.CreateInstance` on any concrete type with a public parameterless constructor, with no registration call required — the same auto-discovery pattern docs/09 documents for `IEntityDebugSection`/`IWorldDebugSection` ("auto-discover via TypeCache... with no registration call"). A manual `Register`/`Unregister` path also exists on both registries for types that can't be default-constructed, but it is optional, not the required path — no consistency gap versus the documented pattern.
+**Severity: medium (visual regression when both `bestIcons` and `folderIcons` are enabled, the two most
+directly comparable features in this file).**
 
-### Redundancy/Simplification
+`HierarchyXBestIcon.Draw` (`Editor/HierarchyX/HierarchyXBestIcon.cs:13-27`) computes
+`var size = Mathf.Min(16f, rect.height); var iconRect = new Rect(rect.x, rect.yMin + (rect.height - size) * 0.5f, size, size);`
+and — critically — paints an **opaque row-matched background** first
+(`EditorGUI.DrawRect(iconRect, bg)`, where `bg = HierarchyX.ComposeRowBackground(...)`) specifically, per
+its own doc comment, "so Unity's default icon is erased rather than showing through transparent/letterboxed
+areas of the custom icon."
 
-- **Info** — The manual `HierarchyXRegistry.Register`/`Unregister` and `HierarchyXPanelRegistry.Register`/`Unregister` methods are not called anywhere in the current codebase (grepped project-wide); every real decorator/section relies solely on `TypeCache` auto-discovery. Not dead code to remove — it's a documented, intentional escape hatch (`HierarchyXRowDecorator.cs:40-41`, `Panel/IHierarchyPanelSection.cs:70-71`) for instances that need non-default construction — but worth knowing it's currently unexercised.
-- **Info** — Two optional-parameter constructors exist in this scope, against docs/00 §2's "No optional parameters" rule: `LayerColor(int layer, Color color, TintMode mode = TintMode.GradientRightToLeft)` (`HierarchyXSettings.cs:38`) and `PanelChip(string label, PanelChipStatus status, string tooltip = null)` (`Panel/IHierarchyPanelSection.cs:28`). Low severity — both are editor-only presentation DTOs, not the gameplay/simulation-facing API surface the rule is primarily guarding against (defensive fallback logic in authoritative code) — but they are a literal instance of the pattern the rule bans, and `ApplySkinDefaults()` (`HierarchyXSettings.cs:182`) actually relies on the `LayerColor` default.
+`HierarchyXFolderIcons.Draw` (`Editor/HierarchyX/HierarchyXFolderIcons.cs:16-24`) computes the **exact same
+formula** — `var size = Mathf.Min(16f, rect.height); var iconRect = new Rect(rect.x, rect.yMin + (rect.height - size) * 0.5f, size, size);`
+— and is called immediately after `HierarchyXBestIcon.Draw` in the pipeline (`HierarchyX.cs:96-97`), but
+calls `GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit)` directly with **no background paint first**.
+Two consequences, both unaddressed by any settings interaction between the two features:
+1. On any row where both `bestIcons` and `folderIcons` are enabled and a folder-icon rule matches, the
+   folder icon is painted **exactly on top of** the best-component icon at the same 16×16 slot — one
+   silently replaces the other with no indication either happened, and no way to see both.
+2. Because there's no opaque backing paint (unlike its sibling `HierarchyXBestIcon`), any folder icon with
+   transparent regions (most of Unity's built-in folder/asset icons have transparent corners) will let
+   whatever was drawn underneath (Unity's stock default icon, or the best-component icon) show through —
+   the exact visual artifact `HierarchyXBestIcon`'s own doc comment explains it added the background paint
+   to avoid.
 
-### Doc/Architecture Drift
+### Efficiency — no per-row caching, unlike the sibling feature it sits next to
 
-- **Warning** — `Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md` never mentions HierarchyX: no row in the "Namespace map" table (the `HierarchyX` namespace is absent), no row in the "Editor tooling" table, and no mention of the `IHierarchyRowDecorator`/`IHierarchyPanelSection` extensibility points or `ProjectSettings/HierarchyXSettings.asset`. Confirmed via grep — zero hits for "HierarchyX" across all of `Documentation~/`. Why it matters: docs/00 §2 requires "after a change that alters a contract, ownership, or layer boundary, update the matching `docs/NN-*.md` (or the package's `ARCHITECTURE.md`)... in the same task" — HierarchyX is a full designer-facing extensibility contract (two `TypeCache` seams other packages already depend on) that is completely invisible to anyone reading this package's own architecture doc, despite being the #2-ranked designer surface project-wide per docs/09.
+**Severity: low/info.** `HierarchyXRowCache` (`Editor/HierarchyX/HierarchyXRowCache.cs:6-9`) exists
+specifically to keep `GetComponents`-class work "out of the per-repaint path," invalidated only on
+`hierarchyChanged`/undo/`ObjectChangeEvents`. `HierarchyXBestIcon.Draw` uses it
+(`HierarchyXRowCache.Get(go).icon`). `HierarchyXFolderIcons.Draw` does the opposite: on **every Repaint,
+for every visible row**, when `folderIcons` is enabled, it calls `AssetDatabase.GetAssetPath` (up to twice),
+conditionally `PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot`, then a `while` loop up the transform
+ancestry each iteration calling `AssetDatabase.GetAssetPath` again, then a linear scan of
+`ProjectWindowXSettings.instance.folderIconRules` inside `FolderIcons.TryResolve` — none of it cached. In a
+scene with many rows and/or many configured rules this reintroduces exactly the per-repaint cost pattern
+`HierarchyXRowCache`'s own doc comment says this package deliberately avoids elsewhere.
 
-### Codebase Gotchas
+### Redundancy check — does this duplicate an existing folder-icon mechanism?
 
-- No findings for `??` on Unity objects. Every null-style check in this scope uses the Unity-null idiom (`if (!go)`, `if (go == null)`, `if (footer != null)` where `footer` is a `VisualElement`, not a `UnityEngine.Object`) — no `??`/`??=` operator appears anywhere in the audited files.
-- No findings for the C# 9 struct rules. All structs in scope (`HierarchyRowDecoration`, `LayerColor`, `PanelChip`, `PanelAction`) have no instance field initializers, and every explicit constructor (`LayerColor`, both `PanelChip`/`PanelAction` ctors) assigns every instance field — no `CS8773`/`CS0171` risk.
-- No findings for unconditional `OnValidate`/`OnAfterDeserialize` scene-dirtying, but this needed the closest look given the flagged in-flight settings change:
-  - `HierarchyXSettings.OnValidate()` (`HierarchyXSettings.cs:194-200`) clamps `lineThickness`/`rightMargin`/`badgePadding`/`badgeSpacing`/`badgeBackgroundOpacity`. The clamp assignments are unconditional (no `if (x != clamped)` guard) but are value-idempotent in practice — `Mathf.Clamp` returns the same value when already in range, so there is no drift-by-repetition risk the way a recomputed hash would have.
-  - More importantly, `HierarchyXSettings` is **not** a scene or prefab asset subject to Unity's normal dirty-tracking. It is a bespoke singleton loaded/saved via `InternalEditorUtility.LoadSerializedFileAndForget`/`SaveToSerializedFileAndForget` against `ProjectSettings/HierarchyXSettings.asset` (`HierarchyXSettings.cs:51,152-171,186-192`), and nothing in `OnValidate` calls `.Save()` — the file on disk only changes when something explicitly calls `Save()` (the settings-provider change-check, `ToggleEnabled`, `SetCollapsed`, `RevealSection`, import/reset buttons). So `OnValidate` firing on domain reload/scene-open cannot by itself produce the kind of "dirty with no git diff" trap docs/00 §3 describes for scene objects — there is no scene here to dirty, and no auto-save path from the callback. This matches what `git diff` actually showed for the in-flight change (an explicit accordion-state save, not spurious recomputation).
+No duplicate *implementation* — `HierarchyXFolderIcons.Draw` correctly delegates to the pre-existing
+`ProjectWindowX.FolderIcons.TryResolve` (`Editor/ProjectWindowX/Passes/FolderIcons.cs`) rather than
+re-parsing rules or re-resolving icons itself, so the single source of truth (`ProjectWindowXSettings.folderIconRules`)
+is preserved and there is no second, competing rule table. This is the right shape for reuse. The problem
+is narrower than duplication: it's that the *cross-cutting opt-in* (`applyToHierarchy`) meant to let a
+designer choose "this rule's icon should also show in the Hierarchy, not just the Project window" is wired
+into the UI and the doc-comment but not into the shared `TryResolve` (or a Hierarchy-specific overload of
+it) — see the bug above.
+
+### Assembly-boundary drift — `defineConstraints: ["HOMAM_GEC"]` silently removed from four assemblies, `ARCHITECTURE.md` now factually wrong
+
+**Severity: warning — this is a new, currently-live doc/architecture drift, distinct from and in addition
+to the original audit's now-fixed one.**
+
+`git diff d714482 HEAD -- Editor/HierarchyX/HierarchyX.Editor.asmdef` shows two changes together:
+`"references": []` → `"references": ["ProjectWindowX.Editor"]`, and `"defineConstraints": ["HOMAM_GEC"]` →
+`"defineConstraints": []`. The same `defineConstraints` removal (with `versionDefines` on
+`com.aethernexus.gameenginecore` left in place, still producing the `HOMAM_GEC` symbol) happened in the
+same diff window to three sibling assemblies: `Editor/ProjectWindowX/ProjectWindowX.Editor.asmdef`,
+`Editor/EditorEnhancerX/EditorEnhancerX.Editor.asmdef`, and
+`Editor/StaleComponentGuard/FoundationPlatform.StaleComponentGuard.Editor.asmdef` (verified via
+`git diff d714482 HEAD` on each file). A repo-wide grep for `HOMAM_GEC` outside `.asmdef`/`.meta`/`AUDIT.md`
+files finds only `Editor/PackageIntegration/HomamGecOrphanDefineCleaner.cs` (a `PlayerSettings`
+scripting-define cleanup utility, unrelated to these four asmdefs' compile gating) — no `#if HOMAM_GEC`
+guard exists anywhere in the four assemblies' own code, so this was a pure `defineConstraints` removal,
+not a shift to finer-grained conditional compilation inside the files.
+
+`Documentation~/ARCHITECTURE.md` at `HEAD` still asserts the opposite of the current state:
+line 53 — "`ProjectWindowX.Editor`, `HierarchyX.Editor` ..., `EditorEnhancerX.Editor`, and
+`FoundationPlatform.StaleComponentGuard.Editor` additionally carry `defineConstraints: ["HOMAM_GEC"]` +
+`versionDefines` on `com.aethernexus.gameenginecore` — they only compile when GameEngineCore is present as
+a UPM package... these four designer-facing subsystems silently don't exist at all in a build without
+GameEngineCore installed." This sentence is now **false** for all four named assemblies: none of them
+carry `defineConstraints` any more, so all four always compile regardless of whether GameEngineCore is
+installed. This is a direct, in-scope contradiction (`HierarchyX.Editor` is explicitly named in the
+now-stale sentence), and it was introduced in the exact diff window this re-audit covers, so — unlike the
+three original findings above — this one was **not** present at `d714482` and is a genuinely new
+regression for this re-audit to report. It also means the sibling `Editor/ProjectWindowX/AUDIT.md`'s
+Context section ("The entire `ProjectWindowX.Editor` assembly is gated...") is now stale for the same
+reason, though fixing that file is out of scope here (only this package's `HierarchyX/AUDIT.md` was
+edited, per instructions).
+
+Practical effect of the reference + constraint change together: previously, `HierarchyX.Editor` had zero
+assembly references and only existed when GameEngineCore was installed; `ProjectWindowX.Editor` was the
+same (zero references, same gating). Now both compile unconditionally *and* `HierarchyX.Editor` has a real,
+undocumented hard reference on `ProjectWindowX.Editor` — a new coupling between what
+`Documentation~/ARCHITECTURE.md`'s Namespace map still describes as two independent "bare namespace"
+subsystems, with no mention of the new dependency anywhere in the doc.
+
+### Codebase Gotchas (docs/00 §3) — checked fresh for `HierarchyXFolderIcons.cs`
+
+No findings for the new file specifically:
+- No `??`/`??=` on a `UnityEngine.Object`-typed operand — `ResolveAssetPath`'s `if (go == null) return null;`
+  (line 30) uses the correct Unity-null idiom; all other null checks are on `string` (`string.IsNullOrEmpty`).
+- No `struct` declarations added.
+- No `OnValidate`/`OnAfterDeserialize` added; the new `HierarchyXSettings.folderIcons` field is a plain
+  bool with a `[Tooltip]`, handled by the pre-existing `OnValidate` (untouched by this diff) which does not
+  reference it.
+- No optional parameters introduced (`Draw(Rect, GameObject, HierarchyXSettings)` and
+  `ResolveAssetPath(GameObject)` both take required arguments only).
+
+### Designer Vocabulary Compliance — checked fresh
+
+No findings. "Enable Folder Icons" / "Folder Icons" / the HelpBox text use plain designer-facing language;
+no docs/14 stale-jargon term ("Drift", bare "Registry"/"Definition", etc.) appears in the new strings
+(`HierarchyXSettingsProvider.cs`'s new `DrawFolderIconsSection`, `HierarchyXSettings.cs`'s new `[Tooltip]`).
+The new settings-search keywords added (`"folder"`, `"icon"`) are consistent with the existing
+plain-vocabulary keyword list.
 
 ## Fixes
 
-1. **Doc/Architecture Drift** — Add a "Hierarchy tooling (HierarchyX)" section to `Documentation~/ARCHITECTURE.md`: namespace `HierarchyX`, the two `TypeCache` extensibility seams (`IHierarchyRowDecorator`, `IHierarchyPanelSection`), the docked-footer/fallback-window pair, and `ProjectSettings/HierarchyXSettings.asset` as the settings location. Needed so a reader of this package's own architecture doc knows the #2 designer surface's extension points exist before adding a new decorator/section elsewhere.
-2. **Unique-Only UI Rule** — Confirm product intent on `HierarchyXRowControls.soloButtons`: either (a) turn it off by default since Unity's own hover icons already cover visibility/pickability, keeping only the genuinely new `rowActiveToggle`, or (b) keep it but document in the Project Settings HelpBox why it's additive (e.g., guarantees the icons regardless of a Unity-side visibility-toolbar state) so the duplication is a documented decision, not an oversight. This is a design call, not made here.
-3. **Redundancy/Simplification (optional parameters)** — Replace `LayerColor`'s and `PanelChip`'s optional parameters with an explicit overload or a required argument, per docs/00 §2. Low priority; safe, mechanical change whenever this file is next touched.
+No files were edited under this task — per instructions, only `AUDIT.md` was rewritten; no source changes
+were made. Suggested fixes, in priority order, for a follow-up task:
 
-No fixes applied — this is a read-only audit; only `AUDIT.md` was written.
+1. **`applyToHierarchy` not enforced (bug)** — Either (a) add a `bool forHierarchy` parameter to
+   `FolderIcons.TryResolve`/`Resolve` (or a new overload) that also checks `rule.applyToHierarchy` when
+   called from `HierarchyXFolderIcons.Draw`, or (b) filter the rule list in `HierarchyXFolderIcons.Draw`
+   itself before calling `TryResolve`. Needed so the "Apply to Hierarchy" checkbox the Settings UI already
+   exposes actually does what its own HelpBox claims.
+2. **Best-icon / folder-icon collision (bug)** — Give `HierarchyXFolderIcons.Draw` an opaque background
+   paint before `GUI.DrawTexture` (matching `HierarchyXBestIcon.Draw`'s `ComposeRowBackground` pattern), and
+   decide product intent for the case where both features would draw at the same slot for the same row —
+   e.g. offset the folder icon to a different position, or make the two features mutually exclusive per row
+   (folder icon wins / best icon wins / side-by-side), and document the decision.
+3. **No per-row caching (efficiency)** — Route `HierarchyXFolderIcons.Draw`'s path resolution and rule
+   match through `HierarchyXRowCache` (or a similarly invalidated per-GameObject cache), consistent with
+   how `HierarchyXBestIcon` already avoids repeated per-repaint work.
+4. **`ARCHITECTURE.md` `defineConstraints` claim now false (doc drift)** — Update
+   `Documentation~/ARCHITECTURE.md`'s Assembly-definitions paragraph (currently around the "additionally
+   carry `defineConstraints: [\"HOMAM_GEC\"]`" sentence) to reflect that `ProjectWindowX.Editor`,
+   `HierarchyX.Editor`, `EditorEnhancerX.Editor`, and `FoundationPlatform.StaleComponentGuard.Editor` no
+   longer gate compilation on GameEngineCore's presence (only `versionDefines` remains, unused by any
+   `#if HOMAM_GEC` in-code guard) — or, if the constraint removal was accidental, restore it. Also add a
+   line noting `HierarchyX.Editor`'s new hard reference on `ProjectWindowX.Editor` to the Namespace-map /
+   Assembly-definitions section, since both are currently documented as independent.
+5. Carry over the original audit's already-fixed items — no action needed; listed here only for
+   completeness: `soloButtons` default, `LayerColor`/`PanelChip` optional parameters, and the
+   HierarchyX section in `ARCHITECTURE.md` all remain fixed at `HEAD`.
 
 ## Cross-references
 
-- Docs read in full: `docs/00-AgentGuide.md`, `docs/01-CorePrinciples.md`, `docs/04-DataAndDomains.md`, `docs/07-Initialization.md`, `docs/09-EditorHub.md`, `docs/13-AuthoringStandards.md`, `docs/14-DesignerVocabulary.md`.
-- Package doc checked for drift: `Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md` (and `index.md`, `AetherInspector.md`, `TweenX.md` — grepped, no HierarchyX mentions anywhere).
-- Files read in full (this package's assigned scope): every `.cs` under `Packages/com.aethernexus.foundationplatform/Editor/HierarchyX/` and `Editor/HierarchyX/Panel/` (18 files) — `HierarchyX.cs`, `HierarchyXBestIcon.cs`, `HierarchyXDropCopy.cs`, `HierarchyXHeaders.cs`, `HierarchyXHoverHighlight.cs`, `HierarchyXMiniLabels.cs`, `HierarchyXMissingScript.cs`, `HierarchyXRowCache.cs`, `HierarchyXRowControls.cs`, `HierarchyXRowDecorator.cs`, `HierarchyXSettings.cs`, `HierarchyXSettingsProvider.cs`, `HierarchyXStyles.cs`, `HierarchyXUtility.cs`, `Panel/HierarchyPanelHost.cs`, `Panel/HierarchyPanelWidgets.cs`, `Panel/HierarchyPanelWindow.cs`, `Panel/HierarchyXPanelRegistry.cs`, `Panel/IHierarchyPanelSection.cs`. Also read `Editor/FoundationPlatform.Editor.asmdef` to confirm the assembly boundary.
-- Files read outside this package's scope, for verification of specific audit-checklist items only (not a full audit of GameEngineCore — leave that to the GameEngineCore package audit pass): `com.aethernexus.gameenginecore/Runtime/Systems/Domains/EngineConcept.cs`, `Editor/Domains/EngineConceptPresentation.cs`, `Editor/Domains/EngineConceptIntrospection.cs`, `Editor/DomainHierarchyBridge/DomainHierarchyDecorator.cs`, `Editor/DomainHierarchyBridge/SessionHierarchyDecorator.cs`.
-- Other `IHierarchyRowDecorator`/`IHierarchyPanelSection` implementers found project-wide but not read in full (out of scope; noted for the Ownership finding only): `Editor/StaleComponentGuard/StaleComponentDecorator.cs` (this package), `com.aethernexus.gameframework/CharacterSystem/Editor/HierarchyBridge/CharacterRigDecorator.cs`, `com.aethernexus.gameframework/ItemSystem/Editor/HierarchyBridge/ItemRigDecorator.cs`, `com.aethernexus.gameenginecore/Editor/HierarchyPanel/{SceneSetupPanelSection,GameSessionPanelSection,DomainsPanelSection,SceneStatePanelSection,PawnSetupPanelSection}.cs`.
-- The GameEngineCore package audit (task #2) should treat the chip glyph/classification verification above as already done and instead focus its own HierarchyX-adjacent checks on: its `ARCHITECTURE.md` doc-drift for these bridge/panel-section files, whether `DomainHierarchyDecorator`/`SessionHierarchyDecorator`/panel sections themselves have any vocabulary or gotcha issues, and whether `EngineConceptIntrospection`'s reflection use is appropriately editor-only per docs/00's "no runtime reflection" rule.
+- Original audit re-verified: this package's own prior `AUDIT.md` content (at `d714482`), superseded by
+  this document.
+- `git diff d714482 HEAD -- Editor/HierarchyX/` (162 lines) and
+  `git diff d714482 HEAD -- Documentation~/ARCHITECTURE.md` — the two diffs this re-audit is based on.
+- Also read for the assembly-boundary finding (out of this package's directory but load-bearing for a
+  `Editor/HierarchyX/` finding): `Editor/HierarchyX/HierarchyX.Editor.asmdef`,
+  `Editor/ProjectWindowX/ProjectWindowX.Editor.asmdef`, `Editor/EditorEnhancerX/EditorEnhancerX.Editor.asmdef`,
+  `Editor/StaleComponentGuard/FoundationPlatform.StaleComponentGuard.Editor.asmdef`,
+  `Editor/PackageIntegration/HomamGecOrphanDefineCleaner.cs`, and the existing
+  `Editor/ProjectWindowX/AUDIT.md` (read for context only — not edited; its Context section is now stale
+  on the same `defineConstraints` point but fixing it is out of this task's scope).
+- Files read in full for the new-code audit: `Editor/HierarchyX/HierarchyXFolderIcons.cs` (new, 56 lines),
+  `Editor/HierarchyX/HierarchyXBestIcon.cs`, `Editor/HierarchyX/HierarchyXRowCache.cs`,
+  `Editor/HierarchyX/HierarchyX.cs` (call-site context), `Editor/HierarchyX/HierarchyXSettings.cs`,
+  `Editor/HierarchyX/HierarchyXSettingsProvider.cs`, `Editor/ProjectWindowX/Passes/FolderIcons.cs`,
+  `Editor/ProjectWindowX/ProjectWindowXSettings.cs` (for `FolderIconRule`/`applyToHierarchy`),
+  `Editor/ProjectWindowX/ProjectWindowXSettingsProvider.cs` (for the `applyToHierarchy` checkbox call site).
+- Docs read/re-checked: `docs/00-AgentGuide.md` §3 "Codebase-specific gotchas" (line 85 onward),
+  `docs/09-EditorHub.md` (HierarchyX designer-surface ranking, line 10),
+  `docs/13-AuthoringStandards.md` (line 94, "must not re-show Unity Project/Inspector defaults... Show
+  only authoring-unique status and actions" — relevant context for whether a Hierarchy-side folder icon is
+  additive vs. redundant; judged additive since it surfaces Project-window metadata at a point of use
+  (prefab rows) Unity's own Hierarchy never shows), `docs/14-DesignerVocabulary.md` (stale-jargon list,
+  none present in new strings).
+- Not re-read in full this pass (unchanged by the diff, already covered by the original audit and not
+  re-verified beyond the table above): `HierarchyXDropCopy.cs`, `HierarchyXHeaders.cs`,
+  `HierarchyXHoverHighlight.cs`, `HierarchyXMiniLabels.cs`, `HierarchyXMissingScript.cs`,
+  `HierarchyXRowControls.cs`, `HierarchyXRowDecorator.cs`, `HierarchyXStyles.cs`, `HierarchyXUtility.cs`,
+  `Panel/HierarchyPanelHost.cs`, `Panel/HierarchyPanelWidgets.cs`, `Panel/HierarchyPanelWindow.cs`,
+  `Panel/HierarchyXPanelRegistry.cs`, `Panel/IHierarchyPanelSection.cs`.

@@ -1,90 +1,206 @@
-# Validation & Tooling (Validation, Windows, Tools, PackageIntegration) — Architecture Audit
+# Validation & Tooling (Validation, Windows, Tools, PackageIntegration) — Architecture Audit (Re-Audit)
 
-## Context
+## Re-Audit Context
+
+Follow-up pass after fixes were applied. Method: re-read the original findings below, diffed
+`d714482..HEAD` for `Editor/Tools/ Editor/Utilities/ Editor/Validation/`, and read current file states
+directly (several structural fixes — the `PrefabLightmapData` move, the `Weaver` `EditorWindow`
+removal, the shared path-helper consolidation, the `DownloadSoundFromStoryBlock` removal — predate
+`d714482` itself, the baseline "Audit" commit this diff range starts from, so they don't appear as
+changed lines in the reviewed diff but are confirmed present in `HEAD`).
+
+**Headline result: all three structural findings called out for this re-audit are fixed**
+(`PrefabLightmapData` moved to `Runtime/`, `UIValidationPolicy`'s default rollout mode now `Strict`,
+`LightmapConfiguration.OnValidate` writes now guarded). Beyond those, two more Redundancy findings from
+the original audit are also independently fixed (`Weaver` is now a plain `static class`; the duplicated
+path-under-root logic is now a single shared `PathComparisonUtility.IsPathUnder` helper), and
+`DownloadSoundFromStoryBlock.cs` — flagged as questionable scope-fit — has been removed entirely. The
+`Documentation~/ARCHITECTURE.md` "Editor tooling" table has been partially updated to reflect these
+fixes (Weaver and Prefab Lightmap Generator entries now correctly describe the new state) but still
+does not list several tools that were already undocumented in the original audit (AutoBinderWindow,
+ScriptGeneratorWindow, MonoBehaviourScriptDuplicator, CodeAwareRename, ClipboardToScript,
+CameraScreenshot, Package2Folder, the `EditorGUIX_ImageStringConverter`, `MenuItemDuplicatePathValidator`,
+`DataPathPolicy`, or the `PackageIntegration` folder) — that Info-level drift finding remains open.
+
+## Original Context
 
 Scope covered, all `.cs` files read in full (30 files, ~7,260 lines):
 
 - `Editor/Validation/` — three unrelated concerns, not one pipeline:
-  - `DataPathPolicy/HierarchyPathPolicy.cs`, `HierarchyPatternMatcher.cs` — read-only asset-path classification/glob-matching primitives (`Match`, `TryClassify`, `ExpandConcreteFolders`). Consumed by GameEngineCore's Central Authoring / domain-manifest code (confirmed by repo-wide grep), not just by anything in this package.
-  - `MenuItemDuplicatePathValidator.cs` — `[InitializeOnLoad]` regression guard that logs when two `[MenuItem]` registrations collide on the same path/role.
-  - `UI/*` (`UIValidationEngine`, `UIValidationConventions`, `UIValidationPolicy`, `UIValidationPostprocessor`, `UIValidationMenu`, `UIValidationReporter`) — a self-contained linter that enforces UI folder-layer conventions (UIElement/Widget/Panel/Orchestration) for scripts and prefabs under `Assets/Scripts/UI`, `Assets/Content/UI`, wired to asset-import batching.
-- `Editor/Windows/` — three generic `EditorWindow`s: `AutoBinderWindow` (generates a field-binding code snippet from a scanned hierarchy), `SceneSwitcherWindow` (scene list/open/play-mode-start utility), `ScriptGeneratorWindow` (reusable generate-preview-write-script window, driven by callers elsewhere in the package).
-- `Editor/Tools/` — a grab-bag of generic editor utilities: `CameraScreenshot`, `ClipboardToScript`, `CodeAwareRename` (shared regex-based class/namespace rewrite), `DownloadSoundFromStoryBlock` (third-party-website MP3 scraper), `MonoBehaviourScriptDuplicator` (+ `ScriptReplacerWindow`), `Package2Folder` (reflection-based `.unitypackage` import-to-folder), `Weaver` (Tags/Layers/Scenes/Animations/NavMesh/Shaders `.g.cs` codegen), `EditorGUIX_ImageStringConverter/` (image↔Base64 string tool), `PrefabLightmapGenerator/` (prefab lightmap bake-and-reapply component + editor), `PresetAutomation/` (auto-apply `.preset` assets on import, with settings/diagnostics window).
-- `Editor/PackageIntegration/` — a single file, `HomamGecOrphanDefineCleaner.cs`, that strips the stale `HOMAM_GEC` scripting-define symbol when the GameEngineCore package is not registered. It is **not** the domain/integration-manifest "ensure semantics" pipeline described in docs/03–04; that pipeline (`PackageIntegrationManifest.cs`, domain folder/README/scripts-folder creation, `CentralAuthoringProjectConfig` registration) lives entirely in `Packages/com.aethernexus.gameenginecore/Editor/PackageIntegration/`, outside this package and outside this audit's file scope. Likewise, the "Central Validation" / "Central Window" described in docs/09 and docs/13 (`CentralWindow.cs`) lives in GameEngineCore, not in this package.
+  - `DataPathPolicy/HierarchyPathPolicy.cs`, `HierarchyPatternMatcher.cs` — read-only asset-path
+    classification/glob-matching primitives.
+  - `MenuItemDuplicatePathValidator.cs` — `[InitializeOnLoad]` regression guard.
+  - `UI/*` (`UIValidationEngine`, `UIValidationConventions`, `UIValidationPolicy`,
+    `UIValidationPostprocessor`, `UIValidationMenu`, `UIValidationReporter`) — a self-contained linter
+    for UI folder-layer conventions.
+- `Editor/Windows/` — `AutoBinderWindow`, `SceneSwitcherWindow`, `ScriptGeneratorWindow`.
+- `Editor/Tools/` — `CameraScreenshot`, `ClipboardToScript`, `CodeAwareRename`,
+  `DownloadSoundFromStoryBlock`, `MonoBehaviourScriptDuplicator` (+ `ScriptReplacerWindow`),
+  `Package2Folder`, `Weaver`, `EditorGUIX_ImageStringConverter/`, `PrefabLightmapGenerator/`,
+  `PresetAutomation/`.
+- `Editor/PackageIntegration/` — `HomamGecOrphanDefineCleaner.cs` only; the real domain/manifest
+  "ensure semantics" pipeline lives in `com.aethernexus.gameenginecore`, out of scope.
 
 Also read: `docs/00`, `01`, `03`, `04`, `09`, `13`, and `Documentation~/ARCHITECTURE.md` (260 lines).
+
+## Mechanical fix (this diff range): optional-parameter cleanup — verified correct
+
+`d714482..HEAD` converts optional parameters into overload pairs across most files in this audit's
+scope: `ReflectionGuard.Method` (`Editor/EditorEnhancerX/Infra/ReflectionGuard.cs`),
+`CameraScreenshot.Take`, `PresetAutomationSettings.FindOrCreateSettingsAsset`,
+`AuthoringUxShared.DrawTooltipIcon`, `DataFolderMappingConfig`'s
+`DiscoverExemptRootFolders`/`IsPathUnderExemptScope`/`IsTypeScriptUnderExemptScope` (3 methods),
+`EditorGUIX.DrawLine`/`DrawBackgroundLine`/`DrawBackgroundBox`/`DropArea<T>`,
+`EditorX.DrawDirectionalLine`/`DrawTinyArrow`/`DrawFlyPath`/`GetPrefabPath`, `ScriptableObjectX.CreateAsset<T>`,
+and `ScriptingDefineSymbolController.ReimportScripts`. All spot-checked: each new reduced-arity overload
+calls the full method with the exact default value that was removed (e.g.
+`DropArea<T>(areaText, height) => DropArea<T>(areaText, height, false, null)`,
+`DiscoverExemptRootFolders() => DiscoverExemptRootFolders(null)`).
+
+Cross-repo call-site check for the two-defaulted-parameter cases (`EditorGUIX.DropArea<T>`,
+`EditorX.DrawDirectionalLine`, `EditorX.DrawTinyArrow`, which only got one reduced-arity overload each,
+not one per default) found no call site anywhere in the `HOMAM` tree using a partial arg count that
+would now fail to resolve — the only real call sites for `DrawDirectionalLine`/`DrawTinyArrow` are
+inside `EditorX.cs` itself (full-arity), and `DropArea<T>` has no call sites found outside this file.
+`IsPathUnderExemptScope`/`IsTypeScriptUnderExemptScope` are called with either 1 or 2 args from
+`com.aethernexus.gameenginecore`'s `CentralAuthoringRegistry.cs`/`ScriptsHierarchyValidator.cs` — both
+arities resolve correctly against the new overloads. No compile breaks found. Not itemized further
+per instructions.
+
+Separately, this diff range also renamed several path constants from `Assets/Data/*` to
+`Assets/Content/*` across `DataFolderMappingConfig.cs`, `HierarchyPathPolicy.cs`,
+`HierarchyPatternMatcher.cs` (comment only), and `UIValidationConventions.cs`/`UIValidationEngine.cs`
+— a consistent, unrelated rename applied uniformly across all path-policy files in scope; not a defect,
+noted for completeness since it touches files this audit covers.
 
 ## Findings
 
 ### Designer Surface Priority / Last-Resort Positioning
-
-No findings. None of the `EditorWindow`s in scope compete with Project/Hierarchy/Inspector for domain-content authoring — they are generic engine-dev utilities (scene switching, script generation/duplication, screenshot, preset automation, codegen, asset import). `Runtime/Menus/MenuPaths.cs` explicitly documents this package's tools as "unwrapped... reads as generic/native engine tooling, not a product," registered under plain `Tools/*` and `Window/*` (not `Tools/Domain/*` / `Window/Domain/*`, which is reserved for the Domain-authoring hub in GameEngineCore). The docs/09 "Central Window is last resort" concern is about the GameEngineCore `CentralWindow`, which is out of this package entirely — there is nothing in this package's scope that duplicates Project/Hierarchy/Inspector daily-authoring functionality.
+No findings. Unchanged.
 
 ### Validation Boundaries
 
-- **Warning** — Runtime component compiled only into an Editor-only assembly; would silently no-op in shipped builds if ever used.
-  `Editor/Tools/PrefabLightmapGenerator/PrefabLightmapData.cs` (whole file; `Awake` lines 71–74, `OnEnable`/scene-load reapply lines 76–84, 271–276) is a plain `MonoBehaviour` (no `#if UNITY_EDITOR` around its runtime lifecycle) whose own doc comment says it "allow[s] lightmaps to be baked once and reused across scenes... automatically applies stored lightmap data when the prefab is instantiated" — i.e. it is meant to run in the built game. But the file lives under `Editor/`, which is covered by `Editor/FoundationPlatform.Editor.asmdef` (`"includePlatforms": ["Editor"]`, confirmed by reading the asmdef; no nested asmdef overrides `Tools/PrefabLightmapGenerator/`). That means the type does not exist in player builds at all: any prefab carrying this component in a real build would show a missing script and never reapply baked lightmaps. Repo-wide search found no prefab/scene currently referencing `PrefabLightmapData`, so it is presently dormant rather than actively broken — but it is a landmine for whoever adopts the tool. Fix is a folder move (Runtime-side component + Editor-side baking/menu code split), not a logic change.
-- No other findings. The rest of the in-scope validation code (`UIValidationEngine`, `HierarchyPathPolicy`/`HierarchyPatternMatcher`, `MenuItemDuplicatePathValidator`) is genuinely editor-time-only: it inspects `AssetDatabase` paths, `MonoScript`/`TypeCache` reflection, and asset contents — never true runtime data (player requests, payloads, dynamic state).
+- **RESOLVED** — `PrefabLightmapData.cs`'s runtime-facing `MonoBehaviour` (originally
+  `Editor/Tools/PrefabLightmapGenerator/PrefabLightmapData.cs`, compiled only into the Editor-only
+  assembly) has been **moved to `Runtime/Tools/PrefabLightmapGenerator/PrefabLightmapData.cs`**.
+  Confirmed via glob — the file now lives under `Runtime/`, so it will exist in player builds as
+  intended by its own doc comment ("applies stored lightmap data when the prefab is instantiated").
+  `Documentation~/ARCHITECTURE.md`'s "Editor tooling" table (now line 298) documents the split
+  explicitly: *"the `PrefabLightmapData` `MonoBehaviour` compiles into player builds; only the
+  `Lightmapping.Bake()`/`PrefabUtility`-dependent baking pipeline (`PrefabLightmapBaker`) and its
+  custom inspector are editor-only."* This implements Fix #1 from the original audit exactly as
+  suggested (structural move, not a logic change).
+- No other findings — unchanged.
 
 ### Severity Semantics
 
-- **Warning** — Declared severities are silently overridden to Warning by a lenient default, undermining "same issue class maps to same severity."
-  `Editor/Validation/UI/UIValidationPolicy.cs` lines 30–40 (`ResolveSeverity`): unless the developer has manually switched `Tools/Linting/Rollout Mode: Strict` (an `EditorPrefs` toggle, defaulting to `WarningFirst`), every rule except `UIV000` (`ConfigMissingOrInvalid`) is reported as `Warning` regardless of how it is coded in `UIValidationEngine.cs` (e.g. `ScriptOutsideMappedFolders`, `PrefabOutsideMappedFolders`, `PanelRootReferencesOrchestration`, `WidgetRootReferencesPanelOrOrchestration`, `ReverseLayerReference`, `InvalidNamingSuffix`, `SerializedDomainDependencyOnRoot`, `MismatchedPrefabFolderLayer` are all built via `AddError`/`UIValidationSeverity.Error` in the engine). Effective severity is therefore a per-machine EditorPrefs setting, not a stable property of the issue class, contrary to docs/13 ("Same issue class maps to same severity across tools"). A team member who has never touched the rollout-mode menu will see every one of these as a non-blocking Warning even though the code author intended several as blocking Errors.
+- **RESOLVED** — `Editor/Validation/UI/UIValidationPolicy.cs`'s `GetRolloutMode()` now defaults to
+  `UIValidationRolloutMode.Strict`: `EditorPrefs.GetInt(RolloutModePrefKey, (int)
+  UIValidationRolloutMode.Strict)`, and the fallback for an invalid stored value also returns `Strict`.
+  Previously the default (and invalid-value fallback) was `WarningFirst`, which silently downgraded
+  every rule except `UIV000` to Warning regardless of how it was coded in `UIValidationEngine.cs`. Now
+  declared severities (`AddError`/`UIValidationSeverity.Error` for `ScriptOutsideMappedFolders`,
+  `PanelRootReferencesOrchestration`, etc.) take effect out of the box for anyone who hasn't touched the
+  rollout-mode setting, closing the "per-machine EditorPrefs setting instead of a stable property of the
+  issue class" gap. Implements Fix #2's first option ("default to Strict").
 
 ### Master List / Manifest Machinery
-
-No scope violation found, but the folder does not contain what its name implies:
-- `Editor/PackageIntegration/HomamGecOrphanDefineCleaner.cs` only removes a stale scripting-define symbol (`RemoveSymbol`, lines 59–67) after checking `PackageInfo.GetAllRegisteredPackages()` — a narrow, self-contained hygiene task. It never creates, moves, renames, or deletes domain folders/manifests, so it doesn't violate the docs/04 "Generated domains" ensure-semantics rule — it simply isn't part of that system at all.
-- The actual domain/manifest "ensure-creates-only" pipeline (folder + README + scripts-folder creation, `CentralAuthoringProjectConfig` registration) lives in `Packages/com.aethernexus.gameenginecore/Editor/PackageIntegration/PackageIntegrationManifest.cs`, outside this audit's scope, so its ensure-semantics compliance cannot be assessed from this package.
-- This package's real, load-bearing contribution to that system is `Validation/DataPathPolicy/HierarchyPathPolicy.cs` + `HierarchyPatternMatcher.cs` (confirmed via repo-wide grep to be consumed by `AuthoringAssetOperations.cs`, `CentralAuthoringAssetPostprocessor.cs`, `CentralAuthoringRegistry.cs`, `DomainCatalog.cs`, and `PackageIntegrationManifest.cs` in GameEngineCore). This code is pure read-only classification/matching (`AssetDatabase.FindAssets`/`IsValidFolder`, string matching) — it never writes anything, so ensure-semantics simply doesn't apply to it, and it is compliant by construction.
+No findings — unchanged. `HomamGecOrphanDefineCleaner.cs` still narrowly scoped; `DataPathPolicy`
+still the package's real, read-only contribution to the cross-package manifest system.
 
 ### Ownership
-
-No findings of competing/duplicate pipelines within this package: UI Validation (layer/naming conventions), `MenuItemDuplicatePathValidator` (menu-registration regression guard), and `DataPathPolicy` (path classification) each cover distinct, non-overlapping concerns, and none of them duplicate the GameEngineCore Central Validation / manifest pipeline. See the naming-collision note below (Doc/Architecture Drift) — it is a naming/documentation issue, not a functional ownership conflict.
+No findings of competing/duplicate pipelines — unchanged.
 
 ### Redundancy/Simplification
 
-- **Info** — Duplicated path-under-root normalization logic.
-  `Validation/DataPathPolicy/HierarchyPathPolicy.cs` lines 40–49 (`IsPathUnderRoot`) and `Validation/UI/UIValidationConventions.cs` lines 108–117 (`IsPathUnder`) implement the identical algorithm (backslash-normalize, trim trailing slash, `StartsWith`/`Equals` with `OrdinalIgnoreCase`) independently, in two files under the same `Validation/` tree. One shared helper would remove the duplication.
-- **Info** — Dead `EditorWindow` inheritance.
-  `Tools/Weaver.cs` line 19 declares `public class Weaver : EditorWindow` but the class has no `OnGUI` override and is never opened via `GetWindow<Weaver>()` anywhere — it is used purely as a static utility class (all members are `static` methods invoked from `[MenuItem]`s). The `EditorWindow` base is vestigial; every sibling codegen tool in the same folder (`CodeAwareRename`, `Package2Folder`) is a plain `static class`.
-- **Info** — Two windows solve the same "generate a code snippet for the user" problem without sharing infrastructure. `Windows/AutoBinderWindow.cs` builds and previews a field-binding snippet in its own `EditorGUILayout.TextArea` with no "Copy to Clipboard" affordance (only a label telling the user to "Copy and paste it into your script," lines 100–101), while `Windows/ScriptGeneratorWindow.cs` — used elsewhere in this same package by `MonoBehaviourScriptDuplicator` — already provides generate/preview/copy-to-clipboard/write-to-disk for exactly this kind of workflow. AutoBinder does not build on it.
-- **Info** — Scope fit. `Tools/DownloadSoundFromStoryBlock.cs` is a single-purpose scraper tied to one third-party website ("Story Block"), unrelated to Unity/game tooling. `Documentation~/ARCHITECTURE.md` describes this package as "Base platform layer for the AetherNexus ecosystem" with reusable, engine-agnostic tooling; this tool reads as a personal convenience utility that happens to live here rather than foundational platform tooling (it is also, along with several other Tools/Windows files, undocumented in ARCHITECTURE.md — see Doc/Architecture Drift).
+- **RESOLVED** — Duplicated path-under-root normalization logic. `HierarchyPathPolicy.IsPathUnderRoot`
+  (`Editor/Validation/DataPathPolicy/HierarchyPathPolicy.cs:40`) and `UIValidationConventions.IsPathUnder`
+  (`Editor/Validation/UI/UIValidationConventions.cs:109`) both now delegate to a single shared
+  `PathComparisonUtility.IsPathUnder(path, root)` helper instead of each implementing the
+  backslash-normalize/trim/`StartsWith` logic independently. Implements Fix #4 exactly as suggested.
+- **RESOLVED** — Dead `EditorWindow` inheritance. `Tools/Weaver.cs` is now `public static class Weaver`
+  (confirmed via grep for `class Weaver`), matching its siblings (`CodeAwareRename`, `Package2Folder`).
+  `Documentation~/ARCHITECTURE.md`'s tooling table now documents this explicitly: *"Weaver |
+  `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities (plain `static class`, not an
+  `EditorWindow`)"*. Implements Fix #5.
+- **Not fixed** — Two windows still solve the same "generate a code snippet for the user" problem
+  without sharing infrastructure. `Windows/AutoBinderWindow.cs` still has no
+  `ScriptGeneratorWindow`/clipboard-copy integration (grepped for `ScriptGeneratorWindow`/
+  `CopyToClipboard` in `AutoBinderWindow.cs` — no matches). Unchanged from original audit, low priority.
+- **RESOLVED (removed)** — `Tools/DownloadSoundFromStoryBlock.cs`, flagged in the original audit as a
+  personal-convenience utility with questionable fit for "Base platform layer" tooling, **no longer
+  exists** in the package (confirmed via `ls` — file not found). Implements Fix #7 by removing rather
+  than relocating, and its absence from `Documentation~/ARCHITECTURE.md`'s tooling table is therefore
+  correct, not drift.
 
 ### Doc/Architecture Drift
 
-- **Warning** — `Documentation~/ARCHITECTURE.md`'s "Editor tooling" table (lines 216–231) only documents a subset of what is actually in this audit's scope. Present: UI Validation, Preset Automation, Scene Switcher, Weaver, Prefab Lightmap Generator. Absent: `Windows/AutoBinderWindow.cs`, `Windows/ScriptGeneratorWindow.cs`, `Tools/MonoBehaviourScriptDuplicator.cs` (+ its nested `ScriptReplacerWindow`), `Tools/CodeAwareRename.cs`, `Tools/ClipboardToScript.cs`, `Tools/CameraScreenshot.cs`, `Tools/DownloadSoundFromStoryBlock.cs`, `Tools/Package2Folder.cs`, `Tools/EditorGUIX_ImageStringConverter/*`, `Validation/MenuItemDuplicatePathValidator.cs`, `Validation/DataPathPolicy/*`, and the entire `Editor/PackageIntegration/` folder. Given docs/03 states each package's `ARCHITECTURE.md` provides "symbol-level detail... read when extending or debugging that package," roughly half the files in this audit's scope have no entry.
-- **Info** — Cross-reference to the Validation Boundaries finding above: `PrefabLightmapData`'s own doc comment describes runtime behavior ("reused across scenes," "applies... when the prefab is instantiated") that contradicts its Editor-only assembly placement — the code's stated intent and its actual compiled scope disagree.
-- **Info** — Folder-name collision, not a functional conflict: this package has an `Editor/PackageIntegration/` folder and GameEngineCore has an unrelated `Editor/PackageIntegration/` folder holding the actual manifest "ensure" pipeline. Someone orienting by folder name alone could reasonably assume this package owns manifest machinery it does not.
+- **PARTIALLY FIXED** — `Documentation~/ARCHITECTURE.md`'s "Editor tooling" table has been updated for
+  the two tools whose behavior changed this pass (Weaver, Prefab Lightmap Generator — both now
+  accurately describe the current split/class-kind), but the broader gap from the original audit is
+  still open: `Windows/AutoBinderWindow.cs`, `Windows/ScriptGeneratorWindow.cs`,
+  `Tools/MonoBehaviourScriptDuplicator.cs` (+ `ScriptReplacerWindow`), `Tools/CodeAwareRename.cs`,
+  `Tools/ClipboardToScript.cs`, `Tools/CameraScreenshot.cs`, `Tools/Package2Folder.cs`,
+  `Tools/EditorGUIX_ImageStringConverter/*`, `Validation/MenuItemDuplicatePathValidator.cs`,
+  `Validation/DataPathPolicy/*`, and the entire `Editor/PackageIntegration/` folder are still absent
+  from the table (grepped the table for each name — no matches). `DownloadSoundFromStoryBlock.cs`'s
+  removal from the table is correct now that the file itself is gone (see Redundancy above), not part
+  of this remaining gap.
+- **Resolved (moot)** — The cross-reference note about `PrefabLightmapData`'s doc comment contradicting
+  its Editor-only placement is resolved along with the underlying move.
+- **Unchanged** — Folder-name collision between this package's `Editor/PackageIntegration/` and
+  GameEngineCore's unrelated folder of the same name. Not a functional conflict, not fixed, not urgent.
 
 ### Codebase Gotchas
 
-- **Warning** — Unconditional serialized-field write in `OnValidate` (the exact pattern docs/00 §3 warns about).
-  `Tools/PrefabLightmapGenerator/LightmapConfiguration.cs` lines 127–133: `OnValidate()` unconditionally reassigns `maxLightmapsPerBatch`, `maxShaderCacheSize`, `maxRenderersWarningThreshold` via `Mathf.Max(1, ...)` on every fire (scene-open, recompile) with no inequality guard, matching the documented "flags the object modified even when the value is byte-identical" trap. Low real-world impact (a single rarely-touched settings asset), but it is a textbook instance of the pattern the docs specifically call out; an inequality guard (`if (x < 1) x = 1;`) would make it idempotent per the recommended fix.
-- Checked and clean: `PrefabLightmapData.OnValidate()` (same folder, lines 86–91) only writes `isInitialized`, which is a private field with no `[SerializeField]` — not serialized, so no dirty risk.
-- No `??` usage on a `UnityEngine.Object` was found anywhere in scope (all instances are on `string`/`Type.FullName` — e.g. `UIValidationEngine.cs:393`, `SceneSwitcherWindow.cs:137,276,282`, `ScriptGeneratorWindow.cs:63,66,67,116,197,209`, `CameraScreenshot.cs:15`, `ClipboardToScript.cs:138`, `MonoBehaviourScriptDuplicator.cs:137,151,152,163,296`). No findings.
-- No struct-rule violations: the four `struct`/`readonly struct` types in scope (`ScriptGeneratorWindow.GenerationContext`, `MonoBehaviourScriptDuplicator.DuplicationSession`, `PrefabLightmapData.RendererInfo`/`LightInfo`) either have no instance field initializers with an explicit ctor assigning every field, or are plain serializable structs with no user-defined ctor. No findings.
-- `Debug` namespace collision (docs/00 §3, `GameEngineCore.*` only) does not apply — nothing in this package's namespace starts with `GameEngineCore.`. No findings.
+- **RESOLVED** — `Tools/PrefabLightmapGenerator/LightmapConfiguration.cs`'s `OnValidate()`
+  (now lines 127-134) is guarded with inequality checks exactly as recommended:
+  ```csharp
+  private void OnValidate()
+  {
+      // Ensure values are within valid ranges. Guarded so a no-op OnValidate (values already
+      // in range) doesn't dirty the asset on every domain reload/scene open.
+      if (maxLightmapsPerBatch < 1) maxLightmapsPerBatch = 1;
+      if (maxShaderCacheSize < 1) maxShaderCacheSize = 1;
+      if (maxRenderersWarningThreshold < 1) maxRenderersWarningThreshold = 1;
+  }
+  ```
+  The comment explicitly names the pattern being avoided (dirtying the asset on a no-op fire),
+  confirming this was a deliberate fix, not incidental. Implements Fix #3 exactly as suggested.
+- Other Codebase Gotchas checks (`??` on `UnityEngine.Object`, struct-rule violations, `Debug`
+  namespace collision not applicable to this package) — unchanged, still no findings.
 
 ## Fixes
 
-Per the audit rules, no source files were modified — findings only. Suggested remediation, in priority order:
+Status of the original priority list:
 
-1. Move `PrefabLightmapData.cs`'s runtime-facing `MonoBehaviour` (and ideally `LightmapConfiguration.cs` if it should ever be runtime-loadable) out of `Editor/` into `Runtime/`, keeping only the `[MenuItem]`/`AssetDatabase`/`Lightmapping.Bake()`-dependent baking methods and `PrefabLightmapDataEditor` under `Editor/`. This is a structural move, not a logic change, and should be confirmed with the user before touching file locations (per repo file-creation/move rules).
-2. Make `UIValidationPolicy`'s default rollout mode intentional and documented (either default to `Strict` so declared severities take effect out of the box, or clearly surface in the tool's own UI that `WarningFirst` downgrades all but one rule).
-3. Guard `LightmapConfiguration.OnValidate()` writes with inequality checks (`if (maxLightmapsPerBatch < 1) maxLightmapsPerBatch = 1;` etc.) per the docs/00 §3 idempotent-write pattern.
-4. Extract the duplicated path-under-root helper (`HierarchyPathPolicy.IsPathUnderRoot` / `UIValidationConventions.IsPathUnder`) into one shared utility.
-5. Drop the unused `EditorWindow` base from `Weaver` (make it a plain `static class` like its siblings).
-6. Update `Documentation~/ARCHITECTURE.md`'s "Editor tooling" table to list the currently-undocumented tools (or explicitly note which are intentionally omitted as minor/legacy utilities).
-7. Confirm with the user whether `DownloadSoundFromStoryBlock.cs` should stay in FoundationPlatform or be relocated/removed as out-of-scope personal tooling.
+1. ~~Move `PrefabLightmapData.cs` out of `Editor/` into `Runtime/`~~ — **DONE**.
+2. ~~Make `UIValidationPolicy`'s default rollout mode intentional~~ — **DONE** (defaults to `Strict`).
+3. ~~Guard `LightmapConfiguration.OnValidate()` writes with inequality checks~~ — **DONE**.
+4. ~~Extract the duplicated path-under-root helper~~ — **DONE** (`PathComparisonUtility.IsPathUnder`).
+5. ~~Drop the unused `EditorWindow` base from `Weaver`~~ — **DONE**.
+6. **Still open** — Update `Documentation~/ARCHITECTURE.md`'s "Editor tooling" table to list the
+   currently-undocumented tools. Two entries were updated as a side effect of fixes #1 and #5, but the
+   broader list from the original audit (AutoBinderWindow, ScriptGeneratorWindow,
+   MonoBehaviourScriptDuplicator, CodeAwareRename, ClipboardToScript, CameraScreenshot, Package2Folder,
+   EditorGUIX_ImageStringConverter, MenuItemDuplicatePathValidator, DataPathPolicy, PackageIntegration)
+   remains undocumented.
+7. ~~Confirm with the user whether `DownloadSoundFromStoryBlock.cs` should stay or be
+   relocated/removed~~ — **DONE** (removed).
 
 ## Cross-references
 
-- `docs/00-AgentGuide.md` §3 — OnValidate/OnAfterDeserialize dirty-write trap, assembly boundaries, `??` on Unity objects, struct rules.
-- `docs/01-CorePrinciples.md` — Validation boundaries (editor-time vs runtime vs generated outputs).
-- `docs/03-Frameworks.md` — Per-package `ARCHITECTURE.md` symbol-level detail; tier-one registry refresh contracts.
-- `docs/04-DataAndDomains.md` — Generated domains / ensure-semantics ("only ever creates what is missing and never moves, renames, deletes, or generates code").
-- `docs/09-EditorHub.md` — Surface priority #6 (editor windows, last resort); `IEntityDebugSection`/`IWorldDebugSection` auto-discovery (not present in this package's scope).
-- `docs/13-AuthoringStandards.md` — Severity semantics (Error/Warning/Info), shared action vocabulary, mapping enforcement (Mapped/Out of Sync/Unclaimed).
-- `Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md` — "Editor tooling" table and assembly-definitions section (source for the `Editor/` → `includePlatforms: [Editor]` confirmation used in the Validation Boundaries finding).
-- `Packages/com.aethernexus.gameenginecore/Editor/PackageIntegration/PackageIntegrationManifest.cs` and `Editor/CentralAuthoring/CentralWindow.cs` — the actual manifest-ensure pipeline and Central Window, both out of this package and referenced only for scope clarification.
+- `docs/00-AgentGuide.md` §3 — OnValidate dirty-write trap (now correctly applied in
+  `LightmapConfiguration.cs`), assembly boundaries.
+- `docs/01-CorePrinciples.md` — Validation boundaries.
+- `docs/03-Frameworks.md` — Per-package `ARCHITECTURE.md` symbol-level detail.
+- `docs/04-DataAndDomains.md` — Generated domains / ensure-semantics.
+- `docs/09-EditorHub.md` — Surface priority #6 (editor windows, last resort).
+- `docs/13-AuthoringStandards.md` — Severity semantics (now correctly enforced by default via
+  `UIValidationPolicy`'s `Strict` default).
+- `Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md` — "Editor tooling" table
+  (partially updated; see Doc/Architecture Drift above for what's still missing) and assembly
+  definitions section.
+- `Packages/com.aethernexus.gameenginecore/Editor/PackageIntegration/PackageIntegrationManifest.cs` and
+  `Editor/CentralAuthoring/CentralWindow.cs` — out of this package's scope, referenced only for scope
+  clarification.

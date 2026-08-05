@@ -1,6 +1,26 @@
-# DebugX — Architecture Audit
+# DebugX — Architecture Audit (Re-Audit)
 
-## Context
+## Re-Audit Context
+
+This is a follow-up pass over the original audit below, after fixes were applied. Method: read the
+original findings, then verified each against current source (`git diff d714482 HEAD -- Runtime/DebugX/
+Editor/Console/ Editor/Debugging/ ...` plus direct file reads of the current tree; some fixes turned
+out to already be baked into `d714482` itself — the "Audit" commit that is this diff's baseline — so a
+few items below are confirmed fixed even though they don't appear as changed lines between `d714482`
+and `HEAD`).
+
+Headline result: **5 of 6 concrete defects from the original audit are fixed** (dead code deleted,
+`ExplicitErrorDedupe` string-match path removed, `using UnityEditor;` guarded, the `DebugX` class/
+namespace collision now documented in `docs/00-AgentGuide.md` §3, and — beyond what was asked — the
+"widespread optional parameters" Info finding is now resolved for every constructor originally cited).
+The one substantive item still open is `DebugX.LogArray<T>` bypassing `LogPipeline.Emit`. Separately,
+this diff range applied a repo-wide mechanical fix (converting `method(..., T x = default)` into
+`method(..., T x)` + a new no-default overload, to satisfy AGENTS.md's "no optional parameters" rule)
+across ~10 methods in this subsystem (`DebugX.DrawString`/`DrawArrowRay`, `LogQueue.Enqueue`,
+`LogPipeline.ProcessLogEvent`, `LogMessageTruncation.TruncateFromBottom`, plus ~15 more files package-wide)
+— spot-checked and correct (see "Mechanical fix" below).
+
+## Original Context
 
 Scope: `Runtime/DebugX/` (logging core: pipeline, sinks, console store, parsing) and its editor
 counterparts `Editor/DebugX/` (menu items), `Editor/Console/` (DebugX Console window — a bespoke
@@ -19,231 +39,185 @@ a real player-build compile risk, a namespace/type naming collision that is alre
 every consumer outside the `DebugX` namespace, a dead parallel logging implementation, and an
 error-dedupe mechanism that can silently drop unrelated errors.
 
+## Mechanical fix (this diff range): optional-parameter cleanup — verified correct
+
+`d714482..HEAD` converts every `Method(..., T param = default)` in this subsystem's files into
+`Method(..., T param)` + a new `Method(...)` overload that calls the full method with the exact
+default baked in. Confirmed correct in this subsystem:
+
+- `Runtime/DebugX/DebugX.cs`: `DrawString(text, worldPos, colour=null)` → `DrawString(text, worldPos)`
+  calls `DrawString(text, worldPos, null)`; `DrawArrowRay(pos, dir, headLength=0.25f, headAngle=20f)` →
+  new zero-extra-arg overload calls `DrawArrowRay(pos, dir, 0.25f, 20.0f)` — both defaults preserved
+  exactly.
+- `Runtime/DebugX/Logging/Core/LogMessageTruncation.cs`: `TruncateFromBottom(value, maxLength)` new
+  1-arg overload calls `TruncateFromBottom(value, MaxFixedStringLength)` — correct.
+- `Runtime/DebugX/Logging/Core/LogQueue.cs`: `Enqueue(logEvent)` calls `Enqueue(logEvent, false)` —
+  correct, and the queue's only other caller pattern (explicit `true`/`false`) still compiles.
+- `Runtime/DebugX/Logging/Pipeline/LogPipeline.cs`: `ProcessLogEvent(logEvent)` calls
+  `ProcessLogEvent(logEvent, false)`, and correctly re-applies `[UnityEngine.HideInCallstack]` to the
+  new overload too (not just the original) — attribute wasn't dropped.
+- Also verified the same pattern in `Editor/Debugging/DebugDrawKit.cs` (3 methods, incl. the
+  two-defaulted-param `Bar(string,float,string,bool=false,Color?=null)` split into three overloads
+  covering all three call arities) and `Editor/Debugging/GizmoLayerSet.cs`/`EventLogView.cs` — all
+  correct.
+- Cross-repo call-site check: grepped the whole `D:\UnityProjects\HOMAM` tree for every affected
+  method's call sites (`DebugDrawKit.Bar(`, `DrawDirectionalLine(`, `DrawTinyArrow(`, etc., including
+  in `com.aethernexus.gameplayabilitysystem`, `com.aethernexus.gameframework`, `Editor/AnimGraph/`,
+  `Editor/TweenX/`). No call site anywhere supplies a partial arg count that would now fail to resolve
+  — every call site either matches a still-existing full-arity overload or one of the newly added
+  reduced-arity overloads. No compile breaks found.
+
+Not individually itemized further per instructions; treat as verified correct across the ~25-file
+diff for this pattern.
+
 ## Findings
 
 ### Execution Spine
-No findings. DebugX is pure cross-cutting logging infrastructure; nothing in scope reads or writes
-gameplay/simulation state, and nothing here participates in `intent → validate → execute → commit`.
+No findings. Unchanged — still pure cross-cutting logging infrastructure.
 
 ### Data/Controller/View Boundary
-No findings. DebugX is correctly a Service per `docs/01-CorePrinciples.md`'s role glossary
-("cross-cutting utility... debug overlay. Must not bypass the pipeline for simulation writes").
-`Editor/Debugging/`'s `IEntityDebugSection`/`IWorldDebugSection` registries match
-`docs/09-EditorHub.md`'s documented seams exactly (`IEntityDebugSection` for per-object Scene View
-state, `IWorldDebugSection` for `GameStateWindow`) — both are strictly read-only diagnostics.
+No findings. Unchanged — correctly a Service per `docs/01-CorePrinciples.md`.
 
 ### Ownership
 
-- **Error** — `Runtime/DebugX/Logging/DebugLogger.cs`, `Runtime/DebugX/Logging/LoggerFactory.cs`,
-  `Runtime/DebugX/Logging/IDebugLogger.cs`, `Runtime/DebugX/Logging/Configuration/LogConfig.cs`: a
-  second, entirely dead logging path. `LoggerFactory.GetOrCreateLogger` / `DebugLogger` /
-  `IDebugLogger` duplicate `DebugXBuilder`/`DebugXLogger`'s fluent API almost 1:1, but gate on a
-  **separate** config object (`LogConfig.MinimumLevel` / `LogConfig._disabledChannels`) that is
-  never touched by `LogPipeline.SetMinimumLevel` (what the DebugX Console settings page and
-  `DebugXInitializer` actually configure). A project-wide grep of `Packages/` and `Assets/` shows
-  `LoggerFactory`/`IDebugLogger`/`GetOrCreateLogger` referenced **only inside their own three
-  files** — nothing in the codebase creates a logger through this path. `Documentation~/ARCHITECTURE.md`
-  §"Logging (DebugX)" also only documents `DebugX.Logger`/`DebugX.Builder`, silently confirming this
-  is unused. Why it matters: if anyone resurrects or copy-pastes from this path (it's `internal`, so
-  discoverable only by reading the file), their minimum-level/channel toggles silently stop working
-  because they're checking a config object nothing else writes to — a second, drifted source of
-  truth for "is this log enabled."
+- **RESOLVED** — `Runtime/DebugX/Logging/DebugLogger.cs`, `LoggerFactory.cs`, `IDebugLogger.cs`,
+  `Configuration/LogConfig.cs`: **deleted**. Confirmed via `git show d714482 --stat` — these four files
+  (296 lines) were removed in the `d714482` "Audit" commit itself (the baseline this re-audit diffs
+  against), and a repo-wide glob for `DebugLogger.cs`/`LoggerFactory.cs`/`IDebugLogger.cs`/`LogConfig.cs`
+  under this package today returns nothing. The dead second logging path (separate `LogConfig` gate,
+  never wired to `LogPipeline.SetMinimumLevel`) no longer exists to be resurrected or copy-pasted from.
 
-- **Warning** — `Runtime/DebugX/DebugX.cs:196-232` (`LogArray<T>`): both overloads check
-  `LogPipeline.ShouldEmit(...)` for the level gate, then call `UnityEngine.Debug.Log(sb.ToString())`
-  **directly**, bypassing `LogPipeline.Emit`/sinks entirely. Every other method in `DebugX` (`Info`,
-  `Warning`, `Error`, the `Logger`/`Builder` paths) constructs a `LogEvent` and routes it through the
-  pipeline so it reaches `FileSink`/`JsonFileSink`/`EditorConsoleSink` consistently. `LogArray`
-  quietly skips all of that — its output never lands in the structured JSON log or the log file, and
-  in-editor it shows up in the DebugX Console tagged `Source=Unity` (via the `Application.logMessageReceivedThreaded`
-  capture) rather than `Source=DebugX`, losing channel/property association. A second, inconsistent
-  logging path inside the very API meant to be the single entry point.
+- **NOT FIXED** — `Runtime/DebugX/DebugX.cs:194-230` (`LogArray<T>`, both overloads): still gate on
+  `LogPipeline.ShouldEmit(...)` and then call `UnityEngine.Debug.Log(sb.ToString())` **directly**,
+  bypassing `LogPipeline.Emit`/sinks. Verified unchanged in current source — same behavior as
+  originally reported. Output still never reaches `FileSink`/`JsonFileSink`/`EditorConsoleSink`, and
+  in-editor still surfaces as `Source=Unity` rather than `Source=DebugX`.
 
-- **Info** — A few raw `UnityEngine.Debug.Log`/`Debug.LogError` calls in `Editor/Debugging/` bypass
-  DebugX: `Editor/Debugging/IEntityDebugSection.cs:90` and `IWorldDebugSection.cs:82` (section
-  registry instantiation failure), `Editor/Debugging/FrameworkDebuggerWindow.cs:261`,
-  `EntityDebuggerOverlay.cs:164`, `GameStateWindow.cs:209` (trivial "copied to clipboard"
-  confirmations). Low severity — this is editor-tool UX feedback and bootstrap-error logging in a
-  different diagnostics subsystem, not runtime/simulation logging — but per AGENTS.md's "Use DebugX"
-  mandate these could route through `DebugX.Logger(LogChannels.Editor)` instead of raw `Debug.*`.
-  (Internal DebugX-infrastructure files — `FileSink`, `JsonFileSink`, `LogQueue`, `FlushScheduler`,
-  `SessionCounter`, `LogPipeline.EmitToSinks` — also call raw `UnityEngine.Debug.LogError` on their
-  own failures; that is a deliberate and correct exception, since these ARE the sinks DebugX would
-  otherwise recurse through.)
+- **Info, unchanged** — Raw `UnityEngine.Debug.Log`/`Debug.LogError` calls in `Editor/Debugging/` still
+  bypass DebugX. Re-verified present at the same sites: `IEntityDebugSection.cs:90`,
+  `IWorldDebugSection.cs:82`, `FrameworkDebuggerWindow.cs:261`, `EntityDebuggerOverlay.cs:164`,
+  `GameStateWindow.cs:209`. Still low severity (editor-tool UX feedback / bootstrap-error logging), not
+  addressed, not blocking.
 
 ### Designer Surface Priority
-No findings — good alignment. `Editor/Console/DebugXConsoleWindow.cs` is a full bespoke
-`EditorWindow` (1941 lines), which is normally a red flag per `docs/13-AuthoringStandards.md`'s
-"prefer Project/Hierarchy/Inspector over a new EditorWindow" — but this is explicitly the case the
-task brief calls out as reasonable: it is a superset replacement for Unity's own Console window
-(mirrors it, adds structured filtering/tabs/watch/export), which is exactly "Unity's own Console is
-the natural home." `GameStateWindow`/`EntityDebuggerOverlay` likewise match the two documented
-diagnostic surfaces in `docs/09-EditorHub.md` ("what's up with this object" → Scene View overlay,
-"what's up with the game" → `Window ▸ Domain ▸ Game State`) rather than inventing a third. No
-unique-inspector-rule violations observed (no asset-browser/path/name duplication).
+No findings — unchanged, still good alignment.
 
 ### Redundancy/Simplification
 
-- Covered above under Ownership: `DebugLogger`/`IDebugLogger`/`LoggerFactory`/`LogConfig` is dead
-  code and should be deleted rather than left as a trap (see Fixes).
-- **Info** — `Runtime/DebugX/Logging/Sinks/UnityConsoleSink.cs`'s doc comment: "the surviving half of
-  the old ConsoleProSink, minus the CPAPI markers" — a legacy reference, harmless, but confirms this
-  package has been through at least one prior consolidation; worth checking there's no other
-  half-migrated leftover beyond the `LogConfig` path already flagged.
+- **RESOLVED** (see Ownership) — dead `DebugLogger`/`IDebugLogger`/`LoggerFactory`/`LogConfig` path
+  deleted rather than left as a trap.
+- **Info, unchanged** — `UnityConsoleSink.cs`'s "surviving half of the old ConsoleProSink" doc comment
+  is still present; harmless, no other half-migrated leftover found beyond the now-deleted `LogConfig`
+  path.
+- **New (bonus, beyond original scope)** — the "widespread optional parameters" Codebase Gotchas
+  finding below (constructors) is now also resolved; noted there rather than duplicated here.
 
 ### Determinism
-No findings requiring action. `LogEvent.FrameCount` and `ConsoleEntry.FrameCount` read
-`UnityEngine.Time.frameCount`, and `ConsoleLogStore`/sinks stamp `DateTime.Now` — both are
-diagnostic metadata only (log display/ordering), never read back into gameplay/validation logic, so
-this does not violate `docs/11-Determinism.md`. No `UnityEngine.Random` usage anywhere in scope.
+No findings requiring action. Unchanged.
 
 ### Fail-Fast Compliance
 
-- **Error** — `Runtime/DebugX/Logging/Core/ExplicitErrorDedupe.cs`: the message-based dedup can
-  silently swallow unrelated future errors. `RegisterExplicitFailure` (called after every
-  `DebugX.Error(messageTemplate, ...)` with **no** exception) extracts a message string from the
-  logged properties and adds it to a `[ThreadStatic] HashSet<string> s_failureMessages` that is
-  **never cleared** for the life of the thread/editor session. `ShouldSkipErrorLog` then checks any
-  **later** exception's `.Message` (walking the `InnerException` chain) against that set — if it
-  matches, the later `DebugX.Error(exception, ...)` call is dropped entirely (no sink sees it). The
-  per-instance guard (`exception.Data[ExplicitlyLoggedKey]`) is sound — it only suppresses the exact
-  same exception object being logged twice. But the string-based half is not scoped to "the same
-  failure": two unrelated exceptions thrown minutes apart, in different subsystems, that merely
-  happen to share message text (very plausible for generic messages like "not found" / "invalid
-  state" / a repeated user-facing string) will cause the second, genuinely new error to be silently
-  dropped from every sink — file, JSON, and console. This directly contradicts
-  `docs/01-CorePrinciples.md`'s fail-fast rule ("do not silently substitute... stop with a clear
-  error") applied to the logging framework's own error-reporting path. It is also an unbounded
-  per-thread memory leak (the set only grows).
-- **Info** — Everywhere else, fail-fast is handled well: `LogQueue`'s overflow drop-oldest is never
-  silent (`ReportDrops` emits a synthetic warning with the drop count), sink failures are caught and
-  reported via `UnityEngine.Debug.LogWarning`/`LogError` rather than swallowed
-  (`LogPipeline.EmitToSinks`, `FileSink.Emit/FlushBuffer`, `JsonFileSink.Emit/FlushBuffer`), and
-  `DebugX.Error(exception, message, ...)` overloads consistently preserve the full exception via
-  `LogEvent.Exception` (message + inner-exception chain via `.ToString()` + caller context) rather
-  than flattening it — good compliance with "preserve full diagnostic detail."
+- **RESOLVED** — `Runtime/DebugX/Logging/Core/ExplicitErrorDedupe.cs`: the unbounded, message-based
+  dedup path is **removed**. Current file (25 lines) contains only the per-instance
+  `exception.Data[ExplicitlyLoggedKey]` check via `ShouldSkipErrorLog`, walking the `InnerException`
+  chain and comparing the marker — exactly the "sound" half the original audit said to keep. The
+  `[ThreadStatic] HashSet<string> s_failureMessages` / `RegisterExplicitFailure` string-match path and
+  its unbounded-memory-leak risk are gone entirely. The file's own doc comment now states this
+  explicitly: *"Scoped strictly to the exact same exception instance/chain — not a message-text match,
+  which would risk dropping unrelated future errors that merely share message text."* This directly
+  implements Fix #3 from the original audit.
+- **Info, unchanged** — Everywhere else, fail-fast is still handled well (queue overflow reporting,
+  sink failure logging, exception preservation).
 
 ### Doc/Architecture Drift
-- **Info** — `Documentation~/ARCHITECTURE.md` §"Logging (DebugX)" documents only `DebugX.Logger`/
-  `DebugX.Builder` and the sink/pipeline architecture. It does not mention `LoggerFactory`/
-  `IDebugLogger`/`DebugLogger`/`LogConfig` at all — consistent with (and indirect confirmation of)
-  the dead-code finding above, not a contradiction. No drift found in the documented parts: the
-  per-platform sink table, the `DebugXInitializer` bootstrap sequence, and the DebugX Console
-  description all match the code as read.
+- **RESOLVED (moot)** — `Documentation~/ARCHITECTURE.md` §"Logging (DebugX)" still doesn't mention
+  `LoggerFactory`/`IDebugLogger`/`DebugLogger`/`LogConfig`, but this is no longer a drift since those
+  types no longer exist in the codebase. No action needed.
 
 ### Codebase Gotchas
 
-- **Error (build-risk, unverified — cannot run Unity to confirm)** — `Runtime/DebugX/DebugX.cs:1-7`:
+- **RESOLVED** — `Runtime/DebugX/DebugX.cs:1-7`: `using UnityEditor;` is now correctly guarded:
   ```csharp
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Text;
-  using UnityEditor;
   using UnityEngine;
   #if UNITY_EDITOR
+  using UnityEditor;
   #endif
   ```
-  `using UnityEditor;` is **not** guarded by `#if UNITY_EDITOR`, immediately followed by a stray,
-  empty `#if UNITY_EDITOR` / `#endif` block (dead code — looks like a leftover from a refactor where
-  the guard was moved but this using directive was left outside it). `Runtime/FoundationPlatform.Runtime.asmdef`
-  has `"includePlatforms": []` (compiled for every platform, including player builds), and none of
-  its `references` list `UnityEditor`. Every actual use of `UnityEditor` types in this file
-  (`Handles`, `SceneView` in `DrawString`) is correctly wrapped in `#if UNITY_EDITOR` — but the
-  `using` directive itself is not, and an unresolvable `using` is a compile error (`CS0246`)
-  independent of whether any imported type is actually referenced. This compiles fine inside the
-  Editor (where `UnityEditor.dll` is always available), which is exactly why it would go unnoticed
-  during normal development — the failure only surfaces when Unity recompiles scripts for an actual
-  player build target. This is the same class of trap as the documented `Debug`/`GameEngineCore.Debug`
-  namespace collision in `docs/00-AgentGuide.md` §3: something that is silently correct in the editor
-  and silently wrong at build time.
+  The stray empty `#if UNITY_EDITOR`/`#endif` block is also gone. Confirmed this was already the state
+  at `d714482` (`git show d714482:Runtime/DebugX/DebugX.cs` shows the same guarded form), i.e. fixed at
+  or before the baseline this re-audit compares against. The player-build compile risk (`CS0246` on an
+  unresolvable `using`) is closed.
 
-- **Warning** — The `DebugX` **class** shares its simple name with its enclosing **namespace**
-  (`namespace AetherNexus.FoundationPlatform.DebugX { public static class DebugX { ... } }`,
-  `Runtime/DebugX/DebugX.cs:9-11`). This is the same category of trap `docs/00-AgentGuide.md` §3
-  already documents for `Debug`/`GameEngineCore.Debug` (a nested namespace shadowing an unqualified
-  identifier), just not yet written down for this case. Confirmed already costing real code: from any
-  namespace nested directly under `AetherNexus.FoundationPlatform` other than `.DebugX` itself —
-  e.g. `AetherNexus.FoundationPlatform` (root) or `AetherNexus.FoundationPlatform.Behaviours` — an
-  unqualified `DebugX.Logger(...)` / `DebugX.Builder(...)` resolves to the **namespace**, not the
-  class, because C# namespace lookup finds the sibling/nested namespace via the enclosing scope
-  before it considers the `using`-imported type of the same simple name. Consumers are forced into
-  the awkward double-qualified `DebugX.DebugX.Logger(...)` to compile:
-  - `Runtime/Patterns/SingletonBehaviour.cs:67,103,162,199` (namespace `AetherNexus.FoundationPlatform`) —
-    `DebugX.DebugX.Logger(LogChannels.DevTools).Error(...)` / `.Info(...)`.
-  - `Runtime/Behaviours/AreaSpawner.cs:86,115,197,209,236,264,320` (namespace
-    `AetherNexus.FoundationPlatform.Behaviours`) — `FoundationPlatform.DebugX.DebugX.Builder(...)`.
+- **RESOLVED (documented)** — The `DebugX` class/namespace collision. `docs/00-AgentGuide.md` now has
+  a dedicated subsection, `### \`DebugX\` class/namespace collision` (lines 99-109), spelling out
+  exactly the trap the original audit flagged: unqualified `DebugX.Logger(...)` from a sibling
+  namespace resolves to the namespace, not the class, forcing the double-qualified
+  `DebugX.DebugX.Logger(...)` form, "[a]lready confirmed costing real code." This implements Fix #5
+  from the original audit. Note: the collision itself still exists in code — `Runtime/Patterns/
+  SingletonBehaviour.cs:67,103,162,199` still uses `DebugX.DebugX.Logger(LogChannels.DevTools)` — which
+  is expected, since the fix requested was documentation of the gotcha, not a rename of the type (a
+  rename would be a much larger, unrequested breaking change).
 
-  Every file living *inside* the `AetherNexus.FoundationPlatform.DebugX.*` namespace tree (all of
-  `Editor/Console/`, `Editor/DebugX/`) is unaffected and uses the clean `DebugX.PrefKeyEditorMinLevel`
-  / `DebugX.CaptureFullStackTraces` form — so the trap is invisible to anyone working inside the
-  DebugX package itself, and only bites every *consumer* elsewhere in the codebase (i.e. everywhere
-  "Use DebugX" actually applies). Worth documenting explicitly in `docs/00-AgentGuide.md` §3 next to
-  the `Debug`/`GameEngineCore.Debug` entry, since it is the same failure mode.
+- **Not addressed** — Runtime reflection in `Runtime/DebugX/Logging/Core/CallerInfoHelper.cs` is still
+  unconditional (not editor-gated): `GetCallingMethod()` (`StackTrace(skipFrames: 1, ...)`),
+  `FindOptimalSkipCount` (`StackTrace(...)`), `IsInternalMethod`/`ExtractAsyncMethodName`
+  (`MethodBase`) all still run on every DebugX log call in every build; only the Unity-stack-extractor
+  fallback remains `#if UNITY_EDITOR`-gated. `Logging/Parsing/MessageTemplateParser.cs:113`
+  (`type.GetMethod("ToString", ...)`) is likewise still unguarded. Still an open design-tension item,
+  not a regression — unchanged from the original audit.
 
-- **Warning** — Runtime reflection used unconditionally (not editor-gated), in tension with
-  AGENTS.md's "No runtime reflection (AOT target) — reflection only in editor tools":
-  - `Runtime/DebugX/Logging/Core/CallerInfoHelper.cs`: `GetCallerInfo()` / `FindOptimalSkipCount` /
-    `IsInternalMethod` / `GetCallingMethod` use `System.Diagnostics.StackTrace` and
-    `System.Reflection.MethodBase` on **every single DebugX log call, in every build** (only the
-    Unity-stack-extractor fallback at lines 177-190 and 264-304 is `#if UNITY_EDITOR`-gated; the core
-    stack-walk/reflection path is not). Contrast with `Runtime/DebugX/Logging/Console/LogEntriesBridge.cs`
-    in the same package, which does the same kind of reflection but correctly confines all of it
-    behind `#if UNITY_EDITOR` (and documents exactly why: "Lives in the runtime assembly
-    (editor-guarded)...").
-  - `Runtime/DebugX/Logging/Parsing/MessageTemplateParser.cs:113`:
-    `type.GetMethod("ToString", System.Type.EmptyTypes)` — a reflection call per logged non-primitive
-    property value, also unguarded, in the Runtime assembly.
-  This is a design tension worth a conscious decision (perf on AOT/IL2CPP targets, plus the stated
-  project policy) rather than a silent default — not necessarily wrong (caller-info without
-  `[CallerMemberName]` genuinely needs some form of this), but it should be a deliberate, documented
-  trade-off rather than something a reviewer has to discover by reading the file.
-
-- **Info** — Widespread public-API constructors with default-valued parameters, in tension with
-  AGENTS.md's "No optional parameters": `LogEvent(...)` (`Core/LogEvent.cs:27-37`, 6 defaulted
-  params), `LogProperty(...)` (`Core/LogProperty.cs:22`), `FileSink(...)` (`Sinks/FileSink.cs:24-25`,
-  4 defaulted params), `JsonFileSink(...)` (`Sinks/JsonFileSink.cs:27-28`, 5 defaulted params),
-  `UnityConsoleSink(...)` (`Sinks/UnityConsoleSink.cs:21`), `EditorConsoleSink(...)`
-  (`Console/EditorConsoleSink.cs:15`). Consistent pattern across the whole public surface rather than
-  an isolated slip, so likely a deliberate convenience choice for this package specifically — flagged
-  for consistency with the stated project-wide rule, not as a functional defect.
-- **No findings** for the other §3 gotchas checked: no `??`/`??=` on any `UnityEngine.Object` in
-  scope (all `??` usages are on strings/collections/plain C# refs); no struct with an instance field
-  initializer or an explicit constructor that skips a field (`LogChannel`, `CallerInfo`, `LogEvent`,
-  `LogProperty`, `DebugXLogger`, `RowRef`, `QueuedLog`, `GizmoLayerSet.Layer` all check out); no
-  `OnValidate`/`OnAfterDeserialize`/`OnBeforeSerialize` anywhere in this scope.
+- **RESOLVED** — Widespread public-API constructors with default-valued parameters (originally flagged
+  as tension with AGENTS.md's "no optional parameters"). All six constructors cited in the original
+  finding now use the chained-overload pattern instead of default parameter values:
+  - `LogEvent` (`Core/LogEvent.cs:27-37` full ctor, no defaults; `:54` convenience 4-arg overload
+    chains to it with explicit `null`s).
+  - `LogProperty` (`Core/LogProperty.cs:22` full ctor; `:29` 2-arg overload chains with
+    `PropertyType.Scalar`).
+  - `FileSink` (`Sinks/FileSink.cs:24-25` full ctor, no defaults; `:36` 2-arg overload chains with
+    `maxFileSizeMB: 10, bufferThreshold: 50, flushIntervalSeconds: 1f`).
+  - `JsonFileSink` (`Sinks/JsonFileSink.cs:27-28` full ctor; `:40` 2-arg overload chains with the same
+    style of named-default arguments).
+  - `UnityConsoleSink` (`Sinks/UnityConsoleSink.cs:21` full ctor; `:27` 1-arg overload chains with
+    `LogLevel.Debug`).
+  - `EditorConsoleSink` (`Console/EditorConsoleSink.cs:15` full ctor; `:20` 0-arg overload chains with
+    `LogLevel.Verbose`).
+  This is the same overload-split pattern used by the mechanical fix elsewhere in this diff, applied
+  here to constructors too — verified each chained overload reproduces the exact default value that
+  was previously inline.
+- **No findings** for the other §3 gotchas checked — unchanged (no `??`/`??=` on `UnityEngine.Object`,
+  no struct violations, no `OnValidate`/serialization callbacks in scope).
 
 ## Fixes
 
-None applied — this audit is read-only per instructions (only this AUDIT.md was written). Suggested
-priority order for a follow-up task:
+Status of the original priority list:
 
-1. Guard `using UnityEditor;` in `Runtime/DebugX/DebugX.cs` behind `#if UNITY_EDITOR` (move the
-   `Handles`/`SceneView`-using methods' using requirement into the existing per-method `#if
-   UNITY_EDITOR` blocks, or wrap the whole using line) and delete the adjacent stray empty `#if
-   UNITY_EDITOR`/`#endif`. Verify with an actual player build, not just an editor recompile.
-2. Delete `DebugLogger.cs`, `IDebugLogger.cs`, `LoggerFactory.cs`, and `LogConfig.cs` (confirmed
-   unreferenced outside themselves), or if the intent was ever to expose this as a documented
-   alternative API, wire it onto `LogPipeline` instead of the orphaned `LogConfig` gate.
-3. Fix or remove the string-based half of `ExplicitErrorDedupe` (drop the `s_failureMessages`
-   text-match path; keep only the per-instance `exception.Data` marker, which is sound), and/or scope
-   it with a bound/expiry instead of an unbounded thread-static set.
-4. Route `DebugX.LogArray<T>` through `LogPipeline.Emit` like every other entry point, or document
-   why it deliberately bypasses sinks.
-5. Add the `DebugX` class/namespace name collision to `docs/00-AgentGuide.md` §3 next to the existing
-   `Debug`/`GameEngineCore.Debug` entry, since it is the same failure mode and already has two
-   confirmed consumer workarounds in the codebase.
+1. ~~Guard `using UnityEditor;`~~ — **DONE** (confirmed fixed at/before `d714482`).
+2. ~~Delete `DebugLogger.cs`/`IDebugLogger.cs`/`LoggerFactory.cs`/`LogConfig.cs`~~ — **DONE** (deleted at
+   `d714482`).
+3. ~~Fix/remove the string-based half of `ExplicitErrorDedupe`~~ — **DONE**.
+4. **Still open** — Route `DebugX.LogArray<T>` through `LogPipeline.Emit` like every other entry point,
+   or document why it deliberately bypasses sinks. This is the one remaining actionable item from the
+   original audit.
+5. ~~Add the `DebugX` class/namespace collision to `docs/00-AgentGuide.md` §3~~ — **DONE**.
+
+New, optional (not from original audit, not blocking): consider editor-gating the unconditional
+`StackTrace`/`MethodBase` reflection in `CallerInfoHelper.cs`/`MessageTemplateParser.cs` per AGENTS.md's
+no-runtime-reflection policy, and/or routing the five remaining raw `Debug.Log`/`Debug.LogError` calls
+in `Editor/Debugging/` through `DebugX.Logger(LogChannels.Editor)`.
 
 ## Cross-references
 
-- `D:\UnityProjects\HOMAM\docs\00-AgentGuide.md` §3 (`Debug` namespace collision gotcha — same
-  failure mode as the `DebugX`/`DebugX` finding above; fail-fast rule; no-runtime-reflection rule)
-- `D:\UnityProjects\HOMAM\docs\01-CorePrinciples.md` (fail-fast errors — `ExplicitErrorDedupe` finding)
+- `D:\UnityProjects\HOMAM\docs\00-AgentGuide.md` §3 (`Debug` namespace collision gotcha; now also
+  carries the `DebugX`/`DebugX` collision as its own subsection — confirmed present)
+- `D:\UnityProjects\HOMAM\docs\01-CorePrinciples.md` (fail-fast errors — `ExplicitErrorDedupe` finding,
+  now resolved)
 - `D:\UnityProjects\HOMAM\docs\02-Libraries.md` (Library/Service role — DebugX correctly scoped)
-- `D:\UnityProjects\HOMAM\docs\09-EditorHub.md` (diagnostic surfaces by scope —
-  `IEntityDebugSection`/`IWorldDebugSection` alignment)
-- `D:\UnityProjects\HOMAM\docs\13-AuthoringStandards.md` (editor-window-as-last-resort — DebugX
-  Console justified as Unity Console's natural extension)
+- `D:\UnityProjects\HOMAM\docs\09-EditorHub.md` (diagnostic surfaces by scope)
+- `D:\UnityProjects\HOMAM\docs\13-AuthoringStandards.md` (editor-window-as-last-resort)
 - `D:\UnityProjects\HOMAM\Packages\com.aethernexus.foundationplatform\Documentation~\ARCHITECTURE.md`
-  (Logging (DebugX) section — matches code except for the undocumented dead `LoggerFactory` path)
+  (Logging (DebugX) section — no longer references the now-deleted `LoggerFactory` path)
 - Sibling audit for a different subsystem in this package, same pattern:
   `D:\UnityProjects\HOMAM\Packages\com.aethernexus.foundationplatform\Editor\ProjectWindowX\AUDIT.md`
