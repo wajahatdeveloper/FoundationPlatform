@@ -7,9 +7,10 @@ namespace AetherNexus.FoundationPlatform.TweenX
     /// <summary>
     /// "Juice" tween: a decaying oscillation applied around a captured origin — the engine behind punch
     /// and shake on position / local-position / scale / rotation. Both effects return exactly to the
-    /// origin at the end. Oscillation is a pure function of time (no RNG state), so a shake with a fixed
-    /// seed is reproducible — including on the deterministic clock. Created via the <c>TweenPunch*</c> /
-    /// <c>TweenShake*</c> extensions.
+    /// origin at the end. Oscillation is a pure function of time (no RNG state). Reproducibility on
+    /// <see cref="TweenClock.Deterministic"/> requires an explicit <c>seed &gt;= 0</c>; the default
+    /// auto-seed (<c>-1</c>) is call-order/session dependent and not reproducible. Created via the
+    /// <c>TweenPunch*</c> / <c>TweenShake*</c> extensions.
     /// </summary>
     public sealed class JuiceTween : Tween
     {

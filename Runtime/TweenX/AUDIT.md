@@ -95,39 +95,14 @@ thin, non-duplicated compositions over the core color/fade tweens.
 
 ### Determinism
 
-- **Error** — `FeedbackTimeFreeze` (`Runtime/TweenX/Feedbacks/Feedbacks.cs:150-164`) mutates the
-  global `Time.timeScale` and schedules the restore through
-  `FeedbackContext.Schedule(FreezeDuration, () => Time.timeScale = prev, unscaled: true)`
-  (`Feedback.cs:36-45`), which tracks a zero-duration, delayed tween and fires the restore from
-  its `OnComplete` callback. But `FeedbackContext.Stop()` (`Feedback.cs:48-52`) — called from
-  `FeedbackPlayer.OnDisable()`/`Play()` (`FeedbackPlayer.cs:31,36,43`) — kills every tracked
-  handle, and `TweenManager.RemoveAt` (`Core/TweenManager.cs:225-237`) only invokes `OnKillCb`,
-  never `OnCompleteCb` (confirmed: `Kill`/`KillResolved`, `Core/TweenManager.cs:314-324`, route
-  through `RemoveAt(idx, killed: true)`). **Failure scenario:** a `FeedbackTimeFreeze` fires (sets
-  `Time.timeScale` to e.g. `0.1`), then the owning GameObject/`FeedbackPlayer` is disabled,
-  pooled, or the scene unloads before `FreezeDuration` elapses (very plausible — hit-stop is
-  typically triggered on a hit that can itself kill/despawn the actor) — the restore action is
-  silently dropped and `Time.timeScale` is left stuck at the frozen value for the rest of the
-  process, permanently slowing every "Scaled"-clock tween and Unity's physics fixed-step cadence
-  project-wide. This is a global engine-state corruption bug caused by a presentation component,
-  not a local visual glitch — worth Error severity even though it is not a direct simulation-fact
-  write.
-- **Warning** — Same root cause, a second failure mode: two overlapping `FeedbackTimeFreeze`
-  calls (two feedbacks on one player, or two different actors hit-stopping concurrently) each
-  independently capture/restore `Time.timeScale` with no ref-count or stack. Whichever restore
-  fires last wins, and if it fires with a `prev` captured *while already frozen* by the other
-  call, the game is left in the wrong timescale after both freezes should have ended (classic
-  hit-stop-stacking bug).
-- **Info** — `JuiceTween`'s class comment (`Core/JuiceTween.cs:10-12`) states "a shake with a
-  fixed seed is reproducible... including on the deterministic clock," and `TweenX.md:124` repeats
-  "With a fixed seed, shake is reproducible on the deterministic clock." Both are accurate only
-  when the caller passes an explicit `seed >= 0`; the default (`seed = -1`) resolves through
-  `JuiceTweenExtensions.ResolveSeed` (`Extensions/TweenExtensions.Juice.cs:73`) to a shared,
-  call-order-dependent static counter `_shakeSeed` (line 13), which is not saved/restored and not
-  reproducible across sessions or call order. Not an architecture violation (shake is
-  presentation-only, so non-determinism here is explicitly allowed by docs/01), but the two docs
-  make a reproducibility claim that only holds for the non-default path — a footgun for anyone
-  wiring a "reproducible" shake onto `TweenClock.Deterministic` without reading closely.
+- **Error (resolved — removed)** — `FeedbackTimeFreeze` previously mutated global `Time.timeScale`
+  from a presentation feedback; restore could be dropped on `Stop()`/`OnDisable`, and overlapping
+  freezes could stomp each other. **Fix applied:** class deleted. Timescale / hit-stop belongs in
+  GameEngineCore (GameManager), not Foundation TweenX. Related `FeedbackContext` must-run cleanup
+  APIs (only consumer) also removed.
+- **Info (resolved — docs)** — `JuiceTween` / `TweenX.md` now state plainly that reproducibility on
+  `TweenClock.Deterministic` requires explicit `seed >= 0`; default auto-seed is not session/
+  call-order stable.
 - Confirmed **no `UnityEngine.Random` usage anywhere in TweenX** (repo grep of
   `Runtime/TweenX` + `Editor/TweenX` returned zero hits). Shake jitter uses a deterministic
   sine-hash (`JuiceTween.NoiseSin`, `Core/JuiceTween.cs:84-88`) instead — correct, and stronger
@@ -138,30 +113,30 @@ thin, non-duplicated compositions over the core color/fade tweens.
 No findings. `Documentation~/TweenX.md` and the `TweenX` row in `Documentation~/ARCHITECTURE.md`
 (lines 5, 7, 17, 27, 223) accurately describe the current namespaces, clock table, fluent-setter
 list, Sequence/Path/Juice APIs, and the Feedback catalogue — every `Feedback*` type documented in
-`TweenX.md:130` (Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake,
-TimeFreeze, Event) matches a real class in `Feedbacks.cs`, and the "Ecosystem integration
+`TweenX.md` Feedback section (Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio,
+CameraShake, Event) matches a real class in `Feedbacks.cs`, and the "Ecosystem integration
 (optional)" section correctly describes the `SimulationClockTweenBridge` seam verified above under
-Ownership.
+Ownership. (`TimeFreeze` removed from catalogue and code.)
 
 ### Codebase Gotchas
 
-- **Warning** — Pervasive use of optional parameters across TweenX's public API, which
-  contradicts the project's stated "No optional parameters" rule (`.cursor/AGENTS.md:37`,
-  docs/00 §2 and the pre-flight checklist). This is a deliberate, consistently-applied DOTween-style
-  ergonomic choice (documented as such throughout `TweenX.md`), not an accidental slip, but it is a
-  direct, wide textual violation of the rule as written. Representative instances:
+- **Warning (resolved — documented exception)** — Pervasive use of optional parameters across
+  TweenX's public API. Documented as an approved exception at the top of `Documentation~/TweenX.md`
+  (DOTween-style fluent surface; overload conversion declined). Representative instances remain:
   - `TweenPunchPosition/LocalPosition/Scale/Rotation(..., float vibrato = 10f)` and
     `TweenShakePosition/Rotation/Scale(..., float vibrato = 10f, int seed = -1)`
     (`Extensions/TweenExtensions.Juice.cs:17-41`)
   - `TweenFlash(..., int flashes = 1)` / `TweenBlink(..., int blinks = 1)`
     (`Extensions/TweenExtensions.Juice.cs:45-60`)
   - `TweenValue.Float/Vector3/Color(..., UnityEngine.Object link = null)`
-    (`Extensions/TweenExtensions.Misc.cs:41-51`)
+    (`Extensions/TweenExtensions.Misc.cs`)
   - `TweenHandle.SetLoops(int count, LoopType type = LoopType.Restart)`,
     `SetSnapping(bool snapping = true)`, `SetRelative(bool relative = true)`
     (`Core/TweenHandle.cs:47,51-52`)
   - `TweenPath(..., PathType type = PathType.CatmullRom, bool local = false)`
     (`Extensions/TweenExtensions.Path.cs:13-14`)
+- **Info (resolved — docs)** — `TweenValue` class summary now warns getter/setter pairs must target
+  presentation-only state.
 - No findings for `??` on `UnityEngine.Object`. The only two `??` usages in scope —
   `_waypoints?.Length ?? 0` (`Core/PathTween.cs:44`) and `Resolve(h)?.Progress ?? 0f`
   (`Core/TweenManager.cs:249`) — operate on a plain `Vector3[]` and the plain C# class `Tween`
@@ -181,28 +156,13 @@ Ownership.
 
 ## Fixes
 
-None applied — this audit is read-only per instructions (only `AUDIT.md` was written). Recommended
-follow-ups, in priority order:
+All follow-ups applied:
 
-1. **`FeedbackTimeFreeze` restore-loss (Error).** Make the `Time.timeScale` restore
-   unconditional, not contingent on the scheduling tween surviving to `OnComplete`. Options: (a)
-   give `FeedbackContext` a small "must-run on stop" callback list that `Stop()` invokes before
-   killing tracked handles, so a pending freeze always restores; or (b) track outstanding freezes
-   with a static ref-count/stack scoped to `FeedbackTimeFreeze` so `Stop()`/domain-shutdown
-   unconditionally restores the pre-freeze value, and nested/overlapping freezes compose instead
-   of stomping each other.
-2. **Optional parameters (Warning).** Either record an explicit, documented exception for TweenX's
-   fluent API against the "No optional parameters" rule (one line at the top of `TweenX.md`,
-   mirroring how `AGENTS.md` documents other rule scopes), or convert the defaulted parameters into
-   explicit overloads (e.g. a `TweenShakePosition(strength, duration)` overload that forwards to
-   the full-parameter version with `vibrato: 10f, seed: -1`).
-3. **Shake-determinism doc footgun (Info).** Tighten `JuiceTween`'s class comment and
-   `TweenX.md:124` to state plainly that reproducibility on `TweenClock.Deterministic` requires an
-   explicit `seed >= 0`; the auto-seed default is not reproducible across sessions or call order.
-4. **Generic escape hatch (Info).** Add a one-line caveat to `TweenValue`'s XML summary
-   (`Extensions/TweenExtensions.Misc.cs:33-37`) warning that getter/setter pairs must target
-   presentation-only state, mirroring the Animator/IK guidance in docs/12 — no code change needed,
-   just closes the documentation gap for future callers.
+1. **`FeedbackTimeFreeze` (Error) — removed.** Class deleted; timescale ownership stays in
+   GameEngineCore GameManager. `FeedbackContext` cleanup APIs that only served TimeFreeze removed.
+2. **Optional parameters (Warning) — documented exception** at top of `TweenX.md` (kept; no overload conversion).
+3. **Shake-determinism doc footgun (Info) — tightened** in `JuiceTween` class comment and `TweenX.md` Juice section.
+4. **Generic escape hatch (Info) — caveat** added to `TweenValue` class summary.
 
 ## Cross-references
 

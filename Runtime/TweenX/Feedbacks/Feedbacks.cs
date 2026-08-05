@@ -147,45 +147,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         }
     }
 
-    /// <summary>
-    /// Briefly scale <see cref="Time.timeScale"/> (hit-stop), then restore it. Overlapping freezes
-    /// (two feedbacks, or two different actors hit-stopping concurrently) are ref-counted against a
-    /// process-wide stack so only the last one to unwind actually restores the pre-freeze value, and
-    /// the restore always runs even if the owning <see cref="FeedbackPlayer"/> is disabled/pooled
-    /// before <see cref="FreezeDuration"/> elapses.
-    /// </summary>
-    [Serializable]
-    public sealed class FeedbackTimeFreeze : Feedback
-    {
-        [Range(0f, 1f)] public float TimeScale = 0.1f;
-        [Min(0f)] public float FreezeDuration = 0.1f;
-
-        private static int s_activeFreezes;
-        private static float s_restoreTimeScale = 1f;
-
-        protected override void Execute(FeedbackContext ctx)
-        {
-            if (s_activeFreezes == 0) s_restoreTimeScale = Time.timeScale;
-            s_activeFreezes++;
-            Time.timeScale = TimeScale;
-
-            bool restored = false;
-            void Restore()
-            {
-                if (restored) return;
-                restored = true;
-                ctx.UnregisterCleanup(Restore);
-                s_activeFreezes = Mathf.Max(0, s_activeFreezes - 1);
-                if (s_activeFreezes == 0) Time.timeScale = s_restoreTimeScale;
-            }
-
-            // Must-run: guarantees the restore fires even if ctx.Stop() kills this delay before it completes.
-            ctx.RegisterCleanup(Restore);
-            // Restore on the unscaled clock so the freeze duration is real-time.
-            ctx.Schedule(FreezeDuration, Restore, unscaled: true);
-        }
-    }
-
     /// <summary>Invoke a UnityEvent (wire up anything from the inspector).</summary>
     [Serializable]
     public sealed class FeedbackEvent : Feedback

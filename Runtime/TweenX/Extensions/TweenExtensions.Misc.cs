@@ -32,8 +32,9 @@ public static class MiscTweenExtensions
 
 /// <summary>
 /// Generic value tweeners for anything without a dedicated extension: supply a getter + setter and
-/// tween a raw <c>float</c>, <c>Vector3</c>, or <c>Color</c>. Static methods (not extensions) since
-/// there is no natural <c>this</c> target.
+/// tween a raw <c>float</c>, <c>Vector3</c>, or <c>Color</c>. Getter/setter pairs must target
+/// presentation-only state — never wire a setter into a simulation-owned field. Static methods
+/// (not extensions) since there is no natural <c>this</c> target.
 /// </summary>
 public static class TweenValue
 {

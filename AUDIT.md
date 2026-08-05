@@ -63,7 +63,7 @@ Consolidates 11 subsystem audits (each with full findings, file/line citations, 
 ## Findings ranked by severity/impact
 
 ### Critical / Error
-- **TweenX — `FeedbackTimeFreeze` can permanently corrupt global `Time.timeScale`.** If the owning `FeedbackPlayer` is disabled/pooled/unloaded before the freeze duration elapses (plausible for hit-stop), the restore never fires (`TweenManager` only calls `OnKillCb`, never `OnCompleteCb` on removal) — the whole process is left running at the frozen timescale. A presentation component corrupting global engine state. See TweenX audit, Determinism §.
+- **TweenX — `FeedbackTimeFreeze` (resolved — removed).** Previously could corrupt global `Time.timeScale` when restore was dropped on kill. Class deleted; timescale / hit-stop belongs in GameEngineCore GameManager, not Foundation. See TweenX audit, Determinism §.
 - **Core Utilities — four confirmed ambiguous-overload pairs** (`Shuffle`, `GetOrAdd`, `SetLossyScale`, `SetWidth`/`SetHeight`) sitting in different files of the same namespace — latent `CS0121` compile errors, one of which (`SetLossyScale`) has **two implementations that compute different math**, so "just delete one" would silently change behavior for whichever side loses.
 - **DebugX — dead second logging implementation** (`DebugLogger`/`IDebugLogger`/`LoggerFactory`/`LogConfig`) gates on a config object nothing else writes to; a silent second source of truth for "is this log enabled" if anyone resurrects it.
 - **DebugX — `ExplicitErrorDedupe` can silently drop unrelated future errors forever** (unbounded thread-static string-match set, never cleared) — a direct fail-fast violation inside the project's own mandated logging framework, plus an unbounded memory leak.

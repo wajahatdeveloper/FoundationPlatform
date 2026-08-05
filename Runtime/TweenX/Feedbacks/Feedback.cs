@@ -7,7 +7,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
     /// <summary>
     /// Shared state passed to every feedback when a <see cref="FeedbackPlayer"/> plays. Owns the tween
     /// handles the feedbacks spawn so the player can stop them all, and provides delayed scheduling for
-    /// non-tween feedbacks (audio, events, time-freeze).
+    /// non-tween feedbacks (audio, events).
     /// </summary>
     public sealed class FeedbackContext
     {
@@ -16,7 +16,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         public TweenClock Clock = TweenClock.Scaled;
 
         private readonly List<TweenHandle> _handles = new(16);
-        private readonly List<Action> _mustRunOnStop = new(4);
 
         internal void Begin(GameObject owner, TweenClock clock)
         {
@@ -24,7 +23,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
             Transform = owner != null ? owner.transform : null;
             Clock = clock;
             _handles.Clear();
-            _mustRunOnStop.Clear();
         }
 
         /// <summary>Register a spawned tween so <see cref="Stop"/> can kill it.</summary>
@@ -33,21 +31,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
             if (h.IsActive) _handles.Add(h);
             return h;
         }
-
-        /// <summary>
-        /// Register a cleanup that must run even if this context is stopped before its tween(s)
-        /// complete naturally (e.g. restoring global state a feedback mutated, like <see cref="Time.timeScale"/>).
-        /// Killing a tracked tween only fires its kill callback, never its complete callback, so anything
-        /// that MUST run on both paths (complete or kill) belongs here, not in <see cref="Schedule"/>'s
-        /// completion action alone.
-        /// </summary>
-        public void RegisterCleanup(Action cleanup)
-        {
-            if (cleanup != null) _mustRunOnStop.Add(cleanup);
-        }
-
-        /// <summary>Remove a cleanup previously registered via <see cref="RegisterCleanup"/> — call this once it has run naturally.</summary>
-        public void UnregisterCleanup(Action cleanup) => _mustRunOnStop.Remove(cleanup);
 
         /// <summary>Run <paramref name="action"/> after <paramref name="delay"/> seconds via a zero-length tween.</summary>
         public void Schedule(float delay, Action action, bool unscaled = false)
@@ -64,15 +47,6 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         /// <summary>Kill every tween spawned by the feedbacks this context served.</summary>
         public void Stop()
         {
-            // Run must-run cleanups before killing handles: killing a tween only fires its kill
-            // callback, never its complete callback, so a cleanup relying on OnComplete would
-            // otherwise be silently dropped here.
-            if (_mustRunOnStop.Count > 0)
-            {
-                var cleanups = _mustRunOnStop.ToArray();
-                _mustRunOnStop.Clear();
-                for (int i = 0; i < cleanups.Length; i++) cleanups[i]();
-            }
             for (int i = 0; i < _handles.Count; i++) _handles[i].Kill();
             _handles.Clear();
         }

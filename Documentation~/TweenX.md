@@ -128,13 +128,13 @@ image.TweenFlash(Color.red, 0.2f, flashes: 2);
 canvasGroup.TweenBlink(0.2f, 0.4f, blinks: 3);
 ```
 
-Punch/shake return to the captured origin. With a fixed seed, shake is reproducible on the deterministic clock when that clock is registered.
+Punch/shake return to the captured origin. Reproducibility on `TweenClock.Deterministic` requires an explicit `seed >= 0`; the default auto-seed (`-1`) is call-order/session dependent and not reproducible.
 
 ## Feedback player
 
 Add **Foundation Platform ▸ Feedback Player**, then build composable feedbacks (no code):
 
-- Built-ins: Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake, TimeFreeze, Event (UnityEvent)
+- Built-ins: Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake, Event (UnityEvent)
 - **Add Feedback** lists every concrete `Feedback` subclass (TypeCache)
 - `Play()` / `Stop()`; optional Play On Enable
 
