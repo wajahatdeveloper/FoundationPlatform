@@ -33,6 +33,27 @@ namespace HierarchyX {
         public bool HasBadge { get { return !string.IsNullOrEmpty(badgeText); } }
     }
 
+    /// <summary>Applies a named <see cref="HierarchyRowStyle"/> from settings onto a decoration.</summary>
+    public static class HierarchyRowDecorationUtil {
+        /// <summary>
+        /// Copy tint / accent / badge from the style with <paramref name="styleId"/> and set
+        /// <paramref name="tooltip"/>. Returns false when the style is missing or disabled.
+        /// </summary>
+        public static bool TryApplyStyle(string styleId, ref HierarchyRowDecoration decoration, string tooltip) {
+            if (!HierarchyXSettings.Instance.TryGetStyle(styleId, out var style))
+                return false;
+
+            decoration.rowTint = style.rowTint;
+            decoration.tintMode = style.tintMode;
+            decoration.accent = style.accent;
+            decoration.accentFilled = style.accentFilled;
+            decoration.badgeText = style.badgeText;
+            decoration.badgeColor = style.badgeColor;
+            decoration.tooltip = tooltip;
+            return true;
+        }
+    }
+
     /// <summary>
     /// Implement to add per-row visuals (tint / left-edge spine) to the hierarchy without
     /// coupling HierarchyX to game code. Concrete implementations with a public parameterless

@@ -44,6 +44,42 @@ namespace HierarchyX {
         public LayerColor(int layer, Color color) : this(layer, color, TintMode.GradientRightToLeft) { }
     }
 
+    /// <summary>Stable style ids used by decorators when looking up entries in <see cref="HierarchyXSettings.styles"/>.</summary>
+    public static class HierarchyRowStyleIds {
+        public const string Invalid = "Invalid";
+    }
+
+    /// <summary>
+    /// Named hierarchy row visual (tint / accent / badge). Looked up by <see cref="id"/>;
+    /// add more list entries for future styles without changing the settings schema.
+    /// </summary>
+    [Serializable]
+    public struct HierarchyRowStyle {
+        [Tooltip("Stable lookup token for code (e.g. Invalid). Decorators match this string.")]
+        public string id;
+        public bool enabled;
+        public Color rowTint;
+        public TintMode tintMode;
+        public Color accent;
+        public bool accentFilled;
+        public string badgeText;
+        public Color badgeColor;
+
+        public static HierarchyRowStyle CreateInvalidDefault() {
+            var red = new Color(0.90f, 0.25f, 0.20f);
+            return new HierarchyRowStyle {
+                id = HierarchyRowStyleIds.Invalid,
+                enabled = true,
+                rowTint = new Color(red.r, red.g, red.b, 0.16f),
+                tintMode = TintMode.GradientLeftToRight,
+                accent = new Color(red.r, red.g, red.b, 0.95f),
+                accentFilled = true,
+                badgeText = "INVALID",
+                badgeColor = red,
+            };
+        }
+    }
+
     /// <summary>
     /// Project-scoped settings for HierarchyX. Persisted to ProjectSettings/HierarchyXSettings.asset
     /// (per-project, versionable) instead of user EditorPrefs.
@@ -88,6 +124,9 @@ namespace HierarchyX {
 
         [Tooltip("Let registered IHierarchyRowDecorators paint per-row tints and left-edge accent spines (e.g. character-rig membership). Turn off to skip that pass entirely.")]
         public bool rowDecorators = true;
+
+        [Tooltip("Named row visuals (tint / accent / badge) looked up by id. Seeded with Invalid; add more entries for future decorator styles.")]
+        public List<HierarchyRowStyle> styles = new List<HierarchyRowStyle>();
 
         [Tooltip("Draw decorator-supplied right-side text chips (e.g. a \"DOMAIN\" tag). Turn off to hide chips while keeping spines and tints.")]
         public bool rowBadges = true;
@@ -174,6 +213,8 @@ namespace HierarchyX {
                 settings = CreateInstance<HierarchyXSettings>();
                 settings.ApplySkinDefaults();
                 settings.Save();
+            } else if (settings.EnsureStylesSeeded()) {
+                settings.Save();
             }
 
             settings.hideFlags = HideFlags.HideAndDontSave & ~HideFlags.NotEditable;
@@ -191,6 +232,44 @@ namespace HierarchyX {
                 perLayerColors = new List<LayerColor> {
                     new LayerColor(5, new Color(0f, 0f, 1f, 0.3f)) // UI layer, subtle blue
                 };
+            EnsureStylesSeeded();
+        }
+
+        /// <summary>Ensure the Styles list has the built-in Invalid entry when missing. Returns true if the list changed.</summary>
+        public bool EnsureStylesSeeded() {
+            if (styles == null)
+                styles = new List<HierarchyRowStyle>();
+            if (HasStyleId(HierarchyRowStyleIds.Invalid))
+                return false;
+            styles.Add(HierarchyRowStyle.CreateInvalidDefault());
+            return true;
+        }
+
+        /// <summary>Look up a style by stable id. Returns false when missing or disabled.</summary>
+        public bool TryGetStyle(string id, out HierarchyRowStyle style) {
+            style = default;
+            if (string.IsNullOrEmpty(id) || styles == null)
+                return false;
+            for (var i = 0; i < styles.Count; i++) {
+                var entry = styles[i];
+                if (!string.Equals(entry.id, id, StringComparison.Ordinal))
+                    continue;
+                if (!entry.enabled)
+                    return false;
+                style = entry;
+                return true;
+            }
+            return false;
+        }
+
+        private bool HasStyleId(string id) {
+            if (styles == null)
+                return false;
+            for (var i = 0; i < styles.Count; i++) {
+                if (string.Equals(styles[i].id, id, StringComparison.Ordinal))
+                    return true;
+            }
+            return false;
         }
 
         public void Save() {

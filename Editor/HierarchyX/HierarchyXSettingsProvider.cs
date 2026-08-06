@@ -52,6 +52,7 @@ namespace HierarchyX {
 
         private static SerializedObject serialized;
         private static ReorderableList layerColorsList;
+        private static ReorderableList stylesList;
 
         [UnityEditor.InitializeOnLoad]
         internal static class HierarchyXFolderIconsSettingsHook {
@@ -80,7 +81,8 @@ namespace HierarchyX {
                 "focus", "double-click", "2d", "frame", "recttransform",
                 "middle-click", "active", "toggle",
                 "stale", "component", "guard", "orphan",
-                "folder", "icon"
+                "folder", "icon",
+                "style", "styles", "invalid"
             };
             HierarchyXSettingsExtras.CollectKeywords(keywords);
             return new SettingsProvider("Project/HierarchyX", SettingsScope.Project) {
@@ -95,6 +97,7 @@ namespace HierarchyX {
             if (serialized == null || serialized.targetObject != settings) {
                 serialized = new SerializedObject(settings);
                 BuildLayerColorsList();
+                BuildStylesList();
             }
         }
 
@@ -152,6 +155,13 @@ namespace HierarchyX {
                 layerColorsList.DoLayoutList();
             }
             EditorGUILayout.PropertyField(serialized.FindProperty("rowDecorators"), new GUIContent("Row Decorators"));
+
+            Space();
+            EditorGUILayout.LabelField("Styles", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Named row visuals looked up by id. Decorators match the Id string (e.g. Invalid for SceneFlow possession bindings). Add entries for future styles without changing settings shape.",
+                MessageType.None);
+            stylesList.DoLayoutList();
 
             Space();
             EditorGUILayout.LabelField("Row Badges", EditorStyles.boldLabel);
@@ -299,6 +309,64 @@ namespace HierarchyX {
                 element.FindPropertyRelative("layer").intValue = 0;
                 element.FindPropertyRelative("color").colorValue = new Color(1f, 1f, 1f, 0.15f);
                 element.FindPropertyRelative("mode").enumValueIndex = (int)TintMode.GradientRightToLeft;
+            };
+        }
+
+        private static void BuildStylesList() {
+            var prop = serialized.FindProperty("styles");
+            stylesList = new ReorderableList(serialized, prop, true, true, true, true);
+            stylesList.elementHeight = EditorGUIUtility.singleLineHeight * 3f + 10f;
+
+            stylesList.drawHeaderCallback = rect =>
+                EditorGUI.LabelField(rect, "Named Row Styles");
+
+            stylesList.drawElementCallback = (rect, index, active, focused) => {
+                var element = prop.GetArrayElementAtIndex(index);
+                var id = element.FindPropertyRelative("id");
+                var enabled = element.FindPropertyRelative("enabled");
+                var rowTint = element.FindPropertyRelative("rowTint");
+                var tintMode = element.FindPropertyRelative("tintMode");
+                var accent = element.FindPropertyRelative("accent");
+                var accentFilled = element.FindPropertyRelative("accentFilled");
+                var badgeText = element.FindPropertyRelative("badgeText");
+                var badgeColor = element.FindPropertyRelative("badgeColor");
+
+                var line = EditorGUIUtility.singleLineHeight;
+                rect.y += 2f;
+                rect.height = line;
+
+                var idW = rect.width * 0.35f;
+                var enW = 60f;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, idW - 4f, line), id, GUIContent.none);
+                EditorGUI.PropertyField(new Rect(rect.x + idW, rect.y, enW, line), enabled, GUIContent.none);
+                EditorGUI.PropertyField(new Rect(rect.x + idW + enW + 4f, rect.y, rect.width - idW - enW - 4f, line), badgeText, GUIContent.none);
+
+                rect.y += line + 2f;
+                var half = (rect.width - 4f) * 0.5f;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, half, line), rowTint, new GUIContent("Tint"));
+                EditorGUI.PropertyField(new Rect(rect.x + half + 4f, rect.y, half, line), tintMode, GUIContent.none);
+
+                rect.y += line + 2f;
+                var third = (rect.width - 8f) / 3f;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, third, line), accent, new GUIContent("Accent"));
+                accentFilled.boolValue = EditorGUI.ToggleLeft(
+                    new Rect(rect.x + third + 4f, rect.y, third, line), "Filled", accentFilled.boolValue);
+                EditorGUI.PropertyField(new Rect(rect.x + third * 2f + 8f, rect.y, third, line), badgeColor, GUIContent.none);
+            };
+
+            stylesList.onAddCallback = list => {
+                var i = prop.arraySize;
+                prop.InsertArrayElementAtIndex(i);
+                var element = prop.GetArrayElementAtIndex(i);
+                var defaults = HierarchyRowStyle.CreateInvalidDefault();
+                element.FindPropertyRelative("id").stringValue = "NewStyle";
+                element.FindPropertyRelative("enabled").boolValue = true;
+                element.FindPropertyRelative("rowTint").colorValue = defaults.rowTint;
+                element.FindPropertyRelative("tintMode").enumValueIndex = (int)defaults.tintMode;
+                element.FindPropertyRelative("accent").colorValue = defaults.accent;
+                element.FindPropertyRelative("accentFilled").boolValue = defaults.accentFilled;
+                element.FindPropertyRelative("badgeText").stringValue = "STYLE";
+                element.FindPropertyRelative("badgeColor").colorValue = defaults.badgeColor;
             };
         }
     }
