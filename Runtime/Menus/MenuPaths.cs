@@ -217,7 +217,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string AiGenerateCommanderBrain        = Root + "AI/Generate Default Commander Brain";
 			public const string AiGenerateDecisionSet           = Root + "AI/Generate Default Decision Set";
 			public const string AiGenerateBuiltInBehaviors      = Root + "AI/Generate Built-in Behavior Assets";
-			public const string AiGenerateBlackboardRegistry    = Root + "AI/Generate Blackboard Registry";
+			public const string AiGenerateBlackboardRegistry    = Root + "AI/Generate Blackboard List";
 			public const string AiSetupPawnOnSelection          = Root + "AI/Setup AI Pawn on Selection";
 			public const string AiSetupPawnContext              = GameObject + "Domain/AI/Setup AI Pawn";
 
