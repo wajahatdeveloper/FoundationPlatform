@@ -16,6 +16,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 		void Unbind();
 		void SetStance(string stanceId);
 		void UpdateBlend(float moveX, float moveZ);
+		/// <summary>Instantly apply blend weights (no damp) so the graph is not bind-pose until the first Update.</summary>
+		void SnapBlend(float moveX, float moveZ);
 		string GetDominantEntryId();
 		string ResolveTurnClipId(float signedAngle);
 	}
