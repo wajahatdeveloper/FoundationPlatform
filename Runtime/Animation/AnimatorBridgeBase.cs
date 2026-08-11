@@ -28,7 +28,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 		protected PlayableGraphBridge animancer;
 
 		[SerializeField]
-		[InspectorName("Animation Sets (Assets)")]
+		[LabelText("Registered Overlay Sets (auto)")]
+		[Tooltip("Lookup table for PlayFromSetStrict / equipment / combat overlay sets. Populated automatically as sets are registered — designers normally leave this alone.")]
 		protected List<AnimationSet> animationSets = new List<AnimationSet>();
 
 		public Action OnAnimatorMove_Event;
@@ -41,10 +42,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 		private Dictionary<string, AnimationSet> _animationSetByName;
 		private Dictionary<AnimationClip, (string setName, string entryId)> _clipToSetEntry;
 
-		[SerializeField]
-		[LabelText("Avatar Masks")]
-		[Tooltip("The _serializedMasks array is indexed by (int)AnimationMask. Create these assets and assign to the array in that order:\n\nIndex\tAnimationMask\tMask description\n0\tFullBody\tLeave slot null (FullBody = no mask)\n1\tArm\tBoth arms, both hands IK + fingers\n2\tUpperBody\tBoth arms, hands IK + fingers, body, head\n3\tRightHand\tRightFingers + RightHandIK\n4\tLeftHand\tLeftFingers + LeftHandIK\n5\tUpperBodyWithRoot\tUpperBody + Root node\n6\tRightArm\tRightArm, RightFingers, RightHandIK\n7\tUpperBodyWithoutArm\tBody + Head only\n8\tLowerBody\tBoth legs + feet IK\n9\tLowerBodyWithRoot\tLowerBody + Root node\n10\tLeftLeg\tLeftLeg + LeftFootIK\n11\tRightLeg\tRightLeg + RightFootIK")]
-		private AvatarMask[] _serializedMasks;
+		private static readonly object AvatarMaskCacheLock = new object();
+		private static AvatarMask[] _avatarMaskCache;
 
 		/// <summary>
 		///  Direct access to the underlying Unity Animator.
@@ -699,12 +698,50 @@ namespace AetherNexus.FoundationPlatform.Animation
 			if (mask == AnimationMask.FullBody)
 				return null;
 
+			EnsureAvatarMaskCache();
 			var idx = (int)mask;
-			if (_serializedMasks == null || idx >= _serializedMasks.Length || _serializedMasks[idx] == null)
+			if (idx < 0 || idx >= _avatarMaskCache.Length || _avatarMaskCache[idx] == null)
 				throw new InvalidOperationException(
-					$"{nameof(AnimatorBridgeBase)} on '{name}': Avatar mask slot for {mask} is not assigned in the inspector.");
+					$"{nameof(AnimatorBridgeBase)} on '{name}': Avatar mask for {mask} missing from Resources/AvatarMasks/AnimationMask_{mask}.mask.");
 
-			return _serializedMasks[idx];
+			return _avatarMaskCache[idx];
+		}
+
+		private static void EnsureAvatarMaskCache()
+		{
+			if (_avatarMaskCache != null)
+				return;
+
+			lock (AvatarMaskCacheLock)
+			{
+				if (_avatarMaskCache != null)
+					return;
+
+				var values = (AnimationMask[])Enum.GetValues(typeof(AnimationMask));
+				var max = 0;
+				for (var i = 0; i < values.Length; i++)
+				{
+					var v = (int)values[i];
+					if (v > max) max = v;
+				}
+
+				var cache = new AvatarMask[max + 1];
+				for (var i = 0; i < values.Length; i++)
+				{
+					var value = values[i];
+					if (value == AnimationMask.FullBody)
+						continue;
+
+					var path = $"AvatarMasks/AnimationMask_{value}";
+					var loaded = Resources.Load<AvatarMask>(path);
+					if (loaded == null)
+						throw new InvalidOperationException(
+							$"{nameof(AnimatorBridgeBase)}: failed to Resources.Load AvatarMask at '{path}'. Expected asset under a Resources/AvatarMasks folder.");
+					cache[(int)value] = loaded;
+				}
+
+				_avatarMaskCache = cache;
+			}
 		}
 
 		#endregion
