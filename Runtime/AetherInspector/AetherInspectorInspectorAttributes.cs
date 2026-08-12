@@ -778,6 +778,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public string MinGetter;
         /// <summary>Member name or expression returning the maximum value.</summary>
         public string MaxGetter;
+        /// <summary>Custom slider track color (RGB/A). When unset, Theme defaults apply.</summary>
+        public float TrackR, TrackG, TrackB, TrackA = 1f;
+        public bool HasTrackColor;
+        public float FillR, FillG, FillB, FillA = 1f;
+        public bool HasFillColor;
+        public float ThumbR, ThumbG, ThumbB, ThumbA = 1f;
+        public bool HasThumbColor;
         /// <summary>Clamp between two constant doubles.</summary>
         /// <param name="min">Minimum allowed value.</param>
         /// <param name="max">Maximum allowed value.</param>
@@ -812,6 +819,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public string MaxValueGetter;
         /// <summary>Member name or expression returning a <c>Vector2</c> where x=min, y=max.</summary>
         public string MinMaxValueGetter;
+        public float TrackR, TrackG, TrackB, TrackA = 1f;
+        public bool HasTrackColor;
+        public float FillR, FillG, FillB, FillA = 1f;
+        public bool HasFillColor;
+        public float ThumbR, ThumbG, ThumbB, ThumbA = 1f;
+        public bool HasThumbColor;
         /// <summary>Create a min/max slider with constant bounds.</summary>
         /// <param name="minValue">Minimum bound.</param>
         /// <param name="maxValue">Maximum bound.</param>
@@ -918,9 +931,50 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public sealed class EnumToggleButtonsAttribute : Attribute { }
 
-    /// <summary>Draws a bool toggle on the left side of its label instead of the default right alignment.</summary>
+    /// <summary>Draws a bool as a stylized on/off switch with the label to the right.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public sealed class ToggleLeftAttribute : Attribute { }
+
+    /// <summary>Draws a float as a percentage field (0-1 or custom scale).</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public sealed class PercentageAttribute : Attribute
+    {
+        public float Scale = 100f;
+        public string Format = "0.##";
+        public PercentageAttribute() { }
+        public PercentageAttribute(float scale) { Scale = scale; }
+    }
+
+    /// <summary>Rotary dial for numeric float/int values.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public sealed class KnobAttribute : Attribute
+    {
+        public float Min;
+        public float Max = 1f;
+        public float Size = 56f;
+        public KnobAttribute() { }
+        public KnobAttribute(float min, float max) { Min = min; Max = max; }
+        public KnobAttribute(float min, float max, float size) { Min = min; Max = max; Size = size; }
+    }
+
+    /// <summary>Inline AnimationCurve editor hint (curves already draw via PropertyField; ensures Theme spacing).</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public sealed class CurveAttribute : Attribute
+    {
+        public float Height = 48f;
+        public CurveAttribute() { }
+        public CurveAttribute(float height) { Height = height; }
+    }
+
+    /// <summary>Fails validation when a string is null or empty.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public sealed class NotEmptyAttribute : Attribute
+    {
+        public string ErrorMessage;
+        public InfoMessageType MessageType = InfoMessageType.Error;
+        public NotEmptyAttribute() { }
+        public NotEmptyAttribute(string errorMessage) { ErrorMessage = errorMessage; }
+    }
 
     /// <summary>Configures how a <c>Dictionary&lt;TKey, TValue&gt;</c> is drawn in the inspector.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]

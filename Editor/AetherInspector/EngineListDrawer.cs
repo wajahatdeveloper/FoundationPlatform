@@ -179,7 +179,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     using (new EditorGUI.DisabledScope(disableAdd))
                     {
-                        if (GUI.Button(trailing[0], "+", EditorStyles.miniButton))
+                        if (GUI.Button(trailing[0], "+", AetherInspectorTheme.CompactButton))
                             AddElement(e, targets, elemType, lds, occ);
                     }
                 }
@@ -202,7 +202,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     using (new EditorGUI.DisabledScope(disableAdd))
                     {
-                        if (GUI.Button(trailing[0], "+", EditorStyles.miniButton))
+                        if (GUI.Button(trailing[0], "+", AetherInspectorTheme.CompactButton))
                             AddElement(e, targets, elemType, lds, occ);
                     }
                 }
@@ -239,10 +239,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     GUILayout.FlexibleSpace();
                     using (new EditorGUI.DisabledScope(page <= 0))
-                        if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.Width(24))) page--;
+                        if (GUILayout.Button("◀", AetherInspectorTheme.CompactButton, GUILayout.Width(24))) page--;
                     GUILayout.Label($"{page + 1}/{pageCount}", EditorStyles.miniLabel, GUILayout.ExpandWidth(false));
                     using (new EditorGUI.DisabledScope(page >= pageCount - 1))
-                        if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(24))) page++;
+                        if (GUILayout.Button("▶", AetherInspectorTheme.CompactButton, GUILayout.Width(24))) page++;
                 }
                 s_pages.AddOrUpdate(key, page);
                 start = page * pageSize;
@@ -302,7 +302,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         // Remove button on the right
                         if (removable)
                         {
-                            if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(20), GUILayout.Height(18)))
+                            if (GUILayout.Button("✕", AetherInspectorTheme.CompactButton, GUILayout.Width(20), GUILayout.Height(18)))
                                 removeIndex = i;
                         }
                     }
@@ -320,7 +320,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var after = rects.FindIndex(r => r.index >= s_dropIndex);
                     if (after >= 0) { var r = rects[after].rect; line = new Rect(r.x, r.yMin - 1, r.width, 2); }
                     else { var r = rects[rects.Count - 1].rect; line = new Rect(r.x, r.yMax - 1, r.width, 2); }
-                    EditorGUI.DrawRect(line, new Color(0.24f, 0.49f, 0.90f));
+                    EditorGUI.DrawRect(line, AetherInspectorTheme.ListDragLine);
                 }
             }
 

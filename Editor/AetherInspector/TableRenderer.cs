@@ -179,8 +179,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             try { cols = GetColumns(elementType); }
             catch (Exception ex)
             {
-                EditorGUILayout.HelpBox($"[TableList] column build failed for {elementType?.Name}: {ex.Message}", MessageType.Error);
-                EditorGUILayout.PropertyField(arrayProp, label ?? new GUIContent(arrayProp.displayName), true);
+                AetherInspectorTheme.DrawValidationBox($"[TableList] column build failed for {elementType?.Name}: {ex.Message}");
+                EditorGUILayout.PropertyField(arrayProp, label ?? AetherInspectorTheme.TempContent(arrayProp.displayName), true);
                 return;
             }
 
@@ -192,7 +192,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (settings.AlwaysExpanded)
                     EditorGUILayout.LabelField(headerText, AetherInspectorTheme.SectionTitle);
                 else
-                    arrayProp.isExpanded = EditorGUILayout.Foldout(arrayProp.isExpanded, headerText, true);
+                    arrayProp.isExpanded = AetherInspectorTheme.SectionFoldout(arrayProp.isExpanded, headerText);
                 GUILayout.FlexibleSpace();
                 if (!settings.HideToolbar && !settings.IsReadOnly &&
                     GUILayout.Button("+", AetherInspectorTheme.CompactButton, GUILayout.Width(22)))
@@ -218,10 +218,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     {
                         GUILayout.FlexibleSpace();
                         using (new EditorGUI.DisabledScope(page <= 0))
-                            if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.Width(24))) page--;
+                            if (GUILayout.Button("◀", AetherInspectorTheme.CompactButton, GUILayout.Width(24))) page--;
                         GUILayout.Label($"{page + 1}/{pageCount}", EditorStyles.miniLabel, GUILayout.ExpandWidth(false));
                         using (new EditorGUI.DisabledScope(page >= pageCount - 1))
-                            if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(24))) page++;
+                            if (GUILayout.Button("▶", AetherInspectorTheme.CompactButton, GUILayout.Width(24))) page++;
                     }
                     s_page[key] = page;
                     start = page * pageSize;

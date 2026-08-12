@@ -82,8 +82,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             if (currentLabel == "(none)" && current != null) currentLabel = current.ToString();
 
             var rect = EditorGUILayout.GetControlRect();
-            rect = EditorGUI.PrefixLabel(rect, new GUIContent(label));
-            if (!EditorGUI.DropdownButton(rect, new GUIContent(currentLabel), FocusType.Keyboard)) return;
+            rect = EditorGUI.PrefixLabel(rect, AetherInspectorTheme.TempContent(label));
+            if (!AetherInspectorTheme.DrawStyledDropdown(rect, AetherInspectorTheme.TempContent(label), currentLabel)) return;
 
             var so = prop.serializedObject;
             string path = prop.propertyPath;
@@ -151,7 +151,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var obj = EditorGUI.ObjectField(fieldRect, lbl, prop.objectReferenceValue, t, false);
             if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; AetherInspectorRenderer.Commit(e, targets); }
 
-            if (EditorGUI.DropdownButton(btnRect, new GUIContent("▾"), FocusType.Keyboard))
+            AetherInspectorTheme.DrawFieldChrome(btnRect);
+            AetherInspectorTheme.DrawDropdownCaret(btnRect);
+            if (EditorGUI.DropdownButton(btnRect, GUIContent.none, FocusType.Keyboard, GUIStyle.none))
             {
                 var options = BuildAssetOptions(t, asel);
                 var so = prop.serializedObject;
@@ -173,14 +175,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var btnRect = new Rect(rect.xMax - btnW, rect.y, btnW, rect.height);
 
             EditorGUI.BeginChangeCheck();
-            var obj = EditorGUI.ObjectField(fieldRect, new GUIContent(label), elemProp.objectReferenceValue, elemType, false);
+            var obj = EditorGUI.ObjectField(fieldRect, AetherInspectorTheme.TempContent(label), elemProp.objectReferenceValue, elemType, false);
             if (EditorGUI.EndChangeCheck())
             {
                 elemProp.objectReferenceValue = obj;
                 elemProp.serializedObject.ApplyModifiedProperties();
             }
 
-            if (EditorGUI.DropdownButton(btnRect, new GUIContent("▾"), FocusType.Keyboard))
+            AetherInspectorTheme.DrawFieldChrome(btnRect);
+            AetherInspectorTheme.DrawDropdownCaret(btnRect);
+            if (EditorGUI.DropdownButton(btnRect, GUIContent.none, FocusType.Keyboard, GUIStyle.none))
             {
                 var options = BuildAssetOptions(elemType, asel);
                 var so = elemProp.serializedObject;
@@ -271,7 +275,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             foreach (var o in visible)
             {
                 bool isCurrent = InspectorMemberResolver.ValuesEqual(_current, o.Value);
-                var style = new GUIStyle(EditorStyles.label) { fontStyle = isCurrent ? FontStyle.Bold : FontStyle.Normal };
+                var style = isCurrent ? AetherInspectorTheme.MenuRowSelected : AetherInspectorTheme.MenuRow;
                 if (GUILayout.Button((isCurrent ? "✓ " : "   ") + o.Label, style))
                 {
                     Select(o);

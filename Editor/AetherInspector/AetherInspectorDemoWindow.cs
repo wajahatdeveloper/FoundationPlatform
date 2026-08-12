@@ -159,6 +159,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         [MinValue(0), MaxValue(999)]
         public int clamped = 10;
 
+        [TitleGroup("Stats")]
+        [Knob(0f, 1f, 48f)]
+        public float intensity = 0.4f;
+
+        [TitleGroup("Stats")]
+        [Percentage]
+        public float critChance = 0.25f;
+
+        [TitleGroup("Stats")]
+        [Curve(56f)]
+        public AnimationCurve falloff = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+
         // --- Enum toggle buttons ---
         [EnumToggleButtons]
         public Mode mode = Mode.Low;
@@ -195,6 +207,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         [Title("Validation")]
         [ValidateInput(nameof(ValidatePositive), "Value must be positive.")]
         public int mustBePositive = 1;
+
+        [NotEmpty("Name must not be empty.")]
+        public string requiredName = "";
 
         private bool ValidatePositive(int value, ref string message)
         {

@@ -126,6 +126,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             s_typeCache?.Clear();
             s_initDone.Clear();
+            if (s_renderTrees != null) s_renderTrees.Clear();
             InspectorMemberResolver.ClearCache();
             AetherInspectorTheme.InvalidateSkinCache();
             AetherInspectorTheme.ResetContainerDepth();
@@ -318,6 +319,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             mm.MinMaxSlider = m.GetCustomAttribute<MinMaxSliderAttribute>();
             mm.ProgressBar = m.GetCustomAttribute<ProgressBarAttribute>();
             mm.EnumToggleButtons = m.GetCustomAttribute<EnumToggleButtonsAttribute>();
+            mm.Knob = m.GetCustomAttribute<KnobAttribute>();
+            mm.Percentage = m.GetCustomAttribute<PercentageAttribute>();
+            mm.Curve = m.GetCustomAttribute<CurveAttribute>();
+            mm.NotEmpty = m.GetCustomAttribute<NotEmptyAttribute>();
             mm.PreviewField = m.GetCustomAttribute<PreviewFieldAttribute>();
             mm.InlineEditor = m.GetCustomAttribute<InlineEditorAttribute>();
             mm.AssetsOnly = m.GetCustomAttribute<AssetsOnlyAttribute>();
@@ -500,6 +505,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         }
 
         private static readonly Stack<List<InspectorEntry>> s_listPool = new Stack<List<InspectorEntry>>();
+        private static readonly Dictionary<Type, (GroupNode root, Dictionary<string, GroupNode> flat)> s_renderTrees =
+            new Dictionary<Type, (GroupNode, Dictionary<string, GroupNode>)>();
 
         private static List<InspectorEntry> GetPooledList()
         {
@@ -552,6 +559,31 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
             }
             return clone;
+        }
+
+        private static void ClearEntryChildren(GroupNode node)
+        {
+            for (int i = node.Children.Count - 1; i >= 0; i--)
+            {
+                if (node.Children[i] is GroupNode gn)
+                    ClearEntryChildren(gn);
+                else
+                    node.Children.RemoveAt(i);
+            }
+        }
+
+        private static (GroupNode root, Dictionary<string, GroupNode> flat) GetOrCreateRenderTree(Type type, GroupNode template)
+        {
+            if (s_renderTrees.TryGetValue(type, out var cached))
+            {
+                ClearEntryChildren(cached.root);
+                return cached;
+            }
+            var flatMap = new Dictionary<string, GroupNode>();
+            var root = CloneGroupNode(template, flatMap);
+            var pair = (root, flatMap);
+            s_renderTrees[type] = pair;
+            return pair;
         }
 
         public static void Draw(UnityEditor.Editor editor, SerializedObject so, object target,
@@ -619,8 +651,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var type = targets[0].GetType();
             var meta = GetOrCreateMetadata(type);
 
-            var flatMap = new Dictionary<string, GroupNode>();
-            var root = CloneGroupNode(meta.GroupTreeTemplate, flatMap);
+            var (root, flatMap) = GetOrCreateRenderTree(type, meta.GroupTreeTemplate);
 
             foreach (var e in entries)
             {
@@ -965,7 +996,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 case GroupKind.Box:
                 {
-                    EditorGUILayout.Space(AetherInspectorTheme.HeaderSpacing);
                     using (new AetherInspectorTheme.ContainerScope())
                     {
                         if (g.ShowLabel)
@@ -990,7 +1020,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var t = g.TitleAttr;
                     string title = InspectorMemberResolver.ResolveString(targets[0], g.Name);
                     string subtitle = t != null ? InspectorMemberResolver.ResolveString(targets[0], t.Subtitle) : null;
-                    EditorGUILayout.Space(AetherInspectorTheme.HeaderSpacing);
                     AetherInspectorTheme.DrawTitle(title, subtitle,
                         ToTextAlignment(t?.Alignment ?? TitleAlignments.Left),
                         t == null || t.HorizontalLine,
@@ -1217,7 +1246,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var prevMixed = EditorGUI.showMixedValue;
                 if (mixed) EditorGUI.showMixedValue = true;
                 EditorGUI.BeginChangeCheck();
-                bool next = EditorGUILayout.ToggleLeft(title, on, EditorStyles.boldLabel);
+                bool next = AetherInspectorTheme.DrawToggleSwitchLeft(
+                    EditorGUILayout.GetControlRect(), AetherInspectorTheme.TempContent(title), on);
                 EditorGUI.showMixedValue = prevMixed;
                 if (EditorGUI.EndChangeCheck() && !failed)
                 {
@@ -1340,7 +1370,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 foreach (var t in mm.Titles)
                 {
-                    EditorGUILayout.Space(AetherInspectorTheme.SectionSpacing * 0.5f);
                     AetherInspectorTheme.DrawTitle(InspectorMemberResolver.ResolveString(target, t.Title),
                         InspectorMemberResolver.ResolveString(target, t.Subtitle),
                         ToTextAlignment(t.TitleAlignment), t.HorizontalLine, t.Bold);
@@ -1616,7 +1645,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             if (mm?.Headers == null) return;
             foreach (var h in mm.Headers)
             {
-                EditorGUILayout.Space(AetherInspectorTheme.HeaderSpacing);
                 EditorGUILayout.LabelField(h.header, AetherInspectorTheme.FlatHeaderLabel);
             }
         }
@@ -1722,13 +1750,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 return;
             }
 
-            // [ToggleLeft] bool → left-aligned checkbox (label right of the box).
+            // [ToggleLeft] bool → stylized switch + label.
             if (prop.propertyType == SerializedPropertyType.Boolean && mm.ToggleLeft != null)
             {
                 DrawUnityHeaders(mm);
                 var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
                 EditorGUI.BeginChangeCheck();
-                bool v = EditorGUILayout.ToggleLeft(lbl, prop.boolValue);
+                bool v = AetherInspectorTheme.DrawToggleSwitchLeft(EditorGUILayout.GetControlRect(), lbl, prop.boolValue);
                 if (EditorGUI.EndChangeCheck()) { prop.boolValue = v; Commit(e, targets); }
                 return;
             }
@@ -1795,6 +1823,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             // [ProgressBar] on a numeric.
             if (mm.ProgressBar != null && TryDrawProgressBar(e, targets, mm.ProgressBar)) return;
+
+            // [Knob] rotary dial.
+            if (mm.Knob != null && TryDrawKnob(e, targets, mm.Knob)) return;
+
+            // [Percentage] float as percent.
+            if (mm.Percentage != null && TryDrawPercentage(e, targets, mm.Percentage)) return;
+
+            // [Curve] AnimationCurve with height.
+            if (mm.Curve != null && TryDrawCurve(e, targets, mm.Curve)) return;
 
             // [EnumToggleButtons] on an enum.
             if (prop.propertyType == SerializedPropertyType.Enum &&
@@ -2024,7 +2061,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
-        // [PreviewField]: square preview that IS the picker (tall ObjectField rects draw as previews).
+        // [PreviewField]: inline texture/sprite/object preview with adjustable height.
         private static void DrawPreviewField(InspectorEntry e, object[] targets, PreviewFieldAttribute pf)
         {
             var prop = e.Property;
@@ -2038,13 +2075,27 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             float x = rect.x + EditorGUIUtility.labelWidth;
             float w = rect.width - EditorGUIUtility.labelWidth;
-            var square = new Rect(x, rect.y, h, h);
-            if (pf.Alignment == ObjectFieldAlignment.Center) square.x = x + (w - h) * 0.5f;
-            else if (pf.Alignment == ObjectFieldAlignment.Right) square.x = rect.xMax - h;
+            var previewRect = new Rect(x, rect.y, Mathf.Min(w, h * 1.5f), h);
+            if (pf.Alignment == ObjectFieldAlignment.Center) previewRect.x = x + (w - previewRect.width) * 0.5f;
+            else if (pf.Alignment == ObjectFieldAlignment.Right) previewRect.x = rect.xMax - previewRect.width;
+
+            AetherInspectorTheme.DrawFieldChrome(previewRect);
+            var obj = prop.objectReferenceValue;
+            if (obj != null)
+            {
+                var tex = AssetPreview.GetAssetPreview(obj);
+                if (tex == null) tex = AssetPreview.GetMiniThumbnail(obj);
+                if (tex != null && Event.current.type == EventType.Repaint)
+                {
+                    float pad = 2f;
+                    GUI.DrawTexture(new Rect(previewRect.x + pad, previewRect.y + pad, previewRect.width - pad * 2f, previewRect.height - pad * 2f),
+                        tex, ScaleMode.ScaleToFit);
+                }
+            }
 
             EditorGUI.BeginChangeCheck();
-            var obj = EditorGUI.ObjectField(square, prop.objectReferenceValue, t, true);
-            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, targets); }
+            var next = EditorGUI.ObjectField(previewRect, GUIContent.none, obj, t, true);
+            if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = next; Commit(e, targets); }
         }
 
         private static readonly LruCache<int, UnityEditor.Editor> s_inlineEditors = new LruCache<int, UnityEditor.Editor>(50, (id, ed) =>
@@ -2082,7 +2133,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     // [BoxGroup]/[FoldoutGroup]/etc. — otherwise the arrow hangs left of the container.
                     var foldRect = AetherInspectorTheme.HeaderRect(
                         new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height));
-                    expanded = EditorGUI.Foldout(foldRect, expanded, lbl, true);
+                    expanded = EditorGUI.Foldout(foldRect, expanded, lbl, true, AetherInspectorTheme.FlatFoldoutStyle);
                     var fieldRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y,
                         rect.width - EditorGUIUtility.labelWidth, rect.height);
                     EditorGUI.BeginChangeCheck();
@@ -2105,7 +2156,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         {
                             var boxedFoldRect = AetherInspectorTheme.HeaderRect(
                                 EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight));
-                            expanded = EditorGUI.Foldout(boxedFoldRect, expanded, TempContent("Nested Inspector"), true);
+                            expanded = EditorGUI.Foldout(boxedFoldRect, expanded, TempContent("Nested Inspector"), true, AetherInspectorTheme.FlatFoldoutStyle);
                         }
                         foldouts[foldKey] = expanded;
                     }
@@ -2317,19 +2368,26 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             double max = ResolveNumber(targets[0], pr.MaxGetter, pr.Max);
             var prop = e.Property;
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            Color track = pr.HasTrackColor ? new Color(pr.TrackR, pr.TrackG, pr.TrackB, pr.TrackA) : AetherInspectorTheme.SliderTrack;
+            Color fill = pr.HasFillColor ? new Color(pr.FillR, pr.FillG, pr.FillB, pr.FillA) : AetherInspectorTheme.SliderFill;
+            Color thumb = pr.HasThumbColor ? new Color(pr.ThumbR, pr.ThumbG, pr.ThumbB, pr.ThumbA) : AetherInspectorTheme.SliderThumb;
             if (prop.propertyType == SerializedPropertyType.Integer)
             {
                 DrawUnityHeaders(e.Metadata);
                 EditorGUI.BeginChangeCheck();
-                int v = EditorGUILayout.IntSlider(lbl, prop.intValue, (int)min, (int)max);
-                if (EditorGUI.EndChangeCheck()) { prop.intValue = v; Commit(e, targets); }
+                var rect = EditorGUILayout.GetControlRect();
+                rect = EditorGUI.PrefixLabel(rect, lbl);
+                float v = AetherInspectorTheme.DrawStyledSlider(rect, prop.intValue, (float)min, (float)max, track, fill, thumb);
+                if (EditorGUI.EndChangeCheck()) { prop.intValue = Mathf.RoundToInt(v); Commit(e, targets); }
                 return true;
             }
             if (prop.propertyType == SerializedPropertyType.Float)
             {
                 DrawUnityHeaders(e.Metadata);
                 EditorGUI.BeginChangeCheck();
-                float v = EditorGUILayout.Slider(lbl, prop.floatValue, (float)min, (float)max);
+                var rect = EditorGUILayout.GetControlRect();
+                rect = EditorGUI.PrefixLabel(rect, lbl);
+                float v = AetherInspectorTheme.DrawStyledSlider(rect, prop.floatValue, (float)min, (float)max, track, fill, thumb);
                 if (EditorGUI.EndChangeCheck()) { prop.floatValue = v; Commit(e, targets); }
                 return true;
             }
@@ -2352,6 +2410,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
 
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            Color track = mms.HasTrackColor ? new Color(mms.TrackR, mms.TrackG, mms.TrackB, mms.TrackA) : AetherInspectorTheme.SliderTrack;
+            Color fill = mms.HasFillColor ? new Color(mms.FillR, mms.FillG, mms.FillB, mms.FillA) : AetherInspectorTheme.SliderFill;
+            Color thumb = mms.HasThumbColor ? new Color(mms.ThumbR, mms.ThumbG, mms.ThumbB, mms.ThumbA) : AetherInspectorTheme.SliderThumb;
 
             if (prop.propertyType == SerializedPropertyType.Vector2)
             {
@@ -2367,13 +2428,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var sliderRect = new Rect(rect.x + fieldW + 4, rect.y, rect.width - (fieldW + 4) * 2, rect.height);
                     var maxRect = new Rect(rect.xMax - fieldW, rect.y, fieldW, rect.height);
                     v.x = EditorGUI.FloatField(minRect, v.x);
-                    EditorGUI.MinMaxSlider(sliderRect, ref v.x, ref v.y, lo, hi);
+                    AetherInspectorTheme.DrawStyledMinMaxSlider(sliderRect, ref v.x, ref v.y, lo, hi, track, fill, thumb);
                     v.y = EditorGUI.FloatField(maxRect, v.y);
                 }
                 else
                 {
                     var rect = EditorGUILayout.GetControlRect();
-                    EditorGUI.MinMaxSlider(rect, lbl, ref v.x, ref v.y, lo, hi);
+                    rect = EditorGUI.PrefixLabel(rect, lbl);
+                    AetherInspectorTheme.DrawStyledMinMaxSlider(rect, ref v.x, ref v.y, lo, hi, track, fill, thumb);
                 }
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -2400,10 +2462,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var sliderRect = new Rect(rect.x + fieldW + 4, rect.y, rect.width - (fieldW + 4) * 2, rect.height);
                     var maxRect = new Rect(rect.xMax - fieldW, rect.y, fieldW, rect.height);
                     fx = EditorGUI.IntField(minRect, (int)fx);
-                    EditorGUI.MinMaxSlider(sliderRect, ref fx, ref fy, lo, hi);
+                    AetherInspectorTheme.DrawStyledMinMaxSlider(sliderRect, ref fx, ref fy, lo, hi, track, fill, thumb);
                     fy = EditorGUI.IntField(maxRect, (int)fy);
                 }
-                else EditorGUI.MinMaxSlider(rect, lbl, ref fx, ref fy, lo, hi);
+                else
+                {
+                    rect = EditorGUI.PrefixLabel(rect, lbl);
+                    AetherInspectorTheme.DrawStyledMinMaxSlider(rect, ref fx, ref fy, lo, hi, track, fill, thumb);
+                }
                 if (EditorGUI.EndChangeCheck())
                 {
                     prop.vector2IntValue = new Vector2Int(
@@ -2509,6 +2575,77 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return true;
         }
 
+        private static bool TryDrawKnob(InspectorEntry e, object[] targets, KnobAttribute knob)
+        {
+            var prop = e.Property;
+            if (prop.propertyType != SerializedPropertyType.Float && prop.propertyType != SerializedPropertyType.Integer)
+                return false;
+            DrawUnityHeaders(e.Metadata);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            float h = Mathf.Max(knob.Size, EditorGUIUtility.singleLineHeight);
+            var rect = EditorGUILayout.GetControlRect(false, h);
+            var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
+            EditorGUI.LabelField(labelRect, lbl);
+            var knobRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, knob.Size, knob.Size);
+            EditorGUI.BeginChangeCheck();
+            float cur = prop.propertyType == SerializedPropertyType.Integer ? prop.intValue : prop.floatValue;
+            float next = AetherInspectorTheme.DrawKnob(knobRect, cur, knob.Min, knob.Max);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (prop.propertyType == SerializedPropertyType.Integer) prop.intValue = Mathf.RoundToInt(next);
+                else prop.floatValue = next;
+                Commit(e, targets);
+            }
+            return true;
+        }
+
+        private static bool TryDrawPercentage(InspectorEntry e, object[] targets, PercentageAttribute pct)
+        {
+            var prop = e.Property;
+            if (prop.propertyType != SerializedPropertyType.Float && prop.propertyType != SerializedPropertyType.Integer)
+                return false;
+            DrawUnityHeaders(e.Metadata);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            float scale = pct.Scale <= 0f ? 100f : pct.Scale;
+            float raw = prop.propertyType == SerializedPropertyType.Integer ? prop.intValue : prop.floatValue;
+            float display = raw * scale;
+            EditorGUI.BeginChangeCheck();
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, lbl);
+            const float suffixW = 18f;
+            var fieldRect = new Rect(rect.x, rect.y, rect.width - suffixW, rect.height);
+            float nextDisplay = EditorGUI.FloatField(fieldRect, display);
+            GUI.Label(new Rect(rect.xMax - suffixW, rect.y, suffixW, rect.height), "%");
+            if (EditorGUI.EndChangeCheck())
+            {
+                float next = nextDisplay / scale;
+                if (prop.propertyType == SerializedPropertyType.Integer) prop.intValue = Mathf.RoundToInt(next);
+                else prop.floatValue = next;
+                Commit(e, targets);
+            }
+            return true;
+        }
+
+        private static bool TryDrawCurve(InspectorEntry e, object[] targets, CurveAttribute curve)
+        {
+            var prop = e.Property;
+            if (prop.propertyType != SerializedPropertyType.AnimationCurve) return false;
+            DrawUnityHeaders(e.Metadata);
+            var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
+            float h = Mathf.Max(curve.Height, EditorGUIUtility.singleLineHeight);
+            EditorGUI.BeginChangeCheck();
+            var rect = EditorGUILayout.GetControlRect(false, h);
+            rect = EditorGUI.PrefixLabel(rect, lbl);
+            AetherInspectorTheme.DrawFieldChrome(rect);
+            var next = EditorGUI.CurveField(rect, prop.animationCurveValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                prop.animationCurveValue = next;
+                Commit(e, targets);
+            }
+            return true;
+        }
+
         private static bool TryDrawEnumToggleButtons(InspectorEntry e, object[] targets)
         {
             var enumType = e.Field?.FieldType;
@@ -2531,7 +2668,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 for (int i = 0; i < values.Length; i++)
                     if (Convert.ToInt32(values.GetValue(i)) == current) { sel = i; break; }
                 EditorGUI.BeginChangeCheck();
-                int next = GUI.Toolbar(rect, sel, names);
+                int next = AetherInspectorTheme.Toolbar(rect, sel, names);
                 if (EditorGUI.EndChangeCheck() && next >= 0)
                 {
                     prop.intValue = Convert.ToInt32(values.GetValue(next));
@@ -2550,7 +2687,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 int v = Convert.ToInt32(values.GetValue(i));
                 var brect = new Rect(rect.x + i * bw, rect.y, bw, rect.height);
                 bool onNow = v == 0 ? result == 0 : (result & v) == v;
-                bool onNew = GUI.Toggle(brect, onNow, names[i], EditorStyles.miniButtonMid);
+                bool onNew = GUI.Toggle(brect, onNow, names[i], AetherInspectorTheme.CompactButton);
                 if (onNew == onNow) continue;
                 if (v == 0) result = 0;
                 else if (onNew) result |= v;
@@ -2810,12 +2947,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             const float iconSize = 16f;
             const float pad = 4f;
             var iconRect = new Rect(rect.x + pad, rect.y + (rect.height - iconSize) * 0.5f, iconSize, iconSize);
-            var textStyle = new GUIStyle(style) { alignment = TextAnchor.MiddleCenter };
+            var textStyle = AetherInspectorTheme.CenteredSectionTitle;
             switch (align)
             {
                 case IconAlignment.RightOfText:
                 {
-                    var textSize = textStyle.CalcSize(new GUIContent(text));
+                    var textSize = textStyle.CalcSize(AetherInspectorTheme.TempContent(text));
                     float total = textSize.x + pad + iconSize;
                     float start = rect.x + (rect.width - total) * 0.5f;
                     GUI.Label(new Rect(start, rect.y, textSize.x, rect.height), text, textStyle);
@@ -2979,6 +3116,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     ? InspectorMemberResolver.ResolveString(target, mm.Required.ErrorMessage)
                     : $"{GetLabelText(e, targets) ?? e.Property.displayName} is required.";
                 AetherInspectorTheme.DrawValidationBox(msg, mm.Required.MessageType);
+            }
+
+            if (mm.NotEmpty != null && e.Property != null && e.Property.propertyType == SerializedPropertyType.String
+                && string.IsNullOrEmpty(e.Property.stringValue))
+            {
+                string msg = mm.NotEmpty.ErrorMessage != null
+                    ? InspectorMemberResolver.ResolveString(target, mm.NotEmpty.ErrorMessage)
+                    : $"{GetLabelText(e, targets) ?? e.Property.displayName} must not be empty.";
+                AetherInspectorTheme.DrawValidationBox(msg, mm.NotEmpty.MessageType);
             }
 
             if (mm.ValidateInputs != null)
@@ -3308,6 +3454,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // Validation
         public RequiredAttribute Required;
+        public NotEmptyAttribute NotEmpty;
         public ValidateInputAttribute[] ValidateInputs;
 
         // Color
@@ -3336,6 +3483,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public MinMaxSliderAttribute MinMaxSlider;
         public ProgressBarAttribute ProgressBar;
         public EnumToggleButtonsAttribute EnumToggleButtons;
+        public KnobAttribute Knob;
+        public PercentageAttribute Percentage;
+        public CurveAttribute Curve;
         public PreviewFieldAttribute PreviewField;
         public InlineEditorAttribute InlineEditor;
         public AssetsOnlyAttribute AssetsOnly;

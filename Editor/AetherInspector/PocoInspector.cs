@@ -168,7 +168,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             try { DrawMember(m, target, depth, visited); }
             catch (Exception ex)
             {
-                EditorGUILayout.HelpBox($"{m.Info.Name}: {ex.InnerException?.Message ?? ex.Message}", MessageType.Error);
+                AetherInspectorTheme.DrawValidationBox($"{m.Info.Name}: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -391,8 +391,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (visited != null && visited.Contains(value)) return;
                 string key = (m.Info.DeclaringType?.FullName ?? "") + "." + m.Info.Name;
                 if (!s_nestedFoldouts.TryGetValue(key, out bool exp)) exp = true;
-                EditorGUILayout.Space(AetherInspectorTheme.SectionSpacing * 0.5f);
-                exp = EditorGUILayout.Foldout(exp, string.IsNullOrEmpty(label) ? m.Info.Name : label, true);
+                exp = AetherInspectorTheme.SectionFoldout(exp, string.IsNullOrEmpty(label) ? m.Info.Name : label);
                 s_nestedFoldouts[key] = exp;
                 if (exp)
                 {

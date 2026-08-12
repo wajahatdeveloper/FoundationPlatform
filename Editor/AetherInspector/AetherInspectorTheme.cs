@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +23,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static bool? s_lastProSkin;
 
         private static GUIStyle s_sectionTitle;
+        private static GUIStyle s_sectionTitleCenter;
+        private static GUIStyle s_sectionTitleRight;
+        private static GUIStyle s_sectionTitlePlain;
+        private static GUIStyle s_sectionTitlePlainCenter;
+        private static GUIStyle s_sectionTitlePlainRight;
         private static GUIStyle s_sectionSubtitle;
         private static GUIStyle s_centeredSectionTitle;
         private static GUIStyle s_tableHeader;
@@ -36,6 +42,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static GUIStyle s_headerButton;
         private static GUIStyle s_buttonBox;
         private static GUIStyle s_buttonFoldout;
+        private static GUIStyle s_buttonHelpBox;
+        private static GUIStyle s_compactButton;
+        private static GUIStyle s_toolbarButton;
+        private static GUIStyle s_infoBoxLabel;
+        private static GUIStyle s_infoBoxCollapsedLabel;
+        private static GUIStyle s_boxContainer;
+        private static GUIStyle s_dropdownField;
+        private static GUIStyle s_progressBarLabelCenter;
+        private static GUIStyle s_progressBarLabelLeft;
+        private static GUIStyle s_progressBarLabelRight;
+        private static readonly GUIContent s_tempContent = new GUIContent();
+        private static readonly Vector3[] s_caretVerts = new Vector3[3];
+        private static readonly Dictionary<int, Texture2D> s_tintTexCache = new Dictionary<int, Texture2D>();
+        private static readonly Dictionary<long, GUIStyle> s_displayAsStringCache = new Dictionary<long, GUIStyle>();
 
         [InitializeOnLoadMethod]
         private static void OnLoad() => InvalidateSkinCache();
@@ -49,6 +69,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static void ClearStyleCache()
         {
             s_sectionTitle = null;
+            s_sectionTitleCenter = null;
+            s_sectionTitleRight = null;
+            s_sectionTitlePlain = null;
+            s_sectionTitlePlainCenter = null;
+            s_sectionTitlePlainRight = null;
             s_sectionSubtitle = null;
             s_centeredSectionTitle = null;
             s_tableHeader = null;
@@ -62,6 +87,22 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             s_headerButton = null;
             s_buttonBox = null;
             s_buttonFoldout = null;
+            s_buttonHelpBox = null;
+            s_compactButton = null;
+            s_toolbarButton = null;
+            s_infoBoxLabel = null;
+            s_infoBoxCollapsedLabel = null;
+            s_boxContainer = null;
+            s_dropdownField = null;
+            s_progressBarLabelCenter = null;
+            s_progressBarLabelLeft = null;
+            s_progressBarLabelRight = null;
+            s_displayAsStringCache.Clear();
+            foreach (var kv in s_tintTexCache)
+            {
+                if (kv.Value != null) UnityEngine.Object.DestroyImmediate(kv.Value);
+            }
+            s_tintTexCache.Clear();
         }
 
         private static void EnsureSkin()
@@ -214,6 +255,133 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
+        public static Color BoxBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.03f)
+                    : new Color(0f, 0f, 0f, 0.03f);
+            }
+        }
+
+        public static Color BoxBorder
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.10f)
+                    : new Color(0f, 0f, 0f, 0.12f);
+            }
+        }
+
+        public static Color FieldBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.22f)
+                    : new Color(1f, 1f, 1f, 0.55f);
+            }
+        }
+
+        public static Color FieldBorder
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.12f)
+                    : new Color(0f, 0f, 0f, 0.18f);
+            }
+        }
+
+        public static Color SliderTrack
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.12f)
+                    : new Color(0f, 0f, 0f, 0.16f);
+            }
+        }
+
+        public static Color SliderFill
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.28f, 0.52f, 0.80f, 0.95f)
+                    : new Color(0.22f, 0.45f, 0.72f, 0.90f);
+            }
+        }
+
+        public static Color SliderThumb
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.92f, 0.92f, 0.92f, 1f)
+                    : new Color(1f, 1f, 1f, 1f);
+            }
+        }
+
+        public static Color ToggleTrackOff
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.14f)
+                    : new Color(0f, 0f, 0f, 0.18f);
+            }
+        }
+
+        public static Color ToggleTrackOn => SliderFill;
+
+        public static Color ToggleThumb => SliderThumb;
+
+        public static Color TabSelectedBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.10f)
+                    : new Color(0f, 0f, 0f, 0.08f);
+            }
+        }
+
+        public static Color TabIdleBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.08f)
+                    : new Color(0f, 0f, 0f, 0.03f);
+            }
+        }
+
+        public static Color ListDragLine
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.35f, 0.60f, 0.95f, 1f)
+                    : new Color(0.24f, 0.49f, 0.90f, 1f);
+            }
+        }
+
+        public static Color Accent => SliderFill;
+
         public static Color InfoBoxBackground(InfoMessageType type)
         {
             EnsureSkin();
@@ -260,9 +428,80 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 EnsureSkin();
                 if (s_sectionTitle == null)
-                    s_sectionTitle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 12 };
+                    s_sectionTitle = new GUIStyle(EditorStyles.boldLabel)
+                    {
+                        fontSize = 12,
+                        alignment = TextAnchor.MiddleLeft,
+                        clipping = TextClipping.Clip,
+                    };
                 return s_sectionTitle;
             }
+        }
+
+        public static GUIStyle SectionTitleCentered
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_sectionTitleCenter == null)
+                {
+                    s_sectionTitleCenter = new GUIStyle(SectionTitle) { alignment = TextAnchor.MiddleCenter };
+                }
+                return s_sectionTitleCenter;
+            }
+        }
+
+        public static GUIStyle SectionTitleRight
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_sectionTitleRight == null)
+                {
+                    s_sectionTitleRight = new GUIStyle(SectionTitle) { alignment = TextAnchor.MiddleRight };
+                }
+                return s_sectionTitleRight;
+            }
+        }
+
+        public static GUIStyle SectionTitlePlain
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_sectionTitlePlain == null)
+                    s_sectionTitlePlain = new GUIStyle(EditorStyles.label)
+                    {
+                        fontSize = 12,
+                        alignment = TextAnchor.MiddleLeft,
+                        clipping = TextClipping.Clip,
+                    };
+                return s_sectionTitlePlain;
+            }
+        }
+
+        public static GUIStyle TitleStyle(TextAlignment alignment, bool bold)
+        {
+            if (bold)
+            {
+                return alignment == TextAlignment.Center ? SectionTitleCentered
+                    : alignment == TextAlignment.Right ? SectionTitleRight
+                    : SectionTitle;
+            }
+            EnsureSkin();
+            if (alignment == TextAlignment.Center)
+            {
+                if (s_sectionTitlePlainCenter == null)
+                    s_sectionTitlePlainCenter = new GUIStyle(SectionTitlePlain) { alignment = TextAnchor.MiddleCenter };
+                return s_sectionTitlePlainCenter;
+            }
+            if (alignment == TextAlignment.Right)
+            {
+                if (s_sectionTitlePlainRight == null)
+                    s_sectionTitlePlainRight = new GUIStyle(SectionTitlePlain) { alignment = TextAnchor.MiddleRight };
+                return s_sectionTitlePlainRight;
+            }
+            return SectionTitlePlain;
         }
 
         public static GUIStyle SectionSubtitle
@@ -352,7 +591,51 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
-        public static GUIStyle CompactButton => EditorStyles.miniButton;
+        public static GUIStyle CompactButton
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_compactButton == null)
+                    s_compactButton = new GUIStyle(EditorStyles.miniButton) { fixedHeight = CompactButtonHeight };
+                return s_compactButton;
+            }
+        }
+
+        public static GUIStyle BoxContainerStyle
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_boxContainer == null)
+                {
+                    s_boxContainer = new GUIStyle(EditorStyles.helpBox)
+                    {
+                        padding = new RectOffset(8, 8, 6, 6),
+                        margin = new RectOffset(0, 0, 2, 2),
+                    };
+                }
+                return s_boxContainer;
+            }
+        }
+
+        public static GUIStyle DropdownFieldStyle
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_dropdownField == null)
+                {
+                    s_dropdownField = new GUIStyle(EditorStyles.label)
+                    {
+                        alignment = TextAnchor.MiddleLeft,
+                        padding = new RectOffset(6, 18, 0, 0),
+                        clipping = TextClipping.Clip,
+                    };
+                }
+                return s_dropdownField;
+            }
+        }
 
         /// <summary>Text style inside a tag/chip pill.</summary>
         public static GUIStyle TagChipText
@@ -433,12 +716,99 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
-        public static GUIStyle ButtonStyleFor(ButtonStyle style) => style switch
+        public static GUIStyle ButtonStyleFor(ButtonStyle style)
         {
-            ButtonStyle.Box => new GUIStyle(EditorStyles.helpBox) { padding = new RectOffset(6, 6, 6, 6) },
-            ButtonStyle.FoldoutButton => ButtonFoldout,
-            _ => CompactButton,
-        };
+            EnsureSkin();
+            switch (style)
+            {
+                case ButtonStyle.Box:
+                    if (s_buttonHelpBox == null)
+                        s_buttonHelpBox = new GUIStyle(EditorStyles.helpBox) { padding = new RectOffset(6, 6, 6, 6), alignment = TextAnchor.MiddleCenter };
+                    return s_buttonHelpBox;
+                case ButtonStyle.FoldoutButton:
+                    return ButtonFoldout;
+                default:
+                    return CompactButton;
+            }
+        }
+
+        public static GUIStyle CreateDisplayAsStringStyle(DisplayAsStringAttribute das)
+        {
+            EnsureSkin();
+            long key = ((long)(das.Overflow ? 1 : 0) << 40)
+                | ((long)(das.EnableRichText ? 1 : 0) << 39)
+                | ((long)(int)das.Alignment << 32)
+                | (uint)das.FontSize;
+            if (s_displayAsStringCache.TryGetValue(key, out var cached)) return cached;
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                wordWrap = !das.Overflow,
+                richText = das.EnableRichText,
+                alignment = das.Alignment == TextAlignment.Center ? TextAnchor.MiddleCenter
+                    : das.Alignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
+            };
+            if (das.FontSize > 0) style.fontSize = das.FontSize;
+            s_displayAsStringCache[key] = style;
+            return style;
+        }
+
+        public static GUIStyle CreateProgressBarLabelStyle(ProgressBarAttribute pb)
+        {
+            EnsureSkin();
+            if (pb.ValueLabelAlignment == TextAlignment.Left)
+            {
+                if (s_progressBarLabelLeft == null)
+                    s_progressBarLabelLeft = MakeProgressLabel(TextAnchor.MiddleLeft);
+                return s_progressBarLabelLeft;
+            }
+            if (pb.ValueLabelAlignment == TextAlignment.Right)
+            {
+                if (s_progressBarLabelRight == null)
+                    s_progressBarLabelRight = MakeProgressLabel(TextAnchor.MiddleRight);
+                return s_progressBarLabelRight;
+            }
+            if (s_progressBarLabelCenter == null)
+                s_progressBarLabelCenter = MakeProgressLabel(TextAnchor.MiddleCenter);
+            return s_progressBarLabelCenter;
+        }
+
+        private static GUIStyle MakeProgressLabel(TextAnchor anchor)
+        {
+            return new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = anchor,
+                normal = { textColor = Color.white },
+            };
+        }
+
+        public static GUIContent TempContent(string text)
+        {
+            s_tempContent.text = text;
+            s_tempContent.tooltip = string.Empty;
+            s_tempContent.image = null;
+            return s_tempContent;
+        }
+
+        public static GUIContent TempContent(string text, string tooltip)
+        {
+            s_tempContent.text = text;
+            s_tempContent.tooltip = tooltip ?? string.Empty;
+            s_tempContent.image = null;
+            return s_tempContent;
+        }
+
+        /// <summary>Cached 1×1 tint texture for rare GUIStyle background overrides.</summary>
+        public static Texture2D GetTintTexture(Color color)
+        {
+            int key = ((byte)(color.r * 255f) << 24) | ((byte)(color.g * 255f) << 16)
+                | ((byte)(color.b * 255f) << 8) | (byte)(color.a * 255f);
+            if (s_tintTexCache.TryGetValue(key, out var tex) && tex != null) return tex;
+            tex = new Texture2D(1, 1, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
+            tex.SetPixel(0, 0, color);
+            tex.Apply(false, true);
+            s_tintTexCache[key] = tex;
+            return tex;
+        }
 
         public static GUIStyle TableHeader
         {
@@ -486,29 +856,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
                 return s_menuRowSelected;
             }
-        }
-
-        public static GUIStyle CreateDisplayAsStringStyle(DisplayAsStringAttribute das)
-        {
-            var style = new GUIStyle(EditorStyles.label)
-            {
-                wordWrap = !das.Overflow,
-                richText = das.EnableRichText,
-                alignment = das.Alignment == TextAlignment.Center ? TextAnchor.MiddleCenter
-                    : das.Alignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
-            };
-            if (das.FontSize > 0) style.fontSize = das.FontSize;
-            return style;
-        }
-
-        public static GUIStyle CreateProgressBarLabelStyle(ProgressBarAttribute pb)
-        {
-            return new GUIStyle(EditorStyles.miniLabel)
-            {
-                alignment = pb.ValueLabelAlignment == TextAlignment.Left ? TextAnchor.MiddleLeft
-                    : pb.ValueLabelAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white },
-            };
         }
 
         // --- Layout helpers --------------------------------------------------------------
@@ -634,7 +981,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             public ContainerScope(GUIStyle style, params GUILayoutOption[] options)
             {
-                _scope = new EditorGUILayout.VerticalScope(style ?? EditorStyles.helpBox,
+                _scope = new EditorGUILayout.VerticalScope(style ?? BoxContainerStyle,
                     options ?? Array.Empty<GUILayoutOption>());
                 PushContainer();
             }
@@ -651,7 +998,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         public static void BeginSection()
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(BoxContainerStyle);
             PushContainer();
         }
 
@@ -682,10 +1029,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void EndBoxHeader() => EditorGUILayout.EndHorizontal();
 
         public static bool Foldout(bool expanded, string label)
-            => EditorGUILayout.Foldout(expanded, label, true, EditorStyles.foldoutHeader);
+            => SectionFoldout(expanded, label);
 
         public static bool Foldout(bool expanded, GUIContent label)
-            => EditorGUILayout.Foldout(expanded, label, true, EditorStyles.foldoutHeader);
+            => SectionFoldout(expanded, label);
 
         /// <summary>
         /// Flat section header — used by <c>[FoldoutGroup]</c>. Renders through the same
@@ -694,17 +1041,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// depth separates top sections; nested foldouts stay chrome-free.
         /// </summary>
         public static bool SectionFoldout(bool expanded, string label)
-            => SectionFoldout(expanded, new GUIContent(label));
+            => SectionFoldout(expanded, TempContent(label));
 
         public static bool SectionFoldout(bool expanded, GUIContent label)
         {
-            EditorGUILayout.Space(HeaderSpacing);
             var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             var headerRect = HeaderRect(rect);
 
             if (ContainerDepth <= 0)
             {
-                // Start the rule at the arrow, not at the raw layout rect, so header and rule agree.
                 float ruleX = HeaderArrowX(headerRect);
                 EditorGUI.DrawRect(new Rect(ruleX, rect.yMax - 1f, rect.xMax - ruleX, 1f), SectionRuleColor);
             }
@@ -738,7 +1083,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // try/finally rather than a using block.
         public static void BeginSectionFoldoutBody()
         {
-            EditorGUILayout.Space(HeaderSpacing);
             PushContainer();
             GUILayout.BeginHorizontal();
             GUILayout.Space(NestedIndentWidth);
@@ -750,7 +1094,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             PopContainer();
-            EditorGUILayout.Space(HeaderSpacing);
         }
 
         /// <summary>
@@ -792,7 +1135,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// </summary>
         public static void DrawTagPill(Rect rect, GUIContent content, Color accent, Action onRemove)
         {
-            EditorGUI.DrawRect(rect, TagChipBackground);
+            DrawRoundedRect(rect, TagChipBackground, 3f);
             EditorGUI.DrawRect(new Rect(rect.x + 1, rect.y + 1, 4, rect.height - 2), accent);
 
             float labelWidth = onRemove != null ? rect.width - 24 : rect.width - 6;
@@ -825,12 +1168,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void DrawTitle(string title, string subtitle, TextAlignment textAlignment,
             bool horizontalLine, bool boldLabel)
         {
-            EditorGUILayout.Space(HeaderSpacing);
             var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-            var ts = boldLabel ? SectionTitle : EditorStyles.label;
-            ts.alignment = textAlignment == TextAlignment.Center ? TextAnchor.MiddleCenter
-                : textAlignment == TextAlignment.Right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-            GUI.Label(rect, title, ts);
+            GUI.Label(rect, title, TitleStyle(textAlignment, boldLabel));
             if (!string.IsNullOrEmpty(subtitle))
                 GUI.Label(rect, subtitle, SectionSubtitle);
             if (horizontalLine)
@@ -851,28 +1190,28 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void DrawInfoBox(string message, InfoMessageType type, ref bool expanded, bool collapsible)
         {
             if (string.IsNullOrEmpty(message)) return;
+            EnsureSkin();
+            if (s_infoBoxLabel == null)
+                s_infoBoxLabel = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
+            if (s_infoBoxCollapsedLabel == null)
+                s_infoBoxCollapsedLabel = new GUIStyle(EditorStyles.label) { wordWrap = false };
 
-            var style = new GUIStyle(EditorStyles.wordWrappedLabel) { padding = new RectOffset(8, 8, 6, 6) };
             float wrapW = EditorGUIUtility.currentViewWidth - 24f;
 
             if (collapsible && !expanded)
             {
                 var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
                 EditorGUI.DrawRect(headerRect, InfoBoxBackground(type));
-                var headerBorder = InfoBoxBorder(type);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1f), headerBorder);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), headerBorder);
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1f, headerRect.height), headerBorder);
-                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1f, headerRect.y, 1f, headerRect.height), headerBorder);
+                DrawRectOutline(headerRect, InfoBoxBorder(type));
 
                 var prevIndent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
-                var labelStyle = new GUIStyle(EditorStyles.label) { wordWrap = false };
                 var labelRect = new Rect(headerRect.x + 6f, headerRect.y + 2f, headerRect.width - 12f, headerRect.height - 4f);
-                string firstLine = message.Split('\n')[0];
-                if (firstLine.Length > 64) firstLine = firstLine.Substring(0, 64);
-                string display = firstLine + "...";
-                GUI.Label(labelRect, display, labelStyle);
+                int nl = message.IndexOf('\n');
+                string firstLine = nl >= 0 ? message.Substring(0, nl) : message;
+                if (firstLine.Length > 64) firstLine = firstLine.Substring(0, 64) + "...";
+                else if (nl >= 0) firstLine += "...";
+                GUI.Label(labelRect, firstLine, s_infoBoxCollapsedLabel);
                 EditorGUI.indentLevel = prevIndent;
 
                 if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
@@ -886,16 +1225,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 return;
             }
 
-            // Full body for non-collapsible, or collapsible+expanded
-            float h = style.CalcHeight(new GUIContent(message), wrapW);
+            float h = s_infoBoxLabel.CalcHeight(TempContent(message), wrapW);
             var rect = EditorGUILayout.GetControlRect(false, h + 8f);
             EditorGUI.DrawRect(rect, InfoBoxBackground(type));
-            var border = InfoBoxBorder(type);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
-            EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, style);
+            DrawRectOutline(rect, InfoBoxBorder(type));
+            GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, s_infoBoxLabel);
 
             if (collapsible && Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
@@ -928,8 +1262,285 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// <summary>Skin-aware toolbar for tab groups.</summary>
         public static int Toolbar(int selected, string[] labels)
         {
-            var style = new GUIStyle(EditorStyles.toolbarButton) { fixedHeight = 22f };
-            return GUILayout.Toolbar(selected, labels, style);
+            EnsureSkin();
+            if (s_toolbarButton == null)
+                s_toolbarButton = new GUIStyle(EditorStyles.toolbarButton) { fixedHeight = 22f };
+            return GUILayout.Toolbar(selected, labels, s_toolbarButton);
+        }
+
+        public static int Toolbar(Rect rect, int selected, string[] labels)
+        {
+            EnsureSkin();
+            if (s_toolbarButton == null)
+                s_toolbarButton = new GUIStyle(EditorStyles.toolbarButton) { fixedHeight = 22f };
+            return GUI.Toolbar(rect, selected, labels, s_toolbarButton);
+        }
+
+        // --- Zero-alloc chrome drawing ---------------------------------------------------
+
+        public static void DrawRoundedRect(Rect rect, Color fill, float radius)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (radius <= 0.5f || rect.width < 2f || rect.height < 2f)
+            {
+                EditorGUI.DrawRect(rect, fill);
+                return;
+            }
+            radius = Mathf.Min(radius, rect.width * 0.5f, rect.height * 0.5f);
+            EditorGUI.DrawRect(new Rect(rect.x + radius, rect.y, rect.width - radius * 2f, rect.height), fill);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y + radius, radius, rect.height - radius * 2f), fill);
+            EditorGUI.DrawRect(new Rect(rect.xMax - radius, rect.y + radius, radius, rect.height - radius * 2f), fill);
+            Handles.BeginGUI();
+            Handles.color = fill;
+            Handles.DrawSolidDisc(new Vector3(rect.x + radius, rect.y + radius, 0f), Vector3.forward, radius);
+            Handles.DrawSolidDisc(new Vector3(rect.xMax - radius, rect.y + radius, 0f), Vector3.forward, radius);
+            Handles.DrawSolidDisc(new Vector3(rect.x + radius, rect.yMax - radius, 0f), Vector3.forward, radius);
+            Handles.DrawSolidDisc(new Vector3(rect.xMax - radius, rect.yMax - radius, 0f), Vector3.forward, radius);
+            Handles.EndGUI();
+        }
+
+        public static void DrawDropdownCaret(Rect fieldRect)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            float cx = fieldRect.xMax - 10f;
+            float cy = fieldRect.y + fieldRect.height * 0.5f;
+            s_caretVerts[0] = new Vector3(cx - 4f, cy - 2f, 0f);
+            s_caretVerts[1] = new Vector3(cx + 4f, cy - 2f, 0f);
+            s_caretVerts[2] = new Vector3(cx, cy + 3f, 0f);
+            Handles.BeginGUI();
+            Handles.color = EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.65f) : new Color(0f, 0f, 0f, 0.55f);
+            Handles.DrawAAConvexPolygon(s_caretVerts);
+            Handles.EndGUI();
+        }
+
+        public static void DrawFieldChrome(Rect rect)
+        {
+            EditorGUI.DrawRect(rect, FieldBackground);
+            DrawRectOutline(rect, FieldBorder);
+        }
+
+        public static bool DrawStyledDropdown(Rect rect, GUIContent label, string currentText)
+        {
+            DrawFieldChrome(rect);
+            GUI.Label(rect, currentText, DropdownFieldStyle);
+            DrawDropdownCaret(rect);
+            return EditorGUI.DropdownButton(rect, GUIContent.none, FocusType.Keyboard, GUIStyle.none);
+        }
+
+        public static float DrawStyledSlider(Rect rect, float value, float min, float max,
+            Color track, Color fill, Color thumb)
+        {
+            float trackH = 4f;
+            float thumbR = 6f;
+            var trackRect = new Rect(rect.x, rect.y + (rect.height - trackH) * 0.5f, rect.width, trackH);
+            EditorGUI.DrawRect(trackRect, track);
+            float t = Mathf.InverseLerp(min, max, value);
+            float fillW = trackRect.width * t;
+            if (fillW > 0f)
+                EditorGUI.DrawRect(new Rect(trackRect.x, trackRect.y, fillW, trackRect.height), fill);
+            float thumbX = trackRect.x + fillW;
+            if (Event.current.type == EventType.Repaint)
+            {
+                Handles.BeginGUI();
+                Handles.color = thumb;
+                Handles.DrawSolidDisc(new Vector3(thumbX, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
+                Handles.EndGUI();
+            }
+
+            int id = GUIUtility.GetControlID(FocusType.Passive);
+            var evt = Event.current;
+            switch (evt.GetTypeForControl(id))
+            {
+                case EventType.MouseDown:
+                    if (rect.Contains(evt.mousePosition) && GUI.enabled)
+                    {
+                        GUIUtility.hotControl = id;
+                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - rect.x) / Mathf.Max(1f, rect.width)));
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == id)
+                    {
+                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - rect.x) / Mathf.Max(1f, rect.width)));
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == id) { GUIUtility.hotControl = 0; evt.Use(); }
+                    break;
+            }
+            return value;
+        }
+
+        public static void DrawStyledMinMaxSlider(Rect rect, ref float minValue, ref float maxValue,
+            float limitMin, float limitMax, Color track, Color fill, Color thumb)
+        {
+            float trackH = 4f;
+            float thumbR = 6f;
+            var trackRect = new Rect(rect.x, rect.y + (rect.height - trackH) * 0.5f, rect.width, trackH);
+            EditorGUI.DrawRect(trackRect, track);
+            float t0 = Mathf.InverseLerp(limitMin, limitMax, minValue);
+            float t1 = Mathf.InverseLerp(limitMin, limitMax, maxValue);
+            float x0 = trackRect.x + trackRect.width * t0;
+            float x1 = trackRect.x + trackRect.width * t1;
+            EditorGUI.DrawRect(new Rect(x0, trackRect.y, Mathf.Max(0f, x1 - x0), trackRect.height), fill);
+            if (Event.current.type == EventType.Repaint)
+            {
+                Handles.BeginGUI();
+                Handles.color = thumb;
+                Handles.DrawSolidDisc(new Vector3(x0, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
+                Handles.DrawSolidDisc(new Vector3(x1, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
+                Handles.EndGUI();
+            }
+
+            int id = GUIUtility.GetControlID(FocusType.Passive);
+            var evt = Event.current;
+            switch (evt.GetTypeForControl(id))
+            {
+                case EventType.MouseDown:
+                    if (rect.Contains(evt.mousePosition) && GUI.enabled)
+                    {
+                        GUIUtility.hotControl = id;
+                        float mx = evt.mousePosition.x;
+                        float d0 = Mathf.Abs(mx - x0);
+                        float d1 = Mathf.Abs(mx - x1);
+                        s_minmaxDragNear = d0 <= d1;
+                        ApplyMinMaxDrag(rect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == id)
+                    {
+                        ApplyMinMaxDrag(rect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == id) { GUIUtility.hotControl = 0; evt.Use(); }
+                    break;
+            }
+        }
+
+        private static bool s_minmaxDragNear;
+
+        private static void ApplyMinMaxDrag(Rect rect, ref float minValue, ref float maxValue,
+            float limitMin, float limitMax, bool near)
+        {
+            float v = Mathf.Lerp(limitMin, limitMax, Mathf.Clamp01((Event.current.mousePosition.x - rect.x) / Mathf.Max(1f, rect.width)));
+            if (near)
+            {
+                minValue = Mathf.Clamp(v, limitMin, maxValue);
+            }
+            else
+            {
+                maxValue = Mathf.Clamp(v, minValue, limitMax);
+            }
+        }
+
+        public static bool DrawToggleSwitch(Rect rect, bool value)
+        {
+            float h = 16f;
+            float w = 28f;
+            var switchRect = new Rect(rect.x, rect.y + (rect.height - h) * 0.5f, w, h);
+            DrawRoundedRect(switchRect, value ? ToggleTrackOn : ToggleTrackOff, h * 0.5f);
+            float thumbR = 5.5f;
+            float tx = value ? switchRect.xMax - thumbR - 2f : switchRect.x + thumbR + 2f;
+            if (Event.current.type == EventType.Repaint)
+            {
+                Handles.BeginGUI();
+                Handles.color = ToggleThumb;
+                Handles.DrawSolidDisc(new Vector3(tx, switchRect.y + h * 0.5f, 0f), Vector3.forward, thumbR);
+                Handles.EndGUI();
+            }
+            if (GUI.enabled && Event.current.type == EventType.MouseDown && switchRect.Contains(Event.current.mousePosition))
+            {
+                value = !value;
+                GUI.changed = true;
+                Event.current.Use();
+            }
+            return value;
+        }
+
+        public static bool DrawToggleSwitchLeft(Rect rect, GUIContent label, bool value)
+        {
+            const float switchW = 30f;
+            var switchRect = new Rect(rect.x, rect.y, switchW, rect.height);
+            bool next = DrawToggleSwitch(switchRect, value);
+            var labelRect = new Rect(rect.x + switchW + 6f, rect.y, rect.width - switchW - 6f, rect.height);
+            GUI.Label(labelRect, label, FlatHeaderLabel);
+            return next;
+        }
+
+        public static float DrawKnob(Rect rect, float value, float min, float max)
+        {
+            float size = Mathf.Min(rect.width, rect.height, 56f);
+            var knobRect = new Rect(rect.x, rect.y, size, size);
+            Vector2 center = knobRect.center;
+            float radius = size * 0.42f;
+            if (Event.current.type == EventType.Repaint)
+            {
+                Handles.BeginGUI();
+                Handles.color = FieldBackground;
+                Handles.DrawSolidDisc(center, Vector3.forward, radius);
+                Handles.color = FieldBorder;
+                Handles.DrawWireDisc(center, Vector3.forward, radius);
+                float t = Mathf.InverseLerp(min, max, value);
+                float ang = Mathf.Lerp(135f, -135f, t) * Mathf.Deg2Rad;
+                var tip = center + new Vector2(Mathf.Cos(ang), -Mathf.Sin(ang)) * (radius - 4f);
+                Handles.color = Accent;
+                Handles.DrawAAPolyLine(3f, center, tip);
+                Handles.EndGUI();
+            }
+
+            int id = GUIUtility.GetControlID(FocusType.Passive);
+            var evt = Event.current;
+            switch (evt.GetTypeForControl(id))
+            {
+                case EventType.MouseDown:
+                    if (knobRect.Contains(evt.mousePosition) && GUI.enabled)
+                    {
+                        GUIUtility.hotControl = id;
+                        value = KnobValueFromMouse(center, min, max);
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == id)
+                    {
+                        value = KnobValueFromMouse(center, min, max);
+                        GUI.changed = true;
+                        evt.Use();
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == id) { GUIUtility.hotControl = 0; evt.Use(); }
+                    break;
+            }
+            return value;
+        }
+
+        private static float KnobValueFromMouse(Vector2 center, float min, float max)
+        {
+            Vector2 d = Event.current.mousePosition - center;
+            float deg = Mathf.Atan2(-d.y, d.x) * Mathf.Rad2Deg;
+            // Map 135..-135 (clockwise-ish through bottom) to 0..1
+            float clamped = Mathf.Clamp(deg, -135f, 135f);
+            float t = Mathf.InverseLerp(135f, -135f, clamped);
+            return Mathf.Lerp(min, max, t);
+        }
+
+        public static bool DrawRoundedButton(Rect rect, GUIContent content, GUIStyle style)
+        {
+            if (Event.current.type == EventType.Repaint)
+                DrawRoundedRect(rect, TabIdleBackground, 4f);
+            return GUI.Button(rect, content, style ?? CompactButton);
         }
     }
 }
