@@ -388,17 +388,17 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return type switch
             {
                 InfoMessageType.Error => EditorGUIUtility.isProSkin
-                    ? new Color(0.45f, 0.12f, 0.12f, 0.35f)
-                    : new Color(0.95f, 0.75f, 0.75f, 0.9f),
+                    ? new Color(0.55f, 0.18f, 0.18f, 0.18f)
+                    : new Color(0.85f, 0.35f, 0.35f, 0.12f),
                 InfoMessageType.Warning => EditorGUIUtility.isProSkin
-                    ? new Color(0.45f, 0.35f, 0.05f, 0.35f)
-                    : new Color(0.98f, 0.92f, 0.70f, 0.95f),
+                    ? new Color(0.50f, 0.40f, 0.10f, 0.16f)
+                    : new Color(0.80f, 0.60f, 0.10f, 0.12f),
                 InfoMessageType.Info => EditorGUIUtility.isProSkin
-                    ? new Color(0.12f, 0.28f, 0.45f, 0.35f)
-                    : new Color(0.78f, 0.88f, 0.98f, 0.95f),
+                    ? new Color(0.20f, 0.35f, 0.50f, 0.16f)
+                    : new Color(0.25f, 0.45f, 0.70f, 0.10f),
                 _ => EditorGUIUtility.isProSkin
-                    ? new Color(0f, 0f, 0f, 0.12f)
-                    : new Color(0f, 0f, 0f, 0.06f),
+                    ? new Color(1f, 1f, 1f, 0.04f)
+                    : new Color(0f, 0f, 0f, 0.04f),
             };
         }
 
@@ -408,16 +408,23 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return type switch
             {
                 InfoMessageType.Error => EditorGUIUtility.isProSkin
-                    ? new Color(0.85f, 0.25f, 0.25f, 0.55f)
-                    : new Color(0.75f, 0.15f, 0.15f, 0.45f),
+                    ? new Color(0.85f, 0.35f, 0.35f, 0.28f)
+                    : new Color(0.70f, 0.25f, 0.25f, 0.22f),
                 InfoMessageType.Warning => EditorGUIUtility.isProSkin
-                    ? new Color(0.95f, 0.75f, 0.15f, 0.55f)
-                    : new Color(0.85f, 0.65f, 0.05f, 0.45f),
+                    ? new Color(0.90f, 0.75f, 0.25f, 0.28f)
+                    : new Color(0.75f, 0.55f, 0.10f, 0.22f),
                 InfoMessageType.Info => EditorGUIUtility.isProSkin
-                    ? new Color(0.35f, 0.65f, 0.95f, 0.55f)
-                    : new Color(0.15f, 0.45f, 0.85f, 0.45f),
+                    ? new Color(0.45f, 0.65f, 0.85f, 0.28f)
+                    : new Color(0.30f, 0.50f, 0.75f, 0.20f),
                 _ => SectionRuleColor,
             };
+        }
+
+        /// <summary>Multiply a theme color by current <see cref="GUI.color"/> so [GUIColor] tints custom chrome.</summary>
+        public static Color GuiTint(Color c)
+        {
+            var g = GUI.color;
+            return new Color(c.r * g.r, c.g * g.g, c.b * g.b, c.a * g.a);
         }
 
         // --- Styles ----------------------------------------------------------------------
@@ -1197,12 +1204,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 s_infoBoxCollapsedLabel = new GUIStyle(EditorStyles.label) { wordWrap = false };
 
             float wrapW = EditorGUIUtility.currentViewWidth - 24f;
+            const float radius = 4f;
 
             if (collapsible && !expanded)
             {
                 var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                EditorGUI.DrawRect(headerRect, InfoBoxBackground(type));
-                DrawRectOutline(headerRect, InfoBoxBorder(type));
+                DrawRoundedRect(headerRect, InfoBoxBackground(type), radius);
+                DrawRectOutline(headerRect, GuiTint(InfoBoxBorder(type)));
 
                 var prevIndent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
@@ -1227,8 +1235,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             float h = s_infoBoxLabel.CalcHeight(TempContent(message), wrapW);
             var rect = EditorGUILayout.GetControlRect(false, h + 8f);
-            EditorGUI.DrawRect(rect, InfoBoxBackground(type));
-            DrawRectOutline(rect, InfoBoxBorder(type));
+            DrawRoundedRect(rect, InfoBoxBackground(type), radius);
+            DrawRectOutline(rect, GuiTint(InfoBoxBorder(type)));
             GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, rect.width - 12f, rect.height - 8f), message, s_infoBoxLabel);
 
             if (collapsible && Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
@@ -1281,6 +1289,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void DrawRoundedRect(Rect rect, Color fill, float radius)
         {
             if (Event.current.type != EventType.Repaint) return;
+            fill = GuiTint(fill);
             if (radius <= 0.5f || rect.width < 2f || rect.height < 2f)
             {
                 EditorGUI.DrawRect(rect, fill);
@@ -1308,15 +1317,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             s_caretVerts[1] = new Vector3(cx + 4f, cy - 2f, 0f);
             s_caretVerts[2] = new Vector3(cx, cy + 3f, 0f);
             Handles.BeginGUI();
-            Handles.color = EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.65f) : new Color(0f, 0f, 0f, 0.55f);
+            Handles.color = GuiTint(EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.65f) : new Color(0f, 0f, 0f, 0.55f));
             Handles.DrawAAConvexPolygon(s_caretVerts);
             Handles.EndGUI();
         }
 
         public static void DrawFieldChrome(Rect rect)
         {
-            EditorGUI.DrawRect(rect, FieldBackground);
-            DrawRectOutline(rect, FieldBorder);
+            EditorGUI.DrawRect(rect, GuiTint(FieldBackground));
+            DrawRectOutline(rect, GuiTint(FieldBorder));
         }
 
         public static bool DrawStyledDropdown(Rect rect, GUIContent label, string currentText)
@@ -1330,22 +1339,31 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static float DrawStyledSlider(Rect rect, float value, float min, float max,
             Color track, Color fill, Color thumb)
         {
+            // Keep thumb inside bounds (no right spill in nested foldouts).
+            const float pad = 6f;
+            rect.xMin += 0f;
+            rect.xMax -= pad;
+            if (rect.width < 8f) return value;
+
             float trackH = 4f;
             float thumbR = 6f;
-            var trackRect = new Rect(rect.x, rect.y + (rect.height - trackH) * 0.5f, rect.width, trackH);
-            EditorGUI.DrawRect(trackRect, track);
+            var trackRect = new Rect(rect.x + thumbR, rect.y + (rect.height - trackH) * 0.5f, Mathf.Max(1f, rect.width - thumbR * 2f), trackH);
+            EditorGUI.DrawRect(trackRect, GuiTint(track));
             float t = Mathf.InverseLerp(min, max, value);
             float fillW = trackRect.width * t;
             if (fillW > 0f)
-                EditorGUI.DrawRect(new Rect(trackRect.x, trackRect.y, fillW, trackRect.height), fill);
+                EditorGUI.DrawRect(new Rect(trackRect.x, trackRect.y, fillW, trackRect.height), GuiTint(fill));
             float thumbX = trackRect.x + fillW;
             if (Event.current.type == EventType.Repaint)
             {
                 Handles.BeginGUI();
-                Handles.color = thumb;
+                Handles.color = GuiTint(thumb);
                 Handles.DrawSolidDisc(new Vector3(thumbX, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
                 Handles.EndGUI();
             }
+
+            if (rect.Contains(Event.current.mousePosition))
+                GUI.tooltip = $"{value:0.##}  ({min:0.##} – {max:0.##})";
 
             int id = GUIUtility.GetControlID(FocusType.Passive);
             var evt = Event.current;
@@ -1355,15 +1373,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     if (rect.Contains(evt.mousePosition) && GUI.enabled)
                     {
                         GUIUtility.hotControl = id;
-                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - rect.x) / Mathf.Max(1f, rect.width)));
+                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - trackRect.x) / Mathf.Max(1f, trackRect.width)));
                         GUI.changed = true;
                         evt.Use();
                     }
                     break;
                 case EventType.MouseDrag:
-                    if (GUIUtility.hotControl == id)
+                    if (GUIUtility.hotControl == id && GUI.enabled)
                     {
-                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - rect.x) / Mathf.Max(1f, rect.width)));
+                        value = Mathf.Lerp(min, max, Mathf.Clamp01((evt.mousePosition.x - trackRect.x) / Mathf.Max(1f, trackRect.width)));
                         GUI.changed = true;
                         evt.Use();
                     }
@@ -1378,23 +1396,30 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static void DrawStyledMinMaxSlider(Rect rect, ref float minValue, ref float maxValue,
             float limitMin, float limitMax, Color track, Color fill, Color thumb)
         {
+            const float pad = 6f;
+            rect.xMax -= pad;
+            if (rect.width < 8f) return;
+
             float trackH = 4f;
             float thumbR = 6f;
-            var trackRect = new Rect(rect.x, rect.y + (rect.height - trackH) * 0.5f, rect.width, trackH);
-            EditorGUI.DrawRect(trackRect, track);
+            var trackRect = new Rect(rect.x + thumbR, rect.y + (rect.height - trackH) * 0.5f, Mathf.Max(1f, rect.width - thumbR * 2f), trackH);
+            EditorGUI.DrawRect(trackRect, GuiTint(track));
             float t0 = Mathf.InverseLerp(limitMin, limitMax, minValue);
             float t1 = Mathf.InverseLerp(limitMin, limitMax, maxValue);
             float x0 = trackRect.x + trackRect.width * t0;
             float x1 = trackRect.x + trackRect.width * t1;
-            EditorGUI.DrawRect(new Rect(x0, trackRect.y, Mathf.Max(0f, x1 - x0), trackRect.height), fill);
+            EditorGUI.DrawRect(new Rect(x0, trackRect.y, Mathf.Max(0f, x1 - x0), trackRect.height), GuiTint(fill));
             if (Event.current.type == EventType.Repaint)
             {
                 Handles.BeginGUI();
-                Handles.color = thumb;
+                Handles.color = GuiTint(thumb);
                 Handles.DrawSolidDisc(new Vector3(x0, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
                 Handles.DrawSolidDisc(new Vector3(x1, trackRect.y + trackH * 0.5f, 0f), Vector3.forward, thumbR);
                 Handles.EndGUI();
             }
+
+            if (rect.Contains(Event.current.mousePosition))
+                GUI.tooltip = $"{minValue:0.##} – {maxValue:0.##}  ({limitMin:0.##} – {limitMax:0.##})";
 
             int id = GUIUtility.GetControlID(FocusType.Passive);
             var evt = Event.current;
@@ -1408,15 +1433,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         float d0 = Mathf.Abs(mx - x0);
                         float d1 = Mathf.Abs(mx - x1);
                         s_minmaxDragNear = d0 <= d1;
-                        ApplyMinMaxDrag(rect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
+                        ApplyMinMaxDrag(trackRect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
                         GUI.changed = true;
                         evt.Use();
                     }
                     break;
                 case EventType.MouseDrag:
-                    if (GUIUtility.hotControl == id)
+                    if (GUIUtility.hotControl == id && GUI.enabled)
                     {
-                        ApplyMinMaxDrag(rect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
+                        ApplyMinMaxDrag(trackRect, ref minValue, ref maxValue, limitMin, limitMax, s_minmaxDragNear);
                         GUI.changed = true;
                         evt.Use();
                     }
@@ -1448,13 +1473,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             float h = 16f;
             float w = 28f;
             var switchRect = new Rect(rect.x, rect.y + (rect.height - h) * 0.5f, w, h);
-            DrawRoundedRect(switchRect, value ? ToggleTrackOn : ToggleTrackOff, h * 0.5f);
-            float thumbR = 5.5f;
-            float tx = value ? switchRect.xMax - thumbR - 2f : switchRect.x + thumbR + 2f;
+            // Off: muted solid track only (no second grey ring). On: accent track.
+            Color track = value ? ToggleTrackOn : ToggleTrackOff;
+            DrawRoundedRect(switchRect, track, h * 0.5f);
+            float thumbR = 5f;
+            float tx = value ? switchRect.xMax - thumbR - 3f : switchRect.x + thumbR + 3f;
             if (Event.current.type == EventType.Repaint)
             {
                 Handles.BeginGUI();
-                Handles.color = ToggleThumb;
+                // Off thumb: slightly brighter than track so it reads as one knob, not a second circle outline.
+                Handles.color = GuiTint(value ? ToggleThumb : (EditorGUIUtility.isProSkin
+                    ? new Color(0.75f, 0.75f, 0.75f, 1f)
+                    : new Color(1f, 1f, 1f, 1f)));
                 Handles.DrawSolidDisc(new Vector3(tx, switchRect.y + h * 0.5f, 0f), Vector3.forward, thumbR);
                 Handles.EndGUI();
             }
@@ -1477,25 +1507,48 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return next;
         }
 
-        public static float DrawKnob(Rect rect, float value, float min, float max)
+        public static float DrawKnob(Rect rect, float value, float min, float max,
+            Color track, Color fill, Color needle, bool showLabels)
         {
-            float size = Mathf.Min(rect.width, rect.height, 56f);
+            float size = Mathf.Min(rect.width, rect.height, 64f);
             var knobRect = new Rect(rect.x, rect.y, size, size);
             Vector2 center = knobRect.center;
-            float radius = size * 0.42f;
+            float radius = size * 0.38f;
+            const float startDeg = 135f;
+            const float endDeg = -135f;
+            float t = Mathf.InverseLerp(min, max, value);
+
             if (Event.current.type == EventType.Repaint)
             {
                 Handles.BeginGUI();
-                Handles.color = FieldBackground;
-                Handles.DrawSolidDisc(center, Vector3.forward, radius);
-                Handles.color = FieldBorder;
+                Handles.color = GuiTint(track);
                 Handles.DrawWireDisc(center, Vector3.forward, radius);
-                float t = Mathf.InverseLerp(min, max, value);
-                float ang = Mathf.Lerp(135f, -135f, t) * Mathf.Deg2Rad;
-                var tip = center + new Vector2(Mathf.Cos(ang), -Mathf.Sin(ang)) * (radius - 4f);
-                Handles.color = Accent;
-                Handles.DrawAAPolyLine(3f, center, tip);
+                // Arc fill min→value
+                Handles.color = GuiTint(fill);
+                float steps = 32f;
+                Vector3 prev = center + DegToOffset(startDeg, radius - 2f);
+                for (int i = 1; i <= steps; i++)
+                {
+                    float u = (i / steps) * t;
+                    float deg = Mathf.Lerp(startDeg, endDeg, u);
+                    var next = center + DegToOffset(deg, radius - 2f);
+                    Handles.DrawAAPolyLine(3.5f, prev, next);
+                    prev = next;
+                }
+                float ang = Mathf.Lerp(startDeg, endDeg, t);
+                var tip = center + DegToOffset(ang, radius - 4f);
+                Handles.color = GuiTint(needle);
+                Handles.DrawAAPolyLine(2.5f, center, tip);
+                Handles.DrawSolidDisc(center, Vector3.forward, 2.5f);
                 Handles.EndGUI();
+            }
+
+            if (showLabels)
+            {
+                var mini = EditorStyles.centeredGreyMiniLabel;
+                GUI.Label(new Rect(knobRect.x, knobRect.yMax - 2f, knobRect.width * 0.5f, 14f), min.ToString("0.##"), mini);
+                GUI.Label(new Rect(knobRect.x + knobRect.width * 0.5f, knobRect.yMax - 2f, knobRect.width * 0.5f, 14f), max.ToString("0.##"), mini);
+                GUI.Label(new Rect(knobRect.x, knobRect.y + 2f, knobRect.width, 14f), value.ToString("0.##"), EditorStyles.centeredGreyMiniLabel);
             }
 
             int id = GUIUtility.GetControlID(FocusType.Passive);
@@ -1512,7 +1565,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     }
                     break;
                 case EventType.MouseDrag:
-                    if (GUIUtility.hotControl == id)
+                    if (GUIUtility.hotControl == id && GUI.enabled)
                     {
                         value = KnobValueFromMouse(center, min, max);
                         GUI.changed = true;
@@ -1526,11 +1579,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return value;
         }
 
+        private static Vector2 DegToOffset(float deg, float radius)
+        {
+            float rad = deg * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(rad), -Mathf.Sin(rad)) * radius;
+        }
+
+        /// <summary>Backward-compatible knob draw with Theme defaults.</summary>
+        public static float DrawKnob(Rect rect, float value, float min, float max)
+            => DrawKnob(rect, value, min, max, FieldBorder, Accent, Accent, true);
+
         private static float KnobValueFromMouse(Vector2 center, float min, float max)
         {
             Vector2 d = Event.current.mousePosition - center;
             float deg = Mathf.Atan2(-d.y, d.x) * Mathf.Rad2Deg;
-            // Map 135..-135 (clockwise-ish through bottom) to 0..1
             float clamped = Mathf.Clamp(deg, -135f, 135f);
             float t = Mathf.InverseLerp(135f, -135f, clamped);
             return Mathf.Lerp(min, max, t);

@@ -27,20 +27,34 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         private void OnEnable()
         {
-            _data = CreateInstance<AetherInspectorDemoData>();
-            _data.hideFlags = HideFlags.DontSave;
-            _editor = UnityEditor.Editor.CreateEditor(_data);
+            // Reuse across Unity's double OnEnable / CreateGUI cycles so [OnInspectorInit] stays once-per-session.
+            if (_data == null)
+            {
+                _data = CreateInstance<AetherInspectorDemoData>();
+                _data.hideFlags = HideFlags.DontSave;
+            }
+            if (_editor == null)
+                _editor = UnityEditor.Editor.CreateEditor(_data);
         }
 
         private void OnDisable()
         {
-            if (_editor != null) DestroyImmediate(_editor);
-            if (_data != null) DestroyImmediate(_data);
+            if (_editor != null)
+            {
+                DestroyImmediate(_editor);
+                _editor = null;
+            }
+            if (_data != null)
+            {
+                DestroyImmediate(_data);
+                _data = null;
+            }
         }
 
         private void CreateGUI()
         {
             var root = rootVisualElement;
+            root.Clear();
             root.style.flexDirection = FlexDirection.Column;
 
             var banner = new HelpBox(
@@ -111,7 +125,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         private Color CounterColor => counter > 5 ? new Color(1f, 0.6f, 0.6f) : Color.white;
 
-        // --- Box group with nested path ---
+        // --- Box group (order = PropertyOrder then Sequence / first member declaration) ---
         [BoxGroup("Identity")]
         public string id = "demo";
 

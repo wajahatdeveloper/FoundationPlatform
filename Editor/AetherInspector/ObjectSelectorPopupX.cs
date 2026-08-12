@@ -24,17 +24,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private readonly List<Object> assetCandidates = new List<Object>();
 
         internal static void Open(Rect activatorRect, Type type, bool allowScene, SerializedProperty prop)
+            => Open(activatorRect, type, allowScene, true, prop);
+
+        internal static void Open(Rect activatorRect, Type type, bool allowScene, bool allowAssets, SerializedProperty prop)
         {
             var window = CreateInstance<ObjectSelectorPopupX>();
             window.targetObject = prop.serializedObject.targetObject;
             window.propertyPath = prop.propertyPath;
-            window.Collect(type, allowScene);
+            window.Collect(type, allowScene, allowAssets);
 
             var screenRect = new Rect(GUIUtility.GUIToScreenPoint(activatorRect.position), Vector2.zero);
             window.ShowAsDropDown(screenRect, new Vector2(280f, 380f));
         }
 
-        private void Collect(Type type, bool allowScene)
+        private void Collect(Type type, bool allowScene, bool allowAssets)
         {
             if (type == null || !typeof(Object).IsAssignableFrom(type))
                 type = typeof(Object);
@@ -48,6 +51,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         sceneCandidates.Add(obj);
                 }
             }
+
+            if (!allowAssets) return;
 
             var guids = AssetDatabase.FindAssets("t:" + type.Name);
             var count = Mathf.Min(guids.Length, MaxAssetResults);

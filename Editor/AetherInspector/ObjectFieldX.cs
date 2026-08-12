@@ -22,6 +22,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static bool mouseDownInField;
 
         internal static Object Draw(Rect rect, GUIContent label, Object value, Type type, bool allowScene, SerializedProperty prop)
+            => Draw(rect, label, value, type, allowScene, true, prop);
+
+        internal static Object Draw(Rect rect, GUIContent label, Object value, Type type, bool allowScene, bool allowAssets, SerializedProperty prop)
         {
             var s = InspectorXSettings.instance;
             var fieldRect = rect;
@@ -45,9 +48,21 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 HandleDragOut(contentRect, value);
 
             if (s.objectFieldSelector && prop != null)
-                HandleSelector(contentRect, type, allowScene, prop);
+                HandleSelector(contentRect, type, allowScene, allowAssets, prop);
 
+            // Unity ObjectField has no scene-only mode; when assets are disallowed use scene-capable
+            // field and reject persistent assignments at the call site / custom selector.
             return EditorGUI.ObjectField(fieldRect, label, value, type, allowScene);
+        }
+
+        private static void HandleSelector(Rect contentRect, Type type, bool allowScene, bool allowAssets, SerializedProperty prop)
+        {
+            var e = Event.current;
+            if ((e.type != EventType.ContextClick && !(e.type == EventType.MouseDown && e.button == 1))
+                || !contentRect.Contains(e.mousePosition))
+                return;
+            e.Use();
+            ObjectSelectorPopupX.Open(new Rect(e.mousePosition, Vector2.zero), type, allowScene, allowAssets, prop);
         }
 
         private static void HandleDragOut(Rect contentRect, Object value)
@@ -84,16 +99,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     mouseDownInField = false;
                     break;
             }
-        }
-
-        private static void HandleSelector(Rect contentRect, Type type, bool allowScene, SerializedProperty prop)
-        {
-            var e = Event.current;
-            if (e.type != EventType.ContextClick || !contentRect.Contains(e.mousePosition))
-                return;
-
-            ObjectSelectorPopupX.Open(new Rect(e.mousePosition, Vector2.zero), type, allowScene, prop);
-            e.Use();
         }
     }
 }

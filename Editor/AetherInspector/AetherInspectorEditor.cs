@@ -3,11 +3,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.Attributes;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
@@ -115,9 +117,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private const BindingFlags Flags =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        // Once-per-lifetime bookkeeping for [OnInspectorInit] and [OnValueChanged(InvokeOnInitialize)].
-        // Keyed by target hash + member name; cleared on domain reload.
-        private static readonly HashSet<long> s_initDone = new HashSet<long>();
+        // Once per (Editor + target + member) for [OnInspectorInit] / [OnValueChanged(InvokeOnInitialize)].
+        // Cleared on domain reload / Force Rebuild cache.
+        private static readonly HashSet<string> s_initDone = new HashSet<string>();
+
+        // Active Editor for the current Draw call stack (nested RenderScope reuses the same editor).
+        private static UnityEditor.Editor s_activeEditor;
 
         private static Dictionary<Type, TypeMetadata> s_typeCache = new Dictionary<Type, TypeMetadata>();
 
@@ -597,39 +602,48 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             Dictionary<string, bool> foldouts, Dictionary<string, int> tabs,
             bool drawScriptRow = true, HashSet<string> skipFields = null)
         {
-            Type type = targets[0].GetType();
-            var meta = GetOrCreateMetadata(type);
-
-            // --- Script row (matches Unity's default look) ---
-            if (drawScriptRow)
+            var prevEditor = s_activeEditor;
+            s_activeEditor = editor;
+            try
             {
-                var scriptProp = so.FindProperty("m_Script");
-                if (scriptProp != null)
+                Type type = targets[0].GetType();
+                var meta = GetOrCreateMetadata(type);
+
+                // --- Script row (matches Unity's default look) ---
+                if (drawScriptRow)
                 {
-                    using (new EditorGUI.DisabledScope(true))
-                        EditorGUILayout.PropertyField(scriptProp);
+                    var scriptProp = so.FindProperty("m_Script");
+                    if (scriptProp != null)
+                    {
+                        using (new EditorGUI.DisabledScope(true))
+                            EditorGUILayout.PropertyField(scriptProp);
+                    }
                 }
+
+                DrawTypeInfoBoxes(meta, targets);
+
+                var entries = GetPooledList();
+                int seq = 0;
+
+                // --- Serialized fields (exact serialized set comes from the SerializedObject) ---
+                var it = so.GetIterator();
+                bool enter = true;
+                while (it.NextVisible(enter))
+                {
+                    enter = false;
+                    if (it.propertyPath == "m_Script") continue;
+                    if (skipFields != null && skipFields.Contains(it.name)) continue;
+                    AddFieldEntry(entries, it.Copy(), meta, ref seq);
+                }
+
+                AddReflectedEntries(entries, meta, targets, ref seq);
+                RenderScope(entries, targets, foldouts, tabs);
+                ReleasePooledList(entries);
             }
-
-            DrawTypeInfoBoxes(meta, targets);
-
-            var entries = GetPooledList();
-            int seq = 0;
-
-            // --- Serialized fields (exact serialized set comes from the SerializedObject) ---
-            var it = so.GetIterator();
-            bool enter = true;
-            while (it.NextVisible(enter))
+            finally
             {
-                enter = false;
-                if (it.propertyPath == "m_Script") continue;
-                if (skipFields != null && skipFields.Contains(it.name)) continue;
-                AddFieldEntry(entries, it.Copy(), meta, ref seq);
+                s_activeEditor = prevEditor;
             }
-
-            AddReflectedEntries(entries, meta, targets, ref seq);
-            RenderScope(entries, targets, foldouts, tabs);
-            ReleasePooledList(entries);
         }
 
         private static void DrawTypeInfoBoxes(TypeMetadata meta, object[] targets)
@@ -667,8 +681,37 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
             }
 
+            RefreshGroupSortKeys(root);
             SortGroupChildren(root);
             RenderChildren(root, targets, foldouts, tabs, maxDepth, visited);
+        }
+
+        /// <summary>
+        /// After entries attach, each group's Sequence = min child Sequence so boxes/foldouts
+        /// land at their first member's declaration/iterator position (not template Dictionary order).
+        /// </summary>
+        private static void RefreshGroupSortKeys(GroupNode node)
+        {
+            foreach (var child in node.Children)
+            {
+                if (child is GroupNode g)
+                    RefreshGroupSortKeys(g);
+            }
+
+            int minSeq = int.MaxValue;
+            foreach (var child in node.Children)
+            {
+                if (child is GroupNode g)
+                {
+                    if (g.Sequence < minSeq) minSeq = g.Sequence;
+                }
+                else if (child is InspectorEntry e)
+                {
+                    if (e.Sequence < minSeq) minSeq = e.Sequence;
+                }
+            }
+            if (minSeq != int.MaxValue)
+                node.Sequence = minSeq;
         }
 
         // Sibling ordering: groups take the Order of their defining attribute (default 0) and the
@@ -1141,9 +1184,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     {
                         try
                         {
+                            float columnW = cell != null && cell.Width >= 1f ? cell.Width
+                                : cell != null && cell.Width > 0f ? available * cell.Width
+                                : available * 0.33f;
                             float lw = cell?.LabelWidth ?? spec?.LabelWidth ?? 0f;
-                            if (lw > 0f && lw < 1f) lw = available * lw; // fractional label width = fraction of the view width
-                            if (lw > 0f) EditorGUIUtility.labelWidth = lw;
+                            if (lw > 0f && lw < 1f) lw = columnW * lw;
+                            if (lw <= 0f)
+                                lw = Mathf.Clamp(columnW * 0.35f, 28f, 72f);
+                            EditorGUIUtility.labelWidth = lw;
 
                             if (child is GroupNode gn) RenderGroup(gn, targets, foldouts, tabs, maxDepth, visited);
                             else RenderEntry((InspectorEntry)child, targets, foldouts, tabs, maxDepth, visited);
@@ -1444,6 +1492,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     bool hasReqComp = false;
                     bool reqCompNeedsAdd = false;
                     bool reqCompNeedsAssign = false;
+                    bool reqCompNoGameObject = false;
                     Type compType = null;
                     if (mm.RequireComponentButton != null)
                     {
@@ -1461,16 +1510,24 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         }
                         if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
                         {
+                            bool anyGo = false;
                             foreach (var t in targets)
                             {
                                 var go = GetGameObject(t);
                                 if (go == null) continue;
+                                anyGo = true;
                                 bool missingComp = go.GetComponent(compType) == null;
                                 bool missingRef = IsEntryReferenceMissing(e, t);
                                 if (missingComp) reqCompNeedsAdd = true;
                                 else if (missingRef) reqCompNeedsAssign = true;
                             }
-                            hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
+                            if (!anyGo)
+                            {
+                                reqCompNoGameObject = true;
+                                hasReqComp = true;
+                            }
+                            else
+                                hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
                         }
                     }
 
@@ -1504,7 +1561,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                             if (string.IsNullOrEmpty(label))
                                 label = reqCompNeedsAdd ? "Add" : "Assign";
                             var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
-                            if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
+                            if (reqCompNoGameObject)
+                            {
+                                using (new EditorGUI.DisabledScope(true))
+                                    GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false));
+                            }
+                            else if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
                             {
                                 foreach (var t in targets)
                                 {
@@ -1524,6 +1586,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                             }
                         }
                     }
+
+                    if (reqCompNoGameObject)
+                        AetherInspectorTheme.DrawInfoBox("Requires a GameObject target.", InfoMessageType.Info);
                 }
 
                 if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
@@ -1580,15 +1645,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
-        // [OnInspectorInit] + [OnValueChanged(InvokeOnInitialize = true)] — run once per member.
+        // [OnInspectorInit] + [OnValueChanged(InvokeOnInitialize = true)] —
+        // once per (Editor instance + target instance + member) until domain reload / cache clear.
         private static void RunInitHooks(InspectorEntry e, object target)
         {
             var mm = e.Metadata;
             if (mm == null || mm.Member == null) return;
 
-            long key = ((long)(target?.GetHashCode() ?? 0) << 32) ^ (uint)(mm.Member.DeclaringType?.FullName ?? "").GetHashCode() ^ (uint)mm.Name.GetHashCode();
-            if (s_initDone.Contains(key)) return;
-            s_initDone.Add(key);
+            string key = BuildInitKey(s_activeEditor, target, mm);
+            if (!s_initDone.Add(key)) return;
 
             if (mm.InitHooks != null)
             {
@@ -1605,6 +1670,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 foreach (var ovc in mm.ValueChangedHooks)
                     if (ovc.InvokeOnInitialize) InvokeChangeAction(e, target, ovc);
             }
+        }
+
+        private static string BuildInitKey(UnityEditor.Editor editor, object target, MemberMetadata mm)
+        {
+            int editorId = editor != null ? editor.GetInstanceID() : 0;
+            int targetId;
+            if (target is UnityEngine.Object uo)
+                targetId = uo != null ? uo.GetInstanceID() : 0;
+            else
+                targetId = target != null ? RuntimeHelpers.GetHashCode(target) : 0;
+            string typeName = mm.Member.DeclaringType != null ? mm.Member.DeclaringType.FullName : "";
+            return editorId + "|" + targetId + "|" + typeName + "|" + mm.Name;
         }
 
         private static void InvokeDrawMethod(object target, string methodName)
@@ -2025,11 +2102,23 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         private static void DrawDisplayAsString(GUIContent label, string text, MemberMetadata mm)
         {
-            var style = mm.DisplayAsStringStyle ?? EditorStyles.label;
+            var valueStyle = mm.DisplayAsStringStyle ?? EditorStyles.label;
             using (new EditorGUI.DisabledScope(true))
             {
-                if (label == GUIContent.none) EditorGUILayout.LabelField(text, style);
-                else EditorGUILayout.LabelField(label, TempContent(text), style);
+                if (label == GUIContent.none)
+                {
+                    EditorGUILayout.LabelField(text, valueStyle);
+                    return;
+                }
+
+                var rect = EditorGUILayout.GetControlRect(false,
+                    valueStyle.wordWrap
+                        ? valueStyle.CalcHeight(new GUIContent(text), EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - 20f)
+                        : EditorGUIUtility.singleLineHeight);
+                var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
+                var valueRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - EditorGUIUtility.labelWidth, rect.height);
+                EditorGUI.LabelField(labelRect, label);
+                GUI.Label(valueRect, text, valueStyle);
             }
         }
 
@@ -2044,24 +2133,67 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = obj; Commit(e, targets); }
         }
 
-        // [SceneObjectsOnly]: reject persistent assets on assignment.
+        // [SceneObjectsOnly]: scene picker only (no asset list). Unity ObjectField always offers assets,
+        // so this path uses Theme chrome + ObjectSelectorPopupX(allowAssets: false).
         private static void DrawSceneObjectField(InspectorEntry e, object[] targets)
         {
             var prop = e.Property;
             var t = e.Field != null ? e.Field.FieldType : typeof(UnityEngine.Object);
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
-            EditorGUI.BeginChangeCheck();
             var rect = EditorGUILayout.GetControlRect();
-            var obj = ObjectFieldX.Draw(rect, lbl, prop.objectReferenceValue, t, true, prop);
-            if (EditorGUI.EndChangeCheck())
+            rect = EditorGUI.PrefixLabel(rect, lbl);
+            var obj = prop.objectReferenceValue;
+
+            AetherInspectorTheme.DrawFieldChrome(rect);
+            string name = obj != null ? obj.name : "None (Scene)";
+            GUI.Label(new Rect(rect.x + 4f, rect.y, rect.width - 22f, rect.height), name, EditorStyles.label);
+            AetherInspectorTheme.DrawDropdownCaret(rect);
+
+            var evt = Event.current;
+            if (GUI.enabled && evt.type == EventType.MouseDown && rect.Contains(evt.mousePosition))
             {
-                if (obj != null && EditorUtility.IsPersistent(obj))
-                    Debug.LogWarning($"[FoundationPlatform.AetherInspector] '{prop.displayName}' accepts scene objects only.");
-                else { prop.objectReferenceValue = obj; Commit(e, targets); }
+                if (evt.button == 0 || evt.button == 1)
+                {
+                    ObjectSelectorPopupX.Open(rect, t, allowScene: true, allowAssets: false, prop);
+                    evt.Use();
+                }
+            }
+
+            if (obj != null && evt.type == EventType.KeyDown && rect.Contains(evt.mousePosition)
+                && (evt.keyCode == KeyCode.Delete || evt.keyCode == KeyCode.Backspace))
+            {
+                prop.objectReferenceValue = null;
+                Commit(e, targets);
+                evt.Use();
+            }
+
+            // Reject persistent drops.
+            if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
+            {
+                if (!rect.Contains(evt.mousePosition)) return;
+                var drag = DragAndDrop.objectReferences;
+                Object candidate = null;
+                if (drag != null)
+                {
+                    for (int i = 0; i < drag.Length; i++)
+                    {
+                        if (drag[i] != null && t.IsAssignableFrom(drag[i].GetType()) && !EditorUtility.IsPersistent(drag[i]))
+                        { candidate = drag[i]; break; }
+                    }
+                }
+                if (candidate == null) { DragAndDrop.visualMode = DragAndDropVisualMode.Rejected; return; }
+                DragAndDrop.visualMode = DragAndDropVisualMode.Link;
+                if (evt.type == EventType.DragPerform)
+                {
+                    DragAndDrop.AcceptDrag();
+                    prop.objectReferenceValue = candidate;
+                    Commit(e, targets);
+                }
+                evt.Use();
             }
         }
 
-        // [PreviewField]: inline texture/sprite/object preview with adjustable height.
+        // [PreviewField]: single paint path — texture preview with invisible ObjectField hit target.
         private static void DrawPreviewField(InspectorEntry e, object[] targets, PreviewFieldAttribute pf)
         {
             var prop = e.Property;
@@ -2070,31 +2202,40 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
 
             var rect = EditorGUILayout.GetControlRect(false, h);
-            var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
-            if (lbl != GUIContent.none) EditorGUI.LabelField(labelRect, lbl);
-
-            float x = rect.x + EditorGUIUtility.labelWidth;
-            float w = rect.width - EditorGUIUtility.labelWidth;
-            var previewRect = new Rect(x, rect.y, Mathf.Min(w, h * 1.5f), h);
-            if (pf.Alignment == ObjectFieldAlignment.Center) previewRect.x = x + (w - previewRect.width) * 0.5f;
-            else if (pf.Alignment == ObjectFieldAlignment.Right) previewRect.x = rect.xMax - previewRect.width;
-
-            AetherInspectorTheme.DrawFieldChrome(previewRect);
-            var obj = prop.objectReferenceValue;
-            if (obj != null)
+            if (lbl != GUIContent.none)
             {
-                var tex = AssetPreview.GetAssetPreview(obj);
-                if (tex == null) tex = AssetPreview.GetMiniThumbnail(obj);
-                if (tex != null && Event.current.type == EventType.Repaint)
+                var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
+                EditorGUI.LabelField(labelRect, lbl);
+            }
+
+            float x = rect.x + (lbl == GUIContent.none ? 0f : EditorGUIUtility.labelWidth);
+            float w = rect.width - (lbl == GUIContent.none ? 0f : EditorGUIUtility.labelWidth);
+            float side = Mathf.Min(h, w);
+            var previewRect = new Rect(x, rect.y, side, h);
+            if (pf.Alignment == ObjectFieldAlignment.Center) previewRect.x = x + (w - side) * 0.5f;
+            else if (pf.Alignment == ObjectFieldAlignment.Right) previewRect.x = rect.xMax - side;
+
+            var obj = prop.objectReferenceValue;
+            if (Event.current.type == EventType.Repaint)
+            {
+                AetherInspectorTheme.DrawFieldChrome(previewRect);
+                var tex = obj != null ? AssetPreview.GetAssetPreview(obj) : null;
+                if (tex == null && obj != null) tex = AssetPreview.GetMiniThumbnail(obj);
+                if (tex != null)
                 {
                     float pad = 2f;
-                    GUI.DrawTexture(new Rect(previewRect.x + pad, previewRect.y + pad, previewRect.width - pad * 2f, previewRect.height - pad * 2f),
+                    GUI.DrawTexture(
+                        new Rect(previewRect.x + pad, previewRect.y + pad, previewRect.width - pad * 2f, previewRect.height - pad * 2f),
                         tex, ScaleMode.ScaleToFit);
                 }
             }
 
+            // Invisible ObjectField for picking only (no second chrome).
             EditorGUI.BeginChangeCheck();
+            var prevCol = GUI.color;
+            GUI.color = Color.clear;
             var next = EditorGUI.ObjectField(previewRect, GUIContent.none, obj, t, true);
+            GUI.color = prevCol;
             if (EditorGUI.EndChangeCheck()) { prop.objectReferenceValue = next; Commit(e, targets); }
         }
 
@@ -2548,18 +2689,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
 
             float frac = Mathf.Clamp01((float)((value - min) / (max - min)));
-            EditorGUI.DrawRect(barRect, back);
+            EditorGUI.DrawRect(barRect, AetherInspectorTheme.GuiTint(back));
             if (pb.Segmented)
             {
                 int segments = Mathf.Max(1, (int)Math.Round(max - min));
                 float segW = barRect.width / segments;
                 int filled = (int)Math.Round((value - min));
                 for (int i = 0; i < filled; i++)
-                    EditorGUI.DrawRect(new Rect(barRect.x + i * segW + 1, barRect.y + 1, segW - 2, barRect.height - 2), fill);
+                    EditorGUI.DrawRect(new Rect(barRect.x + i * segW + 1, barRect.y + 1, segW - 2, barRect.height - 2), AetherInspectorTheme.GuiTint(fill));
             }
             else
             {
-                EditorGUI.DrawRect(new Rect(barRect.x, barRect.y, barRect.width * frac, barRect.height), fill);
+                EditorGUI.DrawRect(new Rect(barRect.x, barRect.y, barRect.width * frac, barRect.height), AetherInspectorTheme.GuiTint(fill));
             }
 
             if (pb.DrawValueLabel)
@@ -2582,14 +2723,17 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 return false;
             DrawUnityHeaders(e.Metadata);
             var lbl = GetLabel(e, targets) ?? TempContent(prop.displayName);
-            float h = Mathf.Max(knob.Size, EditorGUIUtility.singleLineHeight);
+            float h = Mathf.Max(knob.Size + (knob.ShowLabels ? 16f : 0f), EditorGUIUtility.singleLineHeight);
             var rect = EditorGUILayout.GetControlRect(false, h);
             var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(labelRect, lbl);
             var knobRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, knob.Size, knob.Size);
+            Color track = knob.HasTrackColor ? new Color(knob.TrackR, knob.TrackG, knob.TrackB, knob.TrackA) : AetherInspectorTheme.FieldBorder;
+            Color fill = knob.HasFillColor ? new Color(knob.FillR, knob.FillG, knob.FillB, knob.FillA) : AetherInspectorTheme.Accent;
+            Color needle = knob.HasNeedleColor ? new Color(knob.NeedleR, knob.NeedleG, knob.NeedleB, knob.NeedleA) : AetherInspectorTheme.Accent;
             EditorGUI.BeginChangeCheck();
             float cur = prop.propertyType == SerializedPropertyType.Integer ? prop.intValue : prop.floatValue;
-            float next = AetherInspectorTheme.DrawKnob(knobRect, cur, knob.Min, knob.Max);
+            float next = AetherInspectorTheme.DrawKnob(knobRect, cur, knob.Min, knob.Max, track, fill, needle, knob.ShowLabels);
             if (EditorGUI.EndChangeCheck())
             {
                 if (prop.propertyType == SerializedPropertyType.Integer) prop.intValue = Mathf.RoundToInt(next);
@@ -2611,14 +2755,50 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             float display = raw * scale;
             EditorGUI.BeginChangeCheck();
             var rect = EditorGUILayout.GetControlRect();
-            rect = EditorGUI.PrefixLabel(rect, lbl);
+            var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height);
+            EditorGUI.LabelField(labelRect, lbl);
+            // Drag-scrub on label like Unity number fields.
+            EditorGUIUtility.AddCursorRect(labelRect, MouseCursor.SlideArrow);
+            int dragId = GUIUtility.GetControlID(FocusType.Passive);
+            var evt = Event.current;
+            if (GUI.enabled)
+            {
+                switch (evt.GetTypeForControl(dragId))
+                {
+                    case EventType.MouseDown:
+                        if (labelRect.Contains(evt.mousePosition))
+                        {
+                            GUIUtility.hotControl = dragId;
+                            EditorGUIUtility.SetWantsMouseJumping(1);
+                            evt.Use();
+                        }
+                        break;
+                    case EventType.MouseDrag:
+                        if (GUIUtility.hotControl == dragId)
+                        {
+                            display += HandleUtility.niceMouseDelta * 0.1f * (evt.shift ? 10f : 1f);
+                            GUI.changed = true;
+                            evt.Use();
+                        }
+                        break;
+                    case EventType.MouseUp:
+                        if (GUIUtility.hotControl == dragId)
+                        {
+                            GUIUtility.hotControl = 0;
+                            EditorGUIUtility.SetWantsMouseJumping(0);
+                            evt.Use();
+                        }
+                        break;
+                }
+            }
+
             const float suffixW = 18f;
-            var fieldRect = new Rect(rect.x, rect.y, rect.width - suffixW, rect.height);
-            float nextDisplay = EditorGUI.FloatField(fieldRect, display);
+            var fieldRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - EditorGUIUtility.labelWidth - suffixW, rect.height);
+            display = EditorGUI.FloatField(fieldRect, display);
             GUI.Label(new Rect(rect.xMax - suffixW, rect.y, suffixW, rect.height), "%");
             if (EditorGUI.EndChangeCheck())
             {
-                float next = nextDisplay / scale;
+                float next = display / scale;
                 if (prop.propertyType == SerializedPropertyType.Integer) prop.intValue = Mathf.RoundToInt(next);
                 else prop.floatValue = next;
                 Commit(e, targets);

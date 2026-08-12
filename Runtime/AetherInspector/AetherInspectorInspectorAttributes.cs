@@ -952,6 +952,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public float Min;
         public float Max = 1f;
         public float Size = 56f;
+        public bool ShowLabels = true;
+        public float TrackR, TrackG, TrackB, TrackA = 1f;
+        public bool HasTrackColor;
+        public float FillR, FillG, FillB, FillA = 1f;
+        public bool HasFillColor;
+        public float NeedleR = 1f, NeedleG = 1f, NeedleB = 1f, NeedleA = 1f;
+        public bool HasNeedleColor;
         public KnobAttribute() { }
         public KnobAttribute(float min, float max) { Min = min; Max = max; }
         public KnobAttribute(float min, float max, float size) { Min = min; Max = max; Size = size; }

@@ -51,19 +51,23 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 | `ShowIf`, `HideIf`, `EnableIf`, `DisableIf` | Fully Supported | Animated visibility transitions (`Animate = true`) supported via fade groups |
 | `HideInEditorMode`, `HideInPlayMode`, `ShowInPlayMode`, `DisableInEditorMode`, `DisableInPlayMode` | Fully Supported | |
 | `ReadOnly`, `Required`, `NotEmpty`, `ValidateInput`, `InfoBox`, `DetailedInfoBox`, `TypeInfoBox` | Fully Supported | Theme validation / info boxes; `InfoBox.GUIAlwaysEnabled` scope handling supported |
-| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Fully Supported | `Button.Style`, `Icon`, `IconAlignment`, `ButtonAlignment`, parameterized invoke |
+| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Fully Supported | `Button.Style`, `Icon`, `IconAlignment`, `ButtonAlignment`, parameterized invoke. `OnInspectorInit` / `OnValueChanged(InvokeOnInitialize)` run **once per Editor + target + member** until domain reload or **Force Rebuild AetherInspector Cache** |
 | `ListDrawerSettings`, `Searchable`, `TableList`, `TableColumnWidth`, `OnCollectionChanged` | Fully Supported | `ListDisplayMode` and `Searchable.Recursive` fully implemented |
 | `ValueDropdown`, `AssetSelector`, `AssetsOnly`, `SceneObjectsOnly` | Fully Supported | Theme field chrome + Handles caret; searchable popup |
 | `DictionaryDrawerSettings` | Fully Supported | `DisplayMode` and `ShowInInspector` / `IDictionary` read-only grid |
 | `HideReferenceObjectPicker` | Fully Supported | Nested serializable types + inline editors |
 | `InlineProperty`, `InlineEditor`, `PreviewField`, `DrawWithUnity` | Fully Supported | `InlineEditor.MaxHeight` scrolling; PreviewField height + texture preview |
-| `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Knob`, `Percentage`, `Curve`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Fully Supported | Styled sliders/toggles/tabs; Knob rotary; Percentage; Curve height |
-| `DisplayAsString`, `RequireComponentButton` | Fully Supported | |
+| `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Knob`, `Percentage`, `Curve`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Fully Supported | Styled sliders (hover min/cur/max); Knob arc fill + labels; Percentage drag-scrub |
+| `DisplayAsString`, `RequireComponentButton` | Fully Supported | DisplayAsString: label left, value uses alignment; RequireComponent: disabled on non-GO |
 
 ## Theme and performance
 
 - **Theme:** soft Unity-native tokens in `AetherInspectorTheme` (Pro/Personal). Foldouts/boxes/tabs/info use Theme/GuiKit only — no raw `HelpBox` / `foldoutHeader` in engine draw paths.
+- **Info / validation boxes:** dim skin-aware fills with rounded corners (low visual clutter).
+- **Ordering:** root children sort by `PropertyOrder`, then `Sequence` (declaration / SerializedObject iterator). Groups use group-attr `Order` and **min Sequence of members** so a `[BoxGroup]` appears where its first field is declared—not at Dictionary iteration order. Later demo fields with `[PropertyOrder(100+)]` intentionally sort after earlier Order-0 content.
 - **Perf:** cached GUIStyles (skin-invalidated); pooled render group tree (no per-frame `CloneGroupNode`); Handles discs for rounded chrome; Handles AA caret for dropdowns; optional 1×1 tint `Texture2D` dictionary when a style background is required.
+- **GUIColor:** multiplies Theme chrome colors via `GuiTint` so custom drawers honor the tint.
+- **RequireComponentButton:** on ScriptableObject / non-GameObject targets shows a disabled button plus “Requires a GameObject target.”
 - Cache busting: context menu **Force Rebuild AetherInspector Cache** if metadata looks stale.
 
 ## Editor extension guidelines
