@@ -245,6 +245,13 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string PlayerFillRosterPrefabs         = Root + "Player/Fill Roster Prefabs From Prefab Map";
 			public const string PlayerCreateSimplePawn          = GameObject + "Domain/Player/Simple Pawn";
 			public const string PlayerCreatePlayerStart         = GameObject + "Domain/Player/Player Start";
+			public const string PlayerCreateTouchControls       = GameObject + "Domain/Player/Touch Controls HUD";
+			public const string PlayerCreateTouchJoystick       = GameObject + "Domain/Player/Touch/Joystick";
+			public const string PlayerCreateTouchDPad           = GameObject + "Domain/Player/Touch/D-Pad";
+			public const string PlayerCreateTouchActionButton   = GameObject + "Domain/Player/Touch/Action Button";
+			public const string PlayerCreateTouchLookPad        = GameObject + "Domain/Player/Touch/Look Pad";
+			public const string PlayerTouchQuickSetup           = Root + "Player/Set Up Touch Controls In Scene";
+			public const string PlayerCaptureTouchLayout        = Root + "Player/Capture Touch Layout Preset";
 
 			/// <summary>Assets/* and GameObject/Domain/Level/* — one-click LevelDefinition authoring for the GameObject loader kind.</summary>
 			public const string LevelCreateForPrefab            = Assets + "Create Level For This Prefab";
