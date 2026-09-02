@@ -201,6 +201,14 @@ namespace AetherNexus.FoundationPlatform.Animation
 			return true;
 		}
 
+		/// <summary>True when <paramref name="setName"/> is registered and <paramref name="entryId"/> has a clip.</summary>
+		protected bool HasPlayableSetEntry(string setName, string entryId)
+		{
+			if (string.IsNullOrEmpty(setName) || string.IsNullOrEmpty(entryId)) return false;
+			AnimationSet set = FindAnimationSetByName(setName);
+			return IsPlayableAnimationSetEntry(set?.FindEntry(entryId));
+		}
+
 		/// <summary>Called immediately before an AnimationSet entry begins playback.</summary>
 		protected virtual void OnAnimationSetEntryPlayStarted(AnimationSetEntry entry) { }
 
