@@ -230,6 +230,10 @@ namespace AetherNexus.FoundationPlatform.Animation
             {
                 foreach (var active in _activeStates)
                 {
+                    if (active.State == state)
+                        continue;
+                    if (active.State is ClipState)
+                        active.State.Events().OnEnd = null;
                     if (active.State == CurrentState)
                     {
                         active.TargetWeight = 0f;

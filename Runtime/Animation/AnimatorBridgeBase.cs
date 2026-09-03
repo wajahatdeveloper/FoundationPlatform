@@ -38,6 +38,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		public PlayableState ActiveSequenceState { get; protected set; }
 
 		private int _activeSequenceGeneration;
+		private int _animationSetPlayGeneration;
 		private int _activeSequenceLayerIndex = -1;
 		private Dictionary<string, AnimationSet> _animationSetByName;
 		private Dictionary<AnimationClip, (string setName, string entryId)> _clipToSetEntry;
@@ -210,7 +211,14 @@ namespace AetherNexus.FoundationPlatform.Animation
 		}
 
 		/// <summary>Called immediately before an AnimationSet entry begins playback.</summary>
-		protected virtual void OnAnimationSetEntryPlayStarted(AnimationSetEntry entry) { }
+		protected virtual void OnAnimationSetEntryPlayStarted(AnimationSetEntry entry)
+		{
+			_animationSetPlayGeneration++;
+		}
+
+		protected int AnimationSetPlayGeneration => _animationSetPlayGeneration;
+
+		protected bool IsCurrentAnimationSetPlay(int generation) => generation == _animationSetPlayGeneration;
 
 		/// <summary>Wraps the on-complete callback for AnimationSet entry playback.</summary>
 		protected virtual Action WrapAnimationSetEntryOnComplete(AnimationSetEntry entry, Action onComplete) => onComplete;
@@ -310,6 +318,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				&& AnimationSetSequenceUtility.ResolveTerminalTransitionBack(entry, sourceEntry);
 
 			OnAnimationSetEntryPlayStarted(entry);
+			int playGeneration = AnimationSetPlayGeneration;
 
 			var layerIndex = ResolveLayerIndex(entry);
 			var layer = animancer.Layers[layerIndex];
@@ -343,6 +352,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			var wrappedOnComplete = WrapAnimationSetEntryOnComplete(entry, () =>
 			{
 				if (generation != _activeSequenceGeneration) return;
+				if (!IsCurrentAnimationSetPlay(playGeneration)) return;
 
 				if (isTerminal)
 				{
@@ -413,6 +423,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			}
 
 			OnAnimationSetEntryPlayStarted(entry);
+			int playGeneration = AnimationSetPlayGeneration;
 			var wrappedOnComplete = WrapAnimationSetEntryOnComplete(entry, onComplete);
 
 			var layerIndex = ResolveLayerIndex(entry);
@@ -445,6 +456,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 			{
 				state.Events().OnEnd = () =>
 				{
+					if (!IsCurrentAnimationSetPlay(playGeneration))
+						return;
 					if (entry.transitionBack)
 					{
 						TransitionBackFromLayer(layerIndex, entry.clip.FadeDuration);
