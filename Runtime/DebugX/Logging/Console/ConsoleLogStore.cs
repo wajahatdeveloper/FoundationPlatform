@@ -49,26 +49,27 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static readonly List<WatchEntry> _watchList = new List<WatchEntry>();
 
         // Editor Console mirror exposed to the window: merge of _bridgeCompilerEntries (asset-import /
-        // graph compile errors, from LogEntriesBridge) and the script compile errors tracked per-assembly
-        // below (from CompilationPipeline). Rebuilt in Pump() whenever either source changes.
+        // graph compile errors, asset-import warnings, shader/native-only rows from LogEntriesBridge)
+        // and script compile errors+warnings tracked per-assembly below (from CompilationPipeline).
+        // Rebuilt in Pump() whenever either source changes.
         private static readonly List<ConsoleEntry> _compilerEntries = new List<ConsoleEntry>();
 
-        // Raw LogEntries mirror (asset-import / graph compile errors + other native-console-only rows
-        // such as shader/native logs). Compile WARNINGS are deliberately excluded from this mirror by
-        // LogEntriesBridge — they still reach the console via OnUnityLog below, as ordinary Source=Unity
-        // rows, so they behave like any other clearable/evictable log entry.
+        // Raw LogEntries mirror (asset-import / graph compile errors, asset-import warnings, shader/native
+        // logs). Scripting Debug.Log* rows and script compile diagnostics are excluded — those arrive via
+        // OnUnityLog and CompilationPipeline respectively.
         private static readonly List<ConsoleEntry> _bridgeCompilerEntries = new List<ConsoleEntry>();
 
-        // Script compile errors, keyed by assembly path — from CompilationPipeline.assemblyCompilationFinished.
-        // Replaced wholesale per assembly on each compile pass; removed once that assembly compiles clean.
-        private static readonly Dictionary<string, List<ConsoleEntry>> _scriptCompileErrorsByAssembly =
+        // Script compile errors and warnings, keyed by assembly path — from
+        // CompilationPipeline.assemblyCompilationFinished. Replaced wholesale per assembly on each compile
+        // pass; removed once that assembly compiles clean (no errors and no warnings).
+        private static readonly Dictionary<string, List<ConsoleEntry>> _scriptCompileDiagnosticsByAssembly =
             new Dictionary<string, List<ConsoleEntry>>();
 
         // Set by OnAssemblyCompilationFinished (main thread); tells Pump() the merged mirror needs a
         // rebuild even when the native LogEntries list itself hasn't changed.
         private static bool _scriptCompilerDirty;
 
-        // Fast-lookup set of mirrored compiler-error messages for dedup in OnUnityLog (main thread only).
+        // Fast-lookup set of mirrored compiler diagnostic messages for dedup in OnUnityLog (main thread only).
         private static readonly HashSet<string> _compilerMessages = new HashSet<string>();
 
         /// <summary>Bumped whenever visible state changes; the window compares this to decide when to rebuild.</summary>
@@ -126,25 +127,30 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         /// <summary>
-        /// Authoritative script-compile-error feed: exact file/line/message straight from the compiler,
-        /// no reflection or native-console polling involved. Replaces whatever this assembly's error list
-        /// held last pass — an empty list here means the assembly now compiles clean.
+        /// Authoritative script-compile diagnostic feed: exact file/line/message from the compiler,
+        /// no reflection or native-console polling. Replaces whatever this assembly's list held last
+        /// pass — an empty list here means the assembly now compiles clean (no errors and no warnings).
         /// </summary>
         private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
         {
-            List<ConsoleEntry> errors = null;
+            List<ConsoleEntry> diagnostics = null;
             for (int i = 0; i < messages.Length; i++)
             {
                 var m = messages[i];
-                if (m.type != CompilerMessageType.Error)
+                LogLevel level;
+                if (m.type == CompilerMessageType.Error)
+                    level = LogLevel.Error;
+                else if (m.type == CompilerMessageType.Warning)
+                    level = LogLevel.Warning;
+                else
                     continue;
 
-                errors ??= new List<ConsoleEntry>();
-                errors.Add(new ConsoleEntry
+                diagnostics ??= new List<ConsoleEntry>();
+                diagnostics.Add(new ConsoleEntry
                 {
                     Id = NextId(),
                     Timestamp = DateTime.Now,
-                    Level = LogLevel.Error,
+                    Level = level,
                     Source = ConsoleSource.Compiler,
                     Channel = "Compiler",
                     Message = m.message,
@@ -154,10 +160,10 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 });
             }
 
-            if (errors != null)
-                _scriptCompileErrorsByAssembly[assemblyPath] = errors;
+            if (diagnostics != null)
+                _scriptCompileDiagnosticsByAssembly[assemblyPath] = diagnostics;
             else
-                _scriptCompileErrorsByAssembly.Remove(assemblyPath);
+                _scriptCompileDiagnosticsByAssembly.Remove(assemblyPath);
 
             _scriptCompilerDirty = true;
         }
@@ -344,9 +350,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
         {
             // DebugX logs do not reach Unity's log system in the editor (the native relay is dropped),
             // so this feed only carries plain Debug.Log calls, uncaught exceptions and third-party logs.
-            // Whether this duplicates a row already mirrored via LogEntries is decided later, in Pump's
-            // drain loop (main thread only) against a freshly-refreshed _compilerMessages — not here,
-            // since this callback can run off the main thread and _compilerMessages is not thread-safe.
+            // Scripting rows are not mirrored by LogEntriesBridge. Native-only / compile diagnostics in
+            // _compilerMessages are still skipped at Pump drain (message match, main thread only).
             var level = UnityTypeToLevel(type);
             var entry = new ConsoleEntry
             {
@@ -377,7 +382,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     _compilerEntries.Clear();
                     _compilerEntries.AddRange(_bridgeCompilerEntries);
-                    foreach (var kvp in _scriptCompileErrorsByAssembly)
+                    foreach (var kvp in _scriptCompileDiagnosticsByAssembly)
                         _compilerEntries.AddRange(kvp.Value);
 
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;

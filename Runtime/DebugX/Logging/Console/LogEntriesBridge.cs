@@ -7,18 +7,17 @@ namespace AetherNexus.FoundationPlatform.DebugX
 {
     /// <summary>
     /// Reflection wrapper over Unity's internal <c>UnityEditor.LogEntries</c> / <c>LogEntry</c> so the
-    /// DebugX Console can mirror the Editor Console (including rows that never reach
-    /// <see cref="UnityEngine.Application.logMessageReceived"/>, e.g. some shader/native logs).
+    /// DebugX Console can mirror Editor Console rows that never reach
+    /// <see cref="UnityEngine.Application.logMessageReceivedThreaded"/> (shader/native logs, asset-import
+    /// / graph compile errors, asset-import warnings).
     ///
     /// Severity follows Unity's <c>ConsoleWindow.GetIconForErrorMode</c> mode masks.
-    /// <see cref="ConsoleSource.Compiler"/> here is reserved for persistent, currently-present asset-import/
-    /// graph compile ERRORS only — script compile errors are sourced elsewhere (see
-    /// <see cref="ConsoleLogStore"/>'s <c>CompilationPipeline.assemblyCompilationFinished</c> subscription)
-    /// since Unity exposes those via a public, non-reflection API. Compile warnings are intentionally NOT
-    /// mirrored here at all — they already reach the console via
-    /// <see cref="UnityEngine.Application.logMessageReceivedThreaded"/> (<see cref="ConsoleLogStore.OnUnityLog"/>),
-    /// so mirroring them here too would just duplicate them as an unevictable row. All other mirrored rows
-    /// are <see cref="ConsoleSource.Unity"/>.
+    /// Scripting logs/warnings/errors/asserts go through <see cref="ConsoleLogStore"/>'s Unity log
+    /// callback — mirroring them here duplicates every <c>Debug.Log</c> (native message includes the
+    /// stack; the callback condition does not, so exact-message dedup fails). Script compile errors and
+    /// warnings come from <c>CompilationPipeline.assemblyCompilationFinished</c> (public API, exact
+    /// file/line). Asset-import warnings have no pipeline feed, so they stay here as
+    /// <see cref="ConsoleSource.Compiler"/>. Remaining mirrored rows are <see cref="ConsoleSource.Unity"/>.
     ///
     /// Lives in the runtime assembly (editor-guarded) so <see cref="ConsoleLogStore"/> can call it —
     /// the runtime asmdef cannot reference the editor asmdef. Every member lookup is cached and
@@ -49,19 +48,26 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private const int ModeVisualScriptingError = 1 << 22;
 
         /// <summary>
-        /// Asset-import / graph compile ERRORS only — the persistent Compiler source mirrored here.
-        /// Script compile errors are deliberately excluded: <see cref="ConsoleLogStore"/> sources those
-        /// directly from <see cref="UnityEditor.Compilation.CompilationPipeline.assemblyCompilationFinished"/>
-        /// instead (public API, exact file/line/message from the compiler — no reflection, no polling).
+        /// Asset-import / graph compile ERRORS — persistent Compiler source mirrored here.
+        /// Script compile errors/warnings are excluded: <see cref="ConsoleLogStore"/> sources those
+        /// from <see cref="UnityEditor.Compilation.CompilationPipeline.assemblyCompilationFinished"/>.
         /// </summary>
         private const int CompileErrorMask =
             ModeAssetImportError | ModeGraphCompileError;
 
         /// <summary>
-        /// Compile warnings: not classified as Compiler (not a blocker) and not mirrored at all — they
-        /// reach the console via <see cref="UnityEngine.Application.logMessageReceivedThreaded"/> instead.
+        /// Rows that already fire <c>Application.logMessageReceivedThreaded</c>. Mirroring them here
+        /// doubles every <c>Debug.Log*</c> in the DebugX Console.
         /// </summary>
-        private const int CompileWarningMask = ModeAssetImportWarning | ModeScriptCompileWarning;
+        private const int ApplicationLogMask =
+            ModeLog | ModeScriptingLog | ModeScriptingWarning | ModeScriptingError |
+            ModeScriptingException | ModeScriptingAssertion | ModeAssert;
+
+        /// <summary>
+        /// Script compile diagnostics — <see cref="ConsoleLogStore"/> ingest via CompilationPipeline.
+        /// </summary>
+        private const int ScriptCompileMask =
+            ModeScriptCompileError | ModeScriptCompileWarning;
 
         // Matches ConsoleWindow.GetIconForErrorMode error branch (+ exception / visual-scripting).
         private const int ErrorMask =
@@ -162,17 +168,18 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         int mode = _scratchModes[i];
                         string message = _scratchMessages[i];
 
-                        bool isCompilerError = (mode & CompileErrorMask) != 0;
-                        bool isDeclassifiedWarning = !isCompilerError && (mode & CompileWarningMask) != 0;
-                        if (isDeclassifiedWarning)
-                            continue; // reaches the console via Application.logMessageReceivedThreaded instead
+                        if ((mode & ApplicationLogMask) != 0)
+                            continue;
 
-                        bool isScriptCompileError = (mode & ModeScriptCompileError) != 0;
-                        if (isScriptCompileError)
-                            continue; // ConsoleLogStore mirrors these itself via CompilationPipeline instead
+                        if ((mode & ScriptCompileMask) != 0)
+                            continue;
+
+                        bool isCompilerError = (mode & CompileErrorMask) != 0;
+                        bool isAssetImportWarning = (mode & ModeAssetImportWarning) != 0;
+                        bool isCompiler = isCompilerError || isAssetImportWarning;
 
                         var level = LevelFromMode(mode, message);
-                        var source = isCompilerError ? ConsoleSource.Compiler : ConsoleSource.Unity;
+                        var source = isCompiler ? ConsoleSource.Compiler : ConsoleSource.Unity;
 
                         target.Add(new ConsoleEntry
                         {
@@ -180,11 +187,11 @@ namespace AetherNexus.FoundationPlatform.DebugX
                             Timestamp = DateTime.Now,
                             Level = level,
                             Source = source,
-                            Channel = isCompilerError ? "Compiler" : null,
+                            Channel = isCompiler ? "Compiler" : null,
                             Message = message,
                             CallerFilePath = _scratchFiles[i],
                             CallerLineNumber = _scratchLines[i],
-                            CollapseKey = (isCompilerError ? "C|" : "U|") + mode + "|" + message
+                            CollapseKey = (isCompiler ? "C|" : "U|") + mode + "|" + message
                         });
                     }
 

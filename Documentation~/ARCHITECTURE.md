@@ -109,7 +109,7 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 | WebGL | `UnityConsoleSink` |
 | Standalone / other | `UnityConsoleSink` + `FileSink` + `JsonFileSink` |
 
-**DebugX Console window** — `Editor/Console/DebugXConsoleWindow.cs` — reads structured `LogEvent`s from `ConsoleLogStore` (ring buffer fed by `EditorConsoleSink`). Supports filters, tabs, watch expressions, snippets, compile-error surfacing, export.
+**DebugX Console window** — `Editor/Console/DebugXConsoleWindow.cs` — reads `ConsoleLogStore` (ring from `EditorConsoleSink` + Unity `Debug.Log*` via `logMessageReceivedThreaded`; compiler tail from CompilationPipeline script diagnostics plus LogEntriesBridge native-only / asset-import rows). Supports filters, tabs, watch expressions, snippets, compile error/warning surfacing, export.
 
 **Deliberate carve-out — caller-info reflection:** `CallerInfoHelper` and `MessageTemplateParser` use cached `StackTrace`/`MethodBase` reflection on every log call in all builds so file/line/member attribution reaches sinks. This is an intentional trade-off (not a silent violation of the no-runtime-reflection rule). The Unity-stack-extractor fallback remains editor-gated. See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for rationale and future options if attribution is ever threaded via `[CallerMemberName]` instead.
 
