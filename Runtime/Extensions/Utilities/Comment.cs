@@ -9,6 +9,7 @@ namespace AetherNexus.FoundationPlatform.Extensions
     using Gizmos = UnityEngine.Gizmos;
     
 [AddComponentMenu("Toolkit/Comment")]
+[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Comment.png")]
 public class Comment : MonoBehaviour
 {
     [TextArea(3, 10)]

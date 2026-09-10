@@ -14,6 +14,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		"locomotion blend profile walk run idle sprint crouch stance movement speed transition smooth mixer",
 		DesignerFeatureKind.Asset,
 		"")]
+	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/LocomotionBlendProfile.png")]
 	public class LocomotionBlendProfile : ScriptableObject
 	{
 		[TitleGroup("Stances (Mixer Input Order)")]

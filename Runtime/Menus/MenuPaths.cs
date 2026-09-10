@@ -76,6 +76,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string RolloutWarningFirst  = Root + "Rollout Mode: Warning First";
             public const string RolloutStrict        = Root + "Rollout Mode: Strict";
             public const string StaleComponentScanner = Root + "Stale Component Scanner";
+            public const string MissingDesignerIcons = Root + "Report Missing Designer Icons";
         }
 
         /// <summary>Window/Utilities/* — utility windows.</summary>
@@ -327,6 +328,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
 			public const string NetworkValidateSetup = Root + "Network/Validate Setup";
 			public const string AgentToolsExportParams = Root + "Agent Tools/Export MCP Params";
+			public const string IconsReportCoverage = Root + "Icons/Report Coverage";
+			public const string IconsGenerateAndStamp = Root + "Icons/Generate + Stamp Package...";
 		}
 
 		/// <summary>Window/Platform/* — admin / integration windows.</summary>

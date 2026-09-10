@@ -12,6 +12,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		"animation set clip motion character attack idle walk run swap variant animator library",
 		DesignerFeatureKind.Asset,
 		"")]
+	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AnimationSet.png")]
 	public class AnimationSet : ScriptableObject
 	{
 		[Tooltip("Optional parent animation set to inherit entries from.")]

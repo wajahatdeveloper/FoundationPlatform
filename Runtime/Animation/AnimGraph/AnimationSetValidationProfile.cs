@@ -25,6 +25,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		"animation set validation required missing clip check rule profile entry jump land loop",
 		DesignerFeatureKind.Asset,
 		"")]
+	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AnimationSetValidationProfile.png")]
 	public class AnimationSetValidationProfile : ScriptableObject
 	{
 		[Tooltip("Entry ids that must exist in the AnimationSet with assigned clips.")]

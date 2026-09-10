@@ -14,6 +14,7 @@ namespace AetherNexus.FoundationPlatform.TweenX
     /// </summary>
     [AddComponentMenu("FoundationPlatform/Tween Animator")]
     [DisallowMultipleComponent]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/TweenAnimator.png")]
     public sealed class TweenAnimator : MonoBehaviour
     {
         /// <summary>Which property of this GameObject a step drives.</summary>

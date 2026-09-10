@@ -36,6 +36,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         "folder mapping config content scripts twin root project structure layout data area path",
         DesignerFeatureKind.Asset,
         "docs/09-EditorHub.md")]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/DataFolderMappingConfig.png")]
     public class DataFolderMappingConfig : ScriptableObject
     {
         public const string DefaultAssetPath = "Assets/Content/Global/Authoring/DataFolderMappingConfig.asset";

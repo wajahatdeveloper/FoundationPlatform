@@ -14,6 +14,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
     /// </summary>
     [AddComponentMenu("FoundationPlatform/Feedback Player")]
     [DisallowMultipleComponent]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/FeedbackPlayer.png")]
     public sealed class FeedbackPlayer : MonoBehaviour
     {
         [Tooltip("Play automatically when this component is enabled.")]

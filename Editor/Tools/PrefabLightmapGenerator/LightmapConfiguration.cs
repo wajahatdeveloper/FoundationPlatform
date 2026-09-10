@@ -15,6 +15,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         "lightmap configuration bake lighting prefab settings default gi light quality",
         DesignerFeatureKind.Asset,
         "")]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/LightmapConfiguration.png")]
     public class LightmapConfiguration : ScriptableObject
     {
         #region Serialized Fields
