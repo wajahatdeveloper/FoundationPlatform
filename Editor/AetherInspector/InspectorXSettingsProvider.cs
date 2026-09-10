@@ -20,7 +20,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 keywords = new HashSet<string>
                 {
                     "inspector", "object", "field", "pencil", "drag", "selector",
-                    "missing", "script", "fixer", "play", "save", "event"
+                    "missing", "script", "fixer", "play", "save", "event",
+                    "fallback", "scope", "override", "prefab"
                 }
             };
         }
@@ -42,6 +43,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             EditorGUI.BeginChangeCheck();
 
+            EditorGUILayout.LabelField("Fallback Inspector", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("fallbackScope"), new GUIContent("Draw Through Engine"));
+            EditorGUILayout.HelpBox("All Scripts draws every MonoBehaviour and ScriptableObject through the engine. Everything adds native components and assets Unity left on its generic inspector. First Party limits it to this project and first-party packages. Attributed limits it to types declaring an AetherInspector attribute.", MessageType.None);
+
+            EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Object Fields", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("objectFieldPencil"), new GUIContent("Pencil (Open Property Editor)"));
             EditorGUILayout.PropertyField(serialized.FindProperty("objectFieldDragOut"), new GUIContent("Drag From Field"));
@@ -63,6 +69,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 InspectorXSettings.instance.SaveNow();
+                AetherInspectorRenderer.ClearCache();
+                AetherInspectorFallbackScope.ClearCache();
+                foreach (var inspector in Resources.FindObjectsOfTypeAll<EditorWindow>())
+                    inspector.Repaint();
             }
 
             EditorGUILayout.Space(8);
@@ -80,6 +90,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
                     {
                         InspectorXSettings.instance.ImportFromJson(path);
+                        AetherInspectorRenderer.ClearCache();
+                        AetherInspectorFallbackScope.ClearCache();
                         serialized = null;
                         GUIUtility.ExitGUI();
                     }
@@ -88,6 +100,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (GUILayout.Button("Reset to Defaults", GUILayout.Width(140f)))
                 {
                     InspectorXSettings.instance.ResetToDefaults();
+                    AetherInspectorRenderer.ClearCache();
+                    AetherInspectorFallbackScope.ClearCache();
                     serialized = null;
                     GUIUtility.ExitGUI();
                 }

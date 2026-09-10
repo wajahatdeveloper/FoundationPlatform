@@ -31,8 +31,19 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         protected virtual void OnEnable() { }
         protected virtual void OnDisable() { }
 
+        /// <summary>
+        /// Hand-written editors always draw through the engine; the global fallback arms override this
+        /// with the project's fallback scope so out-of-scope types keep Unity's own inspector.
+        /// </summary>
+        protected virtual bool UseEngineDrawing => true;
+
         public override void OnInspectorGUI()
         {
+            if (!UseEngineDrawing)
+            {
+                DrawDefaultInspector();
+                return;
+            }
             serializedObject.Update();
             // Missing script: the engine can't draw a null target — hand over to the fixer.
             if (target == null && InspectorXSettings.instance.missingScriptFixer)
@@ -365,6 +376,19 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 string tooltip = mm.Tooltip?.tooltip;
                 mm.CachedLabel = new GUIContent(text, tooltip);
             }
+
+            // Every attribute the field dispatch in RenderFieldCore can branch on. Kept beside the
+            // attribute reads above so a new drawing attribute is caught here in the same edit.
+            mm.MayDrawCustom =
+                mm.TableList != null || mm.ListDrawerSettings != null || mm.Searchable != null
+                || mm.ValueDropdown != null || mm.AssetSelector != null || mm.OnCollectionChanged != null
+                || mm.InlineProperty != null || mm.DisplayAsString != null || mm.ToggleLeft != null
+                || mm.MultiLineProperty != null || mm.TextArea != null || mm.Multiline != null
+                || mm.PropertyRange != null || mm.MinMaxSlider != null || mm.ProgressBar != null
+                || mm.EnumToggleButtons != null || mm.Knob != null || mm.Percentage != null
+                || mm.Curve != null || mm.PreviewField != null || mm.InlineEditor != null
+                || mm.AssetsOnly != null || mm.SceneObjectsOnly != null
+                || mm.Layer != null || mm.Tag != null;
 
             // Cache GUIStyles
             if (mm.DisplayAsString != null)
@@ -1736,11 +1760,64 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             if (tooltipIcon != null)
             {
                 AetherInspectorTheme.DrawWithTooltipIcon(
-                    () => RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited),
+                    () => RenderFieldScoped(e, targets, foldouts, tabs, maxDepth, visited),
                     tooltipIcon.Tooltip);
                 return;
             }
-            RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited);
+            RenderFieldScoped(e, targets, foldouts, tabs, maxDepth, visited);
+        }
+
+        // Custom-drawn fields bypass EditorGUILayout.PropertyField, which is what supplies Unity's own
+        // property semantics: the prefab-override bar and bold label, the right-click Revert menu, and
+        // Preset apply/revert. One BeginProperty scope around the whole dispatch restores them for every
+        // branch, including the list, table and dropdown drawers called from inside it. Fields that can
+        // only reach PropertyField skip the scope so they keep a single native draw call.
+        private static void RenderFieldScoped(InspectorEntry e, object[] targets,
+            Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, int maxDepth, HashSet<object> visited)
+        {
+            var mm = e.Metadata;
+            if (mm == null || mm.DrawWithUnity != null || !MayDrawCustom(e))
+            {
+                RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited);
+                return;
+            }
+
+            var prevEntry = s_propertyScopeEntry;
+            var prevLabel = s_propertyScopeLabel;
+            try
+            {
+                using (var scope = GuiKit.PropertyBlock(e.Property, ScopeLabel(e, targets)))
+                {
+                    s_propertyScopeEntry = e;
+                    s_propertyScopeLabel = scope.Label;
+                    RenderFieldCore(e, targets, foldouts, tabs, maxDepth, visited);
+                }
+            }
+            finally
+            {
+                s_propertyScopeEntry = prevEntry;
+                s_propertyScopeLabel = prevLabel;
+            }
+        }
+
+        // Mirrors what RenderFieldCore can branch on: attribute-driven branches come from the cached
+        // metadata flag, the two property-shaped branches (enhanced object field, nested / list recursion)
+        // are read off the property. A false positive costs one empty layout group, nothing visual.
+        private static bool MayDrawCustom(InspectorEntry e)
+        {
+            if (e.Metadata.MayDrawCustom) return true;
+            var prop = e.Property;
+            return prop.propertyType == SerializedPropertyType.ObjectReference
+                || (prop.propertyType == SerializedPropertyType.Generic && prop.hasVisibleChildren);
+        }
+
+        // BeginProperty needs a concrete label, while GetLabel returns null to mean "let the property
+        // name through". The substitute must not be the shared temp content, which a later draw clobbers.
+        private static GUIContent ScopeLabel(InspectorEntry e, object[] targets)
+        {
+            var label = GetLabel(e, targets);
+            if (label != null) return label;
+            return new GUIContent(e.Property.displayName, e.Metadata.Tooltip?.tooltip);
         }
 
         private static void RenderFieldCore(InspectorEntry e, object[] targets,
@@ -3444,8 +3521,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             catch (Exception ex) { Debug.LogWarning($"[FoundationPlatform.AetherInspector] OnValueChanged '{attr.Action}' threw: {ex.InnerException?.Message ?? ex.Message}"); }
         }
 
+        // Entry whose BeginProperty scope is open, and the label that scope handed back. Keyed by entry
+        // identity so nested children drawn inside the scope resolve their own labels, not the parent's.
+        private static InspectorEntry s_propertyScopeEntry;
+        private static GUIContent s_propertyScopeLabel;
+
         internal static GUIContent GetLabel(InspectorEntry e, object[] targets)
         {
+            if (ReferenceEquals(e, s_propertyScopeEntry) && s_propertyScopeLabel != null)
+                return s_propertyScopeLabel;
+
             var mm = e.Metadata;
             if (mm == null) return null;
             if (mm.HideLabel) return GUIContent.none;
@@ -3691,6 +3776,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // Flags
         public bool IsFlagsEnum;
+
+        // True when an attribute on this member can route the field away from EditorGUILayout.PropertyField.
+        // Gates the BeginProperty scope so plain fields keep their single native draw call.
+        public bool MayDrawCustom;
 
         // Cached GUIContent for static labels
         public GUIContent CachedLabel;

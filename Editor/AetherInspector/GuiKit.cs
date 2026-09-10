@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
@@ -114,6 +115,36 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         /// <summary>Rect-based flat section header, using a 20px button size.</summary>
         public static bool SectionHeaderRow(Rect rect, GUIContent label, bool expanded, int trailingButtons,
             out Rect[] trailingRects) => AetherInspectorTheme.SectionHeaderRow(rect, label, expanded, trailingButtons, out trailingRects);
+
+        /// <summary>
+        /// Wraps custom-drawn layout content in <see cref="EditorGUI.BeginProperty"/> so a hand-drawn
+        /// field keeps Unity's own property semantics: prefab-override bar and bold label, right-click
+        /// Revert, and Preset apply/revert. Use for content that spans more than one row.
+        /// </summary>
+        public static PropertyBlockScope PropertyBlock(SerializedProperty property, GUIContent label)
+            => new PropertyBlockScope(property, label);
+
+        /// <summary>
+        /// BeginProperty over a vertical layout group. The group rect comes from the previous layout
+        /// pass, which is what the override bar needs (it only draws on Repaint).
+        /// </summary>
+        public struct PropertyBlockScope : IDisposable
+        {
+            /// <summary>The label BeginProperty handed back — bold when the value is a prefab override.</summary>
+            public GUIContent Label { get; }
+
+            public PropertyBlockScope(SerializedProperty property, GUIContent label)
+            {
+                var rect = EditorGUILayout.BeginVertical();
+                Label = EditorGUI.BeginProperty(rect, label ?? GUIContent.none, property);
+            }
+
+            public void Dispose()
+            {
+                EditorGUI.EndProperty();
+                EditorGUILayout.EndVertical();
+            }
+        }
     }
 }
 #endif

@@ -5,6 +5,25 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
+    /// Which objects the global fallback inspector draws through the AetherInspector engine.
+    /// Anything outside the selected scope falls back to Unity's default inspector.
+    /// </summary>
+    public enum InspectorFallbackScope
+    {
+        [Tooltip("Every MonoBehaviour and ScriptableObject, first-party and third-party alike.")]
+        AllScripts = 0,
+
+        [Tooltip("Every object type without a concrete custom editor, including native components and assets.")]
+        Everything = 1,
+
+        [Tooltip("Only scripts compiled from this project or from a first-party package.")]
+        FirstParty = 2,
+
+        [Tooltip("Only types declaring at least one AetherInspector attribute.")]
+        Attributed = 3
+    }
+
+    /// <summary>
     /// Project-wide toggles for the AetherInspector convenience features
     /// (object-field pencil/drag-out/selector, missing-script fixer, play-mode value saver,
     /// UnityEvent drop target). Stored in ProjectSettings/AetherInspectorXSettings.asset.
@@ -12,6 +31,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
     [FilePath("ProjectSettings/AetherInspectorXSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class InspectorXSettings : ScriptableSingleton<InspectorXSettings>
     {
+        [Tooltip("Which objects the global fallback inspector draws through the AetherInspector engine. Types outside the scope use Unity's default inspector. Concrete custom editors are never affected.")]
+        public InspectorFallbackScope fallbackScope = InspectorFallbackScope.AllScripts;
+
         [Tooltip("Pencil button next to populated object-reference fields opening a floating Property Editor.")]
         public bool objectFieldPencil = true;
 
