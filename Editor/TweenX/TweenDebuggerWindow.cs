@@ -20,6 +20,12 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
         private Vector2 _scroll;
 
         [MenuItem(MenuPaths.WindowTweenX.TweenDebugger, priority = MenuPriorities.WindowTweenX)]
+        [DesignerFeature(
+            "Tween Debugger",
+            "Lists the tweens running right now with their progress and owner, for finding an animation that never finishes or fires twice.",
+            "tween animation lerp ease duration running stuck loop debug ui motion transition",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void Open()
         {
             var win = GetWindow<TweenDebuggerWindow>("Tween Debugger");

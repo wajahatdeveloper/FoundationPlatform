@@ -289,6 +289,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		public static class DomainWindow
 		{
 			private const string Root = Window + "Domain/";
+			public const string FindFeature        = Root + "Find Feature...";
 			public const string GasDebugger        = Root + "GAS/Ability System Debugger...";
 			public const string GasTagManager      = Root + "GAS/Gameplay Tag Manager...";
 			public const string AiAuthor           = Root + "AI/AI Author...";
@@ -299,10 +300,12 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string CombatDebugger     = Root + "Combat/Combat Debugger...";
 			public const string WeaponWizard       = Root + "Combat/Weapon Wizard...";
 			public const string CombatPreview      = Root + "Combat/Combat Preview...";
-			public const string ItemRig            = Root + "Item/Equipment Rig Setup...";
-			public const string ItemIkPreview      = Root + "Item/Equipment IK Preview...";
+			// Labels are intent-first ("what the designer wants to do"), not implementation-first,
+			// so both the menu and the Feature Finder match the words a designer searches for.
+			public const string ItemRig            = Root + "Item/Weapon Attach Points & Holsters...";
+			public const string ItemIkPreview      = Root + "Item/Weapon Grip & Hand IK...";
 			public const string ItemDebugger       = Root + "Item/Item Debugger...";
-			public const string ItemEquipKit       = Root + "Item/Character Equipment Kit...";
+			public const string ItemEquipKit       = Root + "Item/Equip Weapon On Character...";
 			public const string QuestDebugger      = Root + "Quest/Quest Debugger...";
 			public const string ShopEconomy        = Root + "Shop/Shop & Economy Debugger...";
 			public const string CentralWindow      = Root + "Central Validation...";

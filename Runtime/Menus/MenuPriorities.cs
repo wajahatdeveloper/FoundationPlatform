@@ -49,6 +49,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public const int Platform           = 1500; // Tools/Platform/*
 
         // ---- Window/Domain/* and Window/Platform/* ----
+        public const int WindowDomainFinder = 1080; // Window/Domain/Find Feature... (sits above the debuggers)
         public const int WindowDomainGas   = 1120; // Window/Domain/GAS/*
         public const int WindowDomainCore  = 1100; // Window/Domain/* (debuggers, central window)
         public const int WindowPlatform    = 1600; // Window/Platform/*

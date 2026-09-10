@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,6 +30,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
     }
 
     [CreateAssetMenu(fileName = "DataFolderMappingConfig", menuName = "Foundation/Data Folder Mapping Config")]
+    [DesignerFeature(
+        "Data Folder Mapping Config",
+        "Defines which project folders hold content versus scripts, which is what the twin-root Project view and out-of-sync checks read.",
+        "folder mapping config content scripts twin root project structure layout data area path",
+        DesignerFeatureKind.Asset,
+        "docs/09-EditorHub.md")]
     public class DataFolderMappingConfig : ScriptableObject
     {
         public const string DefaultAssetPath = "Assets/Content/Global/Authoring/DataFolderMappingConfig.asset";

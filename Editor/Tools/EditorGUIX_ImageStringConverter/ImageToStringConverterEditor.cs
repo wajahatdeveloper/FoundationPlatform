@@ -15,7 +15,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.EditorGUIX_ImageStringConv
 {
 	public class ImageToStringConverterEditor : EditorWindow
 	{
-		[MenuItem(MenuPaths.Utilities.ImageToStringConverter, false, MenuPriorities.Utilities + 2)]
+        [MenuItem(MenuPaths.Utilities.ImageToStringConverter, false, MenuPriorities.Utilities + 2)]
+        [DesignerFeature(
+            "Image To String Converter",
+            "Turns an image into an embeddable base64 string, for editor icons that should not ship as separate asset files.",
+            "image texture png icon base64 string convert embed encode editor icon",
+            DesignerFeatureKind.Action,
+            "")]
 		private static void CreateWindow()
 		{
 			var window = GetWindow<ImageToStringConverterEditor>(false, "Image To String Converter");

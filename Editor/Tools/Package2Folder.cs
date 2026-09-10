@@ -142,6 +142,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Tools
         }
 
         [MenuItem(MenuPaths.AssetsImport.Here, false, 10)]
+        [DesignerFeature(
+            "Import Package Here",
+            "Imports a .unitypackage into the selected folder instead of the paths baked into the package, so third-party content does not scatter across the project.",
+            "import package unitypackage here folder third party asset store extract install",
+            DesignerFeatureKind.Action,
+            "")]
         private static void ImportPackageHereCommand()
         {
             var packagePath = EditorUtility.OpenFilePanel("Import package ...", "", "unitypackage");

@@ -19,7 +19,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		private ActiveSubscriptionsWindow _activeSubscriptionsWindow;
 		private SubscriptionHistoryWindow _subscriptionHistoryWindow;
 
-		[MenuItem(MenuPaths.WindowEventBus.EventBus, false, MenuPriorities.WindowEventBus)]
+        [MenuItem(MenuPaths.WindowEventBus.EventBus, false, MenuPriorities.WindowEventBus)]
+        [DesignerFeature(
+            "Event Bus",
+            "Shows who is listening to which event and what has been published, for tracking down a message that never arrives.",
+            "event bus message publish subscribe listener signal channel broadcast dispatch history",
+            DesignerFeatureKind.Debug,
+            "")]
 		public static void OpenWindow()
 		{
 			var window = GetWindow<EventBusWindow>("Event Bus");

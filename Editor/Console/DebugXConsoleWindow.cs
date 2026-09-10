@@ -103,6 +103,12 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         private bool _dragMoved;
 
         [MenuItem(MenuPaths.WindowDebugX.DebugXConsole, priority = MenuPriorities.WindowDebugX)]
+        [DesignerFeature(
+            "DebugX Console",
+            "Structured log console with per-channel filtering and call-site links, for when Unity's console is too noisy to find the message you want.",
+            "log logging console message error warning channel filter trace stack debug output",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void Open()
         {
             var w = GetWindow<DebugXConsoleWindow>();

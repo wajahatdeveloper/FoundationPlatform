@@ -14,7 +14,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
         
         private Vector2 _scrollPosition;
         
-		[MenuItem(MenuPaths.WindowUtilities.CreateEventChannel, priority = MenuPriorities.WindowUtilities + 5)]
+        [MenuItem(MenuPaths.WindowUtilities.CreateEventChannel, priority = MenuPriorities.WindowUtilities + 5)]
+        [DesignerFeature(
+            "Create Event Channel",
+            "Generates a new typed event channel asset and its script, so two systems can talk without referencing each other.",
+            "event channel create new signal message asset generate scriptableobject decouple",
+            DesignerFeatureKind.Generator,
+            "")]
         public static void ShowWindow()
         {
             var window = GetWindow<EventChannelGenerator>("Event Channel Generator");

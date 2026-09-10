@@ -19,6 +19,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         /// Menu item to bake lightmap data for all PrefabLightmapData components in the scene.
         /// </summary>
         [MenuItem(MenuPaths.Utilities.BakePrefabLightmaps, false, MenuPriorities.Utilities + 3)]
+        [DesignerFeature(
+            "Bake Prefab Lightmaps",
+            "Stores baked lighting on the prefab itself so it keeps its lightmaps when spawned into a scene at runtime.",
+            "lightmap bake prefab lighting gi baked light spawn instantiate keep lighting dark",
+            DesignerFeatureKind.Action,
+            "")]
         public static void GenerateLightmapInfo()
         {
             if (!ValidateLightmappingSettings())

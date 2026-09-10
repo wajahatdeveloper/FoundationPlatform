@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Animation
 {
@@ -18,6 +19,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 	}
 
 	[CreateAssetMenu(fileName = "AnimationSetValidationProfile", menuName = "Foundation/Animation/Animation Set Validation Profile", order = 43)]
+	[DesignerFeature(
+		"Animation Set Validation Profile",
+		"Lists the animation entries a character must have, so a set missing its jump or land clip is caught at author time instead of in play.",
+		"animation set validation required missing clip check rule profile entry jump land loop",
+		DesignerFeatureKind.Asset,
+		"")]
 	public class AnimationSetValidationProfile : ScriptableObject
 	{
 		[Tooltip("Entry ids that must exist in the AnimationSet with assigned clips.")]

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Editor.Tools
 {
@@ -8,6 +9,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
     /// This ScriptableObject allows for centralized configuration of lightmap settings.
     /// </summary>
     [CreateAssetMenu(fileName = "LightmapConfiguration", menuName = "Lightmap Generator/Lightmap Configuration", order = 30)]
+    [DesignerFeature(
+        "Lightmap Configuration",
+        "Holds the defaults used when baking lighting onto prefabs, so every bake in the project behaves the same way.",
+        "lightmap configuration bake lighting prefab settings default gi light quality",
+        DesignerFeatureKind.Asset,
+        "")]
     public class LightmapConfiguration : ScriptableObject
     {
         #region Serialized Fields

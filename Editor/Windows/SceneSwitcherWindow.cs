@@ -72,6 +72,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         };
 
         [MenuItem(MenuPaths.WindowUtilities.SceneSwitcher, priority = 1101)]
+        [DesignerFeature(
+            "Scene Switcher",
+            "Jumps between the project's scenes in one click, without hunting for the scene file in the Project window.",
+            "scene switch open load jump level map navigate list favorite build settings",
+            DesignerFeatureKind.Window,
+            "")]
         public static void Init()
         {
             var window = EditorWindow.GetWindow<SceneSwitcherWindow>("Scene Switcher");

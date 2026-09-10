@@ -11,18 +11,36 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
 public static class ClipboardToScript
 {
     [MenuItem(MenuPaths.AssetsCreate.CSharpScript)]
+    [DesignerFeature(
+        "New C# Script From Clipboard",
+        "Creates a script file in the selected folder from whatever code is on the clipboard, naming it after the class it contains.",
+        "script c# cs clipboard paste create new file code class",
+        DesignerFeatureKind.Generator,
+        "")]
     static void CreateScript()
     {
         Show(FileType.CSharp);
     }
 
     [MenuItem(MenuPaths.AssetsCreate.Shader)]
+    [DesignerFeature(
+        "New Shader From Clipboard",
+        "Creates a shader file in the selected folder from the shader code on the clipboard.",
+        "shader clipboard paste create new file hlsl shaderlab material",
+        DesignerFeatureKind.Generator,
+        "")]
     static void CreateShader()
     {
         Show(FileType.Shader);
     }
 
     [MenuItem(MenuPaths.AssetsCreate.TextFile)]
+    [DesignerFeature(
+        "New Text File From Clipboard",
+        "Creates a plain text asset in the selected folder from the clipboard contents.",
+        "text file txt clipboard paste create new asset notes json data",
+        DesignerFeatureKind.Generator,
+        "")]
     static void CreateTextFile()
     {
         Show(FileType.TXT);

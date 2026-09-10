@@ -2,11 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Animation
 {
 	[CreateAssetMenu(fileName = "LocomotionBlendProfile", menuName = "Foundation/Animation/Locomotion Blend Profile", order = 44)]
+	[DesignerFeature(
+		"Locomotion Blend Profile",
+		"Tunes how a character blends between idle, walk, run, and stance changes as its speed varies.",
+		"locomotion blend profile walk run idle sprint crouch stance movement speed transition smooth mixer",
+		DesignerFeatureKind.Asset,
+		"")]
 	public class LocomotionBlendProfile : ScriptableObject
 	{
 		[TitleGroup("Stances (Mixer Input Order)")]

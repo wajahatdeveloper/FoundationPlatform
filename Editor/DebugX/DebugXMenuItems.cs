@@ -20,6 +20,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private const string SyncConsolePrefKey = DebugX.PrefKeySyncConsole;
 
         [MenuItem(OpenLogsFolderMenuPath, false, MenuPriorities.Debug)]
+        [DesignerFeature(
+            "Open Logs Folder",
+            "Opens the folder holding this project's editor log files, for attaching one to a bug report.",
+            "log logs folder open reveal file editor output crash report ndjson",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void OpenLogsFolder()
         {
             string logPath = Application.dataPath + "/../Logs/Editor";
@@ -34,6 +40,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         [MenuItem(OpenPersistentDataFolderMenuPath, false, MenuPriorities.Debug + 1)]
+        [DesignerFeature(
+            "Open Persistent Data Folder",
+            "Opens the folder where the game writes saves and settings, so you can inspect or delete a save that is misbehaving.",
+            "save saves persistent data folder open reveal delete wipe settings player prefs progress",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void OpenPersistentDataFolder()
         {
             string persistentDataPath = Application.persistentDataPath;
@@ -48,6 +60,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         [MenuItem(CaptureFullStackTracesMenuPath, false, MenuPriorities.Debug + 2)]
+        [DesignerFeature(
+            "Capture Full Stack Traces (toggle)",
+            "Turns full stack traces on for log messages: more detail when chasing a bug, slower logging the rest of the time.",
+            "stack trace full capture toggle log detail callsite performance verbose debug",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void ToggleCaptureFullStackTraces()
         {
             bool next = !EditorPrefs.GetBool(CaptureFullStackTracesPrefKey, false);
@@ -66,6 +84,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
         }
 
         [MenuItem(SyncConsoleMenuPath, false, MenuPriorities.Debug + 3)]
+        [DesignerFeature(
+            "Sync Console (toggle)",
+            "Mirrors DebugX stack traces into Unity's console so double-clicking a message jumps to the right line.",
+            "console sync unity log stack trace double click jump line toggle mirror",
+            DesignerFeatureKind.Debug,
+            "")]
         public static void ToggleSyncConsoleForStackTraces()
         {
             bool next = !EditorPrefs.GetBool(SyncConsolePrefKey, false);

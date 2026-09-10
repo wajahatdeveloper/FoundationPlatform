@@ -23,6 +23,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private Vector2 _scrollPosition;
 
         [MenuItem(MenuPaths.Diagnostics.AetherInspectorDemo, false, MenuPriorities.Diagnostics + 1)]
+        [DesignerFeature(
+            "AetherInspector Demo",
+            "Shows every inspector attribute the project supports side by side, so you can see what a field will look like before authoring it.",
+            "inspector attribute demo sample gallery example foldout button required validate showcase",
+            DesignerFeatureKind.Debug,
+            "")]
         private static void Open() => GetWindow<AetherInspectorDemoWindow>("AetherInspector Demo");
 
         private void OnEnable()

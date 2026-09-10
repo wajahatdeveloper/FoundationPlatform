@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
     /// <summary>
@@ -11,7 +10,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         Action,
         Generator,
         Validation,
-        Debug
+        Debug,
+        Asset
     }
 }
-#endif

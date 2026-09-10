@@ -1,10 +1,17 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Animation
 {
 	[CreateAssetMenu(fileName = "AnimationSet", menuName = "Foundation/Animation/Animation Set", order = 45)]
+	[DesignerFeature(
+		"Animation Set",
+		"Names the clips a character can play so gameplay asks for \"attack\" rather than a specific clip, letting each character swap its own animations in.",
+		"animation set clip motion character attack idle walk run swap variant animator library",
+		DesignerFeatureKind.Asset,
+		"")]
 	public class AnimationSet : ScriptableObject
 	{
 		[Tooltip("Optional parent animation set to inherit entries from.")]

@@ -29,6 +29,12 @@ public static class Weaver
     private const string SCRIPT_EXTENSION = ".g.cs";
 
     [MenuItem(MenuPaths.Rebuild.TagsLayersScenes, false, MenuPriorities.Rebuild)]
+    [DesignerFeature(
+        "Rebuild Tags, Layers and Scenes Constants",
+        "Regenerates the typed constants for tags, layers, and build scenes after you add or rename one, so code stops referring to strings that no longer exist.",
+        "tag layer scene constants rebuild regenerate codegen build settings sortinglayer names sync",
+        DesignerFeatureKind.Generator,
+        "")]
     static void RebuildTagsAndLayersClasses()
     {
         string folderPath = System.IO.Path.Combine(Application.dataPath, FOLDER_LOCATION);
@@ -70,6 +76,12 @@ public static class Weaver
     }
 
     [MenuItem(MenuPaths.Rebuild.AllConstants, false, MenuPriorities.Rebuild + 4)]
+    [DesignerFeature(
+        "Rebuild All Constants",
+        "Runs every constant generator at once (tags, layers, scenes, animations, navmesh areas, shaders) when you are unsure which one went stale.",
+        "rebuild all constants regenerate everything codegen refresh generated sync stale",
+        DesignerFeatureKind.Generator,
+        "")]
     static void RebuildAll()
     {
         RebuildTagsAndLayersClasses();
@@ -81,6 +93,12 @@ public static class Weaver
     }
 
     [MenuItem(MenuPaths.Rebuild.Animations, false, MenuPriorities.Rebuild + 1)]
+    [DesignerFeature(
+        "Rebuild Animations Constants",
+        "Regenerates the typed constants for animator states and parameters after editing a controller.",
+        "animation animator state parameter constants rebuild regenerate codegen controller trigger bool names",
+        DesignerFeatureKind.Generator,
+        "")]
     static void RebuildAnimationsConstants()
     {
         string folderPath = System.IO.Path.Combine(Application.dataPath, FOLDER_LOCATION);
@@ -99,6 +117,12 @@ public static class Weaver
     }
 
     [MenuItem(MenuPaths.Rebuild.NavMeshAreas, false, MenuPriorities.Rebuild + 2)]
+    [DesignerFeature(
+        "Rebuild NavMesh Areas Constants",
+        "Regenerates the typed constants for navmesh areas after adding or renaming one in Navigation settings.",
+        "navmesh area constants rebuild regenerate navigation pathfinding cost walkable codegen names",
+        DesignerFeatureKind.Generator,
+        "")]
     static void RebuildNavMeshAreasConstants()
     {
         string folderPath = System.IO.Path.Combine(Application.dataPath, FOLDER_LOCATION);
@@ -117,6 +141,12 @@ public static class Weaver
     }
 
     [MenuItem(MenuPaths.Rebuild.Shaders, false, MenuPriorities.Rebuild + 3)]
+    [DesignerFeature(
+        "Rebuild Shaders Constants",
+        "Regenerates the typed constants for shader and material property names after a shader changes.",
+        "shader material property constants rebuild regenerate codegen propertyid names sync",
+        DesignerFeatureKind.Generator,
+        "")]
     static void RebuildShadersConstants()
     {
         string folderPath = System.IO.Path.Combine(Application.dataPath, FOLDER_LOCATION);

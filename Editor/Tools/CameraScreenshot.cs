@@ -86,7 +86,13 @@ public static class CameraScreenshot
     /// <summary>Takes a screenshot using the main or last active scene view camera.</summary>
     public static void Take() => Take(null);
 
-    [MenuItem(MenuPaths.Utilities.TakeScreenshot, false, MenuPriorities.Utilities)]
+        [MenuItem(MenuPaths.Utilities.TakeScreenshot, false, MenuPriorities.Utilities)]
+        [DesignerFeature(
+            "Take Screenshot",
+            "Captures the game view to an image file at full resolution, for store shots and bug reports.",
+            "screenshot capture image photo screen grab png render camera store shot",
+            DesignerFeatureKind.Action,
+            "")]
     private static void TakeScreenshot()
     {
         Take();

@@ -8,6 +8,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
     internal static class UIValidationMenu
     {
         [MenuItem(MenuPaths.Linting.RunFullScan, false, MenuPriorities.Linting + 1)]
+        [DesignerFeature(
+            "Run Full UI Lint Scan",
+            "Checks every UI prefab and scene against the project's UI rules and reports what breaks them.",
+            "ui lint scan validate check rules canvas prefab warning error full sweep",
+            DesignerFeatureKind.Validation,
+            "")]
         private static void RunFullScan()
         {
             UIValidationResult result = UIValidationEngine.ValidatePaths(paths: null, fullScan: true);
@@ -30,6 +36,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         }
 
         [MenuItem(MenuPaths.Linting.PrintActiveConfigPath, false, MenuPriorities.Linting + 2)]
+        [DesignerFeature(
+            "Print Active Lint Config Path",
+            "Logs which lint config file is currently in effect, for when the rules being applied are not the ones you expected.",
+            "lint config path which file active rules settings print log locate",
+            DesignerFeatureKind.Debug,
+            "")]
         private static void LogConfigPath()
         {
             UIValidationConfigBridgeSnapshot snapshot = UIValidationConfigBridge.BuildSnapshot();
@@ -40,6 +52,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         }
 
         [MenuItem(MenuPaths.Linting.RolloutWarningFirst, false, MenuPriorities.Linting + 3)]
+        [DesignerFeature(
+            "Lint Rollout: Warning First",
+            "Downgrades lint failures to warnings so a new rule can be adopted gradually instead of blocking work immediately.",
+            "lint rollout warning mode lenient soft gradual adopt rule severity downgrade",
+            DesignerFeatureKind.Action,
+            "")]
         private static void SetWarningFirstMode()
         {
             UIValidationPolicy.SetRolloutMode(UIValidationRolloutMode.WarningFirst);
@@ -55,6 +73,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         }
 
         [MenuItem(MenuPaths.Linting.RolloutStrict, false, MenuPriorities.Linting + 4)]
+        [DesignerFeature(
+            "Lint Rollout: Strict",
+            "Treats lint failures as errors again once a rule has been adopted, so regressions stop shipping.",
+            "lint rollout strict mode error enforce hard severity upgrade block",
+            DesignerFeatureKind.Action,
+            "")]
         private static void SetStrictMode()
         {
             UIValidationPolicy.SetRolloutMode(UIValidationRolloutMode.Strict);

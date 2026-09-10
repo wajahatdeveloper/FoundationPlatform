@@ -1,15 +1,15 @@
-#if UNITY_EDITOR
 using System;
 
 namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
     /// <summary>
-    /// Marks a <c>[MenuItem]</c> method as a designer-discoverable feature. Sits beside the
-    /// <c>[MenuItem]</c> on the same method; the Feature Finder indexes both together so a designer
-    /// can reach a tool by typing what they want to do ("sword hand grip") instead of knowing the
-    /// menu label. Untagged menu entries still appear in the Finder, but name-only.
+    /// Marks a <c>[MenuItem]</c> method or a <c>[CreateAssetMenu]</c> ScriptableObject as a
+    /// designer-discoverable feature. Sits beside the <c>[MenuItem]</c> on the same method, or on
+    /// the asset type itself; the Feature Finder indexes both so a designer can reach a tool by
+    /// typing what they want to do ("sword hand grip") instead of knowing the menu label. Untagged
+    /// entries still appear in the Finder, but name-only.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public sealed class DesignerFeatureAttribute : Attribute
     {
         /// <param name="title">Intent-first name shown as the result row headline.</param>
@@ -42,4 +42,3 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public string Doc { get; }
     }
 }
-#endif

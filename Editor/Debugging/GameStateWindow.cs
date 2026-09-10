@@ -35,7 +35,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		private bool _copyPending;
 		private bool _copyActive;
 
-		[MenuItem(MenuPaths.DomainWindow.GameState, false, MenuPriorities.WindowDomainCore)]
+        [MenuItem(MenuPaths.DomainWindow.GameState, false, MenuPriorities.WindowDomainCore)]
+        [DesignerFeature(
+            "Game State",
+            "World-scope live state that belongs to no GameObject: session readiness, subsystem init, scene stage, players, pipeline, and the random seed.",
+            "game state session world runtime live subsystem init readiness seed random players pipeline scene stage",
+            DesignerFeatureKind.Debug,
+            "docs/09-EditorHub.md")]
 		public static void Open()
 		{
 			var window = GetWindow<GameStateWindow>("Game State");

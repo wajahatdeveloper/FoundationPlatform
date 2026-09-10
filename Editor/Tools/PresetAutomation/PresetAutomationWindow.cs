@@ -25,7 +25,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 			_settings = PresetAutomationSettings.FindOrCreateSettingsAsset();
 		}
 
-		[MenuItem(MenuPaths.WindowUtilities.PresetAutomation, priority = 1106)] 
+        [MenuItem(MenuPaths.WindowUtilities.PresetAutomation, priority = 1106)]
+        [DesignerFeature(
+            "Preset Automation Settings",
+            "Sets which import presets are applied automatically to new assets, so textures and models land with the right settings without manual fixing.",
+            "preset import settings automation default texture model audio importer rule apply automatic",
+            DesignerFeatureKind.Window,
+            "")]
 		public static void Open()
 		{
 			var wnd = GetWindow<PresetAutomationWindow>(false, "Preset Automation");

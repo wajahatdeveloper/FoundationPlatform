@@ -56,7 +56,13 @@ public class AutoBinderToolWindow : EditorWindow
 	private string previewGeneratedCode = string.Empty;
 
 
-	[MenuItem(MenuPaths.WindowUtilities.AutoBinder, priority = MenuPriorities.WindowUtilities + 4)]
+        [MenuItem(MenuPaths.WindowUtilities.AutoBinder, priority = MenuPriorities.WindowUtilities + 4)]
+        [DesignerFeature(
+            "Auto Binder",
+            "Wires serialized references on a component to matching children by name, instead of dragging each one into the Inspector.",
+            "bind wire reference serialize field drag assign auto hook up child component inspector link",
+            DesignerFeatureKind.Window,
+            "")]
 	public static void Open()
 	{
 		GetWindow<AutoBinderToolWindow>("Auto Binder");

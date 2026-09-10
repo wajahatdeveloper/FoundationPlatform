@@ -24,7 +24,13 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 	/// </summary>
 	public class AnimationTestBenchWindow : EditorWindow
 	{
-		[MenuItem(MenuPaths.Diagnostics.AnimationTestBench, false, MenuPriorities.Diagnostics)]
+        [MenuItem(MenuPaths.Diagnostics.AnimationTestBench, false, MenuPriorities.Diagnostics)]
+        [DesignerFeature(
+            "Animation Test Bench",
+            "Plays and scrubs animation states on a character in isolation so you can check a clip or transition without running the game.",
+            "animation clip state machine transition blend preview scrub test bench animator character motion",
+            DesignerFeatureKind.Window,
+            "")]
 		public static void Open()
 		{
 			var window = GetWindow<AnimationTestBenchWindow>("Anim Test Bench");

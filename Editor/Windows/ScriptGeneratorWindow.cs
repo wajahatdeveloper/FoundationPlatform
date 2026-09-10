@@ -83,7 +83,13 @@ public class ScriptGeneratorWindow : EditorWindow
 		Func<GenerationContext, string> validate) =>
 		Show(title, defaultFolder, defaultFileName, defaultClassName, defaultNamespace, buildCode, validate, null);
 
-	[MenuItem(MenuPaths.WindowUtilities.ScriptGenerator, priority = 1105)]
+        [MenuItem(MenuPaths.WindowUtilities.ScriptGenerator, priority = 1105)]
+        [DesignerFeature(
+            "Script Generator",
+            "Generates a new script from a project template so it starts with the right namespace, base class, and folder.",
+            "script generate create new class template boilerplate monobehaviour scriptableobject scaffold",
+            DesignerFeatureKind.Generator,
+            "")]
 	private static void OpenFromMenu()
 	{
 		GetWindow<ScriptGeneratorWindow>(true, "Script Generator").minSize = new Vector2(500, 400);

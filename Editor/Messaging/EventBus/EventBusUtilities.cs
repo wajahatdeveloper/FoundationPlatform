@@ -633,6 +633,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		private const string PrefKey = "EventBus.MonitoringEnabled";
 
 		[MenuItem(MenuPath, priority = MenuPriorities.Debug + 4)]
+		[DesignerFeature(
+			"Monitor Event Bus (toggle)",
+			"Records event traffic while playing so the Event Bus window can show what was published and who heard it. Costs performance, so leave it off for profiling runs.",
+			"event bus monitor record toggle trace publish subscribe traffic capture history performance",
+			DesignerFeatureKind.Debug,
+			"")]
 		private static void ToggleMonitoring()
 		{
 			bool next = !EditorPrefs.GetBool(PrefKey, true);

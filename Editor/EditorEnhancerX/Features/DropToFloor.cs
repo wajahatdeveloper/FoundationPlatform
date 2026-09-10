@@ -21,6 +21,12 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         }
 
         [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, false, 2)]
+        [DesignerFeature(
+            "Drop To Floor",
+            "Snaps the selected objects down onto the surface beneath them, so props stop floating or sinking after placement.",
+            "drop floor ground snap place align surface below sink float prop position",
+            DesignerFeatureKind.Action,
+            "")]
         private static void Menu() => Execute();
 
         [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, true)]

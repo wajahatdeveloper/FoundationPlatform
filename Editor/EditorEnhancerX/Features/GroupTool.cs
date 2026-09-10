@@ -24,12 +24,24 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         }
 
         [MenuItem(MenuPaths.EditorEnhancer.GroupSelection, false, 0)]
+        [DesignerFeature(
+            "Group Selection",
+            "Parents the selected objects under a new empty, keeping their world positions, so a scene can be tidied without moving anything.",
+            "group parent empty folder organize tidy hierarchy nest selection wrap",
+            DesignerFeatureKind.Action,
+            "")]
         private static void GroupMenu() => Group();
 
         [MenuItem(MenuPaths.EditorEnhancer.GroupSelection, true)]
         private static bool GroupMenuValidate() => Selection.transforms.Length > 0;
 
         [MenuItem(MenuPaths.EditorEnhancer.Ungroup, false, 1)]
+        [DesignerFeature(
+            "Ungroup",
+            "Moves children out of their parent and removes the now-empty container, keeping their world positions.",
+            "ungroup unparent flatten remove parent container hierarchy detach",
+            DesignerFeatureKind.Action,
+            "")]
         private static void UngroupMenu() => Ungroup();
 
         [MenuItem(MenuPaths.EditorEnhancer.Ungroup, true)]
