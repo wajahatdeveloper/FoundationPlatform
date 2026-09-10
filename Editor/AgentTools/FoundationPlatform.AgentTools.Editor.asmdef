@@ -1,0 +1,31 @@
+{
+    "name": "FoundationPlatform.AgentTools.Editor",
+    "rootNamespace": "AetherNexus.FoundationPlatform.AgentTools.Editor",
+    "references": [
+        "FoundationPlatform.Runtime",
+        "FoundationPlatform.Editor",
+        "AiBridge.Unity.Runtime",
+        "AiBridge.Unity.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Text.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AETHER_AIBRIDGE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.aibridge.unity",
+            "expression": "1.0.0",
+            "define": "AETHER_AIBRIDGE"
+        }
+    ],
+    "noEngineReferences": false
+}

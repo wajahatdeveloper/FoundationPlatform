@@ -326,6 +326,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string PackageRebuild      = Root + "Rebuild Package Integrations";
 			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
 			public const string NetworkValidateSetup = Root + "Network/Validate Setup";
+			public const string AgentToolsExportParams = Root + "Agent Tools/Export MCP Params";
 		}
 
 		/// <summary>Window/Platform/* — admin / integration windows.</summary>
