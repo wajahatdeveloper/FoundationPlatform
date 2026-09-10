@@ -9,6 +9,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
         SelectedOnly
     }
 
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/GizmosComponent.png")]
     public class GizmosComponent : MonoBehaviour
     {
         public static readonly string[] Type = new string[] {

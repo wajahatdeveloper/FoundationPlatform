@@ -131,7 +131,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				throw new InvalidOperationException(
 					$"Tool '{tool.Name}' in assembly '{assembly}' ({tool.DeclaringType.FullName}) uses the reserved " +
 					$"prefix '{ReservedPrefixes[i]}' owned by the Unity AI Bridge. Package tools must use their own " +
-					"area prefix (core-, platform-, character-, gas-, liveops-).");
+					"area prefix (core-, platform-, character-, gas-, liveops-, render-, anim-, ik-, rig-).");
 			}
 		}
 

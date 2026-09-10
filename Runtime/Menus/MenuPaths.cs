@@ -210,7 +210,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string GasRebuildTagReferenceIndex     = Root + "GAS/Rebuild Tag Reference Index";
 			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
 			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
-			public const string GasInstallGizmoIcons            = Root + "GAS/Install Gizmo Icons";
 			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
 			public const string GasFindDuplicateEffectIdentityTags = Root + "GAS/Find Duplicate Effect Identity Tags";
 
@@ -322,7 +321,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		{
 			private const string Root = Tools + "Platform/";
 			public const string Setup               = Root + "Project Setup...";
-			public const string InstallGizmoIcons   = Root + "Install Gizmo Icons";
 			public const string RegistryRefresh     = Root + "Rebuild All Generated Registries";
 			public const string PackageRebuild      = Root + "Rebuild Package Integrations";
 			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
