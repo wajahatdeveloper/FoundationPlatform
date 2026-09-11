@@ -5,11 +5,9 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
     /// Single source of truth for editor <c>[MenuItem]</c> paths. Grouped by menu area; nested
     /// classes mirror the on-screen submenu hierarchy so the taxonomy is readable at a glance and
     /// reorganizing a group is a one-line edit here rather than a hunt across frameworks.
-    /// <para>Product/framework tooling uses designer-facing <c>Tools/Domain/*</c>,
-    /// <c>Window/Domain/*</c>, <c>Tools/Platform/*</c>, and <c>Window/Platform/*</c> only — no
-    /// dual registration under legacy <c>Tools/GameEngineCore/*</c> / <c>Window/GameEngineCore/*</c>.
-    /// FoundationPlatform stays unwrapped (Debug, Utilities, Diagnostics, Rebuild, Linting under
-    /// <c>Tools/</c>/<c>Window/</c>). UIWidgets keeps its own root.</para>
+    /// <para>Create entries use domain roots under <c>Assets/Create</c> (see docs/NAMING.md §4).
+    /// <c>Tools/</c> is batch-only: Rebuild, Linting, Platform, leftover Domain generators/validation.
+    /// Object-scoped work is <c>GameObject/Domain</c> or <c>CONTEXT</c>. Toggles are Project Settings.</para>
     /// <para>All members are <c>const string</c> (built by concatenating <c>const</c> roots) to
     /// satisfy the <c>[MenuItem]</c> attribute's compile-time-constant requirement.</para>
     /// </summary>
@@ -37,6 +35,10 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string NavMeshAreas     = Root + "Rebuild NavMesh Areas Constants";
             public const string Shaders          = Root + "Rebuild Shaders Constants";
             public const string AnimationSet     = Root + "Rebuild Animation Set Constants";
+            public const string GasAbilityLogic  = Root + "GAS/Rebuild Ability Logic";
+            public const string GasTagReferenceIndex = Root + "GAS/Rebuild Tag Reference Index";
+            public const string Registries       = Root + "Rebuild All Generated Registries";
+            public const string PackageIntegrations = Root + "Rebuild Package Integrations";
         }
 
         /// <summary>Tools/Debug/* — debug filesystem/trace toggles &amp; monitors.</summary>
@@ -45,9 +47,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Tools + "Debug/";
             public const string OpenLogsFolder    = Root + "Open Logs Folder";
             public const string OpenPersistentData = Root + "Open Persistent Data Folder";
-            public const string CaptureFullStackTraces = Root + "Capture Full Stack Traces";
-            public const string SyncConsole        = Root + "Sync Console";
-            public const string MonitorEventBus    = Root + "Monitor Event Bus (toggle)";
         }
 
         /// <summary>Tools/Utilities/* — general-purpose editor utilities.</summary>
@@ -73,8 +72,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Tools + "Linting/";
             public const string RunFullScan          = Root + "Run Full Scan";
             public const string PrintActiveConfigPath = Root + "Print Active Config Path";
-            public const string RolloutWarningFirst  = Root + "Rollout Mode: Warning First";
-            public const string RolloutStrict        = Root + "Rollout Mode: Strict";
             public const string StaleComponentScanner = Root + "Stale Component Scanner";
             public const string MissingDesignerIcons = Root + "Report Missing Designer Icons";
             public const string MissingComponentMenus = Root + "Report Missing Component Menus";
@@ -154,6 +151,15 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string TextFile     = Root + "Text File";
         }
 
+        /// <summary>Assets/Create/Item/* — guided item scaffolding that a bare [CreateAssetMenu] cannot do.</summary>
+        public static class Create
+        {
+            private const string Root = Assets + "Create/";
+            public const string ItemEquippable   = Root + "Item/Equippable Item";
+            public const string ItemConsumable   = Root + "Item/Consumable Item";
+            public const string ItemEquipmentKit = Root + "Item/Equipment Kit";
+        }
+
         /// <summary>Assets/Import Package/* — package-to-folder import helper.</summary>
         public static class AssetsImport
         {
@@ -178,7 +184,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class UIWidgetsTools
         {
             private const string Root = Tools + "UIWidgets/";
-            public const string ScenePickerEnabled = Root + "Scene Picker Enabled";
             public const string FitAnchors         = Root + "Fit Anchors &o";
             public const string Settings           = Root + "Settings...";
         }
@@ -208,8 +213,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 
 			/// <summary>Tools/Domain/GAS/* — GAS authoring and codegen.</summary>
 			public const string GasNormalizeAttributeSetTags    = Root + "GAS/Normalize AttributeSet Tags";
-			public const string GasRebuildAbilityLogic          = Root + "GAS/Rebuild Ability Logic";
-			public const string GasRebuildTagReferenceIndex     = Root + "GAS/Rebuild Tag Reference Index";
+			public const string GasRebuildAbilityLogic          = Rebuild.GasAbilityLogic;
+			public const string GasRebuildTagReferenceIndex     = Rebuild.GasTagReferenceIndex;
 			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
 			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
 			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
@@ -220,27 +225,15 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string AiGenerateDecisionSet           = Root + "AI/Generate Default Decision Set";
 			public const string AiGenerateBuiltInBehaviors      = Root + "AI/Generate Built-in Behavior Assets";
 			public const string AiGenerateBlackboardRegistry    = Root + "AI/Generate Blackboard List";
-			public const string AiSetupPawnOnSelection          = Root + "AI/Setup AI Pawn on Selection";
 			public const string AiSetupPawnContext              = GameObject + "Domain/AI/Setup AI Pawn";
 
 			/// <summary>Tools/Domain/Character/* — character setup.</summary>
 			public const string CharacterCreateDefaultStateProfile = Root + "Character/Create Default Character State Profile";
-			public const string CharacterReconcileSubsystemHub     = Root + "Character/Reconcile Subsystem Hub on Selection";
 			public const string CharacterReconcileHubContext       = GameObject + "Domain/Character/Reconcile Subsystem Hub";
 			public const string CharacterCreateFromArchetype       = GameObject + "Domain/Character/Character From Archetype...";
 
 			/// <summary>Tools/Domain/Economy/* — currency registry tooling.</summary>
 			public const string EconomyRefreshCurrencyRegistries = Root + "Economy/Refresh Currency Registries";
-
-			/// <summary>Tools/Domain/Item/Create/* — item asset scaffolding.</summary>
-			public const string ItemCreateEquippable              = Root + "Item/Create/Equippable Item";
-			public const string ItemCreateConsumable              = Root + "Item/Create/Consumable Item";
-			public const string ItemCreateCraftingRecipe          = Root + "Item/Create/Crafting Recipe";
-			public const string ItemCreateItemDefRegistry         = Root + "Item/Create/Item Definition Registry";
-			public const string ItemCreateItemContainerDefRegistry = Root + "Item/Create/Item Container Definition Registry";
-			public const string ItemCreateCraftingRecipeRegistry   = Root + "Item/Create/Crafting Recipe Registry";
-			public const string ItemCreateInventoryBagContainer    = Root + "Item/Create/Inventory Bag Container";
-			public const string ItemCreateEquipmentSlotSetProfile  = Root + "Item/Create/Equipment Slot Set + Profile + Container";
 
 			/// <summary>Tools/Domain/Player/* and GameObject/Domain/Player/* — player &amp; pawn authoring.</summary>
 			public const string PlayerCreateInputActions        = Root + "Player/Create Player Input Actions";
@@ -252,7 +245,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string PlayerCreateTouchDPad           = GameObject + "Domain/Player/Touch/D-Pad";
 			public const string PlayerCreateTouchActionButton   = GameObject + "Domain/Player/Touch/Action Button";
 			public const string PlayerCreateTouchLookPad        = GameObject + "Domain/Player/Touch/Look Pad";
-			public const string PlayerTouchQuickSetup           = Root + "Player/Set Up Touch Controls In Scene";
+			public const string PlayerTouchQuickSetup           = GameObject + "Domain/Player/Set Up Touch Controls In Scene";
 			public const string PlayerCaptureTouchLayout        = Root + "Player/Capture Touch Layout Preset";
 
 			/// <summary>Assets/* and GameObject/Domain/Level/* — one-click LevelDefinition authoring for the GameObject loader kind.</summary>
@@ -276,10 +269,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string ValidationPlayableScene           = Root + "Validation/Validate Playable Scene";
 			public const string ValidationDomainEntities          = Root + "Validation/Validate Domain Entities";
 			public const string ValidationDeterministicRandom     = Root + "Validation/Find Non-Deterministic Random Usage";
-
-			/// <summary>Tools/Domain/Network/* — network layer setup.</summary>
-			public const string NetworkCreateConfig               = Root + "Network/Create Network Config";
-			public const string NetworkValidateSetup               = Root + "Network/Validate Setup";
 
 			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
 			public const string CreateNewDomain                   = Root + "Create New Content Area...";
@@ -322,18 +311,19 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		public static class Platform
 		{
 			private const string Root = Tools + "Platform/";
-			public const string Setup               = Root + "Project Setup...";
-			public const string RegistryRefresh     = Root + "Rebuild All Generated Registries";
-			public const string PackageRebuild      = Root + "Rebuild Package Integrations";
-			public const string NetworkCreateConfig = Root + "Network/Create Network Config";
-			public const string NetworkValidateSetup = Root + "Network/Validate Setup";
+            public const string Setup               = Root + "Project Setup...";
+            public const string RegistryRefresh     = Rebuild.Registries;
+            public const string PackageRebuild      = Rebuild.PackageIntegrations;
+            public const string NetworkValidateSetup = Root + "Network/Validate Setup";
 			public const string AgentToolsExportParams = Root + "Agent Tools/Export MCP Params";
 			public const string IconsReportCoverage = Root + "Icons/Report Coverage";
 			public const string IconsAuditSymbols   = Root + "Icons/Audit Symbols";
 			public const string IconsStampSymbols   = Root + "Icons/Stamp Symbols Package...";
 			public const string IconsGenerateAndStamp = Root + "Icons/Generate + Stamp Package...";
-			public const string ComponentMenusReportCoverage = Root + "Component Menus/Report Coverage";
-			public const string ComponentMenusApplyPackage = Root + "Component Menus/Apply Package...";
+            public const string ComponentMenusReportCoverage = Root + "Component Menus/Report Coverage";
+            public const string ComponentMenusApplyPackage = Root + "Component Menus/Apply Package...";
+            public const string CreateMenusReportCoverage = Root + "Create Menus/Report Coverage";
+            public const string CreateMenusApplyPackage = Root + "Create Menus/Apply Package...";
 		}
 
 		/// <summary>Window/Platform/* — admin / integration windows.</summary>

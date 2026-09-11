@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AetherNexus.FoundationPlatform.Messaging;
-using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -629,53 +628,36 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 
 	public static class EventBusMonitoringMenu
 	{
-		private const string MenuPath = MenuPaths.Debug.MonitorEventBus;
-		private const string PrefKey = "EventBus.MonitoringEnabled";
+		internal const string PrefKey = "EventBus.MonitoringEnabled";
 
-		[MenuItem(MenuPath, priority = MenuPriorities.Debug + 4)]
-		[DesignerFeature(
-			"Monitor Event Bus (toggle)",
-			"Records event traffic while playing so the Event Bus window can show what was published and who heard it. Costs performance, so leave it off for profiling runs.",
-			"event bus monitor record toggle trace publish subscribe traffic capture history performance",
-			DesignerFeatureKind.Debug,
-			"")]
-		private static void ToggleMonitoring()
+		internal static bool IsEnabled => EditorPrefs.GetBool(PrefKey, true);
+
+		internal static void SetEnabled(bool enabled)
 		{
-			bool next = !EditorPrefs.GetBool(PrefKey, true);
-			EditorPrefs.SetBool(PrefKey, next);
+			EditorPrefs.SetBool(PrefKey, enabled);
 
 			if (Application.isPlaying)
 			{
 				EventBus.ConfigureMonitoring(
-					next,
-					enableEventHistory: next
+					enabled,
+					enableEventHistory: enabled
 				);
-				EventBus.EnableSubscriptionTracking(next);
-				EventBus.SetLoggingLevel(next ? LoggingLevel.Detailed : LoggingLevel.None);
+				EventBus.EnableSubscriptionTracking(enabled);
+				EventBus.SetLoggingLevel(enabled ? LoggingLevel.Detailed : LoggingLevel.None);
 			}
 
-			// Sync the window's settings if it's open
 			if (EditorWindow.HasOpenInstances<EventPublishHistoryWindow>())
 			{
 				var win = EditorWindow.GetWindow<EventPublishHistoryWindow>();
 				if (win != null && win.Settings?.Monitoring != null)
 				{
-					win.Settings.Monitoring.Enabled = next;
-					win.Settings.Monitoring.EnableEventHistory = next;
-					win.Settings.Monitoring.EnableSubscriptionTracking = next;
-					win.Settings.Monitoring.LoggingLevel = next ? LoggingLevel.Detailed : LoggingLevel.None;
+					win.Settings.Monitoring.Enabled = enabled;
+					win.Settings.Monitoring.EnableEventHistory = enabled;
+					win.Settings.Monitoring.EnableSubscriptionTracking = enabled;
+					win.Settings.Monitoring.LoggingLevel = enabled ? LoggingLevel.Detailed : LoggingLevel.None;
 					EventPublishHistoryWindow.RequestApplyMonitoring?.Invoke(win.Settings.Monitoring);
 				}
 			}
-
-			Debug.Log($"[EventBus] Monitoring {(next ? "enabled" : "disabled")}");
-		}
-
-		[MenuItem(MenuPath, true)]
-		private static bool ToggleMonitoringValidate()
-		{
-			Menu.SetChecked(MenuPath, EditorPrefs.GetBool(PrefKey, true));
-			return true;
 		}
 	}
 }

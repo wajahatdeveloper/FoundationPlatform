@@ -6,7 +6,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
     [CreateAssetMenu(
         fileName = "DataFolderExemptionMarker",
-        menuName = "FoundationPlatform/Exemption Marker")]
+        menuName = "Project/Exemption Marker")]
     [DesignerFeature(
         "Folder Exemption Marker",
         "Drop into a folder to exclude it and everything under it from content-area ownership and out-of-sync validation.",

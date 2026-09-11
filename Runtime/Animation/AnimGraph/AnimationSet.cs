@@ -5,7 +5,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Animation
 {
-	[CreateAssetMenu(fileName = "AnimationSet", menuName = "Foundation/Animation/Animation Set", order = 45)]
+	[CreateAssetMenu(fileName = "AnimationSet", menuName = "Animation/Animation Set", order = 45)]
 	[DesignerFeature(
 		"Animation Set",
 		"Names the clips a character can play so gameplay asks for \"attack\" rather than a specific clip, letting each character swap its own animations in.",

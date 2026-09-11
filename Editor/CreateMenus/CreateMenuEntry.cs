@@ -19,6 +19,7 @@ namespace AetherNexus.FoundationPlatform.CreateMenus.Editor
             ScriptPath = scriptPath;
             PackageRoot = packageRoot;
             ExistingMenu = existingMenu;
+            ProposedMenu = CreateMenuTaxonomy.Rehome(existingMenu);
             Verdict = verdict;
             Reason = reason;
         }
@@ -29,6 +30,9 @@ namespace AetherNexus.FoundationPlatform.CreateMenus.Editor
 
         /// <summary>Authored menu path, null when the type declares no <c>[CreateAssetMenu]</c>.</summary>
         public string ExistingMenu { get; }
+
+        /// <summary>Path after the native-or-domain-root law. Equals <see cref="ExistingMenu"/> when already home.</summary>
+        public string ProposedMenu { get; }
 
         public CreateMenuVerdict Verdict { get; }
 

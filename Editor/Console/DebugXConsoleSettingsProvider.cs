@@ -61,7 +61,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Stack Traces & Verbosity", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Per-machine (EditorPrefs), shared with the Tools > GameEngineCore > DebugX menu. " +
+                "Per-machine (EditorPrefs). This page is the only toggle for these options. " +
                 "Minimum Level applies live and is re-read on domain reload.", MessageType.None);
 
             // Pipeline floor. Default Debug keeps per-op Verbose traces (e.g. [GAS:TagTrace]) filtered —

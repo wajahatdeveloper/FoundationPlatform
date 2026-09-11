@@ -50,48 +50,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
                 : snapshot.ResolvedConfigPath;
             Debug.Log($"[UI conventions] Active folder-mapping config: '{path}'.");
         }
-
-        [MenuItem(MenuPaths.Linting.RolloutWarningFirst, false, MenuPriorities.Linting + 3)]
-        [DesignerFeature(
-            "Lint Rollout: Warning First",
-            "Downgrades lint failures to warnings so a new rule can be adopted gradually instead of blocking work immediately.",
-            "lint rollout warning mode lenient soft gradual adopt rule severity downgrade",
-            DesignerFeatureKind.Action,
-            "")]
-        private static void SetWarningFirstMode()
-        {
-            UIValidationPolicy.SetRolloutMode(UIValidationRolloutMode.WarningFirst);
-            Debug.Log("[UI conventions] Rollout mode set to WarningFirst.");
-        }
-
-        [MenuItem(MenuPaths.Linting.RolloutWarningFirst, true, MenuPriorities.Linting + 3)]
-        private static bool ValidateWarningFirstMode()
-        {
-            Menu.SetChecked(MenuPaths.Linting.RolloutWarningFirst,
-                UIValidationPolicy.GetRolloutMode() == UIValidationRolloutMode.WarningFirst);
-            return true;
-        }
-
-        [MenuItem(MenuPaths.Linting.RolloutStrict, false, MenuPriorities.Linting + 4)]
-        [DesignerFeature(
-            "Lint Rollout: Strict",
-            "Treats lint failures as errors again once a rule has been adopted, so regressions stop shipping.",
-            "lint rollout strict mode error enforce hard severity upgrade block",
-            DesignerFeatureKind.Action,
-            "")]
-        private static void SetStrictMode()
-        {
-            UIValidationPolicy.SetRolloutMode(UIValidationRolloutMode.Strict);
-            Debug.Log("[UI conventions] Rollout mode set to Strict.");
-        }
-
-        [MenuItem(MenuPaths.Linting.RolloutStrict, true, MenuPriorities.Linting + 4)]
-        private static bool ValidateStrictMode()
-        {
-            Menu.SetChecked(MenuPaths.Linting.RolloutStrict,
-                UIValidationPolicy.GetRolloutMode() == UIValidationRolloutMode.Strict);
-            return true;
-        }
     }
 }
 #endif

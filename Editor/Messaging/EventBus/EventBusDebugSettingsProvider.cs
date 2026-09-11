@@ -28,7 +28,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				label = "EventBus Debug",
 				keywords = new HashSet<string>(new[]
 				{
-					"eventbus", "reflection", "development", "debug", "EVENTBUS_DEBUG_REFLECTION"
+					"eventbus", "reflection", "development", "debug", "EVENTBUS_DEBUG_REFLECTION", "monitor"
 				}),
 				guiHandler = _ => DrawGui()
 			};
@@ -47,6 +47,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 				"A Development Build with the option on shows a Continue/Cancel warning dialog at build start. " +
 				"Release builds never include this path.",
 				MessageType.Info);
+
+			EditorGUI.BeginChangeCheck();
+			bool monitor = EventBusMonitoringMenu.IsEnabled;
+			monitor = EditorGUILayout.Toggle("Monitor Event Bus In Play Mode", monitor);
+			if (EditorGUI.EndChangeCheck())
+				EventBusMonitoringMenu.SetEnabled(monitor);
 
 			EditorGUI.BeginChangeCheck();
 			s.includeReflectionInDevelopmentBuilds = EditorGUILayout.Toggle(

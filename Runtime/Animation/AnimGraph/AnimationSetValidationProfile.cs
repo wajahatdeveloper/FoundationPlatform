@@ -18,7 +18,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		public bool expectLooping;
 	}
 
-	[CreateAssetMenu(fileName = "AnimationSetValidationProfile", menuName = "Foundation/Animation/Animation Set Validation Profile", order = 43)]
+	[CreateAssetMenu(fileName = "AnimationSetValidationProfile", menuName = "Animation/Animation Set Validation Profile", order = 43)]
 	[DesignerFeature(
 		"Animation Set Validation Profile",
 		"Lists the animation entries a character must have, so a set missing its jump or land clip is caught at author time instead of in play.",

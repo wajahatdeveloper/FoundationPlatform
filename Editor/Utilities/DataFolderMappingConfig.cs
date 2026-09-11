@@ -29,7 +29,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         Violation = 2
     }
 
-    [CreateAssetMenu(fileName = "DataFolderMappingConfig", menuName = "Foundation/Data Folder Mapping Config")]
+    [CreateAssetMenu(fileName = "DataFolderMappingConfig", menuName = "Project/Data Folder Mapping Config")]
     [DesignerFeature(
         "Data Folder Mapping Config",
         "Defines which project folders hold content versus scripts, which is what the twin-root Project view and out-of-sync checks read.",

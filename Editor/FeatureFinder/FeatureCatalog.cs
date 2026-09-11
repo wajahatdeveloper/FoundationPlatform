@@ -34,6 +34,7 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
             "Window/Diagnostics/",
             "Window/UIWidgets/",
             "Assets/Create/From Clipboard/",
+            "Assets/Create/Item/",
             "Assets/Import Package/",
             "GameObject/UI (Canvas)/",
             "Window/HierarchyX/",

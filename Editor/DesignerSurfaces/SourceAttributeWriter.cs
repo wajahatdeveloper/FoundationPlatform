@@ -47,6 +47,51 @@ namespace AetherNexus.FoundationPlatform.DesignerSurfaces.Editor
             return true;
         }
 
+        /// <summary>Rewrites <c>menuName = "..."</c> on an existing <c>[CreateAssetMenu]</c>. Returns false when already at <paramref name="menuName"/>.</summary>
+        internal static bool ReplaceCreateAssetMenuName(string scriptPath, string typeName, string menuName)
+        {
+            string absolutePath = Path.GetFullPath(scriptPath);
+            string source = File.ReadAllText(absolutePath);
+            string newline = source.Contains("\r\n") ? "\r\n" : "\n";
+            var lines = new List<string>(source.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None));
+
+            int declaration = FindDeclarationLine(lines, typeName);
+            if (declaration < 0)
+                throw new InvalidOperationException(
+                    $"Could not find the declaration of '{typeName}' in {scriptPath}. menuName was not rewritten.");
+
+            for (int i = declaration - 1; i >= 0; i--)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (trimmed.Length == 0)
+                    continue;
+                if (trimmed.StartsWith("//", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("*", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("/*", StringComparison.Ordinal))
+                    continue;
+                if (!trimmed.StartsWith("[", StringComparison.Ordinal))
+                    break;
+
+                if (trimmed.IndexOf("CreateAssetMenu", StringComparison.Ordinal) < 0)
+                    continue;
+
+                var match = Regex.Match(lines[i], @"menuName\s*=\s*""([^""]*)""");
+                if (!match.Success)
+                    throw new InvalidOperationException(
+                        $"'{typeName}' in {scriptPath} has [CreateAssetMenu] without menuName. Refusing to guess.");
+
+                if (string.Equals(match.Groups[1].Value, menuName, StringComparison.Ordinal))
+                    return false;
+
+                lines[i] = lines[i].Substring(0, match.Groups[1].Index) + menuName + lines[i].Substring(match.Groups[1].Index + match.Groups[1].Length);
+                File.WriteAllText(absolutePath, string.Join(newline, lines));
+                return true;
+            }
+
+            throw new InvalidOperationException(
+                $"Could not find [CreateAssetMenu] above '{typeName}' in {scriptPath}.");
+        }
+
         private static int FindDeclarationLine(List<string> lines, string typeName)
         {
             var pattern = new Regex($@"\bclass\s+{Regex.Escape(typeName)}\b");

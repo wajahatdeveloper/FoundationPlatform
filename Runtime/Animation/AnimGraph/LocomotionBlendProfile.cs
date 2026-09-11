@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Animation
 {
-	[CreateAssetMenu(fileName = "LocomotionBlendProfile", menuName = "Foundation/Animation/Locomotion Blend Profile", order = 44)]
+	[CreateAssetMenu(fileName = "LocomotionBlendProfile", menuName = "Animation/Locomotion Blend Profile", order = 44)]
 	[DesignerFeature(
 		"Locomotion Blend Profile",
 		"Tunes how a character blends between idle, walk, run, and stance changes as its speed varies.",

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
@@ -37,6 +38,27 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
                 return UIValidationSeverity.Error;
 
             return UIValidationSeverity.Warning;
+        }
+
+        [SettingsProvider]
+        public static SettingsProvider CreateSettings()
+        {
+            return new SettingsProvider("Project/UI Validation", SettingsScope.Project)
+            {
+                label = "UI Validation",
+                keywords = new HashSet<string> { "ui", "lint", "rollout", "warning", "strict", "validation" },
+                guiHandler = _ =>
+                {
+                    EditorGUILayout.HelpBox(
+                        "Warning First downgrades lint failures to warnings so a new rule can be adopted without blocking work. Strict treats failures as errors again.",
+                        MessageType.Info);
+                    UIValidationRolloutMode current = GetRolloutMode();
+                    EditorGUI.BeginChangeCheck();
+                    var next = (UIValidationRolloutMode)EditorGUILayout.EnumPopup("Rollout Mode", current);
+                    if (EditorGUI.EndChangeCheck())
+                        SetRolloutMode(next);
+                }
+            };
         }
     }
 }
