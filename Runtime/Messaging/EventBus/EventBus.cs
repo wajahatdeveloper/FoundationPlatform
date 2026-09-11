@@ -712,15 +712,7 @@ public static class EventBus
 			publisherMethod = originalPublisherMethod;
 		}
 
-		string cleanFile = file;
-		if (!string.IsNullOrEmpty(file))
-		{
-			int assetsIndex = file.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
-			if (assetsIndex >= 0)
-			{
-				cleanFile = file.Substring(assetsIndex).Replace('\\', '/');
-			}
-		}
+		string cleanFile = CleanCallerFilePath(file);
 
 		int frame = 0;
 		try
@@ -732,16 +724,45 @@ public static class EventBus
 			// Safe fallback if called on background thread
 		}
 
-		evt.Provenance = new EventProvenance
+		// Reuse the record already attached to this event instead of replacing it. Event instances
+		// that get republished (pooled actions, re-entrant publishes) then cost no allocation at all.
+		var provenance = evt.Provenance;
+		if (provenance == null)
 		{
-			EventId = _nextEventId++,
-			ParentEventId = parentId,
-			PublisherType = publisherType,
-			PublisherMethod = publisherMethod,
-			File = cleanFile,
-			Line = line,
-			Frame = frame
-		};
+			provenance = new EventProvenance();
+			evt.Provenance = provenance;
+		}
+
+		provenance.EventId = _nextEventId++;
+		provenance.ParentEventId = parentId;
+		provenance.PublisherType = publisherType;
+		provenance.PublisherMethod = publisherMethod;
+		provenance.File = cleanFile;
+		provenance.Line = line;
+		provenance.Frame = frame;
+	}
+
+	// file arrives from CallerFilePath, so it is a compile-time constant and the same handful of
+	// string instances recur for the life of the process. Without this cache every published event
+	// pays an OrdinalIgnoreCase IndexOf (which uppercases as it scans), a Substring and a Replace —
+	// measured as the top string cost inside the simulation loop during a battle.
+	private static readonly Dictionary<string, string> _cleanFilePaths = new();
+
+	private static string CleanCallerFilePath(string file)
+	{
+		if (string.IsNullOrEmpty(file)) return file;
+
+		if (_cleanFilePaths.TryGetValue(file, out var cached)) return cached;
+
+		string cleaned = file;
+		int assetsIndex = file.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
+		if (assetsIndex >= 0)
+		{
+			cleaned = file.Substring(assetsIndex).Replace('\\', '/');
+		}
+
+		_cleanFilePaths[file] = cleaned;
+		return cleaned;
 	}
 	#endif
 
@@ -1454,8 +1475,10 @@ public static class EventBus
 						if (hasGlobal) InvokeSubscribers(globalList, evt, eventType);
 					}
 
-					// Emit debug signal for event publication (optional, if emitter is registered)
-					if (_debugSignalEmitter != null)
+					// Emit debug signal for event publication (optional, if emitter is registered).
+					// Channel: Events = 3, Severity: Trace = 0 — asked up front so the scope
+					// resolution below (reflected property reads) is skipped when nobody records.
+					if (_debugSignalEmitter != null && _debugSignalEmitter.ShouldEmitEventSignal(3, 0))
 					{
 						var scope = EventDebugScope.Global;
 						// Prefer Identity (type Identity) or IIdentity; else fall back to EntityId (int?)
@@ -1477,7 +1500,6 @@ public static class EventBus
 									scope = EventDebugScope.Entity(entityId.Value);
 							}
 						}
-						// Channel: Events = 3, Severity: Trace = 0
 						_debugSignalEmitter.EmitEventSignal(3, 0, scope, $"EventPublished: {FormatTypeName(eventType)}");
 					}
 				}
@@ -1670,10 +1692,18 @@ public static class EventBus
 		}
 	}
 
+	// An event type's [NoSubscriberBehavior] never changes at runtime, but the uncached attribute
+	// read ran on every subscriber-less publish and allocated inside the reflection layer.
+	private static readonly Dictionary<Type, NoSubscriberBehavior> _noSubscriberBehaviors = new();
+
 	private static void HandleNoSubscribers(Type eventType, Identity channel)
 	{
-		var behaviorAttr = Attribute.GetCustomAttribute(eventType, typeof(NoSubscriberBehaviorAttribute)) as NoSubscriberBehaviorAttribute;
-		var behavior = behaviorAttr?.Behavior ?? NoSubscriberBehavior.Warn;
+		if (!_noSubscriberBehaviors.TryGetValue(eventType, out var behavior))
+		{
+			var behaviorAttr = Attribute.GetCustomAttribute(eventType, typeof(NoSubscriberBehaviorAttribute)) as NoSubscriberBehaviorAttribute;
+			behavior = behaviorAttr?.Behavior ?? NoSubscriberBehavior.Warn;
+			_noSubscriberBehaviors[eventType] = behavior;
+		}
 
 		if (behavior == NoSubscriberBehavior.Ignore) return;
 

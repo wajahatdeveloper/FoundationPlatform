@@ -8,6 +8,13 @@ namespace AetherNexus.FoundationPlatform.Messaging
 public interface IEventDebugSignalEmitter
 {
 	/// <summary>
+	/// Checked by the publisher before it resolves the event's debug scope and composes a message,
+	/// both of which cost more than the publication itself. Same channel/severity encoding as
+	/// <see cref="EmitEventSignal"/>.
+	/// </summary>
+	bool ShouldEmitEventSignal(int channel, int severity);
+
+	/// <summary>
 	/// Emit a debug signal for an event publication.
 	/// </summary>
 	/// <param name="channel">Channel category (0=Lifecycle, 1=Rules, 2=Actions, 3=Events, 4=StateMutation, 5=Invariants, 6=Rendering, 7=Performance)</param>

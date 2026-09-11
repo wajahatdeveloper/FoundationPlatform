@@ -7,6 +7,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
     {
         public const int MaxFixedStringLength = 4096;
 
+        /// <summary>
+        /// Budget for a telemetry signal record, which carries a one-line summary rather than the
+        /// full message plus stack trace that the file and console sinks receive.
+        /// </summary>
+        public const int MaxSignalLength = 512;
+
         private const string TruncatedSuffix = "\n... (truncated)";
 
         /// <summary>
