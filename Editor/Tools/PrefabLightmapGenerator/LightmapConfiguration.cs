@@ -16,6 +16,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         DesignerFeatureKind.Asset,
         "")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/LightmapConfiguration.png")]
+    [DesignerIcon(DesignerSymbol.Effect)]
     public class LightmapConfiguration : ScriptableObject
     {
         #region Serialized Fields

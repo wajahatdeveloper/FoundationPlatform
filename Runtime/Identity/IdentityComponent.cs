@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 /// <summary>
 /// MonoBehaviour that holds an Identity (string-only) and implements IIdentity.
@@ -13,6 +14,7 @@ using AetherNexus.FoundationPlatform.Messaging;
 [DisallowMultipleComponent]
 [AddComponentMenu("FoundationPlatform/Identity Component")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/IdentityComponent.png")]
+[DesignerIcon(DesignerSymbol.Tag)]
 public class IdentityComponent : MonoBehaviour, IIdentity
 {
 	[SerializeField] private string _id;

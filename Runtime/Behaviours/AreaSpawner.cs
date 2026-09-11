@@ -6,6 +6,7 @@ using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 #endif
 
 namespace AetherNexus.FoundationPlatform.Behaviours
@@ -19,6 +20,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 	/// </summary>
 	[AddComponentMenu("FoundationPlatform/Area Spawner")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AreaSpawner.png")]
+	[DesignerIcon(DesignerSymbol.Spawn)]
 	public class AreaSpawner : MonoBehaviour
 	{
 		[System.Serializable]

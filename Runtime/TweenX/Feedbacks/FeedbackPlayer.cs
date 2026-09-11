@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
 {
@@ -15,6 +16,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
     [AddComponentMenu("FoundationPlatform/Feedback Player")]
     [DisallowMultipleComponent]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/FeedbackPlayer.png")]
+    [DesignerIcon(DesignerSymbol.Effect)]
     public sealed class FeedbackPlayer : MonoBehaviour
     {
         [Tooltip("Play automatically when this component is enabled.")]

@@ -35,7 +35,45 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             DesignerIconPipeline.ReportCoverage();
         }
 
-        [MenuItem(MenuPaths.Platform.IconsGenerateAndStamp, false, MenuPriorities.Platform + 3)]
+        [MenuItem(MenuPaths.Platform.IconsAuditSymbols, false, MenuPriorities.Platform + 3)]
+        [DesignerFeature(
+            "Audit Designer Icon Symbols",
+            "Shows which shape each asset type and component draws on its icon, and which ones still fall back to a plain letter.",
+            "icon icons symbol shape audit report letter fallback unreadable legibility monogram",
+            DesignerFeatureKind.Validation,
+            "docs/09-EditorHub.md")]
+        private static void AuditSymbols()
+        {
+            DesignerIconPipeline.AuditSymbols();
+        }
+
+        [MenuItem(MenuPaths.Platform.IconsStampSymbols, false, MenuPriorities.Platform + 4)]
+        [DesignerFeature(
+            "Assign Designer Icon Symbols For A Package",
+            "Writes the suggested shape onto each of a package's types so their icons stop being look-alike letters.",
+            "icon icons symbol shape assign stamp package infer suggestion designer icon attribute",
+            DesignerFeatureKind.Generator,
+            "docs/09-EditorHub.md")]
+        private static void StampSymbols()
+        {
+            PickPackage(packageId =>
+            {
+                DebugX.Info(DesignerIconPipeline.AuditSymbols());
+
+                bool apply = EditorUtility.DisplayDialog(
+                    "Designer Icons",
+                    $"{packageId}\n\nThe symbol audit was written to the console. Stamp [DesignerIcon] on this package's types? Unity recompiles afterwards; generate the icons once it is done.",
+                    "Stamp Symbols",
+                    "Cancel");
+
+                if (!apply)
+                    return;
+
+                DebugX.Info(DesignerIconPipeline.StampSymbols(packageId));
+            });
+        }
+
+        [MenuItem(MenuPaths.Platform.IconsGenerateAndStamp, false, MenuPriorities.Platform + 5)]
         [DesignerFeature(
             "Generate Designer Icons For A Package",
             "Draws the monogram icons for one package's designer-facing types and wires each type to its icon.",
@@ -44,9 +82,14 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             "docs/09-EditorHub.md")]
         private static void GenerateAndStamp()
         {
+            PickPackage(RunWithConfirmation);
+        }
+
+        private static void PickPackage(System.Action<string> run)
+        {
             int choice = EditorUtility.DisplayDialogComplex(
                 "Designer Icons",
-                "Pick a package to generate icons for. Each run previews the affected types before writing anything.",
+                "Pick a package. Each run previews the affected types before writing anything.",
                 Packages[0],
                 "Cancel",
                 "More Packages...");
@@ -56,7 +99,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
 
             if (choice == 0)
             {
-                RunWithConfirmation(Packages[0]);
+                run(Packages[0]);
                 return;
             }
 
@@ -64,7 +107,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             foreach (string packageId in Packages)
             {
                 string captured = packageId;
-                menu.AddItem(new UnityEngine.GUIContent(captured), false, () => RunWithConfirmation(captured));
+                menu.AddItem(new UnityEngine.GUIContent(captured), false, () => run(captured));
             }
 
             menu.ShowAsContext();

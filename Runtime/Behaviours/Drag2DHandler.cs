@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
     [RequireComponent(typeof(BoxCollider2D))]
     [AddComponentMenu("FoundationPlatform/Drag2D Handler")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Drag2DHandler.png")]
+    [DesignerIcon(DesignerSymbol.Input)]
     public class Drag2DHandler : MonoBehaviour
     {
         public UnityEvent onDrag;

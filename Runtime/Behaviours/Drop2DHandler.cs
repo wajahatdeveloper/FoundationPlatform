@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
@@ -8,6 +9,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
     [RequireComponent(typeof(BoxCollider2D))]
     [AddComponentMenu("FoundationPlatform/Drop2D Handler")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Drop2DHandler.png")]
+    [DesignerIcon(DesignerSymbol.Input)]
     public class Drop2DHandler : MonoBehaviour
     {
         public UnityEvent<GameObject> onDrop;

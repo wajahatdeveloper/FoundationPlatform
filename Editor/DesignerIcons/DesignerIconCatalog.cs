@@ -18,7 +18,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
     /// </summary>
     internal static class DesignerIconCatalog
     {
-        /// <summary>Type-name endings that carry no meaning in a two-letter monogram.</summary>
+        /// <summary>Type-name endings that carry no meaning in the fallback initial.</summary>
         private static readonly string[] NoiseSuffixes =
         {
             "ScriptableObject", "Definition", "Controller", "Component", "Behaviour", "Settings",
@@ -92,9 +92,11 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             string packageRoot = FirstPartyScriptPaths.PackageRootOf(scriptPath);
             string domain = ResolveDomain(menuPath, packageRoot);
             bool hasIcon = type.GetCustomAttribute<IconAttribute>(false) != null;
+            var declared = type.GetCustomAttribute<DesignerIconAttribute>(false);
+            DesignerSymbol? symbol = declared == null ? (DesignerSymbol?)null : declared.Symbol;
 
             entries.Add(new DesignerIconEntry(
-                type, scriptPath, packageRoot, menuPath, domain, Monogram(type.Name), isAsset, hasIcon));
+                type, scriptPath, packageRoot, menuPath, domain, Letter(type.Name), symbol, isAsset, hasIcon));
         }
 
         /// <summary>Menu path as the designer sees it. <paramref name="hiddenFromMenu"/> marks types deliberately kept out of Add Component.</summary>
@@ -137,19 +139,21 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             return DesignerIconPalette.Canonicalize(packageRoot.Substring("Packages/".Length));
         }
 
-        /// <summary>One or two uppercase letters: initials of the first two meaningful PascalCase words.</summary>
-        internal static string Monogram(string typeName)
+        /// <summary>
+        /// Fallback mark: the initial of the first meaningful PascalCase word. One bold letter
+        /// survives the 16px draw; the two-letter monogram it replaces did not.
+        /// </summary>
+        internal static char Letter(string typeName)
         {
             string trimmed = StripNoiseSuffix(typeName);
             var words = SplitWords(trimmed);
+            string first = words.Count > 0 ? words[0] : trimmed;
 
-            if (words.Count >= 2)
-                return $"{char.ToUpperInvariant(words[0][0])}{char.ToUpperInvariant(words[1][0])}";
+            if (first.Length == 0)
+                throw new InvalidOperationException(
+                    $"Type name '{typeName}' yields no letter for its icon. Give the type a [DesignerIcon] symbol.");
 
-            string single = words.Count == 1 ? words[0] : trimmed;
-            return single.Length >= 2
-                ? $"{char.ToUpperInvariant(single[0])}{char.ToUpperInvariant(single[1])}"
-                : single.ToUpperInvariant();
+            return char.ToUpperInvariant(first[0]);
         }
 
         private static string StripNoiseSuffix(string typeName)
@@ -163,27 +167,53 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             return typeName;
         }
 
-        private static List<string> SplitWords(string name)
+        /// <summary>
+        /// PascalCase split, shared with the symbol audit so both read a type name the same way.
+        /// Runs of capitals stay together, so <c>UIGridRenderer</c> reads as UI / Grid / Renderer
+        /// rather than U / I / Grid / Renderer — the audit matches on words like "ui" and "ik".
+        /// </summary>
+        internal static List<string> SplitWords(string name)
         {
             var words = new List<string>(4);
             var current = new StringBuilder();
 
-            foreach (char c in name)
+            for (int i = 0; i < name.Length; i++)
             {
-                if (char.IsUpper(c) && current.Length > 0)
+                char c = name[i];
+                if (!char.IsLetterOrDigit(c))
+                    continue;
+
+                if (current.Length > 0 && IsBoundary(name, i))
                 {
                     words.Add(current.ToString());
                     current.Clear();
                 }
 
-                if (char.IsLetterOrDigit(c))
-                    current.Append(c);
+                current.Append(c);
             }
 
             if (current.Length > 0)
                 words.Add(current.ToString());
 
             return words;
+        }
+
+        private static bool IsBoundary(string name, int index)
+        {
+            char c = name[index];
+            char previous = name[index - 1];
+
+            if (char.IsDigit(c) != char.IsDigit(previous))
+                return true;
+
+            if (!char.IsUpper(c))
+                return false;
+
+            // A capital opens a word unless it continues a run of capitals — and the last capital
+            // of a run belongs to the word that follows it (the "R" in "UIRenderer").
+            bool continuesRun = char.IsUpper(previous);
+            bool startsNextWord = index + 1 < name.Length && char.IsLower(name[index + 1]);
+            return !continuesRun || startsNextWord;
         }
     }
 }

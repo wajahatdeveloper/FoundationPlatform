@@ -19,6 +19,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
     /// folder (including local assembly roots) are also excluded from manifest population.
     /// </summary>
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/DataFolderExemptionMarker.png")]
+    [DesignerIcon(DesignerSymbol.Tag)]
     public sealed class DataFolderExemptionMarker : ScriptableObject
     {
     }

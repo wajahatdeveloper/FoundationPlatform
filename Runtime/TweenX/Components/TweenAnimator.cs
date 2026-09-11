@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.TweenX
 {
@@ -15,6 +16,7 @@ namespace AetherNexus.FoundationPlatform.TweenX
     [AddComponentMenu("FoundationPlatform/Tween Animator")]
     [DisallowMultipleComponent]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/TweenAnimator.png")]
+    [DesignerIcon(DesignerSymbol.Animation)]
     public sealed class TweenAnimator : MonoBehaviour
     {
         /// <summary>Which property of this GameObject a step drives.</summary>

@@ -1,4 +1,5 @@
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
@@ -10,6 +11,7 @@ namespace AetherNexus.FoundationPlatform.Extensions
     
 [AddComponentMenu("Toolkit/Comment")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Comment.png")]
+[DesignerIcon(DesignerSymbol.Document)]
 public class Comment : MonoBehaviour
 {
     [TextArea(3, 10)]

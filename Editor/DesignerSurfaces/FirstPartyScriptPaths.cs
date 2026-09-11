@@ -16,6 +16,17 @@ namespace AetherNexus.FoundationPlatform.DesignerSurfaces.Editor
         internal const string PackagesPrefix = "Packages/";
         internal const string FirstPartyPrefix = PackagesPrefix + "com.aethernexus.";
 
+        /// <summary>Project-relative folder the embedded first-party packages live in.</summary>
+        internal const string PackagesFolder = "Packages";
+
+        private const string EditorFolder = "/Editor/";
+
+        /// <summary>True when the script compiles into an editor-only assembly by folder convention.</summary>
+        internal static bool IsEditorPath(string scriptPath)
+        {
+            return scriptPath.IndexOf(EditorFolder, StringComparison.Ordinal) >= 0;
+        }
+
         /// <summary>Asset path of the <c>MonoScript</c> declaring <paramref name="type"/>, or null when none matches.</summary>
         internal static string Resolve(Type type, Dictionary<Type, string> cache)
         {

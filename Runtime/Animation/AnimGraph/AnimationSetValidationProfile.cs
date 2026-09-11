@@ -26,6 +26,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		DesignerFeatureKind.Asset,
 		"")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AnimationSetValidationProfile.png")]
+	[DesignerIcon(DesignerSymbol.Animation)]
 	public class AnimationSetValidationProfile : ScriptableObject
 	{
 		[Tooltip("Entry ids that must exist in the AnimationSet with assigned clips.")]

@@ -1,9 +1,11 @@
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
     [AddComponentMenu("FoundationPlatform/Camera Look Constraint")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/CameraLookConstraint.png")]
+    [DesignerIcon(DesignerSymbol.Camera)]
     public class CameraLookConstraint : MonoBehaviour
     {
         public enum UpdatePhase

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Tools
 {
@@ -14,6 +15,7 @@ using FoundationPlatform.DebugX;
     [ExecuteInEditMode]
     [AddComponentMenu("FoundationPlatform/Tools/Prefab Lightmap Data")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/PrefabLightmapData.png")]
+    [DesignerIcon(DesignerSymbol.Effect)]
     public class PrefabLightmapData : MonoBehaviour
     {
         #region Constants

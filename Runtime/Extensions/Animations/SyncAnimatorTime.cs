@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
 [AddComponentMenu("FoundationPlatform/Extensions/Sync Animator Time")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/SyncAnimatorTime.png")]
+[DesignerIcon(DesignerSymbol.Animation)]
 public class SyncAnimatorTime : MonoBehaviour
 {
 	public enum UpdatePhase

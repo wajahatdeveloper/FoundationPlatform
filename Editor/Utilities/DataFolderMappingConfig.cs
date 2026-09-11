@@ -37,6 +37,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         DesignerFeatureKind.Asset,
         "docs/09-EditorHub.md")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/DataFolderMappingConfig.png")]
+    [DesignerIcon(DesignerSymbol.Document)]
     public class DataFolderMappingConfig : ScriptableObject
     {
         public const string DefaultAssetPath = "Assets/Content/Global/Authoring/DataFolderMappingConfig.asset";

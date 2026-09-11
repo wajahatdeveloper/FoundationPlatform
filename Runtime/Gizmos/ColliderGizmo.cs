@@ -1,6 +1,7 @@
 
 
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Gizmos
 {
@@ -13,6 +14,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
 
 	[AddComponentMenu("FoundationPlatform/Gizmos/Collider Gizmo")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/ColliderGizmo.png")]
+	[DesignerIcon(DesignerSymbol.Gizmo)]
 	public class ColliderGizmo : MonoBehaviour
 	{
 		#if UNITY_EDITOR

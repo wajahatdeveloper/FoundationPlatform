@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
 {
@@ -16,7 +17,8 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             string packageRoot,
             string menuPath,
             string domain,
-            string monogram,
+            char letter,
+            DesignerSymbol? symbol,
             bool isAsset,
             bool hasIconAttribute)
         {
@@ -25,7 +27,8 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             PackageRoot = packageRoot;
             MenuPath = menuPath;
             Domain = domain;
-            Monogram = monogram;
+            Letter = letter;
+            Symbol = symbol;
             IsAsset = isAsset;
             HasIconAttribute = hasIconAttribute;
             IconAssetPath = $"{packageRoot}/Editor/Icons/{type.Name}.png";
@@ -41,7 +44,11 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
         /// <summary>Canonical domain bucket, resolved from the menu root (see <see cref="DesignerIconPalette"/>).</summary>
         public string Domain { get; }
 
-        public string Monogram { get; }
+        /// <summary>Fallback mark: the initial of the type's first meaningful word.</summary>
+        public char Letter { get; }
+
+        /// <summary>Symbol declared by <c>[DesignerIcon]</c>, or null when the icon falls back to <see cref="Letter"/>.</summary>
+        public DesignerSymbol? Symbol { get; }
 
         /// <summary>ScriptableObject (document plate) vs MonoBehaviour (component plate).</summary>
         public bool IsAsset { get; }

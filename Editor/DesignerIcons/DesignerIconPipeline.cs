@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
@@ -17,6 +18,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
     {
         private const string ReportDirectory = "Temp/DesignerIcons";
         private const string ReportPath = ReportDirectory + "/icon-coverage.txt";
+        private const string AuditPath = ReportDirectory + "/symbol-audit.txt";
 
         /// <summary>Writes the full designer-facing type table to <c>Temp/DesignerIcons</c> and logs a per-package summary. Mutates nothing.</summary>
         public static string ReportCoverage()
@@ -38,6 +40,120 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
                 covered, entries.Count, ReportPath);
 
             return report;
+        }
+
+        /// <summary>
+        /// Writes the symbol table for every designer-facing type: what it already declares, what
+        /// the name suggests, and which types nothing recognises. Mutates nothing — the suggestions
+        /// are reviewed before <see cref="StampSymbols"/> turns them into source.
+        /// </summary>
+        public static string AuditSymbols()
+        {
+            var entries = DesignerIconCatalog.Build();
+            var builder = new StringBuilder();
+            int declared = 0;
+            int suggested = 0;
+            var unresolved = new List<DesignerIconEntry>();
+
+            string currentPackage = null;
+            foreach (var entry in entries)
+            {
+                if (entry.PackageId != currentPackage)
+                {
+                    currentPackage = entry.PackageId;
+                    builder.AppendLine();
+                    builder.AppendLine($"== {currentPackage}");
+                }
+
+                string state;
+                if (entry.Symbol.HasValue)
+                {
+                    declared++;
+                    DesignerSymbol? second = DesignerIconSymbolInference.Suggest(entry);
+
+                    // A declared symbol wins, but flagging the disagreement is how a bad early
+                    // guess gets caught after the vocabulary improves.
+                    state = second.HasValue && second.Value != entry.Symbol.Value
+                        ? $"differs  {entry.Symbol.Value} vs {second.Value}"
+                        : $"declared {entry.Symbol.Value}";
+                }
+                else
+                {
+                    DesignerSymbol? guess = DesignerIconSymbolInference.Suggest(entry);
+                    if (guess.HasValue)
+                    {
+                        suggested++;
+                        state = $"suggest  {guess.Value}";
+                    }
+                    else
+                    {
+                        unresolved.Add(entry);
+                        state = $"letter   {entry.Letter}";
+                    }
+                }
+
+                builder.AppendLine(string.Join(" | ", new[]
+                {
+                    state.PadRight(22),
+                    entry.IsAsset ? "asset" : "comp ",
+                    entry.Domain.PadRight(24),
+                    entry.Type.Name.PadRight(44),
+                    string.IsNullOrEmpty(entry.MenuPath) ? "(no menu)" : entry.MenuPath,
+                }));
+            }
+
+            var report = new StringBuilder();
+            report.AppendLine(
+                $"Designer icon symbols — {entries.Count} types: {declared} declared, {suggested} suggested, {unresolved.Count} falling back to a letter");
+            report.AppendLine();
+            report.AppendLine($"Symbols available: {string.Join(", ", DesignerIconSymbols.All)}");
+            report.Append(builder);
+
+            Directory.CreateDirectory(ReportDirectory);
+            File.WriteAllText(AuditPath, report.ToString());
+
+            DebugX.Info(
+                "Designer icons: {Declared} declared, {Suggested} suggested, {Unresolved} letter-only. Full table: {Path}",
+                declared, suggested, unresolved.Count, AuditPath);
+
+            return report.ToString();
+        }
+
+        /// <summary>Stamps <c>[DesignerIcon]</c> on one package's types from the inferred suggestions. Types nothing recognises are left alone and listed.</summary>
+        public static string StampSymbols(string packageId)
+        {
+            var entries = DesignerIconCatalog.BuildForPackage(packageId);
+            var builder = new StringBuilder();
+            int stamped = 0;
+            int skipped = 0;
+
+            foreach (var entry in entries)
+            {
+                if (entry.Symbol.HasValue)
+                {
+                    builder.AppendLine($"already   {entry.Type.Name}  ->  {entry.Symbol.Value}");
+                    continue;
+                }
+
+                DesignerSymbol? guess = DesignerIconSymbolInference.Suggest(entry);
+                if (!guess.HasValue)
+                {
+                    skipped++;
+                    builder.AppendLine($"letter    {entry.Type.Name}  ->  '{entry.Letter}' (no symbol inferred)");
+                    continue;
+                }
+
+                if (DesignerIconAttributeWriter.StampSymbol(entry, guess.Value))
+                    stamped++;
+
+                builder.AppendLine($"stamped   {entry.Type.Name}  ->  {guess.Value}");
+            }
+
+            DebugX.Info(
+                "Designer icons: stamped [DesignerIcon] on {Stamped} of {Total} types in {Package}; {Skipped} keep a letter.",
+                stamped, entries.Count, packageId, skipped);
+
+            return builder.ToString();
         }
 
         /// <summary>Lists what <see cref="ApplyPackage"/> would write for one package, without touching a file.</summary>
@@ -148,7 +264,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
                 {
                     entry.HasIconAttribute ? "icon" : "----",
                     entry.IsAsset ? "asset" : "comp ",
-                    entry.Monogram.PadRight(2),
+                    (entry.Symbol.HasValue ? entry.Symbol.Value.ToString() : $"'{entry.Letter}'").PadRight(10),
                     entry.Domain.PadRight(24),
                     entry.Type.Name.PadRight(44),
                     string.IsNullOrEmpty(entry.MenuPath) ? "(no menu)" : entry.MenuPath,
