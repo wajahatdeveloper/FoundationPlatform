@@ -8,6 +8,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// <summary>
     /// Periodically flushes file sinks on a background thread so the main thread is not blocked.
     /// </summary>
+    [AddComponentMenu("")]
     public class FlushScheduler : MonoBehaviour
     {
         private static FlushScheduler _instance;

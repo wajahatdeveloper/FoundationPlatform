@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
+[AddComponentMenu("FoundationPlatform/Extensions/Sync Animator Time")]
+[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/SyncAnimatorTime.png")]
 public class SyncAnimatorTime : MonoBehaviour
 {
 	public enum UpdatePhase

@@ -12,6 +12,8 @@ using FoundationPlatform.DebugX;
     /// This component automatically applies stored lightmap data when the prefab is instantiated.
     /// </summary>
     [ExecuteInEditMode]
+    [AddComponentMenu("FoundationPlatform/Tools/Prefab Lightmap Data")]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/PrefabLightmapData.png")]
     public class PrefabLightmapData : MonoBehaviour
     {
         #region Constants

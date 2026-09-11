@@ -3,6 +3,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Extensions
 {
 [DisallowMultipleComponent]
+[AddComponentMenu("")]
 public class DontDestroyOnLoad : MonoBehaviour
 {
     private void Awake()

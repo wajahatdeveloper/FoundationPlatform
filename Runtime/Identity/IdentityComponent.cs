@@ -11,6 +11,8 @@ namespace AetherNexus.FoundationPlatform.Identity
 using AetherNexus.FoundationPlatform.Messaging;
 	
 [DisallowMultipleComponent]
+[AddComponentMenu("FoundationPlatform/Identity Component")]
+[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/IdentityComponent.png")]
 public class IdentityComponent : MonoBehaviour, IIdentity
 {
 	[SerializeField] private string _id;

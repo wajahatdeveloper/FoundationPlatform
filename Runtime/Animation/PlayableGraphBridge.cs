@@ -15,6 +15,7 @@ namespace AetherNexus.FoundationPlatform.Animation
         public void Fire(string name) { if(_events.TryGetValue(name, out var cb)) cb?.Invoke(); }
     }
 
+    [AddComponentMenu("")]
     public class PlayableGraphBridge : MonoBehaviour
     {
         public PlayableGraph Graph { get; private set; }

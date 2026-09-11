@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.CoroutineX
 {
+[AddComponentMenu("")]
 internal sealed class CoroutineXExecutor : MonoBehaviour
 {
     internal static bool HideCoroutineXExecutor = true;

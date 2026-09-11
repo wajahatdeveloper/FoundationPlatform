@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace AetherNexus.FoundationPlatform.Gizmos
@@ -10,6 +10,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
     }
 
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/GizmosComponent.png")]
+    [AddComponentMenu("FoundationPlatform/Gizmos Component")]
     public class GizmosComponent : MonoBehaviour
     {
         public static readonly string[] Type = new string[] {

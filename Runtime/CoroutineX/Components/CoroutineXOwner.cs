@@ -10,6 +10,7 @@ using UnityEngine;
 /// </summary>
 namespace AetherNexus.FoundationPlatform.CoroutineX
 {
+[AddComponentMenu("")]
 public sealed class CoroutineXOwner : MonoBehaviour
 {
     [SerializeReference]

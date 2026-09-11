@@ -6,6 +6,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// <summary>
     /// MonoBehaviour that dispatches actions to Unity's main thread
     /// </summary>
+    [AddComponentMenu("")]
     public class MainThreadDispatcher : MonoBehaviour
     {
         private static MainThreadDispatcher _instance;

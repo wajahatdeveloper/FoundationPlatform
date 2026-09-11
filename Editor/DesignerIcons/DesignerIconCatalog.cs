@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.DesignerSurfaces.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
@@ -18,8 +18,6 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
     /// </summary>
     internal static class DesignerIconCatalog
     {
-        internal const string FirstPartyPrefix = "Packages/com.aethernexus.";
-
         /// <summary>Type-name endings that carry no meaning in a two-letter monogram.</summary>
         private static readonly string[] NoiseSuffixes =
         {
@@ -65,7 +63,7 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
 
             if (filtered.Count == 0)
                 throw new InvalidOperationException(
-                    $"No designer-facing types found in package '{packageId}'. Expected one of the first-party packages under {FirstPartyPrefix}*.");
+                    $"No designer-facing types found in package '{packageId}'. Expected one of the first-party packages under {FirstPartyScriptPaths.FirstPartyPrefix}*.");
 
             return filtered;
         }
@@ -87,11 +85,11 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             if (hiddenFromMenu)
                 return;
 
-            string scriptPath = ResolveScriptPath(type, scriptPaths);
-            if (scriptPath == null || !scriptPath.StartsWith(FirstPartyPrefix, StringComparison.Ordinal))
+            string scriptPath = FirstPartyScriptPaths.Resolve(type, scriptPaths);
+            if (!FirstPartyScriptPaths.IsFirstParty(scriptPath))
                 return;
 
-            string packageRoot = PackageRootOf(scriptPath);
+            string packageRoot = FirstPartyScriptPaths.PackageRootOf(scriptPath);
             string domain = ResolveDomain(menuPath, packageRoot);
             bool hasIcon = type.GetCustomAttribute<IconAttribute>(false) != null;
 
@@ -137,37 +135,6 @@ namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
             // Menu-less ([DesignerFeature]-only) types, and menu roots with no palette entry, fall
             // back to the owning package's bucket rather than inventing an unclassified colour.
             return DesignerIconPalette.Canonicalize(packageRoot.Substring("Packages/".Length));
-        }
-
-        private static string ResolveScriptPath(Type type, Dictionary<Type, string> cache)
-        {
-            if (cache.TryGetValue(type, out string cached))
-                return cached;
-
-            string resolved = null;
-            foreach (string guid in AssetDatabase.FindAssets($"{type.Name} t:MonoScript"))
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!string.Equals(Path.GetFileNameWithoutExtension(path), type.Name, StringComparison.Ordinal))
-                    continue;
-
-                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path);
-                if (script != null && script.GetClass() == type)
-                {
-                    resolved = path;
-                    break;
-                }
-            }
-
-            cache[type] = resolved;
-            return resolved;
-        }
-
-        private static string PackageRootOf(string scriptPath)
-        {
-            // "Packages/com.aethernexus.x/..." -> "Packages/com.aethernexus.x"
-            int second = scriptPath.IndexOf('/', "Packages/".Length);
-            return second < 0 ? scriptPath : scriptPath.Substring(0, second);
         }
 
         /// <summary>One or two uppercase letters: initials of the first two meaningful PascalCase words.</summary>

@@ -6,6 +6,8 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 {
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(BoxCollider2D))]
+    [AddComponentMenu("FoundationPlatform/Drop2D Handler")]
+    [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Drop2DHandler.png")]
     public class Drop2DHandler : MonoBehaviour
     {
         public UnityEvent<GameObject> onDrop;
