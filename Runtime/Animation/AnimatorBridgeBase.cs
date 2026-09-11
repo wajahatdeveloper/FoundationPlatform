@@ -407,7 +407,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete)
 		{
-			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, 0f);
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(entry.startNormalizedTime));
 		}
 
 		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Animation
@@ -172,6 +173,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		[Tooltip("Transition containing the clip and fade duration.")]
 		public ClipTransitionData clip;
+
+		[Tooltip("Normalized time playback starts from (0 = clip start). Raise it to skip an authored lead-in, " +
+		         "e.g. a death clip that stands still for a moment before it collapses. Ignored by sequence playback " +
+		         "and by debug scrub, which pass their own start time.")]
+		[PropertyRange(0f, 1f)]
+		public float startNormalizedTime;
 
 		[Tooltip("After a one-shot: when true, the overlay is released back to the layer base (default). When false, the overlay holds until replaced or released.")]
 		public bool transitionBack = true;

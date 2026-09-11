@@ -179,7 +179,7 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 | Class | Purpose |
 |---|---|
 | `AnimationSet` (SO) | named animation states/clips for a character |
-| `AnimationSetEntry` / `AnimationSetLink` | individual clip entry / cross-set link within an `AnimationSet` |
+| `AnimationSetEntry` / `AnimationSetLink` | individual clip entry / cross-set link within an `AnimationSet`; the entry owns the authored fade and start offset (`startNormalizedTime`, honoured by the standard play funnel — sequence playback and debug scrub pass their own start time) |
 | `LocomotionBlendProfile` / `LocomotionBlendStanceDefinition` | blend-tree config: directional mix + stance definitions |
 | `ILocomotionBlendLayer` | interface for a locomotion blend layer contract; implemented outside this package (e.g. GameFramework's `CharacterSystem`) |
 | `AnimatorBridgeBase` | abstract `MonoBehaviour` base every character animator bridge subclasses; owns the Animator's non-decisional passthrough properties (`Speed`, `ApplyRootMotion`, `UpdateMode`, etc. — the Animator is an output device, never polled for gameplay decisions here) |

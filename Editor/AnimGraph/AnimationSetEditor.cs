@@ -901,6 +901,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			DrawEntryField(ref y, x, w, sp, property, "id");
 			DrawEntryField(ref y, x, w, sp, property, "category");
 			DrawEntryField(ref y, x, w, sp, property, "clip", true);
+			DrawEntryField(ref y, x, w, sp, property, "startNormalizedTime");
 			DrawEntryField(ref y, x, w, sp, property, "transitionBack");
 			DrawEntryField(ref y, x, w, sp, property, "mask");
 			DrawEntryField(ref y, x, w, sp, property, "rootMotionMode");
@@ -952,6 +953,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			h += GetEntryFieldHeight(property, "id", sp);
 			h += GetEntryFieldHeight(property, "category", sp);
 			h += GetEntryFieldHeight(property, "clip", sp, true);
+			h += GetEntryFieldHeight(property, "startNormalizedTime", sp);
 			h += GetEntryFieldHeight(property, "transitionBack", sp);
 			h += GetEntryFieldHeight(property, "mask", sp);
 			h += GetEntryFieldHeight(property, "rootMotionMode", sp);
