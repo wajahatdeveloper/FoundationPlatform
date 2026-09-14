@@ -1,7 +1,9 @@
 {
     "name": "ProjectWindowX.Editor",
     "rootNamespace": "AetherNexus.FoundationPlatform",
-    "references": [],
+    "references": [
+        "FoundationPlatform.Runtime"
+    ],
     "includePlatforms": [
         "Editor"
     ],

@@ -1,3 +1,4 @@
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,11 +17,17 @@ namespace HierarchyX {
     /// </summary>
     public sealed class HierarchyPanelWindow : EditorWindow {
 
-        public const string MenuPath = "Window/HierarchyX/Setup Panel";
+        public const string MenuPath = MenuPaths.HierarchyX.SetupPanel;
 
         private Vector2 scroll;
 
         [MenuItem(MenuPath, false, 2200)]
+        [DesignerFeature(
+            "Hierarchy Setup Panel",
+            "Opens the Hierarchy setup sections as a dockable window, for when the panel docked under the Hierarchy is unavailable or you want it somewhere else.",
+            "hierarchy panel setup sections dock window scene objects footer accordion",
+            DesignerFeatureKind.Window,
+            "")]
         public static void Open() {
             var window = GetWindow<HierarchyPanelWindow>();
             window.titleContent = new GUIContent("Setup Panel");

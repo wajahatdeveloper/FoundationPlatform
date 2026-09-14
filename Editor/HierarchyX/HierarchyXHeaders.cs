@@ -1,4 +1,5 @@
 using System;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace HierarchyX {
     /// </summary>
     internal static class HierarchyXHeaders {
 
-        private const string CreateMenuPath = "GameObject/Header";
+        private const string CreateMenuPath = MenuPaths.HierarchyX.CreateHeader;
         private static readonly char[] TrimChars = { ' ', '-', '=', '/' };
 
         /// <summary>True when the row is a header (caller skips icon/tree/label passes).</summary>
@@ -46,6 +47,12 @@ namespace HierarchyX {
         }
 
         [MenuItem(CreateMenuPath, false, 0)]
+        [DesignerFeature(
+            "Hierarchy Header",
+            "Drops a labelled divider bar into the Hierarchy to group scene objects into readable sections; it is EditorOnly, so builds strip it.",
+            "header separator divider section group organise hierarchy label bar spacer tidy",
+            DesignerFeatureKind.Action,
+            "")]
         private static void CreateHeader() {
             var s = HierarchyXSettings.Instance;
             var prefix = string.IsNullOrEmpty(s.headerPrefix) ? "---" : s.headerPrefix;

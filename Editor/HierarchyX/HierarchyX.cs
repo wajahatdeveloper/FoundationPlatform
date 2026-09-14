@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,7 +16,7 @@ namespace HierarchyX {
 
         private const float AlphaThreshold = 0.01f;
         private const float Indent = 14f;
-        private const string MenuPath = "Edit/HierarchyX Enabled %h";
+        private const string MenuPath = MenuPaths.HierarchyX.Toggle;
 
         // Per-event state
         private static EventType lastEventType;
@@ -41,6 +42,12 @@ namespace HierarchyX {
         }
 
         [MenuItem(MenuPath, false, int.MinValue)]
+        [DesignerFeature(
+            "Toggle Hierarchy Enhancements",
+            "Turns the Hierarchy row tinting, tree lines, icons and headers on or off (Ctrl+H) when you want Unity's plain Hierarchy back.",
+            "hierarchy enhance decorate toggle disable enable rows colours tint tree lines icons plain default",
+            DesignerFeatureKind.Action,
+            "")]
         private static void ToggleEnabled() {
             var s = HierarchyXSettings.Instance;
             s.enabled = !s.enabled;

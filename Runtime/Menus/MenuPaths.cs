@@ -19,22 +19,20 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public const string GameObject = "GameObject/";
         public const string Context = "CONTEXT/";
         public const string Assets = "Assets/";
+        public const string Edit = "Edit/";
 
         // ============================================================================
         // FoundationPlatform — unwrapped, flat Tools/<Category>/*, Window/<Category>/*
         // (no brand folder: reads as generic/native engine tooling, not a product)
         // ============================================================================
 
-        /// <summary>Tools/Rebuild/* — constant/codegen regeneration.</summary>
+        /// <summary>Tools/Rebuild/* — constant/codegen regeneration. The per-generator entries (tags,
+        /// animations, animation sets, navmesh areas, shaders) are deliberately not exposed:
+        /// <c>Rebuild All Constants</c> runs every one of them and is cheap, so one button beats five.</summary>
         public static class Rebuild
         {
             private const string Root = Tools + "Rebuild/";
-            public const string TagsLayersScenes = Root + "Rebuild Tags, Layers and Scenes";
             public const string AllConstants     = Root + "Rebuild All Constants";
-            public const string Animations       = Root + "Rebuild Animations Constants";
-            public const string NavMeshAreas     = Root + "Rebuild NavMesh Areas Constants";
-            public const string Shaders          = Root + "Rebuild Shaders Constants";
-            public const string AnimationSet     = Root + "Rebuild Animation Set Constants";
             public const string GasAbilityLogic  = Root + "GAS/Rebuild Ability Logic";
             public const string GasTagReferenceIndex = Root + "GAS/Rebuild Tag Reference Index";
             public const string Registries       = Root + "Rebuild All Generated Registries";
@@ -106,6 +104,21 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class WindowTweenX
         {
             public const string TweenDebugger = Window + "Tween Debugger...";
+        }
+
+        /// <summary>Edit/*, Window/HierarchyX/*, GameObject/* — hierarchy window enhancer. The toggle
+        /// carries its %h hotkey inside the path, so <c>Menu.SetChecked</c> must pass this same const.</summary>
+        public static class HierarchyX
+        {
+            public const string Toggle       = Edit + "HierarchyX Enabled %h";
+            public const string SetupPanel   = Window + "HierarchyX/Setup Panel";
+            public const string CreateHeader = GameObject + "Header";
+        }
+
+        /// <summary>Window/ProjectWindowX/* — project window enhancer.</summary>
+        public static class ProjectWindowX
+        {
+            public const string ContextPanel = Window + "ProjectWindowX/Context Panel";
         }
 
         /// <summary>GameObject/* — scene editing helpers (EditorEnhancerX). Not brand-wrapped; these are

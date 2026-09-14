@@ -2,7 +2,8 @@
     "name": "HierarchyX.Editor",
     "rootNamespace": "AetherNexus.FoundationPlatform",
     "references": [
-        "ProjectWindowX.Editor"
+        "ProjectWindowX.Editor",
+        "FoundationPlatform.Runtime"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

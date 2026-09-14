@@ -1,3 +1,4 @@
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -5,11 +6,17 @@ namespace ProjectWindowX {
 
     public sealed class ProjectPanelWindow : EditorWindow {
 
-        public const string MenuPath = "Window/ProjectWindowX/Context Panel";
+        public const string MenuPath = MenuPaths.ProjectWindowX.ContextPanel;
 
         private Vector2 scroll;
 
         [MenuItem(MenuPath, false, 2200)]
+        [DesignerFeature(
+            "Project Context Panel",
+            "Opens the Project window context sections as a dockable window, showing details and create actions for the selected asset outside the docked panel.",
+            "project window panel context asset selection create actions dock folder details",
+            DesignerFeatureKind.Window,
+            "")]
         public static void Open() {
             var window = GetWindow<ProjectPanelWindow>();
             window.titleContent = new GUIContent("Project Context");
