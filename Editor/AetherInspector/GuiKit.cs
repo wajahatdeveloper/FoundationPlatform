@@ -136,7 +136,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             public PropertyBlockScope(SerializedProperty property, GUIContent label)
             {
                 var rect = EditorGUILayout.BeginVertical();
-                Label = EditorGUI.BeginProperty(rect, label ?? GUIContent.none, property);
+                // BeginProperty returns Unity's single shared temp GUIContent; any nested BeginProperty
+                // (array/list drawers re-enter it for their own header) rewrites it in place, so the
+                // scope has to keep its own copy or the label reads back blank at draw time.
+                Label = new GUIContent(EditorGUI.BeginProperty(rect, label ?? GUIContent.none, property));
             }
 
             public void Dispose()
