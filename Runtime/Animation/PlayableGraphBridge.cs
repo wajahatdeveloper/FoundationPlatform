@@ -30,6 +30,8 @@ namespace AetherNexus.FoundationPlatform.Animation
         private int _updateDivisor = 1;
         private int _updatePhase;
         private float _accumulatedDeltaTime;
+        private Animator _animator;
+        private Renderer _cullRenderer;
 
         /// <summary>Frames between evaluations. 1 means every frame.</summary>
         public int UpdateDivisor => _updateDivisor;
@@ -48,6 +50,8 @@ namespace AetherNexus.FoundationPlatform.Animation
         {
             if (Graph.IsValid()) Graph.Destroy();
 
+            _animator = animator;
+            _cullRenderer = animator != null ? animator.GetComponentInChildren<Renderer>(true) : null;
             Graph = PlayableGraph.Create(gameObject.name + " AnimGraph");
             Graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
@@ -118,6 +122,14 @@ namespace AetherNexus.FoundationPlatform.Animation
         private void Update()
         {
             if (!IsValid) return;
+
+            // Culled visual band uses CullCompletely. Skip Manual Evaluate while Unity says the
+            // renderer is gone — otherwise divisor-throttled graphs keep skinning off-screen units.
+            if (_animator != null
+                && _animator.cullingMode == AnimatorCullingMode.CullCompletely
+                && _cullRenderer != null
+                && !_cullRenderer.isVisible)
+                return;
 
             if (_updateDivisor <= 1)
             {
