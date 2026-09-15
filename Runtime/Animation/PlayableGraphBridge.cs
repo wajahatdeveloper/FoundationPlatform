@@ -27,6 +27,13 @@ namespace AetherNexus.FoundationPlatform.Animation
         private Playable _rootPlayable;
         public List<PlayableLayer> Layers { get; private set; }
 
+        private int _updateDivisor = 1;
+        private int _updatePhase;
+        private float _accumulatedDeltaTime;
+
+        /// <summary>Frames between evaluations. 1 means every frame.</summary>
+        public int UpdateDivisor => _updateDivisor;
+
         public float Speed
         {
             get => _rootPlayable.IsValid() ? (float)_rootPlayable.GetSpeed() : 1f;
@@ -58,6 +65,41 @@ namespace AetherNexus.FoundationPlatform.Animation
             }
 
             Graph.Play();
+            ApplyTimeUpdateMode();
+        }
+
+        /// <summary>
+        /// Evaluate this graph once every <paramref name="divisor"/> frames instead of every frame, carrying
+        /// the skipped time into the next evaluation so clips still play at the right speed.
+        /// <para>
+        /// This is the middle ground the old all-or-nothing switch was missing: disabling the component stops
+        /// the graph and freezes the pose, which is glaring on anything the player can see, while a divisor
+        /// just lowers the sampling rate. Pass a <paramref name="phase"/> that differs per character
+        /// (instance id works) so a crowd spreads its evaluations across frames rather than spiking together.
+        /// </para>
+        /// </summary>
+        public void SetUpdateDivisor(int divisor, int phase)
+        {
+            if (divisor < 1)
+                throw new ArgumentOutOfRangeException(nameof(divisor), divisor,
+                    $"[Animation:ERROR:Graph] '{name}' update divisor must be at least 1.");
+
+            _updatePhase = divisor > 1 ? ((phase % divisor) + divisor) % divisor : 0;
+
+            if (_updateDivisor == divisor)
+                return;
+
+            _updateDivisor = divisor;
+            _accumulatedDeltaTime = 0f;
+            ApplyTimeUpdateMode();
+        }
+
+        // Manual hands the clock to Update(); GameTime lets Unity's director advance the graph every frame.
+        // Leaving it on GameTime while also calling Evaluate would double-advance every clip.
+        private void ApplyTimeUpdateMode()
+        {
+            if (!IsValid) return;
+            Graph.SetTimeUpdateMode(_updateDivisor > 1 ? DirectorUpdateMode.Manual : DirectorUpdateMode.GameTime);
         }
 
         public void Evaluate(float deltaTime) { if (IsValid) Graph.Evaluate(deltaTime); }
@@ -76,9 +118,23 @@ namespace AetherNexus.FoundationPlatform.Animation
         private void Update()
         {
             if (!IsValid) return;
-            float dt = Time.deltaTime;
+
+            if (_updateDivisor <= 1)
+            {
+                float dt = Time.deltaTime;
+                foreach (var layer in Layers)
+                    layer.Update(dt);
+                return;
+            }
+
+            _accumulatedDeltaTime += Time.deltaTime;
+            if ((Time.frameCount + _updatePhase) % _updateDivisor != 0) return;
+
+            float step = _accumulatedDeltaTime;
+            _accumulatedDeltaTime = 0f;
             foreach (var layer in Layers)
-                layer.Update(dt);
+                layer.Update(step);
+            Graph.Evaluate(step);
         }
 
         private void OnEnable()

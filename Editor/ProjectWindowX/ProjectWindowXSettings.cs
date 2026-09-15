@@ -36,9 +36,10 @@ namespace ProjectWindowX {
         // Hover "+" create-actions button
         public bool contextActions = true;
 
-        // Docked context panel (Content Areas, …)
+        // Docked context panel. Off by default: nothing ships an IProjectPanelSection, and an empty footer
+        // costs Project window height to say so. Turn it on when a plugin registers a section worth docking.
         [Tooltip("Dock a collapsible context panel to the bottom of the Project window (above Unity's status bar).")]
-        public bool panelEnabled = true;
+        public bool panelEnabled = false;
         [Tooltip("Whether the docked panel is currently collapsed to its header bar.")]
         public bool panelCollapsed = false;
         [Tooltip("Show the aggregated section status chips in the panel status bar / collapsed strip.")]
