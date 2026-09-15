@@ -48,7 +48,6 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
             "Window/DebugX Console...",
             "Window/Event Bus...",
             "Window/Tween Debugger...",
-            "Window/UniTask Tracker",
             "GameObject/Drop To Floor",
             "GameObject/Group Selection",
             "GameObject/Ungroup",

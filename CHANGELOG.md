@@ -4,6 +4,11 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Removed
+
+- **Cysharp UniTask is no longer embedded** (`Runtime/ThirdParty/UniTask/`, `Editor/ThirdParty/UniTask/`, the `UniTask` and `UniTask.Editor` assemblies, and the UniTask Tracker window). Async code across the AetherNexus packages now targets `UnityEngine.Awaitable`. **Breaking for consumers** that referenced the `UniTask` assembly or typed against `UniTask` / `UniTask<T>` in overrides of package APIs — change those signatures to `Awaitable` / `Awaitable<T>` and drop the assembly reference. Fire-and-forget `UniTaskVoid` + `.Forget()` becomes `async void` with an explicit `try`/`catch`, since `Awaitable` has no unobserved-exception routing
+- Legacy `UnityEngine.Input` fallbacks in shipped components: every polling site now goes through the Input System package, which the package already required
+
 ### Added
 
 - **Agent tools** (`Editor/AgentTools/`) — the designer feature index made drivable by coding agents through the Unity AI Bridge: `platform-capability-list` (every `[DesignerFeature]` / owned `[MenuItem]` with intent-first title, blurb and keywords), `platform-capability-invoke` (runs a catalogued entry through its own action and returns what Unity logged), and `platform-agenttools-export-params` (regenerates the MCP schema files from the live tool registry, preserving hand-curated text via a `_generated.json` baseline). New public `FeatureCatalogApi` over the previously internal `FeatureCatalog`. Own assembly gated on `com.aibridge.unity`, so the package ships bridge-free. See [Editor/AgentTools/README.md](Editor/AgentTools/README.md)

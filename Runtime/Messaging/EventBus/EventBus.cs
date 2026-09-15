@@ -797,14 +797,6 @@ public static class EventBus
 				// Skip EventBus internal methods
 				if (declaringType == typeof(EventBus)) continue;
 				
-				// Skip UniTask infrastructure classes
-				if (declaringType.Namespace != null && 
-				    (declaringType.Namespace.StartsWith("Cysharp.Threading.Tasks", StringComparison.Ordinal) ||
-				     declaringType.Namespace == "Cysharp.Threading.Tasks.CompilerServices"))
-				{
-					continue;
-				}
-				
 				#if RULESYSTEM_PRESENT
 				// Skip GameAction infrastructure classes
 				if (IsRuleSystemClass(declaringType)) continue;

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using System.Collections;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
@@ -594,17 +595,7 @@ public static class GameObjectExtensions
                 return new Enumerator(null, withSelf, false, null, descendIntoChildren);
             }
 
-            InternalUnsafeRefStack refStack;
-            if (InternalUnsafeRefStack.RefStackPool.Count != 0)
-            {
-                refStack = InternalUnsafeRefStack.RefStackPool.Dequeue();
-                refStack.pooled = false;
-                refStack.Reset();
-            }
-            else
-            {
-                refStack = new InternalUnsafeRefStack(6);
-            }
+            var refStack = InternalUnsafeRefStack.RefStackPool.Get();
 
             return new Enumerator(origin.transform, withSelf, true, refStack, descendIntoChildren);
         }
@@ -928,11 +919,11 @@ public static class GameObjectExtensions
 
         internal class InternalUnsafeRefStack
         {
-            public static Queue<InternalUnsafeRefStack> RefStackPool = new Queue<InternalUnsafeRefStack>();
-
-            // True while this stack lives in RefStackPool. Guards against double-enqueue
-            // (same stack handed to two live enumerators) under overlapping/reentrant enumeration.
-            internal bool pooled;
+            // collectionCheck is on: handing the same stack back twice under overlapping or reentrant
+            // enumeration throws instead of corrupting a live enumerator.
+            public static readonly ObjectPool<InternalUnsafeRefStack> RefStackPool = new(
+                () => new InternalUnsafeRefStack(6),
+                actionOnGet: stack => stack.Reset());
 
             public int size = 0;
             public Enumerator[] array; // Pop = this.array[--size];
@@ -1000,11 +991,7 @@ public static class GameObjectExtensions
                 {
                     // reuse
                     canRun = false;
-                    if (!sharedStack.pooled)
-                    {
-                        sharedStack.pooled = true;
-                        InternalUnsafeRefStack.RefStackPool.Enqueue(sharedStack);
-                    }
+                    InternalUnsafeRefStack.RefStackPool.Release(sharedStack);
                     return false;
                 }
 
@@ -1016,11 +1003,7 @@ public static class GameObjectExtensions
                 {
                     // reuse
                     canRun = false;
-                    if (!sharedStack.pooled)
-                    {
-                        sharedStack.pooled = true;
-                        InternalUnsafeRefStack.RefStackPool.Enqueue(sharedStack);
-                    }
+                    InternalUnsafeRefStack.RefStackPool.Release(sharedStack);
                     return false;
                 }
             }
@@ -1075,11 +1058,7 @@ public static class GameObjectExtensions
                 if (canRun)
                 {
                     canRun = false;
-                    if (!sharedStack.pooled)
-                    {
-                        sharedStack.pooled = true;
-                        InternalUnsafeRefStack.RefStackPool.Enqueue(sharedStack);
-                    }
+                    InternalUnsafeRefStack.RefStackPool.Release(sharedStack);
                 }
             }
 

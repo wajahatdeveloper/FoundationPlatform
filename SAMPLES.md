@@ -18,8 +18,6 @@ Owned **CoroutineX** ladder publishes **SamplePingEvent**; **EventBus** subscrib
 - **uGUI:** present via `com.unity.ugui` (typical URP templates)
 - **Domain Reload:** leave **enabled** (Fast Enter Play Mode is not supported)
 - **URP** recommended
-- Do **not** install a second UniTask package
-
 ## How to import
 
 Package Manager → Foundation Platform → Samples → **Import** “EventBus + CoroutineX” → open the sample scene → Play.

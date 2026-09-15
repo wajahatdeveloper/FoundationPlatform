@@ -11,7 +11,7 @@ User-facing guides for `com.aethernexus.foundationplatform`.
 | [../SAMPLES.md](../SAMPLES.md) | Package Manager samples |
 | [../CHANGELOG.md](../CHANGELOG.md) | Version history |
 | [../LICENSE.md](../LICENSE.md) | MIT license |
-| [../Third-Party Notices.txt](../Third-Party%20Notices.txt) | UniTask and notices |
+| [../Third-Party Notices.txt](../Third-Party%20Notices.txt) | Third-party notices |
 
 ## Useful Editor menus
 

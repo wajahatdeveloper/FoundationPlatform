@@ -7,7 +7,6 @@ Play Mode sample for Foundation Platform: owned CoroutineX steps publish `Sample
 - Unity **6000.3.10f1+** (URP recommended)
 - **Input System** active (Active Input Handling = Input System Package or Both)
 - Domain Reload **enabled**
-- Do not install a second UniTask package
 
 ## How to run
 

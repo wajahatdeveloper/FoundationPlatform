@@ -27,39 +27,15 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
             "")]
         public static void GenerateLightmapInfo()
         {
-            if (!ValidateLightmappingSettings())
+            Lightmapping.Bake();
+
+            if (LightmapSettings.lightmaps.Length == 0)
             {
+                Debug.LogError("[PrefabLightmapData] Bake produced no lightmaps. Check the scene's lighting settings and that the renderers are marked Contribute GI.");
                 return;
             }
 
-            try
-            {
-                Lightmapping.Bake();
-                ProcessAllPrefabLightmapData();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[PrefabLightmapData] Failed to bake lightmaps: {e.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Validates that lightmapping settings are correct for baking.
-        /// </summary>
-        private static bool ValidateLightmappingSettings()
-        {
-            // Check if lightmapping is available and properly configured
-            try
-            {
-                // Try to access lightmap settings to ensure they're available
-                var currentLightmaps = LightmapSettings.lightmaps;
-                return true;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[PrefabLightmapData] Could not access lightmap settings: {e.Message}. Please ensure lighting is properly configured.");
-                return false;
-            }
+            ProcessAllPrefabLightmapData();
         }
 
         /// <summary>
@@ -122,77 +98,19 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         /// </summary>
         private static void ApplyChangesToPrefab(PrefabLightmapData instance)
         {
-            var targetPrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(instance.gameObject) as GameObject;
-            if (targetPrefab == null)
-            {
-                Debug.LogWarning($"[PrefabLightmapData] No prefab found for {instance.gameObject.name}", instance);
-                return;
-            }
-
-#if UNITY_2018_3_OR_NEWER
+            // Applying on the outermost root covers nested instances too. Unpacking first (as this
+            // tool used to) breaks the instance link and writes a flattened hierarchy over the asset.
             var root = PrefabUtility.GetOutermostPrefabInstanceRoot(instance.gameObject);
-            if (root != null)
+            if (root == null)
             {
-                // Handle nested prefab instances
-                ApplyNestedPrefabChanges(instance, root);
-            }
-            else
-            {
-                // Handle regular prefab instances
-                PrefabUtility.ApplyPrefabInstance(instance.gameObject, InteractionMode.AutomatedAction);
-            }
-#else
-            // Legacy prefab handling
-            PrefabUtility.ReplacePrefab(instance.gameObject, targetPrefab);
-#endif
-        }
-
-#if UNITY_2018_3_OR_NEWER
-        /// <summary>
-        /// Handles changes for nested prefab instances.
-        /// </summary>
-        private static void ApplyNestedPrefabChanges(PrefabLightmapData instance, GameObject root)
-        {
-            var rootPrefab = PrefabUtility.GetCorrespondingObjectFromSource(instance.gameObject);
-            if (rootPrefab == null)
-            {
-                Debug.LogError($"[PrefabLightmapData] Could not find root prefab for {instance.gameObject.name}", instance);
+                Debug.LogWarning(
+                    $"[PrefabLightmapData] '{instance.gameObject.name}' is not a prefab instance; its baked data stays scene-only.",
+                    instance);
                 return;
             }
 
-            string rootPath = AssetDatabase.GetAssetPath(rootPrefab);
-            if (string.IsNullOrEmpty(rootPath))
-            {
-                Debug.LogError($"[PrefabLightmapData] Could not get asset path for root prefab", instance);
-                return;
-            }
-
-            // Unpack the outermost root
-            var unpackedRoots = PrefabUtility.UnpackPrefabInstanceAndReturnNewOutermostRoots(root, PrefabUnpackMode.OutermostRoot);
-
-            try
-            {
-                // Apply the changes to the instance
-                PrefabUtility.ApplyPrefabInstance(instance.gameObject, InteractionMode.AutomatedAction);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[PrefabLightmapData] Failed to apply prefab instance changes: {e.Message}", instance);
-            }
-            finally
-            {
-                // Save the root prefab
-                try
-                {
-                    PrefabUtility.SaveAsPrefabAssetAndConnect(root, rootPath, InteractionMode.AutomatedAction);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[PrefabLightmapData] Failed to save root prefab: {e.Message}", instance);
-                }
-            }
+            PrefabUtility.ApplyPrefabInstance(root, InteractionMode.AutomatedAction);
         }
-#endif
 
         /// <summary>
         /// Generates lightmap information for all renderers and lights in the hierarchy.
@@ -220,7 +138,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
             ProcessLights(root, lightInfos);
         }
 
-        private const int INVALID_LIGHTMAP_INDEX = 0xFFFE;
         private const int NO_LIGHTMAP_INDEX = -1;
 
         /// <summary>
@@ -229,7 +146,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         private static void ProcessRenderers(GameObject root, List<PrefabLightmapData.RendererInfo> rendererInfos, List<Texture2D> lightmaps,
             List<Texture2D> lightmapsDir, List<Texture2D> shadowMasks, LightmapData[] currentLightmaps)
         {
-            var renderers = root.GetComponentsInChildren<MeshRenderer>();
+            // Inactive included: a renderer disabled at author time still carries baked data, and the
+            // lights below are already collected with includeInactive.
+            var renderers = root.GetComponentsInChildren<MeshRenderer>(true);
             int processedCount = 0;
 
             foreach (MeshRenderer renderer in renderers)
@@ -244,9 +163,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
                     Debug.LogWarning($"[PrefabLightmapData] Invalid lightmap index {renderer.lightmapIndex} for renderer {renderer.name}", renderer);
                     continue;
                 }
-
-                // Skip invalid lightmap indices
-                if (renderer.lightmapIndex == INVALID_LIGHTMAP_INDEX) continue;
 
                 // Check if renderer has valid lightmap data
                 if (renderer.lightmapScaleOffset == Vector4.zero) continue;
@@ -297,34 +213,21 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
             var lights = root.GetComponentsInChildren<Light>(true);
             int processedCount = 0;
 
+            // Throws when the scene has no Lighting Settings asset assigned. Read it once so that is one
+            // clear failure instead of the same exception logged per light.
+            var mixedLightingMode = (int)Lightmapping.lightingSettings.mixedBakeMode;
+
             foreach (Light light in lights)
             {
                 if (light == null) continue;
 
-                try
+                lightInfos.Add(new PrefabLightmapData.LightInfo
                 {
-                    var lightInfo = new PrefabLightmapData.LightInfo
-                    {
-                        light = light,
-                        lightmapBakeType = (int)light.lightmapBakeType
-                    };
-
-                    // Get mixed lighting mode based on Unity version
-#if UNITY_2020_1_OR_NEWER
-                    lightInfo.mixedLightingMode = (int)Lightmapping.lightingSettings.mixedBakeMode;
-#elif UNITY_2018_1_OR_NEWER
-                    lightInfo.mixedLightingMode = (int)LightmapEditorSettings.mixedBakeMode;
-#else
-                    lightInfo.mixedLightingMode = (int)light.bakingOutput.lightmapBakeType;
-#endif
-
-                    lightInfos.Add(lightInfo);
-                    processedCount++;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[PrefabLightmapData] Failed to process light {light.name}: {e.Message}", light);
-                }
+                    light = light,
+                    lightmapBakeType = (int)light.lightmapBakeType,
+                    mixedLightingMode = mixedLightingMode
+                });
+                processedCount++;
             }
 
             Debug.Log($"[PrefabLightmapData] Processed {processedCount} lights");

@@ -18,11 +18,6 @@ using FoundationPlatform.DebugX;
     [DesignerIcon(DesignerSymbol.Effect)]
     public class PrefabLightmapData : MonoBehaviour
     {
-        #region Constants
-        private const int INVALID_LIGHTMAP_INDEX = 0xFFFE;
-        private const int NO_LIGHTMAP_INDEX = -1;
-        #endregion
-
         #region Serialized Fields
         [Header("Lightmap Settings")]
         [Tooltip("Reassigns shaders when applying the baked lightmaps. Might conflict with some shaders like transparent HDRP.")]

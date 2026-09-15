@@ -40,11 +40,9 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 ## Assembly definitions
 
 ```
-UniTask                          (Runtime/ThirdParty/UniTask/)   — embedded
 FoundationPlatform.Runtime       (Runtime/)
-  references: Unity.InputSystem, Unity.TextMeshPro, UniTask
+  references: Unity.InputSystem, Unity.TextMeshPro
 
-UniTask.Editor                   (Editor/ThirdParty/UniTask/)
 FoundationPlatform.Editor        (Editor/)
   references: FoundationPlatform.Runtime
   includePlatforms: [Editor]
@@ -135,7 +133,7 @@ State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
 **`RunAsync` / `WaitForCompletionAsync`:** first-party `Task` helpers collocated in `CoroutineX.cs` for bridge scenarios — not vendor drift.
 
-**UniTask coexistence:** `Runtime/ThirdParty/UniTask/` and CoroutineX are both present by design. Pick the substrate that fits the call site (yield/coroutine lifecycle vs async/await); neither is a defect in the other.
+**Async substrates:** CoroutineX (yield/coroutine lifecycle) and `UnityEngine.Awaitable` (async/await) are both in play by design. Pick the one that fits the call site; neither is a defect in the other. No third-party async library is embedded.
 
 ---
 

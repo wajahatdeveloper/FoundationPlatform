@@ -4,7 +4,7 @@ Free Unity foundation layer for the **AetherNexus** toolkit (`com.aethernexus.fo
 
 **Publisher:** [AetherNexus](https://aethernexus.online) · **Support:** wajahatdeveloperqs@gmail.com  
 **Unity:** 6000.3.10f1+ · **URP** recommended · **License:** [MIT](LICENSE.md)  
-**Third-party:** Cysharp UniTask (MIT) — see [Third-Party Notices.txt](Third-Party%20Notices.txt)
+**Third-party:** none embedded — see [Third-Party Notices.txt](Third-Party%20Notices.txt)
 
 ## What's inside
 
@@ -30,13 +30,12 @@ Docs index: [Documentation~/index.md](Documentation~/index.md)
 3. Confirm **uGUI** is present (`com.unity.ugui` — included in typical URP templates).
 4. Optional: Package Manager → Samples → import **EventBus + CoroutineX**.
 
-**Do not** install Cysharp UniTask separately. This package embeds UniTask **2.5.11**; a second UniTask package collides on the `UniTask` assembly name.
+Async code targets `UnityEngine.Awaitable`; no async library is embedded or required.
 
 ## Dependencies
 
 | Dependency | How provided |
 |------------|----------------|
-| UniTask 2.5.11 (MIT) | Embedded under `Runtime/ThirdParty/UniTask` and `Editor/ThirdParty/UniTask` |
 | `com.unity.inputsystem` | Declared in `package.json` |
 | `com.unity.ugui` | Declared in `package.json` |
 
@@ -75,10 +74,8 @@ RandomX.Provider = myProvider;   // IRandomProvider, or IRandomStreamSource for 
 
 | Assembly | Role |
 |----------|------|
-| `UniTask` | Embedded Cysharp UniTask |
 | `FoundationPlatform.Runtime` | Runtime APIs |
 | `FoundationPlatform.Editor` | Editor tooling |
-| `UniTask.Editor` | UniTask Tracker window |
 
 ## Package Integration Manifest
 

@@ -152,9 +152,6 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 foundCaller = true;
             }
 
-            if (trimmed.Contains("Cysharp.Threading.Tasks", StringComparison.Ordinal))
-                return true;
-
             if (trimmed.Contains("UnityEngine.SetupCoroutine", StringComparison.Ordinal))
                 return true;
 
