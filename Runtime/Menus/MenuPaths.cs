@@ -278,10 +278,12 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string PresetLibraryGenerateCharactersItems = Root + "PresetLibrary/Generate Characters + Items";
 			public const string PresetLibraryGenerateArchetypesAi = Root + "PresetLibrary/Generate Archetypes + AI";
 
-			/// <summary>Tools/Domain/Validation/* — scene/entity validation.</summary>
-			public const string ValidationPlayableScene           = Root + "Validation/Validate Playable Scene";
-			public const string ValidationDomainEntities          = Root + "Validation/Validate Domain Entities";
-			public const string ValidationDeterministicRandom     = Root + "Validation/Find Non-Deterministic Random Usage";
+			/// <summary>
+			/// The single project-wide authoring check. Every validator in the project reports into it, so
+			/// there is one entry rather than one per check; scoped runs happen by selecting an asset or
+			/// folder, and the detail lives in Central Validation.
+			/// </summary>
+			public const string ValidateProject                   = Root + "Validate Project";
 
 			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
 			public const string CreateNewDomain                   = Root + "Create New Content Area...";
