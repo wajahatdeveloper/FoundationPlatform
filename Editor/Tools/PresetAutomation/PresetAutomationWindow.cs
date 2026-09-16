@@ -223,8 +223,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.PresetAutomation
 				DrawDefaultInspector();
 			}
 
-			EditorGUILayout.Space();
-			EditorGUILayout.LabelField("Preset Automation", EditorStyles.boldLabel);
+			GuiKit.Title("Preset Automation");
 
 			bool allAutoApply = true;
 			bool mixedAutoApply = false;

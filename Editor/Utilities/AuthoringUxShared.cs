@@ -1,4 +1,5 @@
 using System;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -11,21 +12,21 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         {
             if (string.IsNullOrWhiteSpace(message))
                 throw new InvalidOperationException("[AuthoringUX:ERROR] Source-of-truth message must be non-empty.");
-            EditorGUILayout.HelpBox(message, MessageType.Info);
+            GuiKit.InfoBox(message, InfoMessageType.Info);
         }
 
         public static void DrawSectionHeader(string title)
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new InvalidOperationException("[AuthoringUX:ERROR] Section title must be non-empty.");
-            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            GuiKit.Title(title);
         }
 
         public static void DrawReadOnlyPreview(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
                 throw new InvalidOperationException("[AuthoringUX:ERROR] Preview text must be non-empty.");
-            EditorGUILayout.HelpBox(text, MessageType.None);
+            GuiKit.InfoBox(text, InfoMessageType.Info);
         }
 
         public static void DrawValidationSummary(int errorCount, int warningCount, int infoCount, string policyText)
@@ -35,15 +36,15 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             if (string.IsNullOrWhiteSpace(policyText))
                 throw new InvalidOperationException("[AuthoringUX:ERROR] Validation policy text must be non-empty.");
 
-            var messageType = MessageType.Info;
+            var severity = InfoMessageType.Info;
             if (errorCount > 0)
-                messageType = MessageType.Error;
+                severity = InfoMessageType.Error;
             else if (warningCount > 0)
-                messageType = MessageType.Warning;
+                severity = InfoMessageType.Warning;
 
-            EditorGUILayout.HelpBox(
+            GuiKit.ValidationBox(
                 $"Validation: {errorCount} error(s), {warningCount} warning(s), {infoCount} info. {policyText}",
-                messageType);
+                severity);
         }
 
         /// <summary>Draws a single validation issue row for shared scene/package validation UIs.</summary>
@@ -54,7 +55,17 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             if (string.IsNullOrWhiteSpace(message))
                 throw new InvalidOperationException("[AuthoringUX:ERROR] Validation issue message must be non-empty.");
 
-            EditorGUILayout.HelpBox($"[{source}] {message}", severity);
+            GuiKit.ValidationBox($"[{source}] {message}", ToInfoMessageType(severity));
+        }
+
+        private static InfoMessageType ToInfoMessageType(MessageType severity)
+        {
+            switch (severity)
+            {
+                case MessageType.Error: return InfoMessageType.Error;
+                case MessageType.Warning: return InfoMessageType.Warning;
+                default: return InfoMessageType.Info;
+            }
         }
 
         public static int DrawActionStrip(string[] labels, bool[] enabled)

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Utilities.Debugging;
+using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -27,38 +28,38 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			if (bridge == null)
 				return;
 
-			EditorGUILayout.Space(5);
-			if (GUILayout.Button("Open Animation Test Bench", GUILayout.Height(24)))
-				AnimationTestBenchWindow.Open();
+			using (GuiKit.ActionRow())
+			{
+				if (GuiKit.ActionButton("Open Animation Test Bench"))
+					AnimationTestBenchWindow.Open();
+			}
 
 			if (!EditorApplication.isPlaying)
 			{
-				EditorGUILayout.Space(5);
-				EditorGUILayout.HelpBox("Graph details are only available during Play Mode. Use the Test Bench for offline clip/pose preview.", MessageType.Info);
+				GuiKit.InfoBox("Graph details are only available during Play Mode. Use the Test Bench for offline clip/pose preview.", InfoMessageType.Info);
 				return;
 			}
 
 			if (!bridge.IsGraphInitialized || !bridge.IsValid)
 			{
-				EditorGUILayout.Space(5);
-				EditorGUILayout.HelpBox("PlayableGraph is not initialized.", MessageType.Warning);
+				GuiKit.ValidationBox("PlayableGraph is not initialized.", InfoMessageType.Warning);
 				return;
 			}
 
-			EditorGUILayout.Space(5);
 			DebugDrawKit.Title("Playable Graph Bridge", "Runtime Control");
 
 			// Global graph speed + quick pause / resume.
-			EditorGUILayout.BeginHorizontal();
-			EditorGUI.BeginChangeCheck();
-			float newSpeed = EditorGUILayout.Slider("Graph Speed", bridge.Speed, 0f, 3f);
-			if (EditorGUI.EndChangeCheck())
-				bridge.Speed = newSpeed;
-			if (GUILayout.Button("Pause", GUILayout.Width(58)))
-				bridge.Speed = 0f;
-			if (GUILayout.Button("1x", GUILayout.Width(34)))
-				bridge.Speed = 1f;
-			EditorGUILayout.EndHorizontal();
+			using (GuiKit.ActionRow())
+			{
+				EditorGUI.BeginChangeCheck();
+				float newSpeed = EditorGUILayout.Slider("Graph Speed", bridge.Speed, 0f, 3f);
+				if (EditorGUI.EndChangeCheck())
+					bridge.Speed = newSpeed;
+				if (GuiKit.ActionButton("Pause", 58f))
+					bridge.Speed = 0f;
+				if (GuiKit.ActionButton("1x", 34f))
+					bridge.Speed = 1f;
+			}
 
 			_testFadeDuration = EditorGUILayout.Slider(
 				new GUIContent("Test Fade (s)", "Fade duration used by the per-state Stop button below."),
@@ -66,7 +67,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 			if (bridge.Layers == null || bridge.Layers.Count == 0)
 			{
-				EditorGUILayout.HelpBox("No layers initialized in the graph.", MessageType.Info);
+				GuiKit.InfoBox("No layers initialized in the graph.", InfoMessageType.Info);
 				return;
 			}
 
@@ -86,31 +87,30 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 		{
 			if (layer == null) return;
 
-			EditorGUILayout.BeginVertical("box");
+			GuiKit.BeginBox();
 
 			// Layer header: name + live weight bar.
-			EditorGUILayout.BeginHorizontal();
-			EditorGUILayout.LabelField($"Layer {layer.Index}", EditorStyles.boldLabel, GUILayout.Width(70));
-			EditorGUI.BeginChangeCheck();
-			float newLayerWeight = EditorGUILayout.Slider(layer.Weight, 0f, 1f);
-			if (EditorGUI.EndChangeCheck())
-				layer.Weight = newLayerWeight;
-			EditorGUILayout.EndHorizontal();
+			using (GuiKit.ActionRow())
+			{
+				EditorGUILayout.LabelField($"Layer {layer.Index}", AetherInspectorTheme.FlatHeaderLabel, GUILayout.Width(70));
+				EditorGUI.BeginChangeCheck();
+				float newLayerWeight = EditorGUILayout.Slider(layer.Weight, 0f, 1f);
+				if (EditorGUI.EndChangeCheck())
+					layer.Weight = newLayerWeight;
+			}
 
 			var activeStates = layer.ActiveStates;
 			if (activeStates == null || activeStates.Count == 0)
 			{
 				EditorGUILayout.LabelField("  (no active states)", EditorStyles.miniLabel);
-				EditorGUILayout.EndVertical();
-				EditorGUILayout.Space(5);
+				GuiKit.EndBox();
 				return;
 			}
 
 			for (int j = 0; j < activeStates.Count; j++)
 				DrawState(layer, activeStates[j]);
 
-			EditorGUILayout.EndVertical();
-			EditorGUILayout.Space(5);
+			GuiKit.EndBox();
 		}
 
 		private void DrawState(PlayableLayer layer, PlayableLayer.ActiveState active)
@@ -146,29 +146,28 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			}
 
 			// Per-state controls row.
-			EditorGUILayout.BeginHorizontal();
-			GUILayout.Space(14);
-
-			EditorGUILayout.LabelField("Speed", GUILayout.Width(42));
-			EditorGUI.BeginChangeCheck();
-			float newStateSpeed = EditorGUILayout.FloatField(state.Speed, GUILayout.Width(48));
-			if (EditorGUI.EndChangeCheck())
-				state.Speed = newStateSpeed;
-
-			if (GUILayout.Button(paused ? "Resume" : "Pause", GUILayout.Width(64)))
-				state.Speed = paused ? 1f : 0f;
-
-			if (GUILayout.Button(new GUIContent("Solo", "Weight this state to 1 and fade siblings on this layer to 0."), GUILayout.Width(48)))
-				SoloState(layer, active);
-
-			if (GUILayout.Button(new GUIContent("Stop", "Fade this state out using the Test Fade duration."), GUILayout.Width(48)))
+			using (GuiKit.ActionRow())
 			{
-				active.TargetWeight = 0f;
-				active.FadeSpeed = _testFadeDuration > 0f ? 1f / _testFadeDuration : 1000f;
-			}
+				GUILayout.Space(14);
 
-			EditorGUILayout.EndHorizontal();
-			EditorGUILayout.Space(3);
+				EditorGUILayout.LabelField("Speed", GUILayout.Width(42));
+				EditorGUI.BeginChangeCheck();
+				float newStateSpeed = EditorGUILayout.FloatField(state.Speed, GUILayout.Width(48));
+				if (EditorGUI.EndChangeCheck())
+					state.Speed = newStateSpeed;
+
+				if (GuiKit.ActionButton(paused ? "Resume" : "Pause", 64f))
+					state.Speed = paused ? 1f : 0f;
+
+				if (GuiKit.ActionButton("Solo", 48f))
+					SoloState(layer, active);
+
+				if (GuiKit.ActionButton("Stop", 48f))
+				{
+					active.TargetWeight = 0f;
+					active.FadeSpeed = _testFadeDuration > 0f ? 1f / _testFadeDuration : 1000f;
+				}
+			}
 		}
 
 		private static void SoloState(PlayableLayer layer, PlayableLayer.ActiveState solo)

@@ -57,6 +57,62 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public static bool FoldoutInSection(bool expanded, GUIContent label)
             => AetherInspectorTheme.SectionFoldout(expanded, label);
 
+        /// <summary>
+        /// The canonical section for a hand-written editor: flat foldout header plus an indented body,
+        /// with expansion persisted per <paramref name="stateKey"/> across domain reloads. This is the
+        /// replacement for <c>LabelField(label, EditorStyles.boldLabel)</c> followed by loose content —
+        /// it matches what <c>[FoldoutGroup]</c> renders, so attribute-driven and hand-drawn sections in
+        /// the same inspector line up.
+        /// </summary>
+        public static SectionScope Section(string stateKey, string label)
+            => new SectionScope(stateKey, new GUIContent(label), true);
+
+        /// <summary>Section that starts collapsed the first time it is seen — use for Advanced / Debug.</summary>
+        public static SectionScope CollapsedSection(string stateKey, string label)
+            => new SectionScope(stateKey, new GUIContent(label), false);
+
+        /// <summary>Horizontal run of action buttons, used for the Primary action and Fixes rows.</summary>
+        public static EditorGUILayout.HorizontalScope ActionRow() => new EditorGUILayout.HorizontalScope();
+
+        /// <summary>Themed action button. Label must come from the shared action vocabulary.</summary>
+        public static bool ActionButton(string label)
+            => GUILayout.Button(label, AetherInspectorTheme.CompactButton);
+
+        public static bool ActionButton(string label, float width)
+            => GUILayout.Button(label, AetherInspectorTheme.CompactButton, GUILayout.Width(width));
+
+        /// <summary>Action button that is greyed out while <paramref name="enabled"/> is false.</summary>
+        public static bool ActionButton(string label, bool enabled)
+        {
+            using (new EditorGUI.DisabledScope(!enabled))
+            {
+                return ActionButton(label);
+            }
+        }
+
+        public struct SectionScope : IDisposable
+        {
+            private readonly bool _expanded;
+
+            public bool Expanded => _expanded;
+
+            public SectionScope(string stateKey, GUIContent label, bool expandedByDefault)
+            {
+                var key = "GuiKit.Section." + stateKey;
+                _expanded = AetherInspectorTheme.SectionFoldout(
+                    SessionState.GetBool(key, expandedByDefault), label);
+                SessionState.SetBool(key, _expanded);
+                if (_expanded)
+                    AetherInspectorTheme.BeginSectionFoldoutBody();
+            }
+
+            public void Dispose()
+            {
+                if (_expanded)
+                    AetherInspectorTheme.EndSectionFoldoutBody();
+            }
+        }
+
         public static void Title(string title) => AetherInspectorTheme.DrawTitle(title);
 
         public static void Title(string title, string subtitle) => AetherInspectorTheme.DrawTitle(title, subtitle);

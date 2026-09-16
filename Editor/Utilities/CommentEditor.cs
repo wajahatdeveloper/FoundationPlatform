@@ -1,4 +1,6 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Extensions;
 using UnityEngine;
 using UnityEditor;
@@ -6,7 +8,7 @@ using UnityEditor;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 [CustomEditor(typeof(Comment))]
-public class CommentEditor : UnityEditor.Editor
+public class CommentEditor : AetherInspectorEditor
 {
     private SerializedProperty messageProperty;
     private SerializedProperty typeProperty;
@@ -16,8 +18,9 @@ public class CommentEditor : UnityEditor.Editor
     
     private bool isEditing = false;
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         messageProperty = serializedObject.FindProperty("message");
         typeProperty = serializedObject.FindProperty("type");
         showInSceneViewProperty = serializedObject.FindProperty("showInSceneView");
@@ -45,74 +48,39 @@ public class CommentEditor : UnityEditor.Editor
 
     private void DrawCompactView(Comment comment)
     {
-        // Compact header with type indicator and edit button
-        EditorGUILayout.BeginHorizontal();
-        
-        // Type indicator with color
-        Color originalColor = GUI.color;
-        GUI.color = GetTypeColor(comment.Type);
-        GUIStyle typeStyle = new GUIStyle(EditorStyles.boldLabel);
-        typeStyle.fontSize = 12;
-        EditorGUILayout.LabelField($"[{comment.Type}]", typeStyle, GUILayout.Width(60));
-        GUI.color = originalColor;
-        
-        // Comment message (truncated if too long)
         string displayMessage = string.IsNullOrEmpty(comment.Message) ? "No message" : comment.Message;
-        if (displayMessage.Length > 50)
+        GuiKit.InfoBox(displayMessage, ToMessageType(comment.Type));
+
+        using (GuiKit.ActionRow())
         {
-            displayMessage = displayMessage.Substring(0, 47) + "...";
-        }
-        
-        EditorGUILayout.LabelField(displayMessage, EditorStyles.wordWrappedLabel);
-        
-        // Edit button
-        if (GUILayout.Button("Edit", GUILayout.Width(40)))
-        {
-            isEditing = true;
-        }
-        
-        EditorGUILayout.EndHorizontal();
-        
-        // Scene view indicator
-        if (comment.ShowInSceneView)
-        {
-            EditorGUILayout.LabelField("Visible in Scene View", EditorStyles.miniLabel);
+            if (comment.ShowInSceneView)
+                EditorGUILayout.LabelField("Visible in Scene View", EditorStyles.miniLabel);
+            GUILayout.FlexibleSpace();
+            if (GuiKit.ActionButton("Edit", 60f))
+                isEditing = true;
         }
     }
 
     private void DrawFullEditor(Comment comment)
     {
-        // Header with Done button
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Comment Editor", EditorStyles.boldLabel);
-        GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Done", GUILayout.Width(50)))
+        using (GuiKit.ActionRow())
         {
-            isEditing = false;
+            GuiKit.Title("Comment Editor");
+            GUILayout.FlexibleSpace();
+            if (GuiKit.ActionButton("Done", 60f))
+                isEditing = false;
         }
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.Space();
 
-        // Message field with better styling
-        EditorGUILayout.LabelField("Message", EditorStyles.boldLabel);
+        GuiKit.Title("Message");
         messageProperty.stringValue = EditorGUILayout.TextArea(messageProperty.stringValue, GUILayout.Height(60));
-        EditorGUILayout.Space();
 
-        // Comment type with color coding
-        EditorGUILayout.LabelField("Type", EditorStyles.boldLabel);
+        GuiKit.Title("Type");
         EditorGUILayout.PropertyField(typeProperty, GUIContent.none);
-        
-        // Show type-specific color preview
-        Color originalColor = GUI.color;
-        GUI.color = GetTypeColor(comment.Type);
-        EditorGUILayout.LabelField($"Preview: {comment.Type}", EditorStyles.helpBox);
-        GUI.color = originalColor;
-        EditorGUILayout.Space();
+        GuiKit.InfoBox($"Preview: {comment.Type}", ToMessageType(comment.Type));
 
-        // Scene view options
-        EditorGUILayout.LabelField("Scene View", EditorStyles.boldLabel);
+        GuiKit.Title("Scene View");
         EditorGUILayout.PropertyField(showInSceneViewProperty, new GUIContent("Show in Scene View"));
-        
+
         if (showInSceneViewProperty.boolValue)
         {
             EditorGUI.indentLevel++;
@@ -120,32 +88,33 @@ public class CommentEditor : UnityEditor.Editor
             EditorGUILayout.PropertyField(gizmoSizeProperty, new GUIContent("Gizmo Size"));
             EditorGUI.indentLevel--;
         }
-        EditorGUILayout.Space();
 
-        // Utility buttons
-        EditorGUILayout.LabelField("Utilities", EditorStyles.boldLabel);
-        EditorGUILayout.BeginHorizontal();
-        
-        if (GUILayout.Button("Clear Message"))
+        using (GuiKit.ActionRow())
         {
-            messageProperty.stringValue = "";
-        }
-        
-        if (GUILayout.Button("Reset to Default"))
-        {
-            messageProperty.stringValue = "Enter your comment here...";
-            typeProperty.enumValueIndex = 0;
-            showInSceneViewProperty.boolValue = true;
-            gizmoColorProperty.colorValue = Color.white;
-            gizmoSizeProperty.floatValue = 1f;
-        }
-        
-        EditorGUILayout.EndHorizontal();
+            if (GuiKit.ActionButton("Clear Message"))
+            {
+                messageProperty.stringValue = "";
+            }
 
-        // Info box
-        EditorGUILayout.Space();
-        EditorGUILayout.HelpBox("This component is editor-only and will be disabled during play mode.", MessageType.Info);
+            if (GuiKit.ActionButton("Reset to Default"))
+            {
+                messageProperty.stringValue = "Enter your comment here...";
+                typeProperty.enumValueIndex = 0;
+                showInSceneViewProperty.boolValue = true;
+                gizmoColorProperty.colorValue = Color.white;
+                gizmoSizeProperty.floatValue = 1f;
+            }
+        }
+
+        GuiKit.InfoBox("This component is editor-only and will be disabled during play mode.", InfoMessageType.Info);
     }
+
+    private static InfoMessageType ToMessageType(Comment.CommentType type) => type switch
+    {
+        Comment.CommentType.Warning => InfoMessageType.Warning,
+        Comment.CommentType.Error => InfoMessageType.Error,
+        _ => InfoMessageType.Info
+    };
 
     private Color GetTypeColor(Comment.CommentType type)
     {

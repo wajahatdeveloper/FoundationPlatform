@@ -1,26 +1,30 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.CoroutineX;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.CoroutineX
 {
-using State = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX.State;
-
 [CustomEditor(typeof(CoroutineXOwner))]
-public class CoroutineXOwnerEditor : UnityEditor.Editor
+public class CoroutineXOwnerEditor : AetherInspectorEditor
 {
     private SerializedProperty _coroutinesProperty;
 
     private bool showDetails;
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         _coroutinesProperty = serializedObject.FindProperty("_Coroutines");
         SyncUpdateSubscription();
     }
 
-    private void OnDisable() => EditorApplication.update -= Update;
+    protected override void OnDisable()
+    {
+        EditorApplication.update -= Update;
+        base.OnDisable();
+    }
 
     private void Update() => EditorUtility.SetDirty(serializedObject.targetObject);
 
@@ -35,30 +39,20 @@ public class CoroutineXOwnerEditor : UnityEditor.Editor
     {
         serializedObject.Update();
 
-        GUI.enabled = false;
-        EditorGUILayout.ObjectField("Script:", MonoScript.FromMonoBehaviour((CoroutineXOwner)target), typeof(CoroutineXOwner), false);
-        GUI.enabled = true;
-
-        GUILayout.Space(5f);
-
-        #region Main line
-        GUILayout.BeginHorizontal();
-
-        var showButtonText = $"{(showDetails ? "Hide" : "Show")} CoroutinesX";
-        if (GUILayout.Button(showButtonText, GUILayout.Width(EditorStyles.label.CalcSize(new GUIContent(showButtonText)).x + 10f)))
+        using (new EditorGUI.DisabledScope(true))
         {
-            showDetails = !showDetails;
-            SyncUpdateSubscription();
+            EditorGUILayout.ObjectField("Script:", MonoScript.FromMonoBehaviour((CoroutineXOwner)target), typeof(CoroutineXOwner), false);
         }
 
-        GUILayout.BeginHorizontal(EditorStyles.label);
-        GUILayout.Label($":  {_coroutinesProperty.arraySize}");
-        GUILayout.EndHorizontal();
-
-        GUILayout.EndHorizontal();
-        #endregion
-
-        GUILayout.Space(2f);
+        using (GuiKit.ActionRow())
+        {
+            if (GuiKit.ActionButton($"{(showDetails ? "Hide" : "Show")} CoroutinesX"))
+            {
+                showDetails = !showDetails;
+                SyncUpdateSubscription();
+            }
+            GUILayout.Label($":  {_coroutinesProperty.arraySize}");
+        }
 
         if (!showDetails)
             return;
@@ -66,60 +60,35 @@ public class CoroutineXOwnerEditor : UnityEditor.Editor
         var columnWidth = (Screen.width - 22f) / 4f;
         var columnOptions = GUILayout.Width(columnWidth);
 
-        #region Headers
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Index", EditorStyles.boldLabel, columnOptions);
-        GUILayout.Label("Name", EditorStyles.boldLabel, columnOptions);
-        GUILayout.Label("State", EditorStyles.boldLabel, columnOptions);
-        GUILayout.Label("Last Result", EditorStyles.boldLabel, columnOptions);
-        GUILayout.EndHorizontal();
-        #endregion
+        GuiKit.BeginBox();
+        using (GuiKit.ActionRow())
+        {
+            GUILayout.Label("Index", AetherInspectorTheme.FlatHeaderLabel, columnOptions);
+            GUILayout.Label("Name", AetherInspectorTheme.FlatHeaderLabel, columnOptions);
+            GUILayout.Label("State", AetherInspectorTheme.FlatHeaderLabel, columnOptions);
+            GUILayout.Label("Last Result", AetherInspectorTheme.FlatHeaderLabel, columnOptions);
+        }
 
         for (int i = 0; i < _coroutinesProperty.arraySize; i++)
         {
             var coroutine = (FoundationPlatform.CoroutineX.CoroutineX)_coroutinesProperty.GetArrayElementAtIndex(i).managedReferenceValue;
 
-            GUILayout.BeginHorizontal();
-            #region Index
-            GUILayout.Label(i.ToString(), EditorStyles.label, columnOptions);
-            #endregion
-
-            #region Name
-            var oldColor = GUI.contentColor;
-            GUI.contentColor = coroutine.Name == null ? Color.gray : Color.white;
-
-            var name = string.IsNullOrEmpty(coroutine.Name) ? "[noname]" : coroutine.Name;
-            GUILayout.Label(new GUIContent(name, name), EditorStyles.label, columnOptions);
-
-            GUI.contentColor = oldColor;
-            #endregion
-
-            #region State
-            oldColor = GUI.contentColor;
-            GUI.contentColor = coroutine.CurrentState switch
+            using (GuiKit.ActionRow())
             {
-                State.Reseted => Color.gray,
-                State.Running => Color.white,
-                State.Stopped => Color.yellow,
-                State.Completed => Color.green,
-                _ => Color.white
-            };
+                GUILayout.Label(i.ToString(), EditorStyles.label, columnOptions);
 
-            var state = coroutine.CurrentState.ToString();
-            GUILayout.Label(new GUIContent(state, state), EditorStyles.label, columnOptions);
+                var name = string.IsNullOrEmpty(coroutine.Name) ? "[noname]" : coroutine.Name;
+                GUILayout.Label(new GUIContent(name, name), EditorStyles.label, columnOptions);
 
-            GUI.contentColor = oldColor;
-            #endregion
+                var state = coroutine.CurrentState.ToString();
+                GUILayout.Label(new GUIContent(state, state), EditorStyles.label, columnOptions);
 
-            #region LastResult
-            var lastResult = coroutine.LastResult?.ToString() ?? "null";
-            GUILayout.Label(new GUIContent(lastResult, lastResult), EditorStyles.label, columnOptions);
-            #endregion
-            GUILayout.EndHorizontal();
+                var lastResult = coroutine.LastResult?.ToString() ?? "null";
+                GUILayout.Label(new GUIContent(lastResult, lastResult), EditorStyles.label, columnOptions);
+            }
         }
 
-        EditorGUILayout.EndVertical();
+        GuiKit.EndBox();
     }
 
 

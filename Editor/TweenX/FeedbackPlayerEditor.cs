@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.TweenX.Feedbacks;
 using UnityEditor;
 using UnityEditorInternal;
@@ -14,15 +15,16 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
     /// appear in Play mode.
     /// </summary>
     [CustomEditor(typeof(FeedbackPlayer))]
-    public sealed class FeedbackPlayerEditor : UnityEditor.Editor
+    public sealed class FeedbackPlayerEditor : AetherInspectorEditor
     {
         private SerializedProperty _playOnEnable;
         private SerializedProperty _clock;
         private SerializedProperty _feedbacks;
         private ReorderableList _list;
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             _playOnEnable = serializedObject.FindProperty("PlayOnEnable");
             _clock = serializedObject.FindProperty("Clock");
             _feedbacks = serializedObject.FindProperty("Feedbacks");
@@ -51,11 +53,10 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
 
             if (Application.isPlaying)
             {
-                EditorGUILayout.Space(6f);
-                using (new EditorGUILayout.HorizontalScope())
+                using (GuiKit.ActionRow())
                 {
-                    if (GUILayout.Button("Play")) ((FeedbackPlayer)target).Play();
-                    if (GUILayout.Button("Stop")) ((FeedbackPlayer)target).Stop();
+                    if (GuiKit.ActionButton("Play")) ((FeedbackPlayer)target).Play();
+                    if (GuiKit.ActionButton("Stop")) ((FeedbackPlayer)target).Stop();
                 }
             }
         }

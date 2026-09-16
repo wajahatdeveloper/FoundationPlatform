@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Behaviours;
 using UnityEditor;
 using UnityEngine;
@@ -6,13 +7,14 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 [CustomEditor(typeof(InspectorSeparator))]
-public class InspectorSeparatorEditor : UnityEditor.Editor
+public class InspectorSeparatorEditor : AetherInspectorEditor
 {
     private SerializedProperty _labelProperty;
     private bool _showLabelField;
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         _labelProperty = serializedObject.FindProperty("_label");
     }
 

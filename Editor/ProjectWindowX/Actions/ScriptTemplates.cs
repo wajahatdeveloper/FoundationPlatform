@@ -57,15 +57,16 @@ public class {NAME}
 ";
 
         internal const string CustomEditor =
-@"using UnityEditor;
+@"using AetherNexus.FoundationPlatform.AetherInspector.Editor;
+using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof({TARGET}))]
-public class {NAME} : Editor
+public class {NAME} : AetherInspectorEditor
 {
     public override void OnInspectorGUI()
     {
-        DrawDefaultInspector();
+        base.OnInspectorGUI();
     }
 }
 ";

@@ -1,10 +1,11 @@
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEngine;
 using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Gizmos
 {
 	[CustomEditor(typeof(ColliderGizmo)), CanEditMultipleObjects]
-	public class ColliderGizmoEditor : UnityEditor.Editor
+	public class ColliderGizmoEditor : AetherInspectorEditor
 	{
 		private SerializedProperty _enabledProperty;
 		private SerializedProperty _alphaProperty;
@@ -22,8 +23,9 @@ namespace AetherNexus.FoundationPlatform.Gizmos
 
 		private int _collidersCount;
 
-		private void OnEnable()
+		protected override void OnEnable()
 		{
+			base.OnEnable();
 			_target = target as ColliderGizmo;
 
 			_enabledProperty = serializedObject.FindProperty("m_Enabled");

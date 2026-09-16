@@ -1,11 +1,13 @@
-﻿using UnityEngine;
+﻿using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
+using UnityEngine;
 using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Gizmos
 {
     [CustomEditor(typeof(GizmosComponent))]
     [CanEditMultipleObjects]
-    public class GizmosEditor : UnityEditor.Editor
+    public class GizmosEditor : AetherInspectorEditor
     {
         SerializedProperty drawGizmo;
         SerializedProperty type;
@@ -110,8 +112,9 @@ namespace AetherNexus.FoundationPlatform.Gizmos
 
         static Texture2D s_BackgroundTex;
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             drawGizmo = serializedObject.FindProperty("drawGizmo");
             type = serializedObject.FindProperty("type");
             color = serializedObject.FindProperty("color");
@@ -250,11 +253,11 @@ namespace AetherNexus.FoundationPlatform.Gizmos
 
                 if (type.hasMultipleDifferentValues)
                 {
-                    EditorGUILayout.HelpBox("Selected objects use different gizmo types. Choose a type above to align them, or edit each type's fields after unifying.", MessageType.Info);
+                    GuiKit.InfoBox("Selected objects use different gizmo types. Choose a type above to align them, or edit each type's fields after unifying.", InfoMessageType.Info);
                 }
                 else
                 {
-                    EditorGUILayout.BeginVertical("box");
+                    GuiKit.BeginBox();
 
                     int typeIndex = GetTypeIndex(type.stringValue);
                     switch (typeIndex)
@@ -408,25 +411,25 @@ namespace AetherNexus.FoundationPlatform.Gizmos
                             break;
                     }
 
-                    EditorGUILayout.EndVertical();
+                    GuiKit.EndBox();
                 }
             }
 
             if (showShapeHelp)
-                EditorGUILayout.HelpBox("Shape gizmo hidden; facing arrow can still draw if enabled.", MessageType.Info, true);
+                GuiKit.InfoBox("Shape gizmo hidden; facing arrow can still draw if enabled.", InfoMessageType.Info);
 
             EditorGUILayout.Separator();
             EditorGUILayout.PropertyField(drawFacingArrow, new GUIContent("Draw Facing Arrow"));
             if (drawFacingArrow.hasMultipleDifferentValues || drawFacingArrow.boolValue)
             {
-                EditorGUILayout.BeginVertical("box");
+                GuiKit.BeginBox();
                 EditorGUILayout.PropertyField(facingArrowColor, new GUIContent("Arrow Color"));
                 EditorGUILayout.PropertyField(facingArrowOffset, new GUIContent("Offset"));
                 EditorGUILayout.PropertyField(facingArrowLength, new GUIContent("Length"));
                 EditorGUILayout.PropertyField(facingArrowWidth, new GUIContent("Width"));
                 EditorGUILayout.PropertyField(facingArrowHeadLength, new GUIContent("Head Length"));
                 EditorGUILayout.PropertyField(facingArrowHeadAngle, new GUIContent("Head Angle"));
-                EditorGUILayout.EndVertical();
+                GuiKit.EndBox();
             }
 
             serializedObject.ApplyModifiedProperties();

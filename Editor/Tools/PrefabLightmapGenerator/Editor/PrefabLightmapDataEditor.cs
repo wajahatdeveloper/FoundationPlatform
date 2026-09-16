@@ -2,6 +2,8 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Tools;
 using AetherNexus.FoundationPlatform.Editor.Tools;
 
@@ -11,7 +13,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
     /// Custom editor for PrefabLightmapData component with improved Inspector interface.
     /// </summary>
     [CustomEditor(typeof(PrefabLightmapData))]
-    public class PrefabLightmapDataEditor : UnityEditor.Editor
+    public class PrefabLightmapDataEditor : AetherInspectorEditor
     {
         #region Serialized Properties
         private SerializedProperty releaseShadersProp;
@@ -23,16 +25,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
         private SerializedProperty lightInfosProp;
         #endregion
 
-        #region Private Fields
-        private bool showRendererInfo = true;
-        private bool showLightmapInfo = true;
-        private bool showLightInfo = true;
-        private bool showDebugInfo = false;
-        #endregion
-
         #region Unity Lifecycle
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             // Cache serialized properties
             releaseShadersProp = serializedObject.FindProperty("releaseShaders");
             enableDebugLoggingProp = serializedObject.FindProperty("enableDebugLogging");
@@ -67,43 +63,29 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
                 "Reassigns shaders when applying baked lightmaps. May conflict with some shaders like transparent HDRP."));
             EditorGUILayout.PropertyField(enableDebugLoggingProp, new GUIContent("Enable Debug Logging", 
                 "Shows detailed logging information for troubleshooting."));
-            EditorGUILayout.Space();
         }
 
         private void DrawDataSections()
         {
-            // Renderer Information
-            showRendererInfo = EditorGUILayout.Foldout(showRendererInfo, 
-                $"Renderer Information ({rendererInfosProp.arraySize})", true);
-            if (showRendererInfo)
+            using (var renderers = GuiKit.CollapsedSection("PrefabLightmap.Renderers",
+                       $"Renderer Information ({rendererInfosProp.arraySize})"))
             {
-                EditorGUI.indentLevel++;
-                DrawRendererInfo();
-                EditorGUI.indentLevel--;
+                if (renderers.Expanded)
+                    DrawRendererInfo();
             }
 
-            EditorGUILayout.Space();
-
-            // Lightmap Information
-            showLightmapInfo = EditorGUILayout.Foldout(showLightmapInfo, 
-                $"Lightmap Information ({lightmapsProp.arraySize})", true);
-            if (showLightmapInfo)
+            using (var lightmaps = GuiKit.CollapsedSection("PrefabLightmap.Lightmaps",
+                       $"Lightmap Information ({lightmapsProp.arraySize})"))
             {
-                EditorGUI.indentLevel++;
-                DrawLightmapInfo();
-                EditorGUI.indentLevel--;
+                if (lightmaps.Expanded)
+                    DrawLightmapInfo();
             }
 
-            EditorGUILayout.Space();
-
-            // Light Information
-            showLightInfo = EditorGUILayout.Foldout(showLightInfo, 
-                $"Light Information ({lightInfosProp.arraySize})", true);
-            if (showLightInfo)
+            using (var lights = GuiKit.CollapsedSection("PrefabLightmap.Lights",
+                       $"Light Information ({lightInfosProp.arraySize})"))
             {
-                EditorGUI.indentLevel++;
-                DrawLightInfo();
-                EditorGUI.indentLevel--;
+                if (lights.Expanded)
+                    DrawLightInfo();
             }
         }
 
@@ -111,7 +93,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
         {
             if (rendererInfosProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("No renderer information available. Bake lightmaps to generate data.", MessageType.Info);
+                GuiKit.InfoBox("No renderer information available. Bake lightmaps to generate data.", InfoMessageType.Info);
                 return;
             }
 
@@ -122,16 +104,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
                 var lightmapIndexProp = element.FindPropertyRelative("lightmapIndex");
                 var offsetScaleProp = element.FindPropertyRelative("lightmapOffsetScale");
 
-                EditorGUILayout.BeginVertical("box");
-                EditorGUILayout.LabelField($"Renderer {i}", EditorStyles.miniBoldLabel);
-                
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.PropertyField(rendererProp, new GUIContent("Renderer"));
-                EditorGUILayout.PropertyField(lightmapIndexProp, new GUIContent("Lightmap Index"));
-                EditorGUILayout.PropertyField(offsetScaleProp, new GUIContent("Offset & Scale"));
-                EditorGUI.EndDisabledGroup();
-
-                EditorGUILayout.EndVertical();
+                GuiKit.BeginBox($"Renderer {i}");
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.PropertyField(rendererProp, new GUIContent("Renderer"));
+                    EditorGUILayout.PropertyField(lightmapIndexProp, new GUIContent("Lightmap Index"));
+                    EditorGUILayout.PropertyField(offsetScaleProp, new GUIContent("Offset & Scale"));
+                }
+                GuiKit.EndBox();
             }
         }
 
@@ -139,11 +119,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
         {
             if (lightmapsProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("No lightmap textures available. Bake lightmaps to generate data.", MessageType.Info);
+                GuiKit.InfoBox("No lightmap textures available. Bake lightmaps to generate data.", InfoMessageType.Info);
                 return;
             }
 
-            EditorGUILayout.LabelField("Lightmap Textures", EditorStyles.miniBoldLabel);
+            GuiKit.Title("Lightmap Textures");
             for (int i = 0; i < lightmapsProp.arraySize; i++)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -154,8 +134,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
 
             if (lightmapsDirProp.arraySize > 0)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField("Directional Lightmap Textures", EditorStyles.miniBoldLabel);
+                GuiKit.Title("Directional Lightmap Textures");
                 for (int i = 0; i < lightmapsDirProp.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
@@ -167,8 +146,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
 
             if (shadowMasksProp.arraySize > 0)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField("Shadow Mask Textures", EditorStyles.miniBoldLabel);
+                GuiKit.Title("Shadow Mask Textures");
                 for (int i = 0; i < shadowMasksProp.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
@@ -183,7 +161,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
         {
             if (lightInfosProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("No light information available. Bake lightmaps to generate data.", MessageType.Info);
+                GuiKit.InfoBox("No light information available. Bake lightmaps to generate data.", InfoMessageType.Info);
                 return;
             }
 
@@ -194,72 +172,50 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
                 var bakeTypeProp = element.FindPropertyRelative("lightmapBakeType");
                 var mixedModeProp = element.FindPropertyRelative("mixedLightingMode");
 
-                EditorGUILayout.BeginVertical("box");
-                EditorGUILayout.LabelField($"Light {i}", EditorStyles.miniBoldLabel);
-                
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.PropertyField(lightProp, new GUIContent("Light"));
-                EditorGUILayout.PropertyField(bakeTypeProp, new GUIContent("Bake Type"));
-                EditorGUILayout.PropertyField(mixedModeProp, new GUIContent("Mixed Lighting Mode"));
-                EditorGUI.EndDisabledGroup();
-
-                EditorGUILayout.EndVertical();
+                GuiKit.BeginBox($"Light {i}");
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.PropertyField(lightProp, new GUIContent("Light"));
+                    EditorGUILayout.PropertyField(bakeTypeProp, new GUIContent("Bake Type"));
+                    EditorGUILayout.PropertyField(mixedModeProp, new GUIContent("Mixed Lighting Mode"));
+                }
+                GuiKit.EndBox();
             }
         }
 
         private void DrawDebugInfo()
         {
-            showDebugInfo = EditorGUILayout.Foldout(showDebugInfo, "Debug Information", true);
-            if (showDebugInfo)
-            {
-                EditorGUI.indentLevel++;
-                
-                var target = (PrefabLightmapData)serializedObject.targetObject;
-                
-                EditorGUILayout.LabelField("Data Validation", EditorStyles.miniBoldLabel);
-                EditorGUILayout.LabelField($"Renderer Infos: {rendererInfosProp.arraySize}");
-                EditorGUILayout.LabelField($"Lightmaps: {lightmapsProp.arraySize}");
-                EditorGUILayout.LabelField($"Directional Maps: {lightmapsDirProp.arraySize}");
-                EditorGUILayout.LabelField($"Shadow Masks: {shadowMasksProp.arraySize}");
-                EditorGUILayout.LabelField($"Lights: {lightInfosProp.arraySize}");
-                
-                EditorGUILayout.Space();
-                
-                EditorGUILayout.LabelField("Validation Status", EditorStyles.miniBoldLabel);
-                bool isValid = ValidateData();
-                EditorGUILayout.LabelField($"Valid: {(isValid ? "Yes" : "No")}", 
-                    isValid ? EditorStyles.label : EditorStyles.boldLabel);
-                
-                if (!isValid)
-                {
-                    EditorGUILayout.HelpBox("Data validation failed. Check the console for details.", MessageType.Warning);
-                }
-                
-                EditorGUI.indentLevel--;
-            }
+            using var section = GuiKit.CollapsedSection("PrefabLightmap.Debug", "Debug Information");
+            if (!section.Expanded)
+                return;
+
+            GuiKit.Title("Data Validation");
+            EditorGUILayout.LabelField($"Renderer Infos: {rendererInfosProp.arraySize}");
+            EditorGUILayout.LabelField($"Lightmaps: {lightmapsProp.arraySize}");
+            EditorGUILayout.LabelField($"Directional Maps: {lightmapsDirProp.arraySize}");
+            EditorGUILayout.LabelField($"Shadow Masks: {shadowMasksProp.arraySize}");
+            EditorGUILayout.LabelField($"Lights: {lightInfosProp.arraySize}");
+
+            GuiKit.Title("Validation Status");
+            bool isValid = ValidateData();
+            EditorGUILayout.LabelField($"Valid: {(isValid ? "Yes" : "No")}");
+
+            if (!isValid)
+                GuiKit.ValidationBox("Data validation failed. Check the console for details.", InfoMessageType.Warning);
         }
 
         private void DrawButtons()
         {
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
-            
-            EditorGUILayout.BeginHorizontal();
-            
-            if (GUILayout.Button("Initialize Now"))
+            using (GuiKit.ActionRow())
             {
-                var target = (PrefabLightmapData)serializedObject.targetObject;
-                target.InitializeLightmapData();
-            }
-            
-            EditorGUILayout.EndHorizontal();
-            
-            EditorGUILayout.Space();
-            
-            if (GUILayout.Button("Bake All Prefab Lightmaps", GUILayout.Height(30)))
-            {
-                // Call the public static method directly
-                PrefabLightmapBaker.GenerateLightmapInfo();
+                if (GuiKit.ActionButton("Initialize Now"))
+                {
+                    var target = (PrefabLightmapData)serializedObject.targetObject;
+                    target.InitializeLightmapData();
+                }
+
+                if (GuiKit.ActionButton("Bake All Prefab Lightmaps"))
+                    PrefabLightmapBaker.GenerateLightmapInfo();
             }
         }
         #endregion

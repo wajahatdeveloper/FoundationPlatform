@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Identity;
 using UnityEditor;
 using UnityEngine;
@@ -8,39 +9,40 @@ namespace AetherNexus.FoundationPlatform.Editor.Identity
 	using AetherNexus.FoundationPlatform.DebugX;
 	
 [CustomEditor(typeof(IdentityComponent))]
-public class IdentityComponentEditor : UnityEditor.Editor
+public class IdentityComponentEditor : AetherInspectorEditor
 {
-	private void OnEnable() { }
-
 	public override void OnInspectorGUI()
 	{
 		serializedObject.Update();
 		var comp = (IdentityComponent)target;
 
-		EditorGUILayout.BeginHorizontal();
-		EditorGUILayout.PrefixLabel("ID");
-		EditorGUI.BeginDisabledGroup(true);
-		EditorGUILayout.TextField(string.IsNullOrEmpty(comp.Identity.Value) ? "(not set)" : comp.Identity.Value);
-		EditorGUI.EndDisabledGroup();
-		EditorGUILayout.EndHorizontal();
+		using (GuiKit.ActionRow())
+		{
+			EditorGUILayout.PrefixLabel("ID");
+			using (new EditorGUI.DisabledScope(true))
+			{
+				EditorGUILayout.TextField(string.IsNullOrEmpty(comp.Identity.Value) ? "(not set)" : comp.Identity.Value);
+			}
+		}
 
-		EditorGUILayout.BeginHorizontal();
-		if (GUILayout.Button("Generate ID", GUILayout.Width(90)))
+		using (GuiKit.ActionRow())
 		{
-			Undo.RecordObject(comp, "Generate ID");
-			comp.GenerateDesignTimeId();
+			if (GuiKit.ActionButton("Generate ID", 90f))
+			{
+				Undo.RecordObject(comp, "Generate ID");
+				comp.GenerateDesignTimeId();
+			}
+			if (GuiKit.ActionButton("Copy", 50f))
+			{
+				EditorGUIUtility.systemCopyBuffer = comp.Identity.Value;
+				DebugX.Debug("Copied Identity: {}",comp.Identity);
+			}
+			if (GuiKit.ActionButton("Clear", 50f))
+			{
+				Undo.RecordObject(comp, "Clear Identity");
+				comp.ClearIdentity();
+			}
 		}
-		if (GUILayout.Button("Copy", GUILayout.Width(50)))
-		{
-			EditorGUIUtility.systemCopyBuffer = comp.Identity.Value;
-			DebugX.Debug("Copied Identity: {}",comp.Identity);
-		}
-		if (GUILayout.Button("Clear", GUILayout.Width(50)))
-		{
-			Undo.RecordObject(comp, "Clear Identity");
-			comp.ClearIdentity();
-		}
-		EditorGUILayout.EndHorizontal();
 
 		serializedObject.ApplyModifiedProperties();
 	}

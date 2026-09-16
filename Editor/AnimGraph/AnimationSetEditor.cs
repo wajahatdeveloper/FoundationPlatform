@@ -5,6 +5,8 @@ using System.Reflection;
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Animation;
 using AetherNexus.FoundationPlatform;
+using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -57,15 +59,16 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			_requiredEntryIds = GetRequiredEntryIds(handler);
 			serializedObject.Update();
 
-			EditorGUI.BeginDisabledGroup(true);
-			EditorGUILayout.ObjectField("Script", MonoScript.FromScriptableObject(handler), typeof(MonoScript), false);
-			EditorGUI.EndDisabledGroup();
+			using (new EditorGUI.DisabledScope(true))
+			{
+				EditorGUILayout.ObjectField("Script", MonoScript.FromScriptableObject(handler), typeof(MonoScript), false);
+			}
 
 			EditorGUILayout.PropertyField(_parentSetProp);
 
 			if (_entriesProp == null || _list == null)
 			{
-				EditorGUILayout.HelpBox("entries property missing.", MessageType.Error);
+				GuiKit.ValidationBox("entries property missing.", InfoMessageType.Error);
 				serializedObject.ApplyModifiedProperties();
 				return;
 			}
@@ -74,7 +77,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			DrawToolbar(searchActive);
 			_sequenceStepsById = BuildSequenceStepMap(handler);
 			
-			EditorGUILayout.HelpBox("Format: [Stance]_[Movement]", MessageType.Info);
+			GuiKit.InfoBox("Format: [Stance]_[Movement]", InfoMessageType.Info);
 
 			if (searchActive)
 				DrawFilteredEntries();
@@ -84,12 +87,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			DrawSequenceChains();
 			DrawInheritedEntriesSection(handler);
 			
-			EditorGUILayout.Space(12);
-			
-			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox();
+			GuiKit.BeginBox();
 			DrawBlendProfileSection();
 			DrawValidationSection();
-			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
+			GuiKit.EndBox();
 			
 			DrawCopyEntriesSection();
 			
@@ -121,33 +122,31 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 			if (inherited.Count > 0)
 			{
-				EditorGUILayout.Space(10);
-				FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox("Inherited Entries");
+				GuiKit.BeginBox("Inherited Entries");
 				foreach (var entry in inherited)
 				{
 					if (entry == null) continue;
-					EditorGUILayout.BeginHorizontal();
-					var label = string.IsNullOrEmpty(entry.category) 
-						? entry.id 
-						: $"[{entry.category}] {entry.id}";
-					EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
-					if (GUILayout.Button("Override", GUILayout.Width(70)))
+					using (GuiKit.ActionRow())
 					{
-						OverrideEntry(handler, entry);
+						var label = string.IsNullOrEmpty(entry.category)
+							? entry.id
+							: $"[{entry.category}] {entry.id}";
+						EditorGUILayout.LabelField(label, AetherInspectorTheme.FlatHeaderLabel);
+						if (GuiKit.ActionButton("Override", 70f))
+							OverrideEntry(handler, entry);
 					}
-					EditorGUILayout.EndHorizontal();
 
-					EditorGUI.BeginDisabledGroup(true);
-					var clip = entry.clip?.Clip;
-					EditorGUILayout.ObjectField("Clip", clip, typeof(AnimationClip), false);
-					if (entry.maskAsset != null)
-						EditorGUILayout.ObjectField("Mask Asset", entry.maskAsset, typeof(AvatarMask), false);
-					else
-						EditorGUILayout.EnumPopup("Mask", entry.mask);
-					EditorGUI.EndDisabledGroup();
-					EditorGUILayout.Space(2);
+					using (new EditorGUI.DisabledScope(true))
+					{
+						var clip = entry.clip?.Clip;
+						EditorGUILayout.ObjectField("Clip", clip, typeof(AnimationClip), false);
+						if (entry.maskAsset != null)
+							EditorGUILayout.ObjectField("Mask Asset", entry.maskAsset, typeof(AvatarMask), false);
+						else
+							EditorGUILayout.EnumPopup("Mask", entry.mask);
+					}
 				}
-				FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
+				GuiKit.EndBox();
 			}
 		}
 
@@ -170,9 +169,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 		{
 			if (_blendProfileProp == null)
 			{
-				EditorGUILayout.HelpBox(
+				GuiKit.ValidationBox(
 					"blendProfile property missing. Reimport FoundationPlatform or refresh the AnimationSet script.",
-					MessageType.Warning);
+					InfoMessageType.Warning);
 				return;
 			}
 
@@ -181,49 +180,41 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			var resolved = handler != null ? handler.ResolvedBlendProfile : null;
 			bool isInherited = assignedProfile == null && resolved != null;
 
-			EditorGUILayout.BeginHorizontal();
 			float originalLabelWidth = EditorGUIUtility.labelWidth;
 			EditorGUIUtility.labelWidth = 100;
-			
-			if (isInherited)
-			{
-				GUI.backgroundColor = new Color(0.7f, 0.9f, 1f, 1f);
-			}
 
-			EditorGUILayout.PropertyField(
-				_blendProfileProp,
-				new GUIContent(isInherited ? "Blend Profile [Inh]" : "Blend Profile",
-				               "LocomotionBlendProfile asset. Required for locomotion sets; leave null to inherit."));
-			
-			GUI.backgroundColor = Color.white;
-			EditorGUIUtility.labelWidth = originalLabelWidth;
-
-			var activeProfile = assignedProfile != null ? assignedProfile : resolved;
-			if (activeProfile != null)
+			using (GuiKit.ActionRow())
 			{
-				if (GUILayout.Button("Select Profile", GUILayout.Width(100)))
+				EditorGUILayout.PropertyField(
+					_blendProfileProp,
+					new GUIContent(isInherited ? "Blend Profile [Inherited]" : "Blend Profile",
+					               "LocomotionBlendProfile asset. Required for locomotion sets; leave null to inherit."));
+
+				var activeProfile = assignedProfile != null ? assignedProfile : resolved;
+				if (activeProfile != null && GuiKit.ActionButton("Select Profile", 100f))
 					Selection.activeObject = activeProfile;
 			}
-			EditorGUILayout.EndHorizontal();
+
+			EditorGUIUtility.labelWidth = originalLabelWidth;
 
 			if (isInherited)
 			{
-				EditorGUILayout.HelpBox($"Inherited from parent set: {resolved.name}", MessageType.Info);
+				GuiKit.InfoBox($"Inherited from parent set: {resolved.name}", InfoMessageType.Info);
 			}
 			else if (assignedProfile == null)
 			{
-				EditorGUILayout.HelpBox(
+				GuiKit.InfoBox(
 					"No Blend Profile assigned. Create a LocomotionBlendProfile asset and assign it here for locomotion sets.",
-					MessageType.Info);
+					InfoMessageType.Info);
 			}
 		}
 
 		private void DrawCopyEntriesSection()
 		{
-			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBox();
-			FoundationPlatform.AetherInspector.Editor.GuiKit.BeginBoxHeader();
-			_copyFoldout = FoundationPlatform.AetherInspector.Editor.GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
-			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBoxHeader();
+			GuiKit.BeginBox();
+			GuiKit.BeginBoxHeader();
+			_copyFoldout = GuiKit.Foldout(_copyFoldout, "Copy Entries Utility");
+			GuiKit.EndBoxHeader();
 
 			if (_copyFoldout)
 			{
@@ -233,19 +224,17 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 					typeof(AnimationSet),
 					false);
 
-				using (new EditorGUI.DisabledScope(_sourceAnimationSet == null || _sourceAnimationSet == target))
+				using (GuiKit.ActionRow())
 				{
-					if (GUILayout.Button("Overwrite Entries from Source"))
+					bool canCopy = _sourceAnimationSet != null && _sourceAnimationSet != target;
+					if (GuiKit.ActionButton("Overwrite Entries from Source", canCopy)
+					    && EditorUtility.DisplayDialog("Overwrite Entries", "Are you sure you want to overwrite all entries in this AnimationSet with entries from " + _sourceAnimationSet.name + "?", "Yes", "No"))
 					{
-						if (EditorUtility.DisplayDialog("Overwrite Entries", "Are you sure you want to overwrite all entries in this AnimationSet with entries from " + _sourceAnimationSet.name + "?", "Yes", "No"))
-						{
-							CopyEntriesFrom(_sourceAnimationSet);
-						}
+						CopyEntriesFrom(_sourceAnimationSet);
 					}
 				}
 			}
-			FoundationPlatform.AetherInspector.Editor.GuiKit.EndBox();
-			EditorGUILayout.Space(2);
+			GuiKit.EndBox();
 		}
 
 		private void CopyEntriesFrom(AnimationSet source)
@@ -281,34 +270,26 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			var resolved = handler != null ? handler.ResolvedValidationProfile : null;
 			bool isInherited = assigned == null && resolved != null;
 
-			EditorGUILayout.BeginHorizontal();
 			float originalLabelWidth = EditorGUIUtility.labelWidth;
 			EditorGUIUtility.labelWidth = 100;
 
-			if (isInherited)
+			using (GuiKit.ActionRow())
 			{
-				GUI.backgroundColor = new Color(0.7f, 0.9f, 1f, 1f);
-			}
+				EditorGUILayout.PropertyField(
+					_validationProfileProp,
+					new GUIContent(isInherited ? "Validation Profile [Inherited]" : "Validation Profile",
+					               "Optional required entry ids for combat/equipment sets. Leave null to inherit."));
 
-			EditorGUILayout.PropertyField(
-				_validationProfileProp,
-				new GUIContent(isInherited ? "Validation Profile [Inh]" : "Validation Profile",
-				               "Optional required entry ids for combat/equipment sets. Leave null to inherit."));
-
-			GUI.backgroundColor = Color.white;
-			EditorGUIUtility.labelWidth = originalLabelWidth;
-
-			var activeProfile = assigned != null ? assigned : resolved;
-			if (activeProfile != null)
-			{
-				if (GUILayout.Button("Select Profile", GUILayout.Width(100)))
+				var activeProfile = assigned != null ? assigned : resolved;
+				if (activeProfile != null && GuiKit.ActionButton("Select Profile", 100f))
 					Selection.activeObject = activeProfile;
 			}
-			EditorGUILayout.EndHorizontal();
+
+			EditorGUIUtility.labelWidth = originalLabelWidth;
 
 			if (isInherited)
 			{
-				EditorGUILayout.HelpBox($"Inherited from parent set: {resolved.name}", MessageType.Info);
+				GuiKit.InfoBox($"Inherited from parent set: {resolved.name}", InfoMessageType.Info);
 			}
 
 			DrawValidationResults();
@@ -357,9 +338,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 					_matchingIndices.Add(i);
 			}
 
-			EditorGUILayout.HelpBox(
+			GuiKit.InfoBox(
 				"Non-matching entries are hidden. Clear the search to reorder, add, or remove list items.",
-				MessageType.Info);
+				InfoMessageType.Info);
 
 			if (_matchingIndices.Count == 0)
 				EditorGUILayout.LabelField("No entries match this search.");
@@ -704,11 +685,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 								sb.Append(terminalLoops ? " [loop]" : " [terminal]");
 							}
 						}
-						EditorGUILayout.HelpBox(sb.ToString(), MessageType.None);
+						GuiKit.InfoBox(sb.ToString(), InfoMessageType.None);
 					}
 					catch (InvalidOperationException ex)
 					{
-						EditorGUILayout.HelpBox(ex.Message, MessageType.Error);
+						GuiKit.ValidationBox(ex.Message, InfoMessageType.Error);
 					}
 				}
 				EditorGUI.indentLevel--;
@@ -748,24 +729,23 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 			if (duplicateIds.Count <= 0 && !hasNullClip && sequenceWarnings.Count == 0 && sequenceErrors.Count == 0)
 			{
-				EditorGUILayout.HelpBox("Validation passed. No issues found.", MessageType.Info);
+				GuiKit.InfoBox("Validation passed. No issues found.", InfoMessageType.Info);
 				return;
 			}
 
 			if (duplicateIds.Count > 0)
-				EditorGUILayout.HelpBox(
+				GuiKit.ValidationBox(
 					"Duplicate entry id(s): " + string.Join(", ", duplicateIds) + ". Generated method names will conflict.",
-					MessageType.Warning);
+					InfoMessageType.Warning);
 			if (hasNullClip)
-				EditorGUILayout.HelpBox(
+				GuiKit.ValidationBox(
 					"Some entries have no clip assigned. Runtime play for those ids may throw.",
-					MessageType.Warning);
-
+					InfoMessageType.Warning);
 
 			for (int w = 0; w < sequenceWarnings.Count; w++)
-				EditorGUILayout.HelpBox(sequenceWarnings[w], MessageType.Warning);
+				GuiKit.ValidationBox(sequenceWarnings[w], InfoMessageType.Warning);
 			for (int e = 0; e < sequenceErrors.Count; e++)
-				EditorGUILayout.HelpBox(sequenceErrors[e], MessageType.Error);
+				GuiKit.ValidationBox(sequenceErrors[e], InfoMessageType.Error);
 		}
 
 		private HashSet<string> GetRequiredEntryIds(AnimationSet set)
