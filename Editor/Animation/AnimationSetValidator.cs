@@ -1,10 +1,52 @@
 using System;
 using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.Animation;
+using AetherNexus.FoundationPlatform.Editor.Utilities.Validation;
+using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Animation
 {
+	/// <summary>Surfaces link-chain problems on the asset itself; <see cref="AnimationSetValidator.LogValidation"/> stays console-based for the agent tools that capture it.</summary>
+	public sealed class AnimationSetAuthoringValidator : IAuthoringValidator
+	{
+		private const string SourceName = "AnimationSet";
+
+		public ValidationScope Scope => ValidationScope.Asset;
+
+		public string Source => SourceName;
+
+		public Type TargetType => typeof(AnimationSet);
+
+		public void Collect(in ValidationRequest request, List<AuthoringIssue> issues)
+		{
+			var set = request.Target as AnimationSet;
+			if (set == null)
+				return;
+
+			var warnings = new List<string>();
+			var errors = new List<string>();
+			AnimationSetValidator.CollectLinkChainValidation(set, AnimationSetValidator.BuildEntryMap(set), warnings, errors);
+
+			for (var i = 0; i < errors.Count; i++)
+				issues.Add(Make(AuthoringIssueSeverity.Error, errors[i], set));
+			for (var i = 0; i < warnings.Count; i++)
+				issues.Add(Make(AuthoringIssueSeverity.Warning, warnings[i], set));
+		}
+
+		private static AuthoringIssue Make(AuthoringIssueSeverity severity, string message, AnimationSet set)
+		{
+			return new AuthoringIssue
+			{
+				Severity = severity,
+				Source = SourceName,
+				Message = message,
+				RelatedObject = set,
+				AssetPath = AssetDatabase.GetAssetPath(set),
+			};
+		}
+	}
+
 	public static class AnimationSetValidator
 	{
 		public static void LogValidation(AnimationSet set)

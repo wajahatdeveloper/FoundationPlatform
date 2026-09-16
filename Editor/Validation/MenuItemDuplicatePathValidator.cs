@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
-using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
 {
@@ -12,21 +11,34 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
     /// same path (and the same execute/validate role) silently shadow one another in Unity — no
     /// compile error, no runtime warning, just a menu entry that quietly calls the wrong method.
     /// </summary>
-    [InitializeOnLoad]
+    internal sealed class MenuItemDuplicateValidator : IAuthoringValidator
+    {
+        private const string SourceName = "Editor Menus";
+
+        public ValidationScope Scope => ValidationScope.Project;
+
+        public string Source => SourceName;
+
+        public System.Type TargetType => null;
+
+        public void Collect(in ValidationRequest request, List<AuthoringIssue> issues)
+        {
+            var duplicates = MenuItemDuplicatePathValidator.FindDuplicates();
+            for (int i = 0; i < duplicates.Count; i++)
+            {
+                issues.Add(new AuthoringIssue
+                {
+                    Severity = AuthoringIssueSeverity.Error,
+                    Source = SourceName,
+                    Message = duplicates[i],
+                });
+            }
+        }
+    }
+
     internal static class MenuItemDuplicatePathValidator
     {
-        static MenuItemDuplicatePathValidator()
-        {
-            EditorApplication.delayCall += RunOnce;
-        }
-
-        private static void RunOnce()
-        {
-            EditorApplication.delayCall -= RunOnce;
-            FindDuplicates();
-        }
-
-        /// <summary>Callable on demand (e.g. after a menu-restructure pass) in addition to the automatic load-time check.</summary>
+        /// <summary>Reports rather than logs; Central Validation owns the surfacing.</summary>
         internal static List<string> FindDuplicates()
         {
             var groups = new Dictionary<(string path, bool isValidate), List<(MethodInfo method, string path)>>();
@@ -51,9 +63,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
                 var (path, isValidate) = entry.Key;
                 var role = isValidate ? "validate" : "execute";
                 var owners = string.Join(", ", entry.Value.Select(m => $"{m.method.DeclaringType?.FullName}.{m.method.Name}"));
-                var message = $"[MenuItemDuplicatePathValidator] Duplicate MenuItem \"{path}\" ({role}) registered by: {owners}";
-                Debug.LogError(message);
-                duplicates.Add(message);
+                duplicates.Add($"Duplicate MenuItem \"{path}\" ({role}) registered by: {owners}");
             }
 
             return duplicates;

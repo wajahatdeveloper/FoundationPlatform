@@ -68,7 +68,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class Linting
         {
             private const string Root = Tools + "Linting/";
-            public const string RunFullScan          = Root + "Run Full Scan";
             public const string PrintActiveConfigPath = Root + "Print Active Config Path";
             public const string StaleComponentScanner = Root + "Stale Component Scanner";
             public const string MissingDesignerIcons = Root + "Report Missing Designer Icons";
@@ -231,7 +230,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
 			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
 			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
-			public const string GasFindDuplicateEffectIdentityTags = Root + "GAS/Find Duplicate Effect Identity Tags";
 
 			/// <summary>Tools/Domain/AI/* — AI authoring and generators.</summary>
 			public const string AiGenerateCommanderBrain        = Root + "AI/Generate Default Commander Brain";
