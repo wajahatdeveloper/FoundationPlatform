@@ -51,9 +51,16 @@ namespace AetherNexus.FoundationPlatform.Animation
             if (Graph.IsValid()) Graph.Destroy();
 
             _animator = animator;
-            _cullRenderer = animator != null ? animator.GetComponentInChildren<Renderer>(true) : null;
+            // The skinned body, not the first renderer found: a weapon or VFX renderer under the rig
+            // reports its own visibility, and the CullCompletely skip below would then throttle on it.
+            _cullRenderer = animator != null ? animator.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+            _accumulatedDeltaTime = 0f;
+            // A rebuilt graph starts at full rate. Carrying the old divisor over would create the new graph
+            // on the Manual clock and the caller's following SetUpdateDivisor(1) would have to flip it back,
+            // which is the transition that leaves a graph running but frozen.
+            _updateDivisor = 1;
+            _updatePhase = 0;
             Graph = PlayableGraph.Create(gameObject.name + " AnimGraph");
-            Graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
             var output = AnimationPlayableOutput.Create(Graph, "Output", animator);
             _layerMixer = AnimationLayerMixerPlayable.Create(Graph, initialLayerCount);
@@ -90,19 +97,31 @@ namespace AetherNexus.FoundationPlatform.Animation
 
             _updatePhase = divisor > 1 ? ((phase % divisor) + divisor) % divisor : 0;
 
-            if (_updateDivisor == divisor)
-                return;
+            if (_updateDivisor != divisor)
+            {
+                _updateDivisor = divisor;
+                _accumulatedDeltaTime = 0f;
+            }
 
-            _updateDivisor = divisor;
-            _accumulatedDeltaTime = 0f;
             ApplyTimeUpdateMode();
         }
 
-        // Manual hands the clock to Update(); GameTime lets Unity's director advance the graph every frame.
-        // Leaving it on GameTime while also calling Evaluate would double-advance every clip.
+        /// <summary>
+        /// A graph is born with its clock and must not change it afterwards.
+        /// <para>
+        /// Manual hands the clock to <see cref="Update"/>; GameTime lets Unity's director advance the graph
+        /// and is the only mode under which the rig's pose actually reaches the screen — a manually driven
+        /// graph writes its transforms but the skinned mesh keeps rendering the pose it had. Switching a
+        /// live graph from Manual back to GameTime is worse still: it keeps reporting Playing while nothing
+        /// advances, which is the LOD promote freeze, and Unity exposes no way to re-register it. So the
+        /// mode follows the divisor the graph is created with, and returning to divisor 1 means rebuilding
+        /// the graph (see the owner's rebuild entry point) rather than flipping the mode under it.
+        /// </para>
+        /// </summary>
         private void ApplyTimeUpdateMode()
         {
             if (!IsValid) return;
+
             Graph.SetTimeUpdateMode(_updateDivisor > 1 ? DirectorUpdateMode.Manual : DirectorUpdateMode.GameTime);
         }
 
@@ -136,6 +155,8 @@ namespace AetherNexus.FoundationPlatform.Animation
                 float dt = Time.deltaTime;
                 foreach (var layer in Layers)
                     layer.Update(dt);
+
+                // No Evaluate here: at divisor 1 the graph is on GameTime and Unity's director advances it.
                 return;
             }
 
@@ -151,7 +172,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         private void OnEnable()
         {
-            if (Graph.IsValid()) Graph.Play();
+            if (!Graph.IsValid()) return;
+
+            Graph.Play();
         }
 
         private void OnDisable()
