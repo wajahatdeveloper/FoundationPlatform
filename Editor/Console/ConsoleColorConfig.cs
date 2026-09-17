@@ -1,4 +1,6 @@
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.DebugX;
+using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
@@ -70,10 +72,12 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         }
 
         /// <summary>Highlight colour for selected rows (explicit, since our per-row backgrounds override ListView's).</summary>
-        public static Color SelectionColor => new Color(0.22f, 0.38f, 0.60f, 0.85f);
+        public static Color SelectionColor => AetherInspectorTheme.MenuSelectionBackground;
 
         /// <summary>Dimmed colour for synthetic marker/divider rows (play-mode transitions).</summary>
-        public static Color MarkerColor => new Color(0.55f, 0.65f, 0.55f);
+        public static Color MarkerColor => EditorGUIUtility.isProSkin
+            ? new Color(0.55f, 0.65f, 0.55f)
+            : new Color(0.24f, 0.40f, 0.24f);
 
         public const int DefaultFontSize = 12;
         public const int DefaultRowHeight = 20;
@@ -84,13 +88,17 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             {
                 case LogLevel.Error:
                 case LogLevel.Fatal:
-                    return new Color(1f, 0.45f, 0.42f);
+                    return EditorGUIUtility.isProSkin
+                        ? new Color(1f, 0.45f, 0.42f)
+                        : new Color(0.70f, 0.11f, 0.08f);
                 case LogLevel.Warning:
-                    return new Color(1f, 0.85f, 0.4f);
+                    return EditorGUIUtility.isProSkin
+                        ? new Color(1f, 0.85f, 0.4f)
+                        : new Color(0.55f, 0.40f, 0f);
                 case LogLevel.Verbose:
-                    return new Color(0.6f, 0.6f, 0.62f);
+                    return AetherInspectorTheme.TertiaryTextColor;
                 default:
-                    return new Color(0.86f, 0.86f, 0.88f);
+                    return AetherInspectorTheme.PrimaryTextColor;
             }
         }
 
@@ -98,14 +106,17 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         public static Color ChannelColor(string channel)
         {
             if (string.IsNullOrEmpty(channel))
-                return new Color(0.45f, 0.45f, 0.48f);
+                return AetherInspectorTheme.TertiaryTextColor;
 
             int hash = 17;
             foreach (char c in channel)
                 hash = hash * 31 + c;
 
             float hue = (hash & 0x7fffffff) % 360 / 360f;
-            return Color.HSVToRGB(hue, 0.45f, 0.9f);
+            // Light skin needs saturated-and-darker chips; the same value/saturation reads as washed out on white.
+            return EditorGUIUtility.isProSkin
+                ? Color.HSVToRGB(hue, 0.45f, 0.9f)
+                : Color.HSVToRGB(hue, 0.85f, 0.55f);
         }
 
         /// <summary>Subtle zebra-stripe background for odd rows when alternating rows is enabled.</summary>
@@ -113,7 +124,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
         {
             if (!AlternatingRows || (index & 1) == 0)
                 return Color.clear;
-            return new Color(1f, 1f, 1f, 0.035f);
+            return AetherInspectorTheme.TableRowBackgroundB;
         }
     }
 }

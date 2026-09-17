@@ -9,6 +9,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Identity
 	using AetherNexus.FoundationPlatform.DebugX;
 	
 [CustomEditor(typeof(IdentityComponent))]
+[CanEditMultipleObjects]
 public class IdentityComponentEditor : AetherInspectorEditor
 {
 	public override void OnInspectorGUI()

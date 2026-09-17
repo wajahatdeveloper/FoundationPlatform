@@ -13,6 +13,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools.Editor
     /// Custom editor for PrefabLightmapData component with improved Inspector interface.
     /// </summary>
     [CustomEditor(typeof(PrefabLightmapData))]
+    [CanEditMultipleObjects]
     public class PrefabLightmapDataEditor : AetherInspectorEditor
     {
         #region Serialized Properties

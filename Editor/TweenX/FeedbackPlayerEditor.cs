@@ -15,6 +15,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
     /// appear in Play mode.
     /// </summary>
     [CustomEditor(typeof(FeedbackPlayer))]
+    [CanEditMultipleObjects]
     public sealed class FeedbackPlayerEditor : AetherInspectorEditor
     {
         private SerializedProperty _playOnEnable;

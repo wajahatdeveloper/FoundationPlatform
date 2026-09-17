@@ -7,6 +7,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 [CustomEditor(typeof(InspectorSeparator))]
+[CanEditMultipleObjects]
 public class InspectorSeparatorEditor : AetherInspectorEditor
 {
     private SerializedProperty _labelProperty;

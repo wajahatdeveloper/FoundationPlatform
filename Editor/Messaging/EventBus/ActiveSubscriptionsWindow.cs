@@ -457,13 +457,10 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				if (SelectedRow == item)
 				{
-					return new Color(0.35f, 0.6f, 1f, 0.35f);
+					return EventBusConstants.RowSelectionBackground;
 				}
 
-				// Alternating rows
-				return rowIndex % 2 == 0
-					? new Color(0.22f, 0.22f, 0.22f, 1f)
-					: new Color(0.27f, 0.27f, 0.27f, 1f);
+				return EventBusConstants.RowBackground(rowIndex);
 			});
 
 			// Map column indices to SubscribersSortBy values

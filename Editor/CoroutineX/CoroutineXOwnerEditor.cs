@@ -7,6 +7,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.CoroutineX
 {
 [CustomEditor(typeof(CoroutineXOwner))]
+[CanEditMultipleObjects]
 public class CoroutineXOwnerEditor : AetherInspectorEditor
 {
     private SerializedProperty _coroutinesProperty;

@@ -575,45 +575,21 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			{
 				if (SelectedRow == item)
 				{
-					return new Color(0.35f, 0.6f, 1f, 0.35f);
+					return EventBusConstants.RowSelectionBackground;
 				}
 
 				#if RULESYSTEM_PRESENT
-				// Highlight IRuleAction-based events with mild purple
+				// IRuleAction-based events carry a purple wash, deeper once the action is committed.
 				if (item.IsIRuleActionBased)
 				{
-					// Differentiate validation vs committed actions
-					bool isValidation = !string.IsNullOrEmpty(item.TypeName) && item.TypeName.Contains("(Validation)");
 					bool isCommitted = !string.IsNullOrEmpty(item.TypeName) && item.TypeName.Contains("(Committed)");
-					
-					if (isValidation)
-					{
-						// Lighter purple for validation actions
-						return rowIndex % 2 == 0
-							? new Color(0.4f, 0.3f, 0.45f, 1f)  // Lighter purple for even rows
-							: new Color(0.45f, 0.35f, 0.5f, 1f);  // Even lighter purple for odd rows
-					}
-					else if (isCommitted)
-					{
-						// Darker purple for committed actions
-						return rowIndex % 2 == 0
-							? new Color(0.35f, 0.25f, 0.4f, 1f)  // Darker purple for even rows
-							: new Color(0.4f, 0.3f, 0.45f, 1f);  // Slightly lighter purple for odd rows
-					}
-					else
-					{
-						// Default purple for other action-based events
-						return rowIndex % 2 == 0
-							? new Color(0.35f, 0.25f, 0.4f, 1f)  // Mild purple for even rows
-							: new Color(0.4f, 0.3f, 0.45f, 1f);  // Slightly lighter mild purple for odd rows
-					}
+					bool isValidation = !string.IsNullOrEmpty(item.TypeName) && item.TypeName.Contains("(Validation)");
+					float strength = isValidation ? 0.14f : isCommitted ? 0.30f : 0.22f;
+					return EventBusConstants.RowTintedBackground(rowIndex, EventBusConstants.RULE_ACTION_HUE, strength);
 				}
 				#endif
 
-				// Slightly lighter alternating rows to match request
-				return rowIndex % 2 == 0
-					? new Color(0.22f, 0.22f, 0.22f, 1f)
-					: new Color(0.27f, 0.27f, 0.27f, 1f);
+				return EventBusConstants.RowBackground(rowIndex);
 			});
 
 			// Map column indices to HistorySortBy values

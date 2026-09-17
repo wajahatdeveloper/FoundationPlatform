@@ -1,4 +1,6 @@
 #if UNITY_EDITOR
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
+using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
@@ -50,16 +52,46 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 		public const int MIN_WARN_PERCENT = 50;
 		public const int MAX_WARN_PERCENT = 95;
 		
-		// Colors
-		public static readonly Color COLOR_SORT_HIGHLIGHT = new Color(0.7f, 0.85f, 1f);
-		public static readonly Color COLOR_SORT_BUTTON = new Color(0.7f, 0.9f, 1f);
-		public static readonly Color COLOR_DOMAIN = new Color(0.5f, 0.8f, 1f);
-		public static readonly Color COLOR_SYSTEM = new Color(1f, 0.8f, 0.5f);
-		public static readonly Color COLOR_FRAMEWORK = new Color(0.8f, 0.8f, 0.8f);
-		public static readonly Color COLOR_DEPTH_ERROR = new Color(1f, 0.4f, 0.4f);
-		public static readonly Color COLOR_DEPTH_WARNING = new Color(1f, 0.9f, 0.5f);
-		public static readonly Color COLOR_SUBSCRIBE = new Color(0.5f, 1f, 0.5f);
-		public static readonly Color COLOR_UNSUBSCRIBE = new Color(1f, 0.5f, 0.5f);
+		// Colors. Pale tints read on the dark skin and vanish on the light one, so every accent has
+		// a darker light-skin counterpart and the table chrome defers to AetherInspectorTheme.
+		private static bool Pro => EditorGUIUtility.isProSkin;
+
+		public static Color COLOR_SORT_HIGHLIGHT => Pro ? new Color(0.7f, 0.85f, 1f) : new Color(0.13f, 0.32f, 0.60f);
+		public static Color COLOR_SORT_BUTTON => Pro ? new Color(0.7f, 0.9f, 1f) : new Color(0.13f, 0.35f, 0.62f);
+		public static Color COLOR_DOMAIN => Pro ? new Color(0.5f, 0.8f, 1f) : new Color(0.10f, 0.36f, 0.62f);
+		public static Color COLOR_SYSTEM => Pro ? new Color(1f, 0.8f, 0.5f) : new Color(0.55f, 0.36f, 0.02f);
+		public static Color COLOR_FRAMEWORK => AetherInspectorTheme.SecondaryTextColor;
+		public static Color COLOR_DEPTH_ERROR => Pro ? new Color(1f, 0.4f, 0.4f) : new Color(0.68f, 0.10f, 0.10f);
+		public static Color COLOR_DEPTH_WARNING => Pro ? new Color(1f, 0.9f, 0.5f) : new Color(0.54f, 0.40f, 0f);
+		public static Color COLOR_SUBSCRIBE => Pro ? new Color(0.5f, 1f, 0.5f) : new Color(0.10f, 0.45f, 0.13f);
+		public static Color COLOR_UNSUBSCRIBE => Pro ? new Color(1f, 0.5f, 0.5f) : new Color(0.62f, 0.13f, 0.13f);
+
+		/// <summary>Background for the row the user picked, matching menu/list selection elsewhere.</summary>
+		public static Color RowSelectionBackground => AetherInspectorTheme.MenuSelectionBackground;
+
+		/// <summary>Zebra striping for table rows.</summary>
+		public static Color RowBackground(int rowIndex) => rowIndex % 2 == 0
+			? AetherInspectorTheme.TableRowBackgroundA
+			: AetherInspectorTheme.TableRowBackgroundB;
+
+		/// <summary>
+		/// Semantic row tint (category highlighting) laid over the zebra striping as a translucent wash,
+		/// so the hue survives without deciding the row's lightness for the skin.
+		/// </summary>
+		public static Color RowTintedBackground(int rowIndex, Color hue, float strength)
+		{
+			Color baseColor = RowBackground(rowIndex);
+			Color tint = hue;
+			tint.a = strength;
+			return new Color(
+				Mathf.Lerp(baseColor.r, tint.r, tint.a),
+				Mathf.Lerp(baseColor.g, tint.g, tint.a),
+				Mathf.Lerp(baseColor.b, tint.b, tint.a),
+				Mathf.Max(baseColor.a, tint.a));
+		}
+
+		/// <summary>Hue for rows backed by an IRuleAction, shaded per lifecycle stage.</summary>
+		public static Color RULE_ACTION_HUE => Pro ? new Color(0.62f, 0.45f, 0.78f) : new Color(0.42f, 0.24f, 0.62f);
 	}
 }
 #endif

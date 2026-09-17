@@ -8,6 +8,7 @@ using UnityEditor;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 [CustomEditor(typeof(Comment))]
+[CanEditMultipleObjects]
 public class CommentEditor : AetherInspectorEditor
 {
     private SerializedProperty messageProperty;

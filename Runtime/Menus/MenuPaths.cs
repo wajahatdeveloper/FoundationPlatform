@@ -213,6 +213,19 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string OpenRagdollHelper     = Context + "BoneMapper/Open Ragdoll Helper";
 		}
 
+		/// <summary>CONTEXT/CombatComponent/* — right-click actions on the fighter that owns the attack.</summary>
+		public static class CombatContext
+		{
+			public const string OpenCombatPreview = Context + "CombatComponent/Open Combat Preview";
+		}
+
+		/// <summary>CONTEXT/&lt;equipment component&gt;/* — right-click actions on the character that carries the item.</summary>
+		public static class ItemContext
+		{
+			public const string OpenIkPreview         = Context + "EquipmentIKRuntime/Open Weapon Grip & Hand IK";
+			public const string OpenEquipmentBindings = Context + "InventoryComponent/Open Weapon Attach Points & Holsters";
+		}
+
 		// ============================================================================
 		// Designer-facing menus — Domain / Platform only (no dual legacy registration).
 		// Domain: reach a tool by *what it does*. Platform: project setup / package integration.

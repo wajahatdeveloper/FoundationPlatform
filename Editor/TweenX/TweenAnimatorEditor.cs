@@ -12,6 +12,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
     /// dashed line from the current transform, so designers can author motion targets visually.
     /// </summary>
     [CustomEditor(typeof(TweenAnimator))]
+    [CanEditMultipleObjects]
     public sealed class TweenAnimatorEditor : AetherInspectorEditor
     {
         private void OnSceneGUI()

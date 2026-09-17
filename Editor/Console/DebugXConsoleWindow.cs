@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
@@ -216,7 +217,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             _emptyHint.style.justifyContent = Justify.Center;
             _emptyHint.style.display = DisplayStyle.None;
             _emptyHintLabel = new Label();
-            _emptyHintLabel.style.color = new Color(0.65f, 0.65f, 0.68f);
+            _emptyHintLabel.style.color = AetherInspectorTheme.SecondaryTextColor;
             _emptyHintLabel.style.fontSize = 13;
             _emptyHintLabel.style.marginBottom = 6;
             _emptyHint.Add(_emptyHintLabel);
@@ -238,7 +239,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             _watchScroll.style.width = 260;
             _watchScroll.style.flexShrink = 0;
             _watchScroll.style.borderRightWidth = 1;
-            _watchScroll.style.borderRightColor = new Color(0f, 0f, 0f, 0.3f);
+            _watchScroll.style.borderRightColor = AetherInspectorTheme.MenuSeparatorColor;
             _watchScroll.style.display = DisplayStyle.None;
             _watchPane = new VisualElement();
             _watchPane.style.paddingLeft = _watchPane.style.paddingRight = 6;
@@ -277,9 +278,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             _statusLabel.style.fontSize = 11;
             _statusLabel.style.paddingLeft = 6;
             _statusLabel.style.paddingTop = _statusLabel.style.paddingBottom = 2;
-            _statusLabel.style.color = new Color(0.6f, 0.6f, 0.62f);
+            _statusLabel.style.color = AetherInspectorTheme.TertiaryTextColor;
             _statusLabel.style.borderTopWidth = 1;
-            _statusLabel.style.borderTopColor = new Color(0f, 0f, 0f, 0.3f);
+            _statusLabel.style.borderTopColor = AetherInspectorTheme.MenuSeparatorColor;
             root.Add(_statusLabel);
 
             _compilingOverlay = BuildCompilingOverlay();
@@ -340,7 +341,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             overlay.style.bottom = 0;
             overlay.style.alignItems = Align.Center;
             overlay.style.justifyContent = Justify.Center;
-            overlay.style.backgroundColor = new Color(0f, 0f, 0f, 0.55f);
+            overlay.style.backgroundColor = AetherInspectorTheme.OverlayScrim;
             overlay.pickingMode = PickingMode.Ignore;
             overlay.style.display = DisplayStyle.None;
 
@@ -585,7 +586,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             if (_searchField == null) return;
             bool invalid = _filter.UseRegex && !_filter.SearchRegexValid;
             _searchField.style.backgroundColor = invalid
-                ? new StyleColor(new Color(0.55f, 0.15f, 0.15f, 0.55f))
+                ? new StyleColor(EditorGUIUtility.isProSkin
+                    ? new Color(0.55f, 0.15f, 0.15f, 0.55f)
+                    : new Color(0.85f, 0.35f, 0.35f, 0.45f))
                 : new StyleColor(StyleKeyword.Null);
             _searchField.tooltip = invalid
                 ? "Invalid regular expression — rows are not being filtered"
@@ -769,7 +772,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
         // --- Saved tabs ---
 
-        private static readonly Color ActiveTabColor = new Color(0.25f, 0.42f, 0.60f, 0.65f);
+        private static Color ActiveTabColor => AetherInspectorTheme.TabSelectedBackground;
 
         private void RebuildTabs()
         {
@@ -952,7 +955,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             src.style.unityFontStyleAndWeight = FontStyle.Bold;
 
             var time = new Label { name = "time" };
-            time.style.width = ConsoleColorConfig.TimeWidth; time.style.flexShrink = 0; time.style.color = new Color(0.55f, 0.55f, 0.58f);
+            time.style.width = ConsoleColorConfig.TimeWidth; time.style.flexShrink = 0; time.style.color = AetherInspectorTheme.TertiaryTextColor;
 
             var chan = new Label { name = "chan" };
             chan.style.width = ConsoleColorConfig.ChannelWidth; chan.style.flexShrink = 0;
@@ -972,7 +975,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
             var cnt = new Label { name = "cnt" };
             cnt.style.width = ConsoleColorConfig.CountWidth; cnt.style.flexShrink = 0; cnt.style.unityTextAlign = TextAnchor.MiddleRight;
-            cnt.style.color = new Color(0.7f, 0.7f, 0.72f);
+            cnt.style.color = AetherInspectorTheme.SecondaryTextColor;
 
             var msg = new Label { name = "msg" };
             msg.style.flexGrow = 1; msg.style.overflow = Overflow.Hidden;
@@ -985,7 +988,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             var caller = new Label { name = "caller" };
             caller.style.height = CallerLineHeight;
             caller.style.marginLeft = 30; // dot + src columns
-            caller.style.color = new Color(0.5f, 0.5f, 0.54f);
+            caller.style.color = AetherInspectorTheme.TertiaryTextColor;
             caller.style.overflow = Overflow.Hidden;
             caller.style.whiteSpace = WhiteSpace.NoWrap;
             caller.style.textOverflow = TextOverflow.Ellipsis;
@@ -1041,10 +1044,10 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             src.style.fontSize = fs - 2;
             switch (e.Source)
             {
-                case ConsoleSource.Unity: src.text = "U"; src.style.color = new Color(0.4f, 0.72f, 0.9f); break;
-                case ConsoleSource.Compiler: src.text = "C"; src.style.color = new Color(1f, 0.5f, 0.4f); break;
+                case ConsoleSource.Unity: src.text = "U"; src.style.color = AetherInspectorTheme.LinkTextColor; break;
+                case ConsoleSource.Compiler: src.text = "C"; src.style.color = ConsoleColorConfig.LevelColor(LogLevel.Error); break;
                 case ConsoleSource.Marker: src.text = ""; break;
-                default: src.text = "D"; src.style.color = new Color(0.55f, 0.55f, 0.58f); break;
+                default: src.text = "D"; src.style.color = AetherInspectorTheme.TertiaryTextColor; break;
             }
 
             el.tooltip = Truncate(e.Message, 500);
@@ -1332,7 +1335,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             chip.style.marginLeft = 2;
             chip.style.marginTop = chip.style.marginBottom = 1;
             chip.style.paddingLeft = chip.style.paddingRight = 6;
-            chip.style.backgroundColor = new Color(0.25f, 0.35f, 0.45f, 0.45f);
+            chip.style.backgroundColor = AetherInspectorTheme.TagChipBackground;
             chip.style.borderTopLeftRadius = chip.style.borderTopRightRadius = 8;
             chip.style.borderBottomLeftRadius = chip.style.borderBottomRightRadius = 8;
             return chip;
@@ -1666,9 +1669,9 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             var h = new VisualElement();
             h.style.flexDirection = FlexDirection.Row;
             h.style.flexShrink = 0;
-            h.style.backgroundColor = new Color(0f, 0f, 0f, 0.2f);
+            h.style.backgroundColor = AetherInspectorTheme.TableHeaderBackground;
             h.style.borderBottomWidth = 1;
-            h.style.borderBottomColor = new Color(0f, 0f, 0f, 0.4f);
+            h.style.borderBottomColor = AetherInspectorTheme.MenuSeparatorColor;
 
             // Spacer aligning with the row's level-dot (14) + source-tag (16) columns.
             var spacer = new VisualElement();
@@ -1687,7 +1690,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
                 l.style.unityFontStyleAndWeight = FontStyle.Bold;
                 l.style.fontSize = 11;
                 l.style.paddingLeft = 2;
-                l.style.color = new Color(0.7f, 0.7f, 0.72f);
+                l.style.color = AetherInspectorTheme.SecondaryTextColor;
                 l.RegisterCallback<ClickEvent>(_ => OnHeaderClick(col));
                 _sortLabels[col] = l;
                 h.Add(l);
@@ -1886,14 +1889,14 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
 
         private static Label Hint(string text)
         {
-            var l = new Label(text) { style = { color = new Color(0.6f, 0.6f, 0.62f) } };
+            var l = new Label(text) { style = { color = AetherInspectorTheme.TertiaryTextColor } };
             l.style.whiteSpace = WhiteSpace.Normal;
             return l;
         }
 
         private static Label Meta(string text)
         {
-            var l = new Label(text) { style = { color = new Color(0.68f, 0.68f, 0.7f) } };
+            var l = new Label(text) { style = { color = AetherInspectorTheme.SecondaryTextColor } };
             l.style.whiteSpace = WhiteSpace.Normal;
             l.style.fontSize = 11;
             return l;
@@ -1905,7 +1908,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             l.enableRichText = false;
             l.selection.isSelectable = true;
             l.style.whiteSpace = WhiteSpace.Normal;
-            l.style.color = new Color(0.7f, 0.7f, 0.72f);
+            l.style.color = AetherInspectorTheme.SecondaryTextColor;
             l.style.fontSize = 11;
             return l;
         }
@@ -1915,7 +1918,7 @@ namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
             var l = new Label(text);
             l.enableRichText = false;
             l.selection.isSelectable = true;
-            l.style.color = new Color(0.4f, 0.7f, 1f);
+            l.style.color = AetherInspectorTheme.LinkTextColor;
             l.style.whiteSpace = WhiteSpace.Normal;
             l.style.fontSize = 11;
             l.RegisterCallback<ClickEvent>(_ => onClick());

@@ -137,6 +137,66 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
         }
 
+        /// <summary>Label colour matching Unity's own primary label text.</summary>
+        public static Color PrimaryTextColor
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.86f, 0.86f, 0.88f)
+                    : new Color(0.13f, 0.13f, 0.14f);
+            }
+        }
+
+        /// <summary>Supporting text: counts, captions, secondary columns.</summary>
+        public static Color SecondaryTextColor
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.70f, 0.70f, 0.72f)
+                    : new Color(0.34f, 0.34f, 0.36f);
+            }
+        }
+
+        /// <summary>Least prominent text: timestamps, call sites, disabled hints.</summary>
+        public static Color TertiaryTextColor
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.55f, 0.55f, 0.58f)
+                    : new Color(0.46f, 0.46f, 0.48f);
+            }
+        }
+
+        /// <summary>Clickable text (stack frames, asset links).</summary>
+        public static Color LinkTextColor
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0.40f, 0.70f, 1f)
+                    : new Color(0.16f, 0.38f, 0.75f);
+            }
+        }
+
+        /// <summary>Dimming layer behind a modal overlay drawn inside a window.</summary>
+        public static Color OverlayScrim
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.55f)
+                    : new Color(0f, 0f, 0f, 0.35f);
+            }
+        }
+
         /// <summary>Fill behind a tag/chip pill.</summary>
         public static Color TagChipBackground
         {

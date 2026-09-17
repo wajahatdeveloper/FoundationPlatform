@@ -15,6 +15,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 	///  <see cref="AnimationTestBenchWindow"/> (button below).
 	/// </summary>
 	[CustomEditor(typeof(PlayableGraphBridge))]
+	[CanEditMultipleObjects]
 	public class PlayableGraphBridgeEditor : AetherInspectorEditor
 	{
 		private bool _layersSectionExpanded = true;

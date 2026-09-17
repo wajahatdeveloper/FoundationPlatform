@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
@@ -94,7 +95,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             if (options.Count >= vd.NumberOfItemsBeforeEnablingSearch)
             {
-                SearchableDropdownWindow.Show(rect, vd.DropdownTitle ?? label, options, current, apply);
+                InspectorOptionDropdown.Show(rect, vd.DropdownTitle ?? label, options, apply);
                 return;
             }
 
@@ -161,7 +162,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var src = e.AttributeSource;
                 var field = e.Field;
                 Action<object> apply = value => ApplyDeferred(so, path, value, src, field, targets);
-                SearchableDropdownWindow.Show(rect, asel.DropdownTitle ?? lbl.text, options, prop.objectReferenceValue, apply);
+                InspectorOptionDropdown.Show(rect, asel.DropdownTitle ?? lbl.text, options, apply);
             }
         }
 
@@ -190,7 +191,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var so = elemProp.serializedObject;
                 string path = elemProp.propertyPath;
                 Action<object> apply = value => ApplyDeferred(so, path, value, owner.AttributeSource, owner.Field, targets);
-                SearchableDropdownWindow.Show(rect, asel.DropdownTitle ?? label, options, elemProp.objectReferenceValue, apply);
+                InspectorOptionDropdown.Show(rect, asel.DropdownTitle ?? label, options, apply);
             }
         }
 
@@ -225,71 +226,78 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
     }
 
     /// <summary>
-    /// Searchable dropdown list window: search field + scrollable
-    /// option list; click (or Enter on the single match) selects. Shown as a dropdown under the control.
+    /// Searchable option dropdown built on Unity's <see cref="AdvancedDropdown"/>, so a
+    /// <c>[ValueDropdown]</c> or <c>[AssetSelector]</c> field reads like Add Component or a layer
+    /// picker: same search field, keyboard model, breadcrumb navigation and skin. Nested "a/b"
+    /// labels become child pages.
     /// </summary>
-    internal sealed class SearchableDropdownWindow : EditorWindow
+    internal sealed class InspectorOptionDropdown : AdvancedDropdown
     {
-        private List<InspectorDropdown.Option> _options;
-        private object _current;
-        private Action<object> _onSelect;
-        private string _search = string.Empty;
-        private Vector2 _scroll;
-        private bool _focusPending = true;
+        private sealed class OptionItem : AdvancedDropdownItem
+        {
+            public readonly InspectorDropdown.Option Option;
+
+            public OptionItem(string label, InspectorDropdown.Option option) : base(label)
+            {
+                Option = option;
+            }
+        }
+
+        private readonly string _title;
+        private readonly List<InspectorDropdown.Option> _options;
+        private readonly Action<object> _onSelect;
+
+        private InspectorOptionDropdown(string title, List<InspectorDropdown.Option> options,
+            Action<object> onSelect, float activatorWidth)
+            : base(new AdvancedDropdownState())
+        {
+            _title = title;
+            _options = options;
+            _onSelect = onSelect;
+            minimumSize = new Vector2(
+                Mathf.Max(activatorWidth, 240f),
+                Mathf.Clamp(options.Count * 18f + 60f, 140f, 340f));
+        }
 
         public static void Show(Rect activatorRect, string title, List<InspectorDropdown.Option> options,
-            object current, Action<object> onSelect)
+            Action<object> onSelect)
         {
-            var win = CreateInstance<SearchableDropdownWindow>();
-            win.titleContent = new GUIContent(title ?? "Select");
-            win._options = options;
-            win._current = current;
-            win._onSelect = onSelect;
-            var screenRect = GUIUtility.GUIToScreenRect(activatorRect);
-            float height = Mathf.Clamp(options.Count * 18f + 40f, 90f, 320f);
-            win.ShowAsDropDown(screenRect, new Vector2(Mathf.Max(activatorRect.width, 240f), height));
+            new InspectorOptionDropdown(title, options, onSelect, activatorRect.width).Show(activatorRect);
         }
 
-        private void OnGUI()
+        protected override AdvancedDropdownItem BuildRoot()
         {
-            GUI.SetNextControlName("dropdown-search");
-            _search = EditorGUILayout.TextField(_search, EditorStyles.toolbarSearchField);
-            if (_focusPending) { EditorGUI.FocusTextInControl("dropdown-search"); _focusPending = false; }
+            var root = new AdvancedDropdownItem(_title ?? "Select");
+            var groups = new Dictionary<string, AdvancedDropdownItem>(StringComparer.Ordinal);
 
-            var visible = new List<InspectorDropdown.Option>();
-            foreach (var o in _options)
-                if (string.IsNullOrEmpty(_search) || o.Label.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0)
-                    visible.Add(o);
-
-            if (Event.current.type == EventType.KeyDown)
+            foreach (var option in _options)
             {
-                if (Event.current.keyCode == KeyCode.Escape) { Close(); return; }
-                if (Event.current.keyCode == KeyCode.Return && visible.Count == 1)
+                string[] segments = option.Label.Split('/');
+                AdvancedDropdownItem parent = root;
+                string walked = null;
+
+                for (int i = 0; i < segments.Length - 1; i++)
                 {
-                    Select(visible[0]);
-                    return;
+                    walked = walked == null ? segments[i] : walked + "/" + segments[i];
+                    if (!groups.TryGetValue(walked, out AdvancedDropdownItem group))
+                    {
+                        group = new AdvancedDropdownItem(segments[i]);
+                        groups[walked] = group;
+                        parent.AddChild(group);
+                    }
+                    parent = group;
                 }
+
+                parent.AddChild(new OptionItem(segments[segments.Length - 1], option));
             }
 
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            foreach (var o in visible)
-            {
-                bool isCurrent = InspectorMemberResolver.ValuesEqual(_current, o.Value);
-                var style = isCurrent ? AetherInspectorTheme.MenuRowSelected : AetherInspectorTheme.MenuRow;
-                if (GUILayout.Button((isCurrent ? "✓ " : "   ") + o.Label, style))
-                {
-                    Select(o);
-                    EditorGUILayout.EndScrollView();
-                    return;
-                }
-            }
-            EditorGUILayout.EndScrollView();
+            return root;
         }
 
-        private void Select(InspectorDropdown.Option o)
+        protected override void ItemSelected(AdvancedDropdownItem item)
         {
-            try { _onSelect?.Invoke(o.Value); } catch { }
-            Close();
+            if (item is OptionItem optionItem)
+                _onSelect?.Invoke(optionItem.Option.Value);
         }
     }
 }

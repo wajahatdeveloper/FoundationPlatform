@@ -14,6 +14,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	[CustomEditor(typeof(AnimationSet))]
+	[CanEditMultipleObjects]
 	internal class AnimationSetEditor : FoundationPlatform.AetherInspector.Editor.AetherInspectorEditor
 	{
 		private const float DragHandleInset = 18f;
