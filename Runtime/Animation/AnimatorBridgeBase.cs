@@ -412,6 +412,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime)
 		{
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, startNormalizedTime, -1f);
+		}
+
+		// fadeDurationSeconds < 0 keeps the entry's authored ClipTransitionData fade.
+		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime, float fadeDurationSeconds)
+		{
 			if (entry.clip.IsLooping && onComplete != null)
 			{
 				string id = string.IsNullOrEmpty(entry.id) ? entry.clip.Clip.name : entry.id;
@@ -435,7 +441,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			if (layerIndex != AnimLayer.Locomotion)
 				layer.Weight = 1f;
 
-			var state = layer.Play(entry.clip);
+			var state = layer.Play(entry.clip, fadeDurationSeconds);
 			if (startNormalizedTime > 0f)
 			{
 				state.NormalizedTime = startNormalizedTime;
@@ -531,6 +537,24 @@ namespace AetherNexus.FoundationPlatform.Animation
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
 			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(startNormalizedTime));
+		}
+
+		/// <summary>
+		///  <see cref="PlayFromSetStrict(string, string, Action)"/> with an explicit crossfade duration.
+		///  Pass a negative value to keep the entry's authored fade. Used when one clip cuts into another
+		///  mid-motion (combo cancel), where the blend belongs to the transition, not to the clip.
+		/// </summary>
+		public PlayableState PlayFromSetStrictWithFade(string setName, string entryId, Action onComplete, float fadeDurationSeconds)
+		{
+			AssertReady();
+			CancelActiveSetSequence();
+			AnimationSet set = FindAnimationSetByName(setName);
+			if (set == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
+			AnimationSetEntry entry = set?.FindEntry(entryId);
+			if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
+			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
+			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(entry.startNormalizedTime), fadeDurationSeconds);
 		}
 
 		/// <summary>
