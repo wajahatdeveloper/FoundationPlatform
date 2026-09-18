@@ -16,9 +16,9 @@ MonoBehaviour:
   displayName: Foundation Platform
   icon: {fileID: 0}
   documentationPath: Packages/com.aethernexus.foundationplatform/Documentation~/ARCHITECTURE.md
-  packageToolMenuPaths: []
   setupInstructions: 
   gameplayTags: []
+  domains: []
   typeMappings:
   - TypeScript: {fileID: 11500000, guid: ded7978ee7d2d3b41bf146451d719e74, type: 3}
     AuthoringTier: 0
@@ -63,14 +63,14 @@ MonoBehaviour:
     - ConcretePrefix: Assets/Content/Global/Authoring
       Tokens:
       - Kind: 2
-        Literal:
+        Literal: 
   - TypeScript: {fileID: 11500000, guid: 86b3f2ba540e9fa45849d617ce311d33, type: 3}
     AuthoringTier: 2
     StructuredPatterns:
     - ConcretePrefix: Assets/Content/Global/Authoring
       Tokens:
       - Kind: 2
-        Literal:
+        Literal: 
   - TypeScript: {fileID: 11500000, guid: 5021efff9a0202f4abd81765a55e6137, type: 3}
     AuthoringTier: 0
     StructuredPatterns:
@@ -89,3 +89,8 @@ MonoBehaviour:
     CscRspAssetPath: 
     CscRspLines: []
     SeedTextFiles: []
+  unityPackageImport:
+    Enabled: 0
+    UnityPackagePath: 
+    ImportTargetPath: 
+    LastImportedSignature: 
