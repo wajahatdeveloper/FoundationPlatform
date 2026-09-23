@@ -299,6 +299,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
 			public const string CreateNewDomain                   = Root + "Create New Content Area...";
 			public const string CreateNewScene                    = Root + "Create New Scene...";
+			public const string CreateBootScene                   = Root + "Set Up Boot Scene";
 			public const string CreateDomainEvent                = Root + "Create Domain Event...";
 		}
 
