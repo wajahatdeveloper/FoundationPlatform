@@ -1,8 +1,8 @@
 using System;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 namespace AetherNexus.FoundationPlatform.Messaging
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 public sealed class EventProvenance
 {
     public ulong EventId;

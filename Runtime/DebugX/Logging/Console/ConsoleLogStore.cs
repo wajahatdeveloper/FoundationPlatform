@@ -59,11 +59,19 @@ namespace AetherNexus.FoundationPlatform.DebugX
         // OnUnityLog and CompilationPipeline respectively.
         private static readonly List<ConsoleEntry> _bridgeCompilerEntries = new List<ConsoleEntry>();
 
+        // Native script-compile rows from LogEntriesBridge. Merged only where the CompilationPipeline feed
+        // below has no matching message — covers player-build compiles and diagnostics that outlived a
+        // domain reload (the pipeline dictionary is static and starts empty after one).
+        private static readonly List<ConsoleEntry> _bridgeScriptCompileEntries = new List<ConsoleEntry>();
+        private static readonly HashSet<string> _pipelineMessages = new HashSet<string>();
+
         // Script compile errors and warnings, keyed by assembly path — from
         // CompilationPipeline.assemblyCompilationFinished. Replaced wholesale per assembly on each compile
         // pass; removed once that assembly compiles clean (no errors and no warnings).
         private static readonly Dictionary<string, List<ConsoleEntry>> _scriptCompileDiagnosticsByAssembly =
             new Dictionary<string, List<ConsoleEntry>>();
+
+        private static readonly List<string> _scratchAssemblyKeys = new List<string>();
 
         // Set by OnAssemblyCompilationFinished (main thread); tells Pump() the merged mirror needs a
         // rebuild even when the native LogEntries list itself hasn't changed.
@@ -114,6 +122,9 @@ namespace AetherNexus.FoundationPlatform.DebugX
             // the sync-console check work in edit mode, before any runtime initializer runs.
             MainThreadDispatcher.CaptureMainThread();
 
+            // Must run immediately before the hook below: rows already in the native console are exactly
+            // the ones this domain's hook missed, and everything after arrives through OnUnityLog.
+            RestorePreReloadRows();
             Application.logMessageReceivedThreaded += OnUnityLog;
             EditorApplication.update += Pump;
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
@@ -124,6 +135,18 @@ namespace AetherNexus.FoundationPlatform.DebugX
             CompilationPipeline.compilationFinished += _ => Pump();
 
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+        }
+
+        private static void RestorePreReloadRows()
+        {
+            var restored = new List<ConsoleEntry>();
+            LogEntriesBridge.Snapshot(restored);
+            if (restored.Count == 0) return;
+
+            AppendMarker("――  Restored from Unity Console (pre-reload)  ――");
+            for (int i = 0; i < restored.Count; i++)
+                Append(restored[i]);
+            Version++;
         }
 
         /// <summary>
@@ -192,11 +215,13 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _logCount = _warningCount = _errorCount = 0;
             _compilerEntries.Clear();
             _bridgeCompilerEntries.Clear();
+            _bridgeScriptCompileEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
-            _scriptCompilerDirty = true; // still-broken assemblies reappear next pump, same as bridge-sourced errors
+            DropScriptCompileWarnings();
+            _scriptCompilerDirty = true; // compile errors reappear next pump; warnings return only on the assembly's next compile
             Version++;
         }
 
@@ -212,13 +237,28 @@ namespace AetherNexus.FoundationPlatform.DebugX
             _logCount = _warningCount = _errorCount = 0;
             _compilerEntries.Clear();
             _bridgeCompilerEntries.Clear();
+            _bridgeScriptCompileEntries.Clear();
             _compilerMessages.Clear();
             _compilerErrorCount = _compilerWarningCount = _compilerLogCount = 0;
             ClearCount++;
             LogEntriesBridge.Clear();
-            _scriptCompilerDirty = true; // still-broken assemblies reappear next pump, same as bridge-sourced errors
+            DropScriptCompileWarnings();
+            _scriptCompilerDirty = true; // compile errors reappear next pump; warnings return only on the assembly's next compile
             CompilerVersion++;
             Version++;
+        }
+
+        /// <summary>Unity Console parity: Clear keeps script compile errors but drops compile warnings.</summary>
+        private static void DropScriptCompileWarnings()
+        {
+            _scratchAssemblyKeys.Clear();
+            foreach (var kvp in _scriptCompileDiagnosticsByAssembly)
+            {
+                kvp.Value.RemoveAll(e => e.Level == LogLevel.Warning);
+                if (kvp.Value.Count == 0) _scratchAssemblyKeys.Add(kvp.Key);
+            }
+            for (int i = 0; i < _scratchAssemblyKeys.Count; i++)
+                _scriptCompileDiagnosticsByAssembly.Remove(_scratchAssemblyKeys[i]);
         }
 
         public static void ClearWatches()
@@ -374,7 +414,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
 
             if (CaptureCompilerErrors)
             {
-                bool bridgeChanged = LogEntriesBridge.Refresh(_bridgeCompilerEntries);
+                bool bridgeChanged = LogEntriesBridge.Refresh(_bridgeCompilerEntries, _bridgeScriptCompileEntries);
                 bool scriptChanged = _scriptCompilerDirty;
                 _scriptCompilerDirty = false;
 
@@ -382,8 +422,19 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     _compilerEntries.Clear();
                     _compilerEntries.AddRange(_bridgeCompilerEntries);
+                    _pipelineMessages.Clear();
                     foreach (var kvp in _scriptCompileDiagnosticsByAssembly)
+                    {
                         _compilerEntries.AddRange(kvp.Value);
+                        for (int i = 0; i < kvp.Value.Count; i++)
+                            _pipelineMessages.Add(NormalizeCompilerMessage(kvp.Value[i].Message));
+                    }
+                    for (int i = 0; i < _bridgeScriptCompileEntries.Count; i++)
+                    {
+                        var be = _bridgeScriptCompileEntries[i];
+                        if (!_pipelineMessages.Contains(NormalizeCompilerMessage(be.Message)))
+                            _compilerEntries.Add(be);
+                    }
 
                     int compilerErrors = 0, compilerWarnings = 0, compilerLogs = 0;
                     _compilerMessages.Clear();
@@ -503,6 +554,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 case ConsoleCategory.Error: if (_errorCount > 0) _errorCount--; break;
                 default: if (_logCount > 0) _logCount--; break;
             }
+        }
+
+        /// <summary>Pipeline and native console disagree on path separators for the same diagnostic.</summary>
+        private static string NormalizeCompilerMessage(string message)
+        {
+            return (message ?? string.Empty).Replace('\\', '/').Trim();
         }
 
         private static LogLevel UnityTypeToLevel(LogType type)

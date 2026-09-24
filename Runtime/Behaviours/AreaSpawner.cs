@@ -4,9 +4,9 @@ using AetherNexus.FoundationPlatform.DebugX;
 using AetherNexus.FoundationPlatform.Extensions;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
+using AetherNexus.FoundationPlatform.Utilities.Menus;
 #if UNITY_EDITOR
 using UnityEditor;
-using AetherNexus.FoundationPlatform.Utilities.Menus;
 #endif
 
 namespace AetherNexus.FoundationPlatform.Behaviours

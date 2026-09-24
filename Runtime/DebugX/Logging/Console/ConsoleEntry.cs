@@ -7,8 +7,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// Where a console row originated. DebugX = structured pipeline, Unity = plain Debug.Log /
     /// exceptions / third-party / native-only LogEntries rows. Compiler = sticky diagnostics: script
     /// compile errors and warnings from CompilationPipeline.assemblyCompilationFinished, plus
-    /// asset-import / graph compile errors and asset-import warnings mirrored from UnityEditor.LogEntries
-    /// (no public API for those).
+    /// asset-import / graph compile errors, asset-import warnings, and script-compile rows the pipeline
+    /// did not report (player builds, post-reload) mirrored from UnityEditor.LogEntries.
     /// </summary>
     public enum ConsoleSource
     {

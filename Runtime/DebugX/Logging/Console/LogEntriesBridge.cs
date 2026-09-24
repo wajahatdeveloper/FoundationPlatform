@@ -15,9 +15,12 @@ namespace AetherNexus.FoundationPlatform.DebugX
     /// Scripting logs/warnings/errors/asserts go through <see cref="ConsoleLogStore"/>'s Unity log
     /// callback — mirroring them here duplicates every <c>Debug.Log</c> (native message includes the
     /// stack; the callback condition does not, so exact-message dedup fails). Script compile errors and
-    /// warnings come from <c>CompilationPipeline.assemblyCompilationFinished</c> (public API, exact
-    /// file/line). Asset-import warnings have no pipeline feed, so they stay here as
+    /// warnings come primarily from <c>CompilationPipeline.assemblyCompilationFinished</c> (public API,
+    /// exact file/line); the native script-compile rows are returned separately as a fallback for passes
+    /// the pipeline never reported to this domain (player builds, diagnostics surviving a domain reload).
+    /// Asset-import warnings have no pipeline feed, so they stay here as
     /// <see cref="ConsoleSource.Compiler"/>. Remaining mirrored rows are <see cref="ConsoleSource.Unity"/>.
+    /// <see cref="Snapshot"/> recovers scripting rows logged before this domain's log hook existed.
     ///
     /// Lives in the runtime assembly (editor-guarded) so <see cref="ConsoleLogStore"/> can call it —
     /// the runtime asmdef cannot reference the editor asmdef. Every member lookup is cached and
@@ -64,7 +67,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
             ModeScriptingException | ModeScriptingAssertion | ModeAssert;
 
         /// <summary>
-        /// Script compile diagnostics — <see cref="ConsoleLogStore"/> ingest via CompilationPipeline.
+        /// Script compile diagnostics. Routed to the fallback list; <see cref="ConsoleLogStore"/> keeps
+        /// only rows its CompilationPipeline feed did not already report.
         /// </summary>
         private const int ScriptCompileMask =
             ModeScriptCompileError | ModeScriptCompileWarning;
@@ -105,15 +109,17 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static readonly List<int> _scratchLines = new List<int>();
 
         /// <summary>
-        /// Rebuilds <paramref name="target"/> from the current Editor Console rows if they
-        /// changed since the last call. Returns true when the list was modified.
+        /// Rebuilds <paramref name="target"/> (native-only / asset-import rows) and
+        /// <paramref name="scriptCompileTarget"/> (native script-compile rows) from the current Editor
+        /// Console rows if they changed since the last call. Returns true when either list was modified.
         /// </summary>
-        public static bool Refresh(List<ConsoleEntry> target)
+        public static bool Refresh(List<ConsoleEntry> target, List<ConsoleEntry> scriptCompileTarget)
         {
             if (!Resolve())
             {
-                if (target.Count == 0) return false;
+                if (target.Count == 0 && scriptCompileTarget.Count == 0) return false;
                 target.Clear();
+                scriptCompileTarget.Clear();
                 _prevModes.Clear();
                 _prevMessages.Clear();
                 return true;
@@ -163,6 +169,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
                         return false;
 
                     target.Clear();
+                    scriptCompileTarget.Clear();
                     for (int i = 0; i < _scratchModes.Count; i++)
                     {
                         int mode = _scratchModes[i];
@@ -172,7 +179,21 @@ namespace AetherNexus.FoundationPlatform.DebugX
                             continue;
 
                         if ((mode & ScriptCompileMask) != 0)
+                        {
+                            scriptCompileTarget.Add(new ConsoleEntry
+                            {
+                                Id = ConsoleLogStore.NextId(),
+                                Timestamp = DateTime.Now,
+                                Level = LevelFromMode(mode, message),
+                                Source = ConsoleSource.Compiler,
+                                Channel = "Compiler",
+                                Message = message,
+                                CallerFilePath = _scratchFiles[i],
+                                CallerLineNumber = _scratchLines[i],
+                                CollapseKey = "C|" + mode + "|" + message
+                            });
                             continue;
+                        }
 
                         bool isCompilerError = (mode & CompileErrorMask) != 0;
                         bool isAssetImportWarning = (mode & ModeAssetImportWarning) != 0;
@@ -216,6 +237,68 @@ namespace AetherNexus.FoundationPlatform.DebugX
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Appends every scripting row (<see cref="ApplicationLogMask"/>) currently in the Editor Console
+        /// to <paramref name="target"/>. Called once per domain, right before the
+        /// <c>logMessageReceivedThreaded</c> hook is attached, so it returns exactly the rows that hook
+        /// missed (logged before a domain reload, or earlier in this reload). Native messages carry the
+        /// stack after the first newline; it is split back into <see cref="ConsoleEntry.RawStackTrace"/>.
+        /// </summary>
+        public static void Snapshot(List<ConsoleEntry> target)
+        {
+            if (!Resolve()) return;
+
+            try
+            {
+                int count = (int)_getCount.Invoke(null, null);
+                _startGetting.Invoke(null, null);
+                try
+                {
+                    var args = new object[2];
+                    for (int i = 0; i < count; i++)
+                    {
+                        args[0] = i;
+                        args[1] = _entryInstance;
+                        if (!(bool)_getEntryInternal.Invoke(null, args)) continue;
+
+                        int mode = _fMode != null ? Convert.ToInt32(_fMode.GetValue(_entryInstance)) : 0;
+                        if ((mode & ApplicationLogMask) == 0) continue;
+
+                        string raw = _fMessage != null ? _fMessage.GetValue(_entryInstance) as string : null;
+                        if (string.IsNullOrEmpty(raw)) continue;
+
+                        int newline = raw.IndexOf('\n');
+                        string message = newline >= 0 ? raw.Substring(0, newline) : raw;
+                        string stack = newline >= 0 ? raw.Substring(newline + 1) : null;
+                        var level = LevelFromMode(mode, message);
+
+                        target.Add(new ConsoleEntry
+                        {
+                            Id = ConsoleLogStore.NextId(),
+                            Timestamp = DateTime.Now,
+                            Level = level,
+                            Source = ConsoleSource.Unity,
+                            Message = message,
+                            RawStackTrace = stack,
+                            CallerFilePath = _fFile != null ? _fFile.GetValue(_entryInstance) as string : null,
+                            CallerLineNumber = _fLine != null ? Convert.ToInt32(_fLine.GetValue(_entryInstance)) : 0,
+                            CollapseKey = "U|" + (int)level + "|" + message
+                        });
+                    }
+                }
+                finally
+                {
+                    _endGetting.Invoke(null, null);
+                }
+            }
+            catch
+            {
+                // Internal API changed; same policy as Refresh.
+                _available = false;
+                _resolved = true;
+            }
         }
 
         /// <summary>True when the current scratch snapshot differs from the last-committed one.</summary>

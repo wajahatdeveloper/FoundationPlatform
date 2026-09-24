@@ -20,7 +20,8 @@ compiled into the Runtime assembly (`includePlatforms: []`) with no such guard, 
 in real player builds, including IL2CPP/AOT targets, on every log call.
 
 A sibling file in the same package, `Runtime/DebugX/Logging/Console/LogEntriesBridge.cs`, does the same
-kind of reflection but correctly confines all of it behind `#if UNITY_EDITOR` — so the project already
+kind of reflection (over `UnityEditor.LogEntries`, both for the per-tick `Refresh` mirror and the
+one-shot post-reload `Snapshot`) but correctly confines all of it behind `#if UNITY_EDITOR` — so the project already
 has a documented, working pattern for this; `CallerInfoHelper` and `MessageTemplateParser` just don't
 follow it.
 
