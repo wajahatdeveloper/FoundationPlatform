@@ -397,7 +397,7 @@ namespace AetherNexus.FoundationPlatform.Animation
         {
             float layerW = Weight;
             if (layerW != _layerTargetWeight)
-                Weight = Mathf.MoveTowards(layerW, _layerTargetWeight, _layerFadeSpeed * deltaTime);
+                _layerMixer.SetInputWeight(Index, Mathf.MoveTowards(layerW, _layerTargetWeight, _layerFadeSpeed * deltaTime));
 
             for (int i = _activeStates.Count - 1; i >= 0; i--)
             {
