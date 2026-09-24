@@ -34,7 +34,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Tools + "Rebuild/";
             public const string AllConstants     = Root + "Rebuild All Constants";
             public const string GasAbilityLogic  = Root + "GAS/Rebuild Ability Logic";
-            public const string GasTagReferenceIndex = Root + "GAS/Rebuild Tag Reference Index";
             public const string Registries       = Root + "Rebuild All Generated Registries";
             public const string PackageIntegrations = Root + "Rebuild Package Integrations";
         }
@@ -237,10 +236,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			private const string Root = Tools + "Domain/";
 
 			/// <summary>Tools/Domain/GAS/* — GAS authoring and codegen.</summary>
-			public const string GasNormalizeAttributeSetTags    = Root + "GAS/Normalize AttributeSet Tags";
 			public const string GasRebuildAbilityLogic          = Rebuild.GasAbilityLogic;
-			public const string GasRebuildTagReferenceIndex     = Rebuild.GasTagReferenceIndex;
-			public const string GasSanitizeTagHashes            = Root + "GAS/Sanitize Tag Hashes";
 			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
 			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
 
