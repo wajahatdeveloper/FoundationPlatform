@@ -322,28 +322,30 @@ namespace AetherNexus.FoundationPlatform.Animation
             {
                 foreach (var active in _activeStates)
                 {
-                    if (active.State == state)
-                        continue;
-                    if (active.State is ClipState)
+                    if (active.State != state && active.State is ClipState)
                         active.State.Events().OnEnd = null;
-                    if (active.State == CurrentState)
-                    {
-                        active.TargetWeight = 0f;
-                        active.FadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
-                    }
                 }
             }
 
+            // Every state finishes its fade at the same moment, so the linear weights always sum to 1.
+            // Independent per-state speeds let the sum sag mid-crossfade (a short reaction fading out
+            // under a longer swing fading in), and a humanoid pulls the missing weight toward its default
+            // pose: the body floats or sinks for those frames.
             CurrentState = state;
             bool found = false;
             foreach (var active in _activeStates)
             {
+                float weight = _stateMixer.GetInputWeight(active.Port);
                 if (active.State == state)
                 {
                     active.TargetWeight = 1f;
-                    active.FadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
+                    active.FadeSpeed = fadeDuration > 0f ? Mathf.Max(1f - weight, 0.0001f) / fadeDuration : 1000f;
                     found = true;
-                    break;
+                }
+                else
+                {
+                    active.TargetWeight = 0f;
+                    active.FadeSpeed = fadeDuration > 0f ? Mathf.Max(weight, 0.0001f) / fadeDuration : 1000f;
                 }
             }
 
