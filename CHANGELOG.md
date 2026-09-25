@@ -6,6 +6,11 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ### Added
 
+- **`DebugDrawKit.CaptureHeadless(draw)`** / **`DebugDrawKit.Headless`**: runs a debug section outside an IMGUI pass and returns its recorded text (used by the `core-report-game-state` agent tool). Every helper records and skips drawing while headless; sections that draw raw GUI must skip it too.
+- **`DesignerFeatures.MenuPathFor(title)` / `Describe(title)`**: title lookup into the Feature Finder index for hints; a stale title throws.
+- **`AuthoringValidatorRegistry.PackageIds()`**: the package ids validators declare.
+- **`ProjectContentConfig.MergeLegacyValues`**: union-merge used by Migrate To v2.
+
 - **`[ContentHome]`** (`AetherNexus.FoundationPlatform.Attributes.ContentHomeAttribute`): declares where an authored type's assets belong — folder patterns relative to `Assets/Content` (`*`, `**`, leading `***`), inherited by subclasses. It replaces `PackageIntegrationManifest` type-mapping rows as the source of truth. `ContentHomes` (editor) is the one resolver. `AnimationSet`, `AnimationSetValidationProfile`, `LocomotionBlendProfile` and `LightmapConfiguration` carry their former manifest patterns.
 - **`ProjectContentConfig`** (editor): the single per-project content layout asset — content areas, combined areas, Shared/Global subfolders, required roots, exempt folders, auto-move-on-import flag.
 

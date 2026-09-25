@@ -15,6 +15,33 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 	{
 		public static System.Text.StringBuilder ActiveRecorder;
 
+		/// <summary>
+		///  True inside <see cref="CaptureHeadless"/>: helpers record into <see cref="ActiveRecorder"/> and draw
+		///  nothing, so a section can be read outside an IMGUI pass (agent reports). Sections that draw raw
+		///  GUI (buttons, layout scopes) must skip it while this is set.
+		/// </summary>
+		public static bool Headless { get; private set; }
+
+		/// <summary>Runs <paramref name="draw"/> without an IMGUI context and returns the text it recorded.</summary>
+		public static string CaptureHeadless(System.Action draw)
+		{
+			if (Headless)
+				throw new System.InvalidOperationException("DebugDrawKit.CaptureHeadless does not nest.");
+			var recorder = new System.Text.StringBuilder();
+			ActiveRecorder = recorder;
+			Headless = true;
+			try
+			{
+				draw();
+			}
+			finally
+			{
+				Headless = false;
+				ActiveRecorder = null;
+			}
+			return recorder.ToString();
+		}
+
 		public static readonly Color BarTrack = new(0.15f, 0.15f, 0.15f);
 		public static readonly Color BarFill = new(0.35f, 0.55f, 0.85f);
 		public static readonly Color BarHighlight = new(0.3f, 0.8f, 0.3f);
@@ -39,6 +66,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"  {label}: {valueText}");
 			}
+			if (Headless)
+				return;
 
 			var rect = GUILayoutUtility.GetRect(1f, 18f, GUILayout.ExpandWidth(true));
 			var labelRect = new Rect(rect.x, rect.y, LabelWidth, rect.height);
@@ -73,12 +102,16 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"  {label}: {value}");
 			}
+			if (Headless)
+				return;
 			EditorGUILayout.LabelField(label, value);
 		}
 
 		/// <summary>A single colored tag chip. Use inside a horizontal group.</summary>
 		public static void Chip(string label, Color color)
 		{
+			if (Headless)
+				return;
 			var previous = GUI.backgroundColor;
 			GUI.backgroundColor = color;
 			GUILayout.Label(label, EditorStyles.helpBox, GUILayout.Height(18f));
@@ -92,6 +125,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"  {(string.IsNullOrEmpty(label) ? "Tags" : label)}: {string.Join(", ", chips)}");
 			}
+			if (Headless)
+				return;
 
 			EditorGUILayout.BeginHorizontal();
 			if (!string.IsNullOrEmpty(label))
@@ -114,6 +149,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine(text);
 			}
+			if (Headless)
+				return;
 			if (style != null)
 			{
 				EditorGUILayout.LabelField(text, style);
@@ -130,6 +167,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		/// <summary>A 12x12 color swatch followed by its label — one legend entry.</summary>
 		public static void LegendSwatch(string label, Color color)
 		{
+			if (Headless)
+				return;
 			var rect = GUILayoutUtility.GetRect(12f, 12f, GUILayout.Width(12f), GUILayout.Height(12f));
 			EditorGUI.DrawRect(rect, color);
 			GUILayout.Label(label, EditorStyles.miniLabel, GUILayout.Width(62f));
@@ -167,6 +206,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"\n# {title} ({subtitle})");
 			}
+			if (Headless)
+				return;
 
 			EnsureStyles();
 			EditorGUILayout.Space(2f);
@@ -188,6 +229,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 				ActiveRecorder.AppendLine($"\n## [{title}]");
 				expanded = true;
 			}
+			if (Headless)
+				return true;
 
 			EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 			var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
@@ -196,7 +239,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			return expanded;
 		}
 
-		public static void EndSection() => EditorGUILayout.EndVertical();
+		public static void EndSection()
+		{
+			if (Headless)
+				return;
+			EditorGUILayout.EndVertical();
+		}
 
 		/// <summary>Progress bar with the label overlaid left and the value overlaid right.</summary>
 		public static void Bar(string label, float fill01, string value, Color fill)
@@ -205,6 +253,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"  {label}: {value}");
 			}
+			if (Headless)
+				return;
 
 			EnsureStyles();
 			var rect = EditorGUILayout.GetControlRect(false, 18f);
@@ -227,6 +277,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 			{
 				ActiveRecorder.AppendLine($"  {left}: {right}");
 			}
+			if (Headless)
+				return;
 
 			EnsureStyles();
 			var rect = EditorGUILayout.GetControlRect(false, 18f);

@@ -144,6 +144,19 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
             }
         }
 
+        /// <summary>Every package id declared by an <see cref="IPackageScopedValidator"/>, sorted.</summary>
+        public static List<string> PackageIds()
+        {
+            EnsureDiscovered();
+            var ids = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < _validators.Length; i++)
+            {
+                if (_validators[i] is IPackageScopedValidator scoped && !string.IsNullOrWhiteSpace(scoped.PackageId))
+                    ids.Add(scoped.PackageId);
+            }
+            return new List<string>(ids);
+        }
+
         /// <summary>
         /// Findings from the validators that declared themselves owned by <paramref name="packageId"/>.
         /// False when no validator claims that package, which is how a caller distinguishes "this package
