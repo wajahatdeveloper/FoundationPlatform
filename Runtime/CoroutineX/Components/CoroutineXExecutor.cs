@@ -24,6 +24,6 @@ internal sealed class CoroutineXExecutor : MonoBehaviour
             Instance.gameObject.hideFlags = HideFlags.HideInHierarchy;
         }
 
-        DontDestroyOnLoad(Instance.gameObject);
+        PersistentObjects.Register(Instance.gameObject, PersistenceScope.Application, "FoundationPlatform.CoroutineXExecutor");
     }
 }}

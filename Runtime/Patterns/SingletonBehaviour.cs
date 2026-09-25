@@ -159,24 +159,24 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
     {
         var type = GetType();
 
-        if (!instances.TryGetValue(type, out var existing) || existing == null)
-        {
-            instances[type] = this as T;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (!ReferenceEquals(existing, this))
-        {
-            DebugX.Logger(LogChannels.DevTools).Info(
-                "PersistentSingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
-                type.Name);
-            Destroy(gameObject);
-        }
+        // Persistence, the duplicate decision and the scene-boundary broadcast all come from the one
+        // registry, so a persistent singleton behaves exactly like any other persistent object.
+        if (!PersistentObjects.Register(gameObject, Scope, type.FullName)) { return; }
+
+        instances[type] = this as T;
     }
+
+    /// <summary>
+    ///     Lifetime this singleton claims. Defaults to <see cref="PersistenceScope.Application" /> — the
+    ///     scope that carries music and other cross-scene services. Override for a session-lifetime one.
+    /// </summary>
+    protected virtual PersistenceScope Scope => PersistenceScope.Application;
 
     protected virtual void OnDestroy()
     {
         var type = GetType();
         if (instances.TryGetValue(type, out var existing) && ReferenceEquals(existing, this)) instances.Remove(type);
+        PersistentObjects.Unregister(type.FullName, gameObject);
     }
 
     private void OnApplicationQuit()

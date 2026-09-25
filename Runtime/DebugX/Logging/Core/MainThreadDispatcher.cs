@@ -41,7 +41,7 @@ namespace AetherNexus.FoundationPlatform.Logging
 
             var go = new GameObject("DebugX MainThreadDispatcher");
             _instance = go.AddComponent<MainThreadDispatcher>();
-            DontDestroyOnLoad(go);
+            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.DebugX.MainThreadDispatcher");
         }
 
         private void Update()

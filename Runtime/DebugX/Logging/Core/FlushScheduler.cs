@@ -26,7 +26,7 @@ namespace AetherNexus.FoundationPlatform.Logging
 
             var go = new GameObject("DebugX FlushScheduler");
             _instance = go.AddComponent<FlushScheduler>();
-            DontDestroyOnLoad(go);
+            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.DebugX.FlushScheduler");
 
             _running = true;
             _flushThread = new Thread(FlushThreadProc)

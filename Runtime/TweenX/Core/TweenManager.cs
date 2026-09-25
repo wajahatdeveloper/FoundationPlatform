@@ -64,9 +64,7 @@ namespace AetherNexus.FoundationPlatform.TweenX
             IsPaused = false;
 
             if (_runner != null) return;
-            var go = new GameObject("TweenRunner") { hideFlags = HideFlags.HideInHierarchy };
-            _runner = go.AddComponent<TweenRunner>();
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            CreateRunner();
         }
 
         // ---------------------------------------------------------------- clock registration
@@ -149,9 +147,14 @@ namespace AetherNexus.FoundationPlatform.TweenX
         private static void EnsureRunner()
         {
             if (_runner != null || !Application.isPlaying) return;
+            CreateRunner();
+        }
+
+        private static void CreateRunner()
+        {
             var go = new GameObject("TweenRunner") { hideFlags = HideFlags.HideInHierarchy };
             _runner = go.AddComponent<TweenRunner>();
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.TweenRunner");
         }
 
         internal static TweenHandle AsHandle(this Tween t) => new(t.Id, t.Generation);

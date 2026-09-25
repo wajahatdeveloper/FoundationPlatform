@@ -89,7 +89,7 @@ public static class PersistentDataHandler
 
             var go = new GameObject("PersistentDataHandler_LifecycleHelper");
             go.hideFlags = HideFlags.HideAndDontSave;
-            DontDestroyOnLoad(go);
+            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.PersistentDataHandler");
             instance = go.AddComponent<LifecycleHelper>();
         }
 
