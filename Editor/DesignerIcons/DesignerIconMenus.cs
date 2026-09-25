@@ -4,7 +4,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
 {
-    using DebugX = DebugX.DebugX;
 
     /// <summary>
     /// Menu surface for the designer icon pass. These are project-wide batch operations, which is

@@ -1,4 +1,4 @@
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Property type for structured logging

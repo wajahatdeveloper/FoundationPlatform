@@ -1,12 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
-	using DebugX = DebugX.DebugX;
 	
 	/// <summary>
 	///  Base class for the project's "single pane" debugger windows (see the AI Debugger). Provides the

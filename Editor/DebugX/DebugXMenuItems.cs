@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Editor menu items for DebugX

@@ -2,14 +2,13 @@
 using System.Text;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
-	using DebugX = DebugX.DebugX;
 	
 	/// <summary>
 	///  The world-scope diagnostics window: session, players, lifecycle stages, subsystems, level, RNG, and

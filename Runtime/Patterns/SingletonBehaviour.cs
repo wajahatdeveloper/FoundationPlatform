@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform
 {
  
-using DebugX = DebugX.DebugX;
 
 // Non-generic host so a single RuntimeInitializeOnLoadMethod can reset every
 // closed SingletonBehaviour<T>/PersistentSingletonBehaviour<T> instantiation.
@@ -66,7 +65,7 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         }
         else if (!ReferenceEquals(existing, this))
         {
-            FoundationPlatform.DebugX.DebugX.Logger(LogChannels.DevTools).Info(
+            DebugX.Logger(LogChannels.DevTools).Info(
                 "SingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
                 type.Name);
             Destroy(gameObject);
@@ -108,7 +107,7 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         if (TryGetInstance(type, out var instance))
             return instance;
 
-        FoundationPlatform.DebugX.DebugX.Logger(LogChannels.DevTools)
+        DebugX.Logger(LogChannels.DevTools)
             .Error(
                 "SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.",
                 type.Name);
@@ -167,7 +166,7 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
         }
         else if (!ReferenceEquals(existing, this))
         {
-            FoundationPlatform.DebugX.DebugX.Logger(LogChannels.DevTools).Info(
+            DebugX.Logger(LogChannels.DevTools).Info(
                 "PersistentSingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
                 type.Name);
             Destroy(gameObject);
@@ -208,7 +207,7 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
         if (TryGetInstance(type, out var instance))
             return instance;
 
-        FoundationPlatform.DebugX.DebugX.Logger(LogChannels.DevTools).Error(
+        DebugX.Logger(LogChannels.DevTools).Error(
             "PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.",
             type.Name);
         return null;

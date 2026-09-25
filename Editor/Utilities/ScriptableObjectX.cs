@@ -5,7 +5,7 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 	
 	public static class ScriptableObjectX
 	{

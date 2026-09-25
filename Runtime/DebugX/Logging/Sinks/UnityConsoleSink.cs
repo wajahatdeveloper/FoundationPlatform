@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Relays DebugX log events to UnityEngine.Debug so builds still surface logs through the platform

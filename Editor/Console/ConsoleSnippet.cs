@@ -1,9 +1,9 @@
 using System.IO;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>
     /// Builds an inline source-code snippet (a few lines around the log's caller line, with the caller

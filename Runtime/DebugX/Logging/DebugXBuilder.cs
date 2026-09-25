@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Fluent builder implementation for DebugX structured logging

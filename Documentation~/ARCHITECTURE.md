@@ -20,8 +20,8 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 | `AetherNexus.FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` |
 | `AetherNexus.FoundationPlatform.Attributes` | `Runtime/Attributes/` | `[Tag]`, `[Layer]`, `[TooltipIcon]`, run-order attributes |
 | `AetherNexus.FoundationPlatform.Behaviours` | `Runtime/Behaviours/` | small reusable MonoBehaviours |
-| `AetherNexus.FoundationPlatform.DebugX` | `Runtime/DebugX/`, `Editor/DebugX/` | logging API + editor menu items. **Gotcha:** the class and its enclosing namespace share the name `DebugX` — see `docs/00-AgentGuide.md` §3 |
-| `AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor` | `Editor/Console/` | DebugX Console window |
+| `AetherNexus.FoundationPlatform.Logging` | `Runtime/DebugX/`, `Editor/DebugX/` | logging API (`DebugX` class) + editor menu items |
+| `AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor` | `Editor/Console/` | DebugX Console window |
 | `AetherNexus.FoundationPlatform.AetherInspector` | `Runtime/AetherInspector/` | runtime-visible attributes |
 | `AetherNexus.FoundationPlatform.AetherInspector.Editor` | `Editor/AetherInspector/` | inspector engine, `GuiKit` |
 | `AetherNexus.FoundationPlatform.Identity` | `Runtime/Identity/`, `Editor/Identity/` | `IdentityComponent`, `IdentityFieldAttribute` — consumers of the `Identity` value type. Same `Runtime/Identity/` folder also holds `Identity.cs` (Messaging namespace — see above) |

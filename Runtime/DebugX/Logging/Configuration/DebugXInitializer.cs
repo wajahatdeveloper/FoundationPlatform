@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Initialize logging on app start

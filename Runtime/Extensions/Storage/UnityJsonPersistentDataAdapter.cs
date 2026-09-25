@@ -9,7 +9,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Extensions
 {
     
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
     
 public class UnityJsonPersistentDataAdapter : IPersistentDataAdapter
 {

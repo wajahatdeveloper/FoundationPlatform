@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using AetherNexus.FoundationPlatform.DebugX;
-using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.Logging;
+using AetherNexus.FoundationPlatform.Logging.ConsoleView;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>One display row: an entry plus how many identical entries it represents when collapsed.</summary>
     internal struct RowRef

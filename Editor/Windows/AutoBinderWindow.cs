@@ -16,7 +16,7 @@ using UnityEngine;
 // and assigns references in the Inspector. Supports dry-run and overwrite options.
 namespace AetherNexus.FoundationPlatform.Editor.Windows
 {
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 	
 public class AutoBinderToolWindow : EditorWindow
 {

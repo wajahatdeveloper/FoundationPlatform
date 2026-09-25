@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEngine;
@@ -8,7 +8,6 @@ using UnityEngine.UIElements;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
-	using DebugX = DebugX.DebugX;
 	
 	/// <summary>
 	///  Scene-View overlay that folds the project's per-entity debugger detail panes into the scene,

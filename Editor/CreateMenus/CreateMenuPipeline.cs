@@ -8,7 +8,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.CreateMenus.Editor
 {
-    using DebugX = DebugX.DebugX;
 
     /// <summary>
     /// Report, review, stamp for <c>[CreateAssetMenu]</c> paths. The TSV is the source of truth for

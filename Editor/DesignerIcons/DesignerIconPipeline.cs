@@ -7,7 +7,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.DesignerIcons.Editor
 {
-    using DebugX = DebugX.DebugX;
 
     /// <summary>
     /// Batch entry points for the designer icon pass: report what is covered, generate a package's

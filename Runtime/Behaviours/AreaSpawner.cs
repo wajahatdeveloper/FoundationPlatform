@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using AetherNexus.FoundationPlatform.Extensions;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using UnityEngine;
@@ -11,7 +11,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
-	using DebugX = DebugX.DebugX;
 	
 	/// <summary>
 	///  Spawner script for spawning units within an adjustable area.

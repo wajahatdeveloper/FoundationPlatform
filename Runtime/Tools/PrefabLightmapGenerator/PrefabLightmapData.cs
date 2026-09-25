@@ -6,7 +6,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Tools
 {
-using FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 
     /// <summary>
     /// Handles lightmap data preservation for prefabs, allowing lightmaps to be baked once and reused across scenes.

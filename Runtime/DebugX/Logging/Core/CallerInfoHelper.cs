@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Helper for adaptively detecting caller information by skipping internal logging methods.
@@ -19,7 +19,7 @@ namespace AetherNexus.FoundationPlatform.DebugX
         private static int _cacheMisses = 0;
 
         // Logging pipeline namespace — every frame under this prefix is skipped when resolving the call site.
-        private const string DebugXNamespace = "AetherNexus.FoundationPlatform.DebugX";
+        private const string DebugXNamespace = "AetherNexus.FoundationPlatform.Logging";
         private const string DebugXPathMarker = "/DebugX/";
 
         private static bool _skipMethodsContainingLog = false;
@@ -280,8 +280,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
                 {
                     string trimmed = line.TrimStart();
 
-                    if (trimmed.StartsWith("AetherNexus.FoundationPlatform.DebugX.", StringComparison.Ordinal)) continue;
-                    if (trimmed.StartsWith("at AetherNexus.FoundationPlatform.DebugX.", StringComparison.Ordinal)) continue;
+                    if (trimmed.StartsWith("AetherNexus.FoundationPlatform.Logging.", StringComparison.Ordinal)) continue;
+                    if (trimmed.StartsWith("at AetherNexus.FoundationPlatform.Logging.", StringComparison.Ordinal)) continue;
                     if (trimmed.StartsWith("FoundationPlatform.DebugX.", StringComparison.Ordinal)) continue;
                     if (trimmed.StartsWith("DebugX", StringComparison.Ordinal)) continue;
                     if (trimmed.StartsWith("UnityEngine.StackTraceUtility", StringComparison.Ordinal)) continue;

@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities
 {
 	
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 	
 public static class EditorGUIX
 {

@@ -1,5 +1,5 @@
 using System.Collections;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using AetherNexus.FoundationPlatform.Messaging;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace AetherNexus.FoundationPlatform.Samples
 {
     using CoroutineX = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX;
-    using DebugX = AetherNexus.FoundationPlatform.DebugX.DebugX;
+    using DebugX = AetherNexus.FoundationPlatform.Logging.DebugX;
 
     /// <summary>
     /// Sample event for the Foundation Platform EventBus + CoroutineX demo.

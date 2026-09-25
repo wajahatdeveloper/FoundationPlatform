@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace AetherNexus.FoundationPlatform.Extensions
 {
 
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
     
 /// <summary>
 /// Extensions for transforms and vector3

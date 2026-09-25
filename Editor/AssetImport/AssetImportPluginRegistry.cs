@@ -5,8 +5,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.Editor.AssetImport
 {
-    using DebugX;
-    
     public static class AssetImportPluginRegistry
     {
         private static readonly List<IAssetImportBatchPlugin> BatchPlugins = new();

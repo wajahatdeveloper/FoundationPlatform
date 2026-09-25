@@ -4,7 +4,14 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- **Logging namespace renamed** `AetherNexus.FoundationPlatform.DebugX` -> `AetherNexus.FoundationPlatform.Logging` (and `.DebugX.ConsoleView.Editor` -> `.Logging.ConsoleView.Editor`); the `DebugX` class keeps its name. The old namespace shared the class's simple name, so from sibling namespaces `DebugX.Logger(...)` resolved to the namespace and needed `DebugX.DebugX.Logger(...)` or a local alias. **Breaking for consumers**: replace `using AetherNexus.FoundationPlatform.DebugX;` with `using AetherNexus.FoundationPlatform.Logging;` and drop any `DebugX.DebugX.` qualification or `using DebugX = DebugX.DebugX;` alias.
+- Agent tools: `platform-agenttools-export-params` and `AgentToolParamExporter` moved into the bridge package (`com.aethernexus.aibridge`, tool `editor-export-mcp-params`, runs after every compile). The agent-tools assembly is now gated on `com.aethernexus.aibridge`.
+
 ### Removed
+
+- `Tools/Platform/Agent Tools/Export MCP Params` menu (now **Tools > AI Bridge > Export MCP Params**)
 
 - **Cysharp UniTask is no longer embedded** (`Runtime/ThirdParty/UniTask/`, `Editor/ThirdParty/UniTask/`, the `UniTask` and `UniTask.Editor` assemblies, and the UniTask Tracker window). Async code across the AetherNexus packages now targets `UnityEngine.Awaitable`. **Breaking for consumers** that referenced the `UniTask` assembly or typed against `UniTask` / `UniTask<T>` in overrides of package APIs — change those signatures to `Awaitable` / `Awaitable<T>` and drop the assembly reference. Fire-and-forget `UniTaskVoid` + `.Forget()` becomes `async void` with an explicit `try`/`catch`, since `Awaitable` has no unobserved-exception routing
 - Legacy `UnityEngine.Input` fallbacks in shipped components: every polling site now goes through the Input System package, which the package already required

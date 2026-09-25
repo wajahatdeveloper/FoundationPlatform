@@ -1,6 +1,6 @@
 using System;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
 	/// <summary>
 	/// Suppresses a re-log of an exception that a caller has already explicitly logged (marked via

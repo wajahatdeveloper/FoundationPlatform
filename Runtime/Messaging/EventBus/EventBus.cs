@@ -8,7 +8,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Messaging
 {
 	
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 	
 public enum EventCategory
 {

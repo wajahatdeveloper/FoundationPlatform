@@ -42,7 +42,7 @@ Async code targets `UnityEngine.Awaitable`; no async library is embedded or requ
 ## Quick usage
 
 ```csharp
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 
 EventBus.Subscribe<MyEvent>(OnMyEvent, priority: 0);
 EventBus.Publish(new MyEvent(...));
@@ -58,7 +58,7 @@ float roll = RandomX.value;              // deterministic when a provider is ins
 var loot = RandomX.Stream("loot");       // independent sequence
 ```
 
-`EventBus`, `CoroutineX`, and tween extension methods are in the **global** namespace. Logging types live under `AetherNexus.FoundationPlatform.DebugX`; `RandomX` under `AetherNexus.FoundationPlatform.Extensions`.
+`EventBus`, `CoroutineX`, and tween extension methods are in the **global** namespace. Logging types live under `AetherNexus.FoundationPlatform.Logging`; `RandomX` under `AetherNexus.FoundationPlatform.Extensions`.
 
 ### RandomX needs a provider
 

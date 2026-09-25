@@ -1,9 +1,9 @@
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>
     /// Appearance facade over <see cref="DebugXConsoleSettings"/> (per-project). Per-channel tints are

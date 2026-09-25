@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 {
-using FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 
     /// <summary>
     /// Brings UI convention findings into Central Validation. The import postprocessor keeps its own

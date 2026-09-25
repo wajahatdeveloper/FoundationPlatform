@@ -1,13 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
-	using DebugX = DebugX.DebugX;
 	
 	/// <summary>
 	///  One block of <i>world-scope</i> live state — the counterpart to <see cref="IEntityDebugSection"/>,

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Tools
 {
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
     
 public static class CameraScreenshot
 {

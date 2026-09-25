@@ -1,10 +1,10 @@
 using System.Text.RegularExpressions;
-using AetherNexus.FoundationPlatform.DebugX;
-using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.Logging;
+using AetherNexus.FoundationPlatform.Logging.ConsoleView;
 using UnityEditor;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>
     /// Resolves and opens source locations from console rows and stack frames. Handles both Unity's

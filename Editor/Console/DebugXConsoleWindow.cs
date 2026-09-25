@@ -3,15 +3,15 @@ using System.Reflection;
 using System.Text;
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
-using AetherNexus.FoundationPlatform.DebugX;
-using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.Logging;
+using AetherNexus.FoundationPlatform.Logging.ConsoleView;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>
     /// In-house replacement for Editor Console Pro 3, built on UI Toolkit. Reads the always-on

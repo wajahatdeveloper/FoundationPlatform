@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Formats call site / stack for Unity console clickable links: (at Assets/Path/File.cs:line)
@@ -137,8 +137,8 @@ namespace AetherNexus.FoundationPlatform.DebugX
             return line.Substring(0, pathStart) + projectPath + line.Substring(colonIndex);
         }
 
-        private const string DebugXNamespacePrefix = "AetherNexus.FoundationPlatform.DebugX.";
-        private const string DebugXNamespacePrefixAt = "at AetherNexus.FoundationPlatform.DebugX.";
+        private const string DebugXNamespacePrefix = "AetherNexus.FoundationPlatform.Logging.";
+        private const string DebugXNamespacePrefixAt = "at AetherNexus.FoundationPlatform.Logging.";
         private const string LegacyDebugXNamespacePrefix = "FoundationPlatform.DebugX.";
         private const string LegacyDebugXNamespacePrefixAt = "at FoundationPlatform.DebugX.";
 

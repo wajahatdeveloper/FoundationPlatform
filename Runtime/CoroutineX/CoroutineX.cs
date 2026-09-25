@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 namespace AetherNexus.FoundationPlatform.CoroutineX
 {
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
     
 [Serializable]
 public sealed class CoroutineX

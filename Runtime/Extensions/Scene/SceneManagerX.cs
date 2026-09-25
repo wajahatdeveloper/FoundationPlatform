@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
-using AetherNexus.FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
     using CoroutineX = AetherNexus.FoundationPlatform.CoroutineX.CoroutineX;
-    using DebugX = AetherNexus.FoundationPlatform.DebugX.DebugX;
+    using DebugX = AetherNexus.FoundationPlatform.Logging.DebugX;
     
 public static class SceneManagerX
 {

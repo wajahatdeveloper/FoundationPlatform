@@ -1,9 +1,9 @@
-using AetherNexus.FoundationPlatform.DebugX;
-using AetherNexus.FoundationPlatform.DebugX.ConsoleView;
+using AetherNexus.FoundationPlatform.Logging;
+using AetherNexus.FoundationPlatform.Logging.ConsoleView;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
-namespace AetherNexus.FoundationPlatform.DebugX.ConsoleView.Editor
+namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
 {
     /// <summary>Clears the console when a player build starts, if the per-project setting is enabled.</summary>
     internal sealed class ConsoleBuildClear : IPreprocessBuildWithReport

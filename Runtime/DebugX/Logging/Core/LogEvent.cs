@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// Represents a single log event with all metadata

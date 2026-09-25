@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AetherNexus.FoundationPlatform.Utilities.Menus
 {
-using FoundationPlatform.DebugX;
+using AetherNexus.FoundationPlatform.Logging;
     
     /// <summary>
     /// Shared codegen file-write guard. Consolidates the identical <c>WriteIfChanged</c> that

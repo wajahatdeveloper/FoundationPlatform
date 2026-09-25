@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Editor.Identity
 { 
-	using AetherNexus.FoundationPlatform.DebugX;
+	using AetherNexus.FoundationPlatform.Logging;
 	
 [CustomEditor(typeof(IdentityComponent))]
 [CanEditMultipleObjects]

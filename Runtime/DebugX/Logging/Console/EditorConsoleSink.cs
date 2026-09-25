@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace AetherNexus.FoundationPlatform.DebugX
+namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
     /// DebugX pipeline sink that feeds the in-editor <see cref="ConsoleLogStore"/> with fully

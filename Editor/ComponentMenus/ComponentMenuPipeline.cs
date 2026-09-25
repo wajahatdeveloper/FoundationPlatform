@@ -5,7 +5,6 @@ using UnityEditor;
 
 namespace AetherNexus.FoundationPlatform.ComponentMenus.Editor
 {
-    using DebugX = DebugX.DebugX;
 
     /// <summary>
     /// Batch entry points for the component menu pass: classify and report, stamp one reviewed
