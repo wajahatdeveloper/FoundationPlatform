@@ -292,7 +292,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 
 			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
 			public const string CreateNewScene                    = Root + "Create New Scene...";
-			public const string CreateBootScene                   = Root + "Set Up Boot Scene";
 		}
 
 		/// <summary>Window/Domain/<System>/* — designer-facing debugger and preview windows.</summary>
