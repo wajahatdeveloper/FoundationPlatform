@@ -46,7 +46,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			_utility.lights[1].color = new Color(0.85f, 0.9f, 1f, 1f);
 			_utility.lights[1].transform.rotation = Quaternion.Euler(-12f, -110f, 0f);
 
-			_instance = Object.Instantiate(source);
+			_instance = InstantiateRenderOnly(source);
 			_instance.name = source.name;
 			_instance.hideFlags = HideFlags.HideAndDontSave;
 			_instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -55,6 +55,78 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			_instance.GetComponentsInChildren(true, _renderers);
 			FramingBounds = ComputeBounds();
 		}
+
+		/// <summary>
+		/// Clones under an inactive holder so no gameplay Awake/OnEnable runs, then strips every
+		/// MonoBehaviour before the clone activates. Cloning a live Play-mode character used to register
+		/// the clone with runtime registries (motor lists, managers), which left dangling references once
+		/// the preview was destroyed and could hang the Editor.
+		/// </summary>
+		private static GameObject InstantiateRenderOnly(GameObject source)
+		{
+			var holder = new GameObject("AgentPreviewHolder") { hideFlags = HideFlags.HideAndDontSave };
+			holder.SetActive(false);
+			try
+			{
+				GameObject clone = Object.Instantiate(source, holder.transform);
+				StripBehaviours(clone);
+				clone.transform.SetParent(null, false);
+				clone.SetActive(true);
+				return clone;
+			}
+			finally
+			{
+				Object.DestroyImmediate(holder);
+			}
+		}
+
+		private static void StripBehaviours(GameObject clone)
+		{
+			var behaviours = new List<MonoBehaviour>();
+			// [RequireComponent] chains refuse removal while a dependent still exists, so peel in passes.
+			for (var pass = 0; pass < 8; pass++)
+			{
+				clone.GetComponentsInChildren(true, behaviours);
+				if (behaviours.Count == 0)
+					return;
+
+				for (var i = behaviours.Count - 1; i >= 0; i--)
+				{
+					if (behaviours[i] != null && CanDestroy(behaviours[i]))
+						Object.DestroyImmediate(behaviours[i]);
+				}
+			}
+
+			clone.GetComponentsInChildren(true, behaviours);
+			if (behaviours.Count > 0)
+				throw new InvalidOperationException(
+					$"Could not strip {behaviours.Count} MonoBehaviour(s) from the preview clone of '{clone.name}' " +
+					$"(first: {behaviours[0].GetType().FullName}); a [RequireComponent] cycle blocks removal.");
+		}
+
+		private static bool CanDestroy(Component component)
+		{
+			Component[] siblings = component.GetComponents<Component>();
+			Type type = component.GetType();
+			for (var i = 0; i < siblings.Length; i++)
+			{
+				if (siblings[i] == null || siblings[i] == component)
+					continue;
+
+				object[] requirements = siblings[i].GetType().GetCustomAttributes(typeof(RequireComponent), true);
+				for (var r = 0; r < requirements.Length; r++)
+				{
+					var require = (RequireComponent)requirements[r];
+					if (Requires(require.m_Type0, type) || Requires(require.m_Type1, type) || Requires(require.m_Type2, type))
+						return false;
+				}
+			}
+
+			return true;
+		}
+
+		private static bool Requires(Type required, Type candidate) =>
+			required != null && required.IsAssignableFrom(candidate);
 
 		private Bounds ComputeBounds()
 		{

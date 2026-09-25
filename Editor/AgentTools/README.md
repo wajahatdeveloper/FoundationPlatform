@@ -26,6 +26,9 @@ nudge.
 
 Animation Rigging does **not** evaluate off-scene. To see an evaluated IK pose, target the live
 object — `scene:Archetype_Player` — because cloning it copies the transforms the rig already wrote.
+The clone is instantiated under an inactive holder and stripped of every `MonoBehaviour` before it
+activates, so no gameplay `Awake`/`OnEnable` runs: cloning a live Play-mode character used to
+register the ghost with runtime registries and leave dangling references once it was destroyed.
 
 Editor chrome (Inspector rows, tool windows, overlays) is still outside the bridge; capture it with
 [Tools/UnityBridge/capture_editor.py](../../../../Tools/UnityBridge/capture_editor.py).
