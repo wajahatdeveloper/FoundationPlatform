@@ -66,7 +66,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
                 AddIssue(result, UIValidationRuleIds.ConfigMissingOrInvalid, UIValidationSeverity.Error,
                     UIValidationConventions.ConfigAssetPath,
                     snapshot.MappingErrors[i],
-                    "Repair CentralAuthoringProjectConfig or PackageIntegrationManifest typeMappings.");
+                    "Create the ProjectContentConfig (Tools > Domain > Validate Project offers the fix).");
             }
 
             List<string> normalizedPaths = NormalizeCandidatePaths(paths, fullScan);

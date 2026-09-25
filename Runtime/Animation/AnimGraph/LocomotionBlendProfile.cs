@@ -16,6 +16,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		"")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/LocomotionBlendProfile.png")]
 	[DesignerIcon(DesignerSymbol.Character)]
+	[AetherNexus.FoundationPlatform.Attributes.ContentHome("Domains/Characters/**")]
 	public class LocomotionBlendProfile : ScriptableObject
 	{
 		[TitleGroup("Stances (Mixer Input Order)")]

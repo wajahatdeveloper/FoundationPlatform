@@ -17,8 +17,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             capturedDomain = string.Empty;
             reason = string.Empty;
 
-            string normalizedAsset = DataFolderMappingPathUtility.NormalizeAssetPath(assetPath);
-            string normalizedPattern = DataFolderMappingPathUtility.NormalizeAssetPath(pattern);
+            string normalizedAsset = NormalizeAssetPath(assetPath);
+            string normalizedPattern = NormalizeAssetPath(pattern);
             if (string.IsNullOrWhiteSpace(normalizedAsset) || string.IsNullOrWhiteSpace(normalizedPattern))
             {
                 reason = "Asset path or pattern is empty.";
@@ -33,7 +33,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         public static IEnumerable<string> ExpandConcreteFolders(string pattern, IReadOnlyList<string> knownDomains)
         {
             var result = new List<string>();
-            string normalizedPattern = DataFolderMappingPathUtility.NormalizeAssetPath(pattern);
+            string normalizedPattern = NormalizeAssetPath(pattern);
             if (string.IsNullOrWhiteSpace(normalizedPattern))
                 return result;
 
@@ -178,6 +178,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             }
 
             return false;
+        }
+
+        private static string NormalizeAssetPath(string path)
+        {
+            return string.IsNullOrEmpty(path) ? string.Empty : path.Replace('\\', '/');
         }
 
         private static string BuildSearchRootBeforeWildcard(string pattern)

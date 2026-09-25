@@ -244,7 +244,7 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
                     if (_query.Length > 0 && GUILayout.Button("\u2715", EditorStyles.miniButton, GUILayout.Width(22f)))
                         ClearQuery();
 
-                    // Only needed after adding a menu entry or manifest row without a domain reload.
+                    // Only needed after adding a menu entry or asset without a domain reload.
                     if (GUILayout.Button("\u21bb", EditorStyles.miniButton, GUILayout.Width(22f)))
                     {
                         FeatureCatalog.Invalidate();

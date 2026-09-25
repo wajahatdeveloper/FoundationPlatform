@@ -17,6 +17,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
         "")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/LightmapConfiguration.png")]
     [DesignerIcon(DesignerSymbol.Effect)]
+    [AetherNexus.FoundationPlatform.Attributes.ContentHome("Global/Authoring/**")]
     public class LightmapConfiguration : ScriptableObject
     {
         #region Serialized Fields

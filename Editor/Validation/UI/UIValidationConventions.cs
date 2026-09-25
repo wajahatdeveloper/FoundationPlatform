@@ -17,7 +17,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 
     internal static class UIValidationConventions
     {
-        internal const string ConfigAssetPath = DataFolderMappingConfig.CentralAuthoringProjectConfigAssetPath;
+        internal const string ConfigAssetPath = ProjectContentConfig.DefaultAssetPath;
         internal const string UserScriptsUiRoot = "Assets/Scripts/UI";
         internal const string UserScriptsDomainsUiRoot = "Assets/Scripts/DomainScripts/UI";
         internal const string UserScriptsDomainsUiOrchestration = "Assets/Scripts/DomainScripts/UI/Orchestration";
@@ -154,14 +154,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
     {
         public string ResolvedConfigPath;
         public List<string> MappingErrors { get; } = new();
-        public Dictionary<Type, string> TypeToFolder { get; } = new();
-        public Dictionary<UILayer, HashSet<string>> LayerFolders { get; } = new()
-        {
-            { UILayer.UIElement, new HashSet<string>(StringComparer.OrdinalIgnoreCase) },
-            { UILayer.Widget, new HashSet<string>(StringComparer.OrdinalIgnoreCase) },
-            { UILayer.Panel, new HashSet<string>(StringComparer.OrdinalIgnoreCase) },
-            { UILayer.Orchestration, new HashSet<string>(StringComparer.OrdinalIgnoreCase) }
-        };
     }
 
     internal static class UIValidationConfigBridge
@@ -169,38 +161,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         internal static UIValidationConfigBridgeSnapshot BuildSnapshot()
         {
             UIValidationConfigBridgeSnapshot snapshot = new();
-            DataFolderMappingConfig config = DataFolderMappingConfig.Load();
+            ProjectContentConfig config = ProjectContentConfig.Load();
             if (config == null)
             {
-                snapshot.MappingErrors.Add($"Missing mapping config. Expected at '{UIValidationConventions.ConfigAssetPath}'.");
+                snapshot.MappingErrors.Add($"Missing ProjectContentConfig. Expected at '{UIValidationConventions.ConfigAssetPath}'.");
                 return snapshot;
             }
 
-            string configPath = AssetDatabase.GetAssetPath(config);
-            snapshot.ResolvedConfigPath = string.IsNullOrEmpty(configPath)
-                ? DataFolderMappingConfig.CentralAuthoringProjectConfigAssetPath
-                : configPath;
-
-            IReadOnlyList<Type> mappedTypes = config.GetAllMappedTypes();
-            for (int i = 0; i < mappedTypes.Count; i++)
-            {
-                Type mappedType = mappedTypes[i];
-                IReadOnlyList<string> concrete = config.ResolveConcreteFoldersForType(mappedType);
-                if (concrete == null || concrete.Count == 0)
-                    continue;
-
-                string folderPath = concrete[0];
-                if (string.IsNullOrEmpty(folderPath))
-                    continue;
-
-                snapshot.TypeToFolder[mappedType] = folderPath;
-                UILayer layer = UIValidationConventions.ResolveLayerFromPath(folderPath);
-                if (layer == UILayer.Unknown)
-                    continue;
-
-                snapshot.LayerFolders[layer].Add(folderPath);
-            }
-
+            snapshot.ResolvedConfigPath = AssetDatabase.GetAssetPath(config);
             return snapshot;
         }
     }

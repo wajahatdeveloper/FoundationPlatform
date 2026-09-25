@@ -477,8 +477,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static string ListFieldNameFromPath(string propertyPath)
         {
             if (string.IsNullOrEmpty(propertyPath)) return null;
-            // e.g. typeMappings.Array.data[0].Tokens → Tokens
-            //      Tokens → Tokens
+            // e.g. domains.Array.data[0].Subfolders → Subfolders
+            //      Subfolders → Subfolders
             int arrayIdx = propertyPath.LastIndexOf(".Array", StringComparison.Ordinal);
             string beforeArray = arrayIdx >= 0 ? propertyPath.Substring(0, arrayIdx) : propertyPath;
             int dot = beforeArray.LastIndexOf('.');

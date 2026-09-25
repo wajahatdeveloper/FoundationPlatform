@@ -15,6 +15,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		"")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AnimationSet.png")]
 	[DesignerIcon(DesignerSymbol.Animation)]
+	[AetherNexus.FoundationPlatform.Attributes.ContentHome("*/**/AnimationSets/**", "*/**/Items/**")]
 	public class AnimationSet : ScriptableObject
 	{
 		[Tooltip("Optional parent animation set to inherit entries from.")]

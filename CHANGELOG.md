@@ -4,6 +4,15 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- **`[ContentHome]`** (`AetherNexus.FoundationPlatform.Attributes.ContentHomeAttribute`): declares where an authored type's assets belong — folder patterns relative to `Assets/Content` (`*`, `**`, leading `***`), inherited by subclasses. It replaces `PackageIntegrationManifest` type-mapping rows as the source of truth. `ContentHomes` (editor) is the one resolver. `AnimationSet`, `AnimationSetValidationProfile`, `LocomotionBlendProfile` and `LightmapConfiguration` carry their former manifest patterns.
+- **`ProjectContentConfig`** (editor): the single per-project content layout asset — content areas, combined areas, Shared/Global subfolders, required roots, exempt folders, auto-move-on-import flag.
+
+### Removed
+
+- `DataFolderMappingConfig`, `DataFolderExemptionMarker` (exempt folders are now a `ProjectContentConfig` list), `DataFolderMappingExemptionResolver`, `HierarchyPathPolicy.TryClassify` and the `HierarchyRoot` / `HierarchyBucket` / `DataFolderMappingPathClassification` enums. **Breaking**: move any exemption-marker folders into `ProjectContentConfig ▸ Exempt Folders`.
+
 ### Changed
 
 - **Logging namespace renamed** `AetherNexus.FoundationPlatform.DebugX` -> `AetherNexus.FoundationPlatform.Logging` (and `.DebugX.ConsoleView.Editor` -> `.Logging.ConsoleView.Editor`); the `DebugX` class keeps its name. The old namespace shared the class's simple name, so from sibling namespaces `DebugX.Logger(...)` resolved to the namespace and needed `DebugX.DebugX.Logger(...)` or a local alias. **Breaking for consumers**: replace `using AetherNexus.FoundationPlatform.DebugX;` with `using AetherNexus.FoundationPlatform.Logging;` and drop any `DebugX.DebugX.` qualification or `using DebugX = DebugX.DebugX;` alias.

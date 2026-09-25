@@ -20,7 +20,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             string path = string.IsNullOrEmpty(snapshot.ResolvedConfigPath)
                 ? UIValidationConventions.ConfigAssetPath
                 : snapshot.ResolvedConfigPath;
-            Debug.Log($"[UI conventions] Active folder-mapping config: '{path}'.");
+            Debug.Log($"[UI conventions] Active project content config: '{path}'.");
         }
     }
 }

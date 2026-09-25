@@ -253,8 +253,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string CharacterCreateFromArchetype       = GameObject + "Domain/Character/Character From Archetype...";
 
 			/// <summary>Tools/Domain/Economy/* — currency registry tooling.</summary>
-			public const string EconomyRefreshCurrencyRegistries = Root + "Economy/Refresh Currency Registries";
-
 			/// <summary>Tools/Domain/Player/* and GameObject/Domain/Player/* — player &amp; pawn authoring.</summary>
 			public const string PlayerCreateInputActions        = Root + "Player/Create Player Input Actions";
 			public const string PlayerFillRosterPrefabs         = Root + "Player/Fill Roster Prefabs From Prefab Map";
