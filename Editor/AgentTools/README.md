@@ -1,7 +1,7 @@
 # FoundationPlatform agent tools
 
 Bridge tools that let a coding agent discover and drive this project's designer features instead of
-re-deriving them from source. Compiles only when `com.aibridge.unity` is installed
+re-deriving them from source. Compiles only when `com.aethernexus.aibridge` is installed
 (`AETHER_AIBRIDGE` version define on `FoundationPlatform.AgentTools.Editor.asmdef`), so the package
 ships bridge-free.
 
@@ -9,7 +9,6 @@ ships bridge-free.
 |---|---|---|
 | `platform-capability-list` | `FeatureCatalogApi.List` over `FeatureCatalog` | The `[DesignerFeature]` index: menu path, intent-first title, blurb, designer keywords, kind, doc. Filter with `keyword`. |
 | `platform-capability-invoke` | `FeatureCatalogApi.Invoke` → the entry's own action | Catalogued entries only; unknown keys fail with the closest matches. Returns everything Unity logged while it ran. |
-| `platform-agenttools-export-params` | `AgentToolParamExporter.Export` | Regenerates `.claude/skills/unity-bridge/params/*.json` from the live registry. |
 | `render-preview` | `PreviewRenderUtility` + `AnimationClip.SampleAnimation` | One PNG of a model, prefab or scene object at a chosen angle, optionally posed at a clip time. |
 | `render-clip-strip` | same session, many samples | Labelled contact sheet across a clip (`frames` or explicit `times`), one row per `yaws` entry. |
 | `render-compare` | two preview sessions + pixel diff | Two poses side by side under identical framing, plus a difference cell and `changedFraction`. |
@@ -31,25 +30,11 @@ activates, so no gameplay `Awake`/`OnEnable` runs: cloning a live Play-mode char
 register the ghost with runtime registries and leave dangling references once it was destroyed.
 
 Editor chrome (Inspector rows, tool windows, overlays) is still outside the bridge; capture it with
-[Tools/UnityBridge/capture_editor.py](../../../../Tools/UnityBridge/capture_editor.py).
+`capture_editor.py` in the bridge package's `Tools~` folder.
 
 ## Publishing a new tool to agents
 
-The MCP server builds `tools/list` from the schema files alone, so a `[BridgeTool]` that has not been
-exported does not exist as far as any agent is concerned.
-
-1. Add the method with `[BridgeTool]` + `[Description]` on the method and every parameter.
-2. Run **Tools ▸ Platform ▸ Agent Tools ▸ Export MCP Params** (or call the tool above).
-3. Restart the MCP server — it reads the schema files at startup.
-
-Ids use an area prefix (`core-`, `platform-`, `character-`, `gas-`, `liveops-`, `render-`, `anim-`,
-`ik-`, `rig-`). The exporter throws
-when a package tool takes a prefix the vendored bridge owns, because the registry is a single
-dictionary and the winner would depend on assembly scan order.
-
-## Curated schema text
-
-`_generated.json` records what the exporter last wrote per tool and parameter. A description that
-still matches its baseline is untouched generated text and gets overwritten; anything else was
-hand-curated (payload shapes, ENUM hints on vendored bridge tools) and survives regeneration.
-Unknown top-level keys such as `hints` are always preserved.
+Add the method with `[BridgeTool]` + `[Description]` on the method and every parameter, then restart
+the MCP server. The bridge re-exports `UnityBridge/params` after every compile. Ids use an area prefix
+(`core-`, `platform-`, `character-`, `gas-`, `liveops-`, `render-`, `anim-`, `ik-`, `rig-`); schema
+export and curation rules are in the bridge package's `Tools~/README.md`.

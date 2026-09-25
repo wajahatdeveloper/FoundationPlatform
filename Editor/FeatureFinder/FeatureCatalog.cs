@@ -54,7 +54,6 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
             "GameObject/Header",
             "Edit/HierarchyX Enabled",
             "Assets/Create Level For This Prefab",
-            "Assets/Create Content Area",
             "Assets/Create/Content Area",
             "Assets/Create Domain Event",
             "Assets/Fix Out of Sync"

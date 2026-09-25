@@ -293,10 +293,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string ValidateProject                   = Root + "Validate Project";
 
 			/// <summary>Tools/Domain/* — one-click scaffolding.</summary>
-			public const string CreateNewDomain                   = Root + "Create New Content Area...";
 			public const string CreateNewScene                    = Root + "Create New Scene...";
 			public const string CreateBootScene                   = Root + "Set Up Boot Scene";
-			public const string CreateDomainEvent                = Root + "Create Domain Event...";
 		}
 
 		/// <summary>Window/Domain/<System>/* — designer-facing debugger and preview windows.</summary>
@@ -338,7 +336,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string RegistryRefresh     = Rebuild.Registries;
             public const string PackageRebuild      = Rebuild.PackageIntegrations;
             public const string NetworkValidateSetup = Root + "Network/Validate Setup";
-			public const string AgentToolsExportParams = Root + "Agent Tools/Export MCP Params";
 			public const string IconsReportCoverage = Root + "Icons/Report Coverage";
 			public const string IconsAuditSymbols   = Root + "Icons/Audit Symbols";
 			public const string IconsStampSymbols   = Root + "Icons/Stamp Symbols Package...";
