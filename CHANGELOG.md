@@ -12,6 +12,7 @@ All notable changes to this package are documented here. Format follows [Keep a 
 ### Removed
 
 - `Tools/Platform/Agent Tools/Export MCP Params` menu (now **Tools > AI Bridge > Export MCP Params**)
+- Publisher-only editor tooling moved to the monorepo package `com.aethernexus.publishertools` (not shipped): `Editor/DesignerIcons/`, `Editor/ComponentMenus/`, `Editor/CreateMenus/`, `Editor/DesignerSurfaces/` and their **Tools > Platform > Icons / Component Menus / Create Menus** and **Tools > Linting > Report Missing …** menus. `[DesignerIcon]` and the icon PNGs stay here.
 
 - **Cysharp UniTask is no longer embedded** (`Runtime/ThirdParty/UniTask/`, `Editor/ThirdParty/UniTask/`, the `UniTask` and `UniTask.Editor` assemblies, and the UniTask Tracker window). Async code across the AetherNexus packages now targets `UnityEngine.Awaitable`. **Breaking for consumers** that referenced the `UniTask` assembly or typed against `UniTask` / `UniTask<T>` in overrides of package APIs — change those signatures to `Awaitable` / `Awaitable<T>` and drop the assembly reference. Fire-and-forget `UniTaskVoid` + `.Forget()` becomes `async void` with an explicit `try`/`catch`, since `Awaitable` has no unobserved-exception routing
 - Legacy `UnityEngine.Input` fallbacks in shipped components: every polling site now goes through the Input System package, which the package already required

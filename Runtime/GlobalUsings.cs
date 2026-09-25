@@ -1,3 +1,2 @@
-// Resolves the DebugX namespace vs static DebugX class name clash for code under
-// AetherNexus.FoundationPlatform.* (sibling of the DebugX namespace). Prefer DebugXLog.Logger / DebugXLog.Builder.
+// Makes DebugX available across this assembly without a using directive.
 global using DebugX = AetherNexus.FoundationPlatform.Logging.DebugX;
