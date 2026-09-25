@@ -329,7 +329,8 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		public static class Platform
 		{
 			private const string Root = Tools + "Platform/";
-            public const string Setup               = Root + "Project Setup...";
+			public const string Setup               = Root + "Project Setup...";
+			public const string MigrateToV2         = Root + "Migrate To v2";
             public const string RegistryRefresh     = Rebuild.Registries;
             public const string PackageRebuild      = Rebuild.PackageIntegrations;
             public const string NetworkValidateSetup = Root + "Network/Validate Setup";

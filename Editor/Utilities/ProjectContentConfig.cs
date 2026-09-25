@@ -216,6 +216,48 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
                 Save();
         }
 
+        /// <summary>Union-merges values read from a pre-v2 config into this one (Migrate To v2). Returns the number of values added.</summary>
+        public int MergeLegacyValues(
+            IEnumerable<string> legacyDomains,
+            IEnumerable<string> legacyCompositeDomains,
+            IEnumerable<string> legacySharedSubfolders,
+            IEnumerable<string> legacyGlobalSubfolders,
+            IEnumerable<string> legacyRequiredRoots,
+            bool legacyAutoMove,
+            IEnumerable<string> legacyExemptFolders)
+        {
+            int added = AddMissing(domains, legacyDomains)
+                        + AddMissing(compositeDomains, legacyCompositeDomains)
+                        + AddMissing(dataSharedSubfolders, legacySharedSubfolders)
+                        + AddMissing(dataGlobalSubfolders, legacyGlobalSubfolders)
+                        + AddMissing(requiredAssetFolderRoots, legacyRequiredRoots)
+                        + AddMissing(exemptFolders, legacyExemptFolders);
+            if (legacyAutoMove && !autoMoveOutOfSyncOnImport)
+            {
+                autoMoveOutOfSyncOnImport = true;
+                added++;
+            }
+            if (added > 0)
+                Save();
+            return added;
+        }
+
+        private static int AddMissing(List<string> target, IEnumerable<string> values)
+        {
+            int added = 0;
+            foreach (string raw in values)
+            {
+                string value = raw.Trim();
+                if (value.Length == 0 || target.Exists(existing => string.Equals(existing, value, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                target.Add(value);
+                added++;
+            }
+            if (added > 0)
+                target.Sort(StringComparer.OrdinalIgnoreCase);
+            return added;
+        }
+
         public void AppendRequiredFolderRootIssues(IList<string> messages)
         {
             const string assetsPrefix = "Assets/";
