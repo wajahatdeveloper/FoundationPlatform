@@ -1,26 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AetherNexus.FoundationPlatform.SupportTypes;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class MonoBehaviourExtensions
 {
+    private static readonly ConditionalWeakTable<GameObject, HashSet<string>> RanOnceKeys = new();
+
     public static void RunOnce(this MonoBehaviour behaviour, Action action)
     {
-        var key = GetActionKey(action);
-        var customState = behaviour.gameObject.GetOrAddComponent<CustomState>();
-        customState.keyValuePairs.TryGetValue(key, out var value);
-        if (value != null)
-        {
-            return;
-        }
-        else
-        {
-            customState.keyValuePairs[key] = "1";
+        var keys = RanOnceKeys.GetOrCreateValue(behaviour.gameObject);
+        if (keys.Add(GetActionKey(action)))
             action();
-        }
     }
 
     public static void RunOncePersistent(this MonoBehaviour behaviour, Action action)

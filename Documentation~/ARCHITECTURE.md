@@ -163,8 +163,9 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 | `Observable<T>` | `Runtime/Patterns/Observable.cs` | class (not struct — see Design Decisions); `Value` setter fires `OnValueChanged` / `OnValueChangedTo` / `OnValueChangedFromTo` |
 | `ObservableList<T>` | `Runtime/Patterns/ObservableList.cs` | `ItemAdded`, `ItemRemoved`, `Cleared` events |
 | `MaybeMonad` | `Runtime/SupportTypes/MaybeMonad.cs` | **non-generic** static class of LINQ-chain extension methods (`With`, `Return`, `If`, `Unless`, `Do`, `IfNotNull`) — not a generic `Some`/`None` optional-value wrapper |
-| `CustomState` | `Runtime/SupportTypes/CustomState.cs` | a bare `MonoBehaviour` wrapping `Dictionary<string,string> keyValuePairs`, used by `MonoBehaviourExtensions.RunOnce`/`RunOncePersistent` as a per-object "have I already fired this once" flag store — no state-machine semantics |
 | `HSL` / `HSV` | `Runtime/SupportTypes/` | color-space value types |
+
+`MonoBehaviourExtensions.RunOnce` keeps its per-GameObject "already fired" keys in a `ConditionalWeakTable<GameObject, HashSet<string>>`; it adds no component.
 
 ---
 
