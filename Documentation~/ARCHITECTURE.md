@@ -111,6 +111,10 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 
 **Deliberate carve-out — caller-info reflection:** `CallerInfoHelper` and `MessageTemplateParser` use cached `StackTrace`/`MethodBase` reflection on every log call in all builds so file/line/member attribution reaches sinks. This is an intentional trade-off (not a silent violation of the no-runtime-reflection rule). The Unity-stack-extractor fallback remains editor-gated. See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for rationale and future options if attribution is ever threaded via `[CallerMemberName]` instead.
 
+**`DebugHistory<T>`** — `Runtime/DebugX/DebugHistory.cs` — fixed-capacity ring of timestamped debug entries (`Push(value, time)`, `CopySince(cutoff, list)`, `CopyAll(list)`). Reads fill a caller-owned list oldest first: no per-read allocation, no sort. Shared by every per-actor debug history (GAS tag/effect/cue, item events, character state, tutorial log).
+
+**Guarding debug code (all packages):** debug-only components stay compiled as shells — class, serialized fields and public API — so placed prefabs never become missing scripts in release players. Their Unity messages, event subscriptions and string building sit under `#if UNITY_EDITOR || DEVELOPMENT_BUILD`; void recorders use `[Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]` so release strips the call and its argument construction. Warnings and errors are never compiled out.
+
 ---
 
 ## CoroutineX
