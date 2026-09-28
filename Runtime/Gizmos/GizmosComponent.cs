@@ -13,7 +13,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/GizmosComponent.png")]
     [AddComponentMenu("FoundationPlatform/Gizmos Component")]
     [DesignerIcon(DesignerSymbol.Gizmo)]
-    public class GizmosComponent : MonoBehaviour
+    public class GizmosComponent : MonoBehaviour, IEditorOnlyComponent
     {
         public static readonly string[] Type = new string[] {
             "Cube",

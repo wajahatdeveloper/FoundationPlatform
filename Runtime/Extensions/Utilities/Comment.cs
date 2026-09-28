@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.Extensions
 [AddComponentMenu("Toolkit/Comment")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Comment.png")]
 [DesignerIcon(DesignerSymbol.Document)]
-public class Comment : MonoBehaviour
+public class Comment : MonoBehaviour, IEditorOnlyComponent
 {
     [TextArea(3, 10)]
     [SerializeField] private string message = "Enter your comment here...";

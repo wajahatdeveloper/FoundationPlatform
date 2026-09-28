@@ -6,7 +6,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
     [AddComponentMenu("FoundationPlatform/Editor/Inspector Separator")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/InspectorSeparator.png")]
     [DesignerIcon(DesignerSymbol.Widget)]
-    public class InspectorSeparator : MonoBehaviour
+    public class InspectorSeparator : MonoBehaviour, IEditorOnlyComponent
     {
         [SerializeField] string _label;
     }
