@@ -96,11 +96,24 @@ namespace AetherNexus.FoundationPlatform.Animation
 			return byId;
 		}
 
+		private const int AllocationFreeResolveDepth = 16;
+
 		public LocomotionBlendProfile ResolvedBlendProfile
 		{
 			get
 			{
 				if (blendProfile != null) return blendProfile;
+
+				// Read per sim tick: walk a bounded depth allocation-free. Revisiting a cycle only re-checks sets
+				// whose profile is already null, so the result matches the visited-set walk below.
+				var shallow = parentSet;
+				for (int depth = 0; depth < AllocationFreeResolveDepth; depth++)
+				{
+					if (shallow == null) return null;
+					if (shallow.blendProfile != null) return shallow.blendProfile;
+					shallow = shallow.parentSet;
+				}
+
 				var visited = new HashSet<AnimationSet>();
 				visited.Add(this);
 				var current = parentSet;
