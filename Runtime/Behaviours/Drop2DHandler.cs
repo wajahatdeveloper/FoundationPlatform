@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
+    /// <summary>
+    /// Drop zone for <see cref="Drag2DHandler"/> objects. Overlap is tracked by trigger; the drop fires
+    /// when the dragged object's drag ends while it still overlaps this zone.
+    /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(BoxCollider2D))]
     [AddComponentMenu("FoundationPlatform/Drop2D Handler")]
@@ -31,60 +34,49 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 
             if (makeColliderTrigger)
             {
-                if (_collider != null) _collider.isTrigger = true;
+                _collider.isTrigger = true;
             }
 
             if (freezeRigidbody)
             {
                 var rb = GetComponent<Rigidbody2D>();
-                if (rb != null)
-                {
-                    rb.bodyType = RigidbodyType2D.Kinematic;
-                    rb.simulated = true;
-                    rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-                }
+                rb.bodyType = RigidbodyType2D.Kinematic;
+                rb.simulated = true;
+                rb.constraints = RigidbodyConstraints2D.FreezeRotation;
             }
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
             droppedObject = collision.gameObject;
+            if (collision.TryGetComponent(out Drag2DHandler drag))
+            {
+                drag.SetHoveredDrop(this);
+            }
             onHoverEnter?.Invoke(droppedObject);
-        }
-
-        private void Update()
-        {
-            if (droppedObject == null)
-            {
-                return;
-            }
-
-            if (droppedObject.GetComponent<Drag2DHandler>() == null)
-            {
-                return;
-            }
-
-            if (Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
-            {
-                onDrop?.Invoke(droppedObject);
-                if (snapDroppedToCenter && droppedObject != null)
-                {
-                    var drag = droppedObject.GetComponent<Drag2DHandler>();
-                    if (drag != null && !drag.isDragging)
-                    {
-                        Vector3 center = _collider != null ? _collider.bounds.center : transform.position;
-                        droppedObject.transform.position = new Vector3(center.x + snapOffset.x, center.y + snapOffset.y, droppedObject.transform.position.z);
-                    }
-                }
-            }
         }
 
         private void OnTriggerExit2D(Collider2D collision)
         {
+            if (collision.TryGetComponent(out Drag2DHandler drag))
+            {
+                drag.ClearHoveredDrop(this);
+            }
             onHoverExit?.Invoke(collision.gameObject);
             if (collision.gameObject == droppedObject)
             {
                 droppedObject = null;
+            }
+        }
+
+        internal void AcceptDrop(Drag2DHandler drag)
+        {
+            var dropped = drag.gameObject;
+            onDrop?.Invoke(dropped);
+            if (snapDroppedToCenter)
+            {
+                Vector3 center = _collider.bounds.center;
+                dropped.transform.position = new Vector3(center.x + snapOffset.x, center.y + snapOffset.y, dropped.transform.position.z);
             }
         }
     }

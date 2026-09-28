@@ -5,8 +5,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.TweenX
 {
     /// <summary>
-    /// Central driver for all tweens. A hidden, <c>DontDestroyOnLoad</c> runner (created via
-    /// <see cref="RuntimeInitializeOnLoadMethod"/>, mirroring <c>CoroutineXExecutor</c>) ticks the
+    /// Central driver for all tweens. The <see cref="PlatformHost"/> player-loop entry ticks the
     /// presentation clocks every frame; the deterministic clock is ticked externally by whoever
     /// registered it (see <see cref="RegisterClock"/> / <see cref="TickDeterministic"/>).
     ///
@@ -43,15 +42,7 @@ namespace AetherNexus.FoundationPlatform.TweenX
         /// <summary>Number of live tweens.</summary>
         public static int ActiveCount => _active.Count;
 
-        // ---------------------------------------------------------------- runner
-
-        private sealed class TweenRunner : MonoBehaviour
-        {
-            private void Update() => TickPresentation();
-            private void OnDestroy() { if (_runner == this) _runner = null; }
-        }
-
-        private static TweenRunner _runner;
+        // ---------------------------------------------------------------- reset
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -62,9 +53,6 @@ namespace AetherNexus.FoundationPlatform.TweenX
             _idCounter = 0;
             GlobalTimeScale = 1f;
             IsPaused = false;
-
-            if (_runner != null) return;
-            CreateRunner();
         }
 
         // ---------------------------------------------------------------- clock registration
@@ -90,7 +78,6 @@ namespace AetherNexus.FoundationPlatform.TweenX
             Interpolator<T> lerp, Adder<T> add = null, Func<T, bool, T> snapper = null,
             UnityEngine.Object target = null, TweenClock clock = TweenClock.Scaled)
         {
-            EnsureRunner();
             var t = Rent<T>();
             t.Getter = getter;
             t.Setter = setter;
@@ -109,7 +96,6 @@ namespace AetherNexus.FoundationPlatform.TweenX
         /// <summary>Assign an id and add a bare tween (or sequence/path/juice tween) to the active set.</summary>
         internal static void Register(Tween t)
         {
-            EnsureRunner();
             t.IsAlive = true;
             t.Id = ++_idCounter;
             _byId[t.Id] = t;
@@ -141,20 +127,6 @@ namespace AetherNexus.FoundationPlatform.TweenX
             if (t == null) return;
             t.IsAlive = false;
             Return(t);
-        }
-
-        /// <summary>Create the runner on demand (e.g. tweens started before <see cref="Bootstrap"/> in edit-mode preview).</summary>
-        private static void EnsureRunner()
-        {
-            if (_runner != null || !Application.isPlaying) return;
-            CreateRunner();
-        }
-
-        private static void CreateRunner()
-        {
-            var go = new GameObject("TweenRunner") { hideFlags = HideFlags.HideInHierarchy };
-            _runner = go.AddComponent<TweenRunner>();
-            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.TweenRunner");
         }
 
         internal static TweenHandle AsHandle(this Tween t) => new(t.Id, t.Generation);

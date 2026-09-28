@@ -33,6 +33,11 @@ public class SyncAnimatorTime : MonoBehaviour
 	private void Start()
 	{
 		animator = GetComponent<Animator>();
+		if (animator == null || sourceAnimator == null)
+		{
+			throw new System.InvalidOperationException(
+				$"{nameof(SyncAnimatorTime)} on '{name}' needs an Animator on this GameObject and an assigned {nameof(sourceAnimator)}.");
+		}
 		srcStateHash = Animator.StringToHash(srcStateName);
 		dstStateHash = Animator.StringToHash(stateName);
 	}
@@ -55,11 +60,6 @@ public class SyncAnimatorTime : MonoBehaviour
 
 	private void Sync()
 	{
-		if (sourceAnimator == null || animator == null)
-		{
-			return;
-		}
-
 		if (srcLayerIndex < 0 || srcLayerIndex >= sourceAnimator.layerCount)
 		{
 			return;
@@ -84,10 +84,10 @@ public class SyncAnimatorTime : MonoBehaviour
 			{
 				return;
 			}
-			animator.Play(stateName, layerIndex, 0f);
+			animator.Play(dstStateHash, layerIndex, 0f);
 		}
 
 		float t = Mathf.Repeat(srcInfo.normalizedTime, 1f);
-		animator.Play(stateName, layerIndex, t);
+		animator.Play(dstStateHash, layerIndex, t);
 	}
 }}

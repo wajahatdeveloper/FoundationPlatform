@@ -289,7 +289,7 @@ public sealed class CoroutineX
 
         if (owner == null)
         {
-            CoroutineXExecutor.Instance.Owner.Add(this);
+            PlatformHost.Instance.Owner.Add(this);
             return;
         }
 
@@ -305,7 +305,7 @@ public sealed class CoroutineX
     /// Destroyed Coroutines are not taken into account.
     /// </summary>
     /// <returns>Unowned Coroutines.</returns>
-    public static List<CoroutineX> GetUnownedCoroutinesX() => CoroutineXExecutor.Instance.gameObject.GetCoroutinesX();
+    public static List<CoroutineX> GetUnownedCoroutinesX() => PlatformHost.Instance.gameObject.GetCoroutinesX();
 
     /// <summary>
     /// Gets unowned Coroutines by <paramref name="mask"/>.
@@ -313,7 +313,7 @@ public sealed class CoroutineX
     /// </summary>
     /// <param name="mask">State mask.</param>
     /// <returns>Unowned Coroutines.</returns>
-    public static List<CoroutineX> GetUnownedCoroutinesX(State mask) => CoroutineXExecutor.Instance.gameObject.GetCoroutinesX(mask);
+    public static List<CoroutineX> GetUnownedCoroutinesX(State mask) => PlatformHost.Instance.gameObject.GetCoroutinesX(mask);
     #endregion
 
     #region Creation
@@ -577,7 +577,7 @@ public sealed class CoroutineX
         }
 
         CurrentState = State.Running;
-        _coroutine = CoroutineXExecutor.Instance.StartCoroutine(RunEnumerator());
+        _coroutine = PlatformHost.Instance.StartCoroutine(RunEnumerator());
 
         return this;
     }
@@ -612,7 +612,7 @@ public sealed class CoroutineX
             return this;
 
         if (_coroutine != null)
-            CoroutineXExecutor.Instance.StopCoroutine(_coroutine);
+            PlatformHost.Instance.StopCoroutine(_coroutine);
 
         CurrentState = State.Stopped;
 
@@ -630,7 +630,7 @@ public sealed class CoroutineX
             return this;
 
         if (_coroutine != null)
-            CoroutineXExecutor.Instance.StopCoroutine(_coroutine);
+            PlatformHost.Instance.StopCoroutine(_coroutine);
 
         _enumerator = _enumerable.GetEnumerator();
         CurrentState = State.Reseted;
@@ -673,7 +673,7 @@ public sealed class CoroutineX
             return this;
 
         if (!IsOwned)
-            CoroutineXExecutor.Instance.Owner.Remove(this);
+            PlatformHost.Instance.Owner.Remove(this);
         else
         {
             Owner.Remove(this);
@@ -683,7 +683,7 @@ public sealed class CoroutineX
         if (ownerGameObject == null)
         {
             Owner = null;
-            CoroutineXExecutor.Instance.Owner.Add(this);
+            PlatformHost.Instance.Owner.Add(this);
             IsOwned = false;
         }
         else
@@ -708,7 +708,7 @@ public sealed class CoroutineX
     internal void OnOwnerDeactivate()
     {
         // CoroutinesExecutor can be null when we close the application.
-        if (!CoroutineXExecutor.HasInstance)
+        if (!PlatformHost.HasInstance)
             return;
 
         if (IsRunning)
@@ -804,7 +804,7 @@ public sealed class CoroutineX
             Stop();
 
         if (!IsOwned)
-            CoroutineXExecutor.Instance.Owner.Remove(this);
+            PlatformHost.Instance.Owner.Remove(this);
         else
         {
             Owner.Remove(this);

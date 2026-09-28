@@ -1,18 +1,15 @@
 using System.Threading;
-using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
-    /// MonoBehaviour that dispatches actions to Unity's main thread
+    /// Main-thread identity for logging. Queued main-thread log actions are drained by the
+    /// <see cref="PlatformHost"/> player-loop entry each frame and once more on quit.
     /// </summary>
-    [AddComponentMenu("")]
-    public class MainThreadDispatcher : MonoBehaviour
+    public static class MainThreadDispatcher
     {
-        private static MainThreadDispatcher _instance;
-
         /// <summary>
-        /// Managed thread ID of Unity's main thread. Set in Awake. Used for sync console mode.
+        /// Managed thread ID of Unity's main thread. Used for sync console mode.
         /// </summary>
         public static int MainThreadId { get; private set; }
 
@@ -21,40 +18,18 @@ namespace AetherNexus.FoundationPlatform.Logging
             MainThreadId != 0 && Thread.CurrentThread.ManagedThreadId == MainThreadId;
 
         /// <summary>
-        /// Records the current thread as the main thread. Called from main-thread entry points that run
-        /// before the dispatcher GameObject exists (editor load, RuntimeInitializeOnLoad).
+        /// Records the current thread as the main thread. Called from main-thread entry points
+        /// (editor load, RuntimeInitializeOnLoad, pipeline start).
         /// </summary>
         public static void CaptureMainThread()
         {
             MainThreadId = Thread.CurrentThread.ManagedThreadId;
         }
 
-        private void Awake()
-        {
-            MainThreadId = Thread.CurrentThread.ManagedThreadId;
-        }
-
+        /// <summary>Kept for the pipeline start path; draining is owned by <see cref="PlatformHost"/>.</summary>
         public static void EnsureExists()
         {
-            if (_instance != null)
-                return;
-
-            var go = new GameObject("DebugX MainThreadDispatcher");
-            _instance = go.AddComponent<MainThreadDispatcher>();
-            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.DebugX.MainThreadDispatcher");
-        }
-
-        private void Update()
-        {
-            // Process queued main thread actions
-            LogQueue.ProcessMainThreadActions();
-        }
-
-        private void OnApplicationQuit()
-        {
-            // Ensure all actions are processed before shutdown
-            LogQueue.ProcessMainThreadActions();
+            CaptureMainThread();
         }
     }
 }
-

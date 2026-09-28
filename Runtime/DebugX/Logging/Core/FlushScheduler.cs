@@ -6,12 +6,12 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Logging
 {
     /// <summary>
-    /// Periodically flushes file sinks on a background thread so the main thread is not blocked.
+    /// Periodically flushes file sinks on a background thread so the main thread is not blocked;
+    /// flushes once more when <see cref="PlatformHost"/> reports quit.
     /// </summary>
-    [AddComponentMenu("")]
-    public class FlushScheduler : MonoBehaviour
+    public static class FlushScheduler
     {
-        private static FlushScheduler _instance;
+        private static bool _started;
         private static readonly List<FileSink> _fileSinks = new List<FileSink>();
         private static readonly List<JsonFileSink> _jsonFileSinks = new List<JsonFileSink>();
         private static readonly object _sinksLock = new object();
@@ -21,13 +21,12 @@ namespace AetherNexus.FoundationPlatform.Logging
 
         public static void EnsureExists()
         {
-            if (_instance != null)
+            if (_started)
                 return;
 
-            var go = new GameObject("DebugX FlushScheduler");
-            _instance = go.AddComponent<FlushScheduler>();
-            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.DebugX.FlushScheduler");
-
+            _started = true;
+            PlatformHost.Quitting -= OnQuitting;
+            PlatformHost.Quitting += OnQuitting;
             _running = true;
             _flushThread = new Thread(FlushThreadProc)
             {
@@ -76,9 +75,11 @@ namespace AetherNexus.FoundationPlatform.Logging
             }
         }
 
-        private void OnApplicationQuit()
+        private static void OnQuitting()
         {
             _running = false;
+            _started = false;
+            PlatformHost.Quitting -= OnQuitting;
             FlushAllSinksStatic();
         }
 

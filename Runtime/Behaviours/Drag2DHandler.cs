@@ -1,15 +1,20 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
+    /// <summary>
+    /// Drags a 2D world object with the pointer through the EventSystem. The camera that sees this
+    /// object needs a <see cref="Physics2DRaycaster"/> and the scene needs an <see cref="EventSystem"/>.
+    /// Dropping while overlapping a <see cref="Drop2DHandler"/> hands the object to it.
+    /// </summary>
     [RequireComponent(typeof(BoxCollider2D))]
     [AddComponentMenu("FoundationPlatform/Drag2D Handler")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Drag2DHandler.png")]
     [DesignerIcon(DesignerSymbol.Input)]
-    public class Drag2DHandler : MonoBehaviour
+    public class Drag2DHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         public UnityEvent onDrag;
         public UnityEvent onDragStart;
@@ -18,96 +23,87 @@ namespace AetherNexus.FoundationPlatform.Behaviours
         [Header("Options")] public bool lockX = false;
         public bool lockY = false;
         public bool clampToCamera = true;
-        public float zDepthFromCamera = 10f;
         public bool useSmoothing = true;
         public float smoothingSpeed = 25f;
 
         [Header("Runtime")] public bool isDragging;
 
         private Vector3 worldDragOffset;
-        private Camera mainCamera;
+        private BoxCollider2D boxCollider;
+        private Drop2DHandler hoveredDrop;
+
+        private void Awake()
+        {
+            boxCollider = GetComponent<BoxCollider2D>();
+        }
 
         private void OnEnable()
         {
-            mainCamera = Camera.main;
-            var spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null)
+            var spriteRenderer = GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null && spriteRenderer.sprite != null)
             {
-                Vector2 S = spriteRenderer.sprite != null ? spriteRenderer.sprite.bounds.size : Vector2.one;
-                BoxCollider2D boxCollider2D = gameObject.GetComponent<BoxCollider2D>();
-                boxCollider2D.size = S;
+                boxCollider.size = spriteRenderer.sprite.bounds.size;
             }
         }
 
-        void OnMouseDown()
+        internal void SetHoveredDrop(Drop2DHandler drop) => hoveredDrop = drop;
+
+        internal void ClearHoveredDrop(Drop2DHandler drop)
         {
-            if (mainCamera == null)
+            if (hoveredDrop == drop)
             {
-                mainCamera = Camera.main;
-                if (mainCamera == null) return;
+                hoveredDrop = null;
             }
+        }
 
-            float distance = zDepthFromCamera;
-            if (mainCamera != null)
-            {
-                distance = Mathf.Abs(mainCamera.WorldToScreenPoint(transform.position).z);
-            }
-
-            Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-            Vector3 worldPointAtMouse = mainCamera.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, distance));
-            worldDragOffset = transform.position - worldPointAtMouse;
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            var cam = eventData.pressEventCamera;
+            worldDragOffset = transform.position - PointerToWorld(cam, eventData.position);
             isDragging = true;
             onDragStart?.Invoke();
         }
 
-        private void OnMouseUp()
+        public void OnDrag(PointerEventData eventData)
         {
-            isDragging = false;
-            onDragEnd?.Invoke();
-        }
-
-        void OnMouseDrag()
-        {
-            if (mainCamera == null)
-            {
-                mainCamera = Camera.main;
-                if (mainCamera == null) return;
-            }
-
-            float distance = Mathf.Abs(mainCamera.WorldToScreenPoint(transform.position).z);
-            Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-            Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, distance));
-            Vector3 target = mouseWorld + worldDragOffset;
+            var cam = eventData.pressEventCamera;
+            Vector3 target = PointerToWorld(cam, eventData.position) + worldDragOffset;
 
             Vector3 current = transform.position;
             if (lockX) target.x = current.x;
             if (lockY) target.y = current.y;
-            target.z = current.z; // keep original z
+            target.z = current.z;
 
-            if (clampToCamera && mainCamera != null && mainCamera.orthographic)
+            if (clampToCamera && cam.orthographic)
             {
-                Vector3 min = mainCamera.ViewportToWorldPoint(new Vector3(0, 0, distance));
-                Vector3 max = mainCamera.ViewportToWorldPoint(new Vector3(1, 1, distance));
-                var col = GetComponent<Collider2D>();
-                Vector2 extents = Vector2.zero;
-                if (col != null)
-                {
-                    Bounds b = col.bounds;
-                    extents = b.extents;
-                }
+                float distance = Mathf.Abs(cam.WorldToScreenPoint(current).z);
+                Vector3 min = cam.ViewportToWorldPoint(new Vector3(0, 0, distance));
+                Vector3 max = cam.ViewportToWorldPoint(new Vector3(1, 1, distance));
+                Vector2 extents = boxCollider.bounds.extents;
                 target.x = Mathf.Clamp(target.x, min.x + extents.x, max.x - extents.x);
                 target.y = Mathf.Clamp(target.y, min.y + extents.y, max.y - extents.y);
             }
 
-            if (useSmoothing)
-            {
-                transform.position = Vector3.Lerp(current, target, Time.deltaTime * smoothingSpeed);
-            }
-            else
-            {
-                transform.position = target;
-            }
+            transform.position = useSmoothing
+                ? Vector3.Lerp(current, target, Time.deltaTime * smoothingSpeed)
+                : target;
             onDrag?.Invoke();
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            isDragging = false;
+            onDragEnd?.Invoke();
+            if (hoveredDrop != null)
+            {
+                hoveredDrop.AcceptDrop(this);
+            }
+        }
+
+        private Vector3 PointerToWorld(Camera cam, Vector2 screenPosition)
+        {
+            float distance = Mathf.Abs(cam.WorldToScreenPoint(transform.position).z);
+            return cam.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, distance));
         }
     }
 }

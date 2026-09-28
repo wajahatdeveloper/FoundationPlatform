@@ -15,7 +15,7 @@ Most types live under `AetherNexus.FoundationPlatform.*`. A few subsystems keep 
 | Namespace | Folder | Notes |
 |---|---|---|
 | `AetherNexus.FoundationPlatform.Messaging` | `Runtime/Messaging/EventBus/`, `Runtime/Identity/Identity.cs` | `EventBus`, `BaseGameEvent`, `DomainEvent`, `Identity`, `IIdentity`, `SubscriptionToken` — **not** global despite ergonomic call sites. `Identity` value type lives on disk under `Runtime/Identity/`; `IIdentity` stays in EventBus |
-| `AetherNexus.FoundationPlatform.CoroutineX` | `Runtime/CoroutineX/` | `CoroutineX`, `Routines`, `CoroutineXExecutor`, `CoroutineXOwner` — **not** global |
+| `AetherNexus.FoundationPlatform.CoroutineX` | `Runtime/CoroutineX/` | `CoroutineX`, `Routines`, `CoroutineXOwner` — **not** global (unowned routines run on `PlatformHost`) |
 | `AetherNexus.FoundationPlatform` | `Runtime/Patterns/` | root types such as `FragmentData` |
 | `AetherNexus.FoundationPlatform.Animation` / `.Editor.Animation` | `Runtime/Animation/`, `Editor/Animation/` | includes `AnimGraph/` |
 | `AetherNexus.FoundationPlatform.Attributes` | `Runtime/Attributes/` | `[Tag]`, `[Layer]`, `[TooltipIcon]`, run-order attributes |
@@ -97,7 +97,7 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
   └─ LogPipeline.Configure()
        ├─ set minimum level + excluded channels
        ├─ register sinks (per platform, below)
-       └─ start LogQueue + MainThreadDispatcher
+       └─ start LogQueue + capture main thread (MainThreadDispatcher is static; PlatformHost drains)
 ```
 
 | Platform | Sinks |
@@ -133,7 +133,7 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
 
 State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
-`CoroutineXExecutor` — `DontDestroyOnLoad` singleton, dispatches unowned coroutines. `CoroutineXOwner` — auto-added to owned GameObjects, stops coroutines on deactivate.
+`PlatformHost` (`Runtime/Patterns/`) — dispatches unowned coroutines. `CoroutineXOwner` — auto-added to owned GameObjects, stops coroutines on deactivate.
 
 **`RunAsync` / `WaitForCompletionAsync`:** first-party `Task` helpers collocated in `CoroutineX.cs` for bridge scenarios — not vendor drift.
 
@@ -330,18 +330,30 @@ Inspector chrome is centralized in `AetherInspectorTheme.cs`. `GuiKit` is the pu
 ## Bootstrap
 
 ```
+[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]
+  └─ PlatformHost.InstallPlayerLoop()    ← one entry after Update.ScriptRunBehaviourUpdate:
+                                           TweenManager.TickPresentation + LogQueue main-thread actions
 [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
   ├─ DebugXInitializer.Initialize()      ← logging pipeline
-  └─ CoroutineXExecutor.CreateInstance() ← global coroutine executor
+  └─ PlatformHost.CreateInstance()       ← the only hidden persistent object ("[FoundationPlatform]")
 
 EventBus — stateless, ready immediately (all static)
 ```
+
+### Application hosts
+
+FoundationPlatform owns exactly one hidden persistent GameObject, `PlatformHost`. It runs unowned
+`CoroutineX` routines and raises `FocusChanged` / `PauseChanged` / `Quitting` (internal static events)
+for static services: `PersistentDataHandler` (flush on pause/quit) and `FlushScheduler` (final file-sink
+flush). Per-frame service work is a player-loop entry, not a MonoBehaviour `Update`. Do not add another
+hidden host; subscribe to `PlatformHost` or extend its tick. Subscribers `-=` before `+=` because static
+events survive Stop→Play without a domain reload.
 
 ---
 
 ## Key design decisions
 
-- **Static service locator over DI** — `EventBus`, `DebugX`, `CoroutineXExecutor` are static. Zero setup cost; acceptable because these are true app-lifetime singletons, not swappable services.
+- **Static service locator over DI** — `EventBus`, `DebugX`, `PlatformHost` are static. Zero setup cost; acceptable because these are true app-lifetime singletons, not swappable services.
 - **Struct-based zero-alloc logging** — `DebugXLogger` is a struct; `ShouldEmit()` gates before any string building; 1–5 typed-arg overloads avoid `params object[]` boxing.
 - **Channel-based event routing** — `Identity`-tagged events, with `Identity.Global` as explicit fallback. Enables per-entity event scoping without subscriber-side filtering.
 - **`DomainEvent` publish gate** — blocked outside the Commit phase to prevent state mutation from validation or other read-only phases. Fails loud (assert/throw), not silently.

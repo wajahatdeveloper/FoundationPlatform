@@ -72,41 +72,15 @@ public static class PersistentDataHandler
         }
     }
 
-    /// <summary>
-    /// Internal MonoBehaviour helper to handle Unity lifecycle events for the static class.
-    /// </summary>
-    private class LifecycleHelper : MonoBehaviour
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void SubscribeLifecycle()
     {
-        private static LifecycleHelper instance;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Initialize()
-        {
-            if (instance != null)
-            {
-                return;
-            }
-
-            var go = new GameObject("PersistentDataHandler_LifecycleHelper");
-            go.hideFlags = HideFlags.HideAndDontSave;
-            PersistentObjects.Register(go, PersistenceScope.Application, "FoundationPlatform.PersistentDataHandler");
-            instance = go.AddComponent<LifecycleHelper>();
-        }
-
-        private void OnApplicationFocus(bool hasFocus)
-        {
-            PersistentDataHandler.OnApplicationFocusChanged(hasFocus);
-        }
-
-        private void OnApplicationPause(bool isPaused)
-        {
-            PersistentDataHandler.OnApplicationPauseChanged(isPaused);
-        }
-
-        private void OnApplicationQuit()
-        {
-            PersistentDataHandler.OnApplicationQuitting();
-        }
+        PlatformHost.FocusChanged -= OnApplicationFocusChanged;
+        PlatformHost.PauseChanged -= OnApplicationPauseChanged;
+        PlatformHost.Quitting -= OnApplicationQuitting;
+        PlatformHost.FocusChanged += OnApplicationFocusChanged;
+        PlatformHost.PauseChanged += OnApplicationPauseChanged;
+        PlatformHost.Quitting += OnApplicationQuitting;
     }
 
     public static bool ContainsKey(string key)
