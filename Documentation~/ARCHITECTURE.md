@@ -145,8 +145,9 @@ State events: `Reseted, Running, Stopped, Completed, Destroyed`.
 
 | Class | File | Behavior |
 |---|---|---|
-| `SingletonBehaviour<T>` | `Runtime/Patterns/SingletonBehaviour.cs` | `FindFirstObjectByType` lazy-init; logs **Info** (not Error) when a second copy is found in a newly-loaded scene — the session survivor is kept, the duplicate destroyed |
-| `PersistentSingletonBehaviour<T>` | same file | `DontDestroyOnLoad` variant |
+| `SingletonBehaviourCore<T>` | `Runtime/Patterns/SingletonBehaviour.cs` | shared slot registry keyed by concrete type (`Dialog` / `InputDialog` keep separate slots). An instance resolves only after its own `Awake` registered it; no scene search. `Instance` throws when nothing is registered (returns null only while quitting); `HasInstance` / `TryGetInstance` are the quiet checks for optional callers or code that can run before the owner's `Awake` |
+| `SingletonBehaviour<T>` | same file | scene singleton; logs **Info** (not Error) when a second copy is found in a newly-loaded scene — the session survivor is kept, the duplicate destroyed |
+| `PersistentSingletonBehaviour<T>` | same file | persistent variant; duplicates and lifetime decided by `PersistentObjects` |
 | `Singleton<T>` | same file | non-MonoBehaviour, thread-safe lazy-init |
 | `FragmentData<TDefinition, TPayload>` | `Runtime/Patterns/FragmentData.cs` | SO-based config: `SharedConfig` (reference to `TDefinition` SO) OR `CustomConfig` (inline `TPayload`) — pick one, not both |
 

@@ -40,6 +40,15 @@ using AetherNexus.FoundationPlatform.Logging;
         #region Private Fields
         private bool isInitialized = false;
         private static readonly Dictionary<string, Shader> shaderCache = new Dictionary<string, Shader>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private bool DebugLogging => enableDebugLogging;
+#else
+        private static bool DebugLogging => false;
+#endif
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetShaderCache() => shaderCache.Clear();
         #endregion
 
         #region Data Structures
@@ -99,7 +108,7 @@ using AetherNexus.FoundationPlatform.Logging;
 
             if (!ValidateLightmapData())
             {
-                if (enableDebugLogging)
+                if (DebugLogging)
                     Debug.LogWarning($"[PrefabLightmapData] Invalid lightmap data on {gameObject.name}", this);
                 return;
             }
@@ -109,7 +118,7 @@ using AetherNexus.FoundationPlatform.Logging;
                 ApplyLightmapData();
                 isInitialized = true;
 
-                if (enableDebugLogging)
+                if (DebugLogging)
                     DebugX.Debug($"[PrefabLightmapData] Successfully initialized lightmap data for {gameObject.name}", this);
             }
             catch (Exception e)
@@ -142,14 +151,14 @@ using AetherNexus.FoundationPlatform.Logging;
         {
             if (rendererInfos == null || rendererInfos.Length == 0)
             {
-                if (enableDebugLogging)
+                if (DebugLogging)
                     Debug.LogWarning("[PrefabLightmapData] No renderer information available");
                 return false;
             }
 
             if (lightmaps == null || lightmaps.Length == 0)
             {
-                if (enableDebugLogging)
+                if (DebugLogging)
                     Debug.LogWarning("[PrefabLightmapData] No lightmap textures available");
                 return false;
             }
@@ -290,7 +299,7 @@ using AetherNexus.FoundationPlatform.Logging;
                 var info = rendererInfos[i];
                 if (!info.IsValid)
                 {
-                    if (enableDebugLogging)
+                    if (DebugLogging)
                         Debug.LogWarning($"[PrefabLightmapData] Invalid renderer info at index {i}", this);
                     continue;
                 }
@@ -326,7 +335,7 @@ using AetherNexus.FoundationPlatform.Logging;
                     var lightInfo = lightInfos[i];
                     if (!lightInfo.IsValid)
                     {
-                        if (enableDebugLogging)
+                        if (DebugLogging)
                             Debug.LogWarning($"[PrefabLightmapData] Invalid light info at index {i}", this);
                         continue;
                     }
@@ -380,7 +389,7 @@ using AetherNexus.FoundationPlatform.Logging;
                 {
                     materials[i].shader = shader;
                 }
-                else if (enableDebugLogging)
+                else if (DebugLogging)
                 {
                     Debug.LogWarning($"[PrefabLightmapData] Shader not found: {shaderName}", this);
                 }

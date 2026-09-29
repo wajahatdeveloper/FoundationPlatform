@@ -5,10 +5,8 @@ using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform
 {
- 
-
 // Non-generic host so a single RuntimeInitializeOnLoadMethod can reset every
-// closed SingletonBehaviour<T>/PersistentSingletonBehaviour<T> instantiation.
+// closed SingletonBehaviourCore<T> / Singleton<T> instantiation.
 // Domain reload being off means static fields of already-used closed generics
 // survive Stop->Play; each generic class registers its reset once (in its
 // static ctor) and this registry replays all of them every SubsystemRegistration.
@@ -29,7 +27,11 @@ internal static class SingletonResetRegistry
     }
 }
 
-public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
+/// <summary>
+///     Shared slot registry for <see cref="SingletonBehaviour{T}" /> and <see cref="PersistentSingletonBehaviour{T}" />.
+///     An instance is resolvable only after its own <c>Awake</c> has registered it; there is no scene search.
+/// </summary>
+public abstract class SingletonBehaviourCore<T> : MonoBehaviour where T : MonoBehaviour
 {
     // Keyed by concrete runtime type so subclasses that share the same closed
     // generic base (e.g. Dialog / InputDialog : Dialog) each get their own slot
@@ -37,7 +39,7 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     private static readonly Dictionary<Type, T> instances = new();
     private static bool isQuitting;
 
-    static SingletonBehaviour()
+    static SingletonBehaviourCore()
     {
         SingletonResetRegistry.Register(() =>
         {
@@ -46,49 +48,16 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         });
     }
 
+    /// <summary>
+    ///     The registered instance. Throws when none has registered (none placed, or read before its
+    ///     <c>Awake</c>); returns null only while the application is quitting.
+    /// </summary>
     public static T Instance => GetInstance(typeof(T));
 
-    /// <summary>
-    ///     Gets whether this singleton instance has been set.
-    ///     Useful for checking initialization state.
-    /// </summary>
     public static bool HasInstance =>
         !isQuitting && instances.TryGetValue(typeof(T), out var instance) && instance != null;
 
-    protected virtual void Awake()
-    {
-        var type = GetType();
-
-        if (!instances.TryGetValue(type, out var existing) || existing == null)
-        {
-            instances[type] = this as T;
-        }
-        else if (!ReferenceEquals(existing, this))
-        {
-            DebugX.Logger(LogChannels.DevTools).Info(
-                "SingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
-                type.Name);
-            Destroy(gameObject);
-        }
-    }
-
-    protected virtual void OnDestroy()
-    {
-        var type = GetType();
-        if (instances.TryGetValue(type, out var existing) && ReferenceEquals(existing, this)) instances.Remove(type);
-    }
-
-    private void OnApplicationQuit()
-    {
-        isQuitting = true;
-    }
-
-    /// <summary>
-    ///     Quiet resolve — no error log when absent. Use for optional callers
-    ///     (player-loop probes, non-deterministic fallbacks, editor/pre-init).
-    ///     Prefer <see cref="HasInstance" /> when you only need a registered slot check
-    ///     and must avoid a scene search.
-    /// </summary>
+    /// <summary>Quiet resolve for optional callers; false when nothing has registered.</summary>
     public static bool TryGetInstance(out T instance)
     {
         return TryGetInstance(typeof(T), out instance);
@@ -107,63 +76,69 @@ public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
         if (TryGetInstance(type, out var instance))
             return instance;
 
-        DebugX.Logger(LogChannels.DevTools)
-            .Error(
-                "SingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.",
-                type.Name);
-        return null;
+        throw new InvalidOperationException(
+            $"{type.Name}: no registered instance. It registers in its own Awake, so place one in the scene " +
+            "and do not read Instance before that Awake has run. Use HasInstance / TryGetInstance for optional access.");
     }
 
     protected static bool TryGetInstance(Type type, out T instance)
     {
         instance = null;
         if (isQuitting) return false;
+        return instances.TryGetValue(type, out instance) && instance != null;
+    }
 
-        if (instances.TryGetValue(type, out instance) && instance != null)
-            return true;
-
-        instance = FindFirstObjectByType(type) as T;
-        if (instance == null)
+    /// <summary>Claims this concrete type's slot; false when another live instance already holds it.</summary>
+    protected bool TryClaimSlot()
+    {
+        var type = GetType();
+        if (instances.TryGetValue(type, out var existing) && existing != null && !ReferenceEquals(existing, this))
             return false;
 
-        instances[type] = instance;
+        instances[type] = this as T;
         return true;
+    }
+
+    protected void ReleaseSlot()
+    {
+        var type = GetType();
+        if (instances.TryGetValue(type, out var existing) && ReferenceEquals(existing, this))
+            instances.Remove(type);
+    }
+
+    private void OnApplicationQuit()
+    {
+        isQuitting = true;
     }
 }
 
-public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
+public class SingletonBehaviour<T> : SingletonBehaviourCore<T> where T : MonoBehaviour
 {
-    // Keyed by concrete runtime type — see SingletonBehaviour<T> for the rationale.
-    private static readonly Dictionary<Type, T> instances = new();
-    private static bool isQuitting;
-
-    static PersistentSingletonBehaviour()
-    {
-        SingletonResetRegistry.Register(() =>
-        {
-            isQuitting = false;
-            instances.Clear();
-        });
-    }
-
-    public static T Instance => GetInstance(typeof(T));
-
-    /// <summary>
-    ///     Gets whether this singleton instance has been set.
-    ///     Useful for checking initialization state.
-    /// </summary>
-    public static bool HasInstance =>
-        !isQuitting && instances.TryGetValue(typeof(T), out var instance) && instance != null;
-
     protected virtual void Awake()
     {
-        var type = GetType();
+        if (TryClaimSlot()) return;
 
+        DebugX.Logger(LogChannels.DevTools).Info(
+            "SingletonBehaviour<{TypeName}>: Newly loaded scene had a second copy; keeping the session survivor and destroying the duplicate.",
+            GetType().Name);
+        Destroy(gameObject);
+    }
+
+    protected virtual void OnDestroy()
+    {
+        ReleaseSlot();
+    }
+}
+
+public class PersistentSingletonBehaviour<T> : SingletonBehaviourCore<T> where T : MonoBehaviour
+{
+    protected virtual void Awake()
+    {
         // Persistence, the duplicate decision and the scene-boundary broadcast all come from the one
         // registry, so a persistent singleton behaves exactly like any other persistent object.
-        if (!PersistentObjects.Register(gameObject, Scope, type.FullName)) { return; }
+        if (!PersistentObjects.Register(gameObject, Scope, GetType().FullName)) { return; }
 
-        instances[type] = this as T;
+        TryClaimSlot();
     }
 
     /// <summary>
@@ -174,59 +149,8 @@ public class PersistentSingletonBehaviour<T> : MonoBehaviour where T : MonoBehav
 
     protected virtual void OnDestroy()
     {
-        var type = GetType();
-        if (instances.TryGetValue(type, out var existing) && ReferenceEquals(existing, this)) instances.Remove(type);
-        PersistentObjects.Unregister(type.FullName, gameObject);
-    }
-
-    private void OnApplicationQuit()
-    {
-        isQuitting = true;
-    }
-
-    /// <summary>
-    ///     Quiet resolve — no error log when absent. Use for optional callers
-    ///     (player-loop probes, non-deterministic fallbacks, editor/pre-init).
-    ///     Prefer <see cref="HasInstance" /> when you only need a registered slot check
-    ///     and must avoid a scene search.
-    /// </summary>
-    public static bool TryGetInstance(out T instance)
-    {
-        return TryGetInstance(typeof(T), out instance);
-    }
-
-    /// <summary>
-    ///     Resolves the singleton for a specific concrete type. Subclasses that share
-    ///     this base should shadow <c>Instance</c> with <c>public static new TSelf Instance</c>
-    ///     forwarding here with their own type.
-    /// </summary>
-    protected static T GetInstance(Type type)
-    {
-        if (isQuitting) return null;
-
-        if (TryGetInstance(type, out var instance))
-            return instance;
-
-        DebugX.Logger(LogChannels.DevTools).Error(
-            "PersistentSingletonBehaviour<{TypeName}>: Instance not found, this is likely due to it being non-existent in the scene.",
-            type.Name);
-        return null;
-    }
-
-    protected static bool TryGetInstance(Type type, out T instance)
-    {
-        instance = null;
-        if (isQuitting) return false;
-
-        if (instances.TryGetValue(type, out instance) && instance != null)
-            return true;
-
-        instance = FindFirstObjectByType(type) as T;
-        if (instance == null)
-            return false;
-
-        instances[type] = instance;
-        return true;
+        ReleaseSlot();
+        PersistentObjects.Unregister(GetType().FullName, gameObject);
     }
 }
 
@@ -254,5 +178,5 @@ public class Singleton<T> where T : new()
             return instance;
         }
     }
-}   
+}
 }
