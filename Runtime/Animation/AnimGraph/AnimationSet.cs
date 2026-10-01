@@ -206,8 +206,12 @@ namespace AetherNexus.FoundationPlatform.Animation
 		[Tooltip("Explicit Animancer layer index for this clip (-1 = auto: looping→1, one-shot→2). Set explicitly for channeled actions, stun loops, concurrent overlays, etc.")]
 		public int layerIndex = -1;
 
-		[Tooltip("Which axes of animator root motion drive the KCC motor for this clip.")]
+		[Tooltip("Which axes of root motion drive the KCC motor for this clip. Any mode other than None needs a baked trajectory below.")]
 		public RootMotionMode rootMotionMode = RootMotionMode.None;
+
+		[HideIf(nameof(rootMotionMode), RootMotionMode.None)]
+		[Tooltip("Root trajectory sampled in the Editor and read by simulation instead of the animation graph, so root motion is identical on every peer. Re-bake with Tools > Rebuild > Animation > Bake Root Motion, or the Apply fix on the set's validation finding.")]
+		public AnimationRootMotionBake rootMotionBake = new();
 
 		[Tooltip("While this clip plays: block KCC translation from move input. Input-driven rotation still applies. Does not replace rootMotionMode position drive.")]
 		public bool suspendTranslation;

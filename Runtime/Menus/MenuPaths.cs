@@ -36,6 +36,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string GasAbilityLogic  = Root + "GAS/Rebuild Ability Logic";
             public const string Registries       = Root + "Rebuild All Generated Registries";
             public const string PackageIntegrations = Root + "Rebuild Package Integrations";
+            public const string AnimationRootMotion = Root + "Animation/Bake Root Motion";
         }
 
         /// <summary>Tools/Debug/* — debug filesystem/trace toggles &amp; monitors.</summary>

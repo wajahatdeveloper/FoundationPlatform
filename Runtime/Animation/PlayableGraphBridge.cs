@@ -277,29 +277,9 @@ namespace AetherNexus.FoundationPlatform.Animation
             var state = new ClipState(_bridge.Graph, transition.Clip);
             state.Speed = transition.Speed;
             float fade = fadeDuration >= 0f ? fadeDuration : transition.FadeDuration;
-            WireClipEvents(state, transition);
+            // Authored clip events are not wired here: they fire from AnimatorBridgeBase's gameplay
+            // timeline on the simulation clock, so a throttled or culled graph cannot move or drop them.
             return Play(state, fade) as ClipState;
-        }
-
-        // Registers each authored clip event as a timed callback that fires the named event into the
-        // bridge's dispatcher. This is the single funnel for entry/transition-based playback (PlayFromSet,
-        // sequences, jump, etc.), so authored events fire on every such path. Raw-AnimationClip plays
-        // (CrossfadeAsync / PlayLoopingAnimation) carry no transition data and therefore no events.
-        private void WireClipEvents(PlayableState state, ClipTransitionData transition)
-        {
-            if (transition == null || !transition.HasEvents)
-                return;
-
-            var events = state.Events();
-            for (int i = 0; i < transition.events.Length; i++)
-            {
-                var evt = transition.events[i];
-                if (evt == null || string.IsNullOrWhiteSpace(evt.eventName))
-                    continue;
-
-                string name = evt.eventName;
-                events.Add(Mathf.Clamp01(evt.normalizedTime), () => _bridge.Events.Fire(name));
-            }
         }
 
         public ClipState Play(AnimationClip clip) => Play(clip, 0.25f);

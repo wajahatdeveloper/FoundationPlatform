@@ -6,8 +6,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 {
 	/// <summary>
 	///  A single named event fired at a point along a clip's timeline. The <see cref="eventName"/> is
-	///  fired into the graph's event dispatcher, invoking any callback registered via
-	///  <c>AnimatorBridgeBase.AddEventCallback(eventName, ...)</c>. Because AnimationSets are shared
+	///  fired from the bridge's simulation-clock gameplay timeline into its event dispatcher, invoking any
+	///  callback registered via <c>AddEventCallback(eventName, ...)</c>. Because AnimationSets are shared
 	///  assets, events are matched by name only — never by direct object/delegate reference.
 	/// </summary>
 	[Serializable]
