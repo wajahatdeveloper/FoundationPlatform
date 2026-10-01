@@ -312,6 +312,27 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		protected void CancelGameplayTimeline(int layerIndex) => _timeline[layerIndex] = default;
 
+		/// <summary>
+		/// Multiplies the playback rate of the entry playing on <paramref name="layerIndex"/>: the gameplay timeline
+		/// (completion, events, root motion) and the presented <paramref name="state"/> together, so they stay in step.
+		/// <paramref name="state"/> is null when the entry was started without presentation.
+		/// </summary>
+		protected void ScaleEntryPlaybackRate(int layerIndex, PlayableState state, float rate)
+		{
+			if (rate <= 0f)
+				throw new ArgumentOutOfRangeException(nameof(rate), rate, $"{nameof(AnimatorBridgeBase)} on '{name}': playback rate must be positive.");
+
+			ref var slot = ref _timeline[layerIndex];
+			if (!slot.Active)
+				throw new InvalidOperationException($"{nameof(AnimatorBridgeBase)} on '{name}': no entry is playing on layer {layerIndex} to rescale.");
+
+			slot.Speed *= rate;
+			if (!float.IsPositiveInfinity(slot.CompleteAt))
+				slot.CompleteAt = slot.Elapsed + (slot.CompleteAt - slot.Elapsed) / rate;
+			if (state != null)
+				state.Speed *= rate;
+		}
+
 		private void StartGameplayTimeline(int layerIndex, AnimationSetEntry entry, float startNormalizedTime, float fadeSeconds, Action onComplete)
 		{
 			StartGameplayTimeline(layerIndex, entry, startNormalizedTime, fadeSeconds, onComplete, float.PositiveInfinity, 0f);
