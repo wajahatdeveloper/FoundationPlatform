@@ -17,7 +17,25 @@ namespace AetherNexus.FoundationPlatform.Logging
         private static readonly object _sinksLock = new object();
         private static volatile bool _running = true;
         private static Thread _flushThread;
+        private static volatile int _threadGeneration;
         private const int FlushIntervalMs = 1000;
+
+        // DebugXInitializer registers fresh sinks every Play; the previous session's thread and sinks retire here.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            _threadGeneration++;
+            _running = false;
+            _started = false;
+            _flushThread = null;
+            PlatformHost.Quitting -= OnQuitting;
+            FlushAllSinksStatic();
+            lock (_sinksLock)
+            {
+                _fileSinks.Clear();
+                _jsonFileSinks.Clear();
+            }
+        }
 
         public static void EnsureExists()
         {
@@ -28,7 +46,8 @@ namespace AetherNexus.FoundationPlatform.Logging
             PlatformHost.Quitting -= OnQuitting;
             PlatformHost.Quitting += OnQuitting;
             _running = true;
-            _flushThread = new Thread(FlushThreadProc)
+            int generation = _threadGeneration;
+            _flushThread = new Thread(() => FlushThreadProc(generation))
             {
                 Name = "DebugX Flush",
                 IsBackground = true
@@ -58,12 +77,12 @@ namespace AetherNexus.FoundationPlatform.Logging
             }
         }
 
-        private static void FlushThreadProc()
+        private static void FlushThreadProc(int generation)
         {
-            while (_running)
+            while (_running && generation == _threadGeneration)
             {
                 Thread.Sleep(FlushIntervalMs);
-                if (!_running) break;
+                if (!_running || generation != _threadGeneration) break;
                 try
                 {
                     FlushAllSinksStatic();

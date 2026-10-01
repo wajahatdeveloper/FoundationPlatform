@@ -3,7 +3,6 @@ using AetherNexus.FoundationPlatform.CoroutineX;
 using AetherNexus.FoundationPlatform.Logging;
 using AetherNexus.FoundationPlatform.TweenX;
 using UnityEngine;
-using UnityEngine.LowLevel;
 using UnityEngine.PlayerLoop;
 
 namespace AetherNexus.FoundationPlatform
@@ -24,8 +23,7 @@ namespace AetherNexus.FoundationPlatform
 
         internal CoroutineXOwner Owner { get; private set; }
 
-        // Static events survive Stop->Play without a domain reload; subscribers unsubscribe before
-        // re-subscribing so they are never registered twice.
+        // Cleared at SubsystemRegistration; subscribers re-subscribe at BeforeSceneLoad or later.
         internal static event Action<bool> FocusChanged;
         internal static event Action<bool> PauseChanged;
 
@@ -33,16 +31,17 @@ namespace AetherNexus.FoundationPlatform
         internal static event Action Quitting;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEvents()
+        {
+            FocusChanged = null;
+            PauseChanged = null;
+            Quitting = null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void InstallPlayerLoop()
         {
-            var root = PlayerLoop.GetCurrentPlayerLoop();
-            RemoveTick(ref root);
-            if (!TryInsertAfter(ref root, typeof(Update.ScriptRunBehaviourUpdate)))
-            {
-                throw new InvalidOperationException(
-                    "[FoundationPlatform] PlatformHost could not find Update.ScriptRunBehaviourUpdate in the player loop.");
-            }
-            PlayerLoop.SetPlayerLoop(root);
+            PlayerLoopInstaller.InsertAfter(typeof(PlatformHost), typeof(Update.ScriptRunBehaviourUpdate), Tick);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -86,66 +85,6 @@ namespace AetherNexus.FoundationPlatform
 
             TweenManager.TickPresentation();
             LogQueue.ProcessMainThreadActions();
-        }
-
-        private static PlayerLoopSystem CreateTickSystem() => new()
-        {
-            type = typeof(PlatformHost),
-            updateDelegate = Tick,
-        };
-
-        private static bool TryInsertAfter(ref PlayerLoopSystem system, Type afterType)
-        {
-            var list = system.subSystemList;
-            if (list == null)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < list.Length; i++)
-            {
-                if (list[i].type == afterType)
-                {
-                    var newList = new PlayerLoopSystem[list.Length + 1];
-                    Array.Copy(list, 0, newList, 0, i + 1);
-                    newList[i + 1] = CreateTickSystem();
-                    Array.Copy(list, i + 1, newList, i + 2, list.Length - i - 1);
-                    system.subSystemList = newList;
-                    return true;
-                }
-
-                if (TryInsertAfter(ref list[i], afterType))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        // Without a domain reload the previous play session's entry is still in the current loop.
-        private static void RemoveTick(ref PlayerLoopSystem system)
-        {
-            var list = system.subSystemList;
-            if (list == null)
-            {
-                return;
-            }
-
-            int index = Array.FindIndex(list, s => s.type == typeof(PlatformHost));
-            if (index >= 0)
-            {
-                var newList = new PlayerLoopSystem[list.Length - 1];
-                Array.Copy(list, 0, newList, 0, index);
-                Array.Copy(list, index + 1, newList, index, list.Length - index - 1);
-                system.subSystemList = newList;
-                list = newList;
-            }
-
-            for (int i = 0; i < list.Length; i++)
-            {
-                RemoveTick(ref list[i]);
-            }
         }
     }
 }

@@ -15,6 +15,34 @@ static class InspectorAugment
     {
         UnityEditor.Editor.finishedDefaultHeaderGUI -= DrawInspectorSearchTool;
         UnityEditor.Editor.finishedDefaultHeaderGUI += DrawInspectorSearchTool;
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    // Scene objects are swapped across the Play transition; drop the search and restore hidden components first.
+    private static void OnPlayModeStateChanged(PlayModeStateChange change)
+    {
+        if (change != PlayModeStateChange.ExitingEditMode && change != PlayModeStateChange.ExitingPlayMode)
+        {
+            return;
+        }
+
+        if (OriginalHideFlags != null)
+        {
+            foreach (var kv in OriginalHideFlags)
+            {
+                if (kv.Key != null && kv.Key.hideFlags != kv.Value)
+                {
+                    kv.Key.hideFlags = kv.Value;
+                }
+            }
+        }
+
+        LastSelection = null;
+        OriginalHideFlags = null;
+        Search = string.Empty;
+        EditorApplication.update -= RepaintAllEditors;
+        _repaintSubscribed = false;
     }
 
     private static string Search;

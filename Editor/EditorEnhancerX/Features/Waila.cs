@@ -24,6 +24,15 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 () => EditorEnhancerXSettings.instance.smartSelectKey,
                 KeyScope.SceneView,
                 CycleSelection);
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange change) {
+            if (change != PlayModeStateChange.ExitingEditMode && change != PlayModeStateChange.ExitingPlayMode)
+                return;
+            hovered = null;
+            cycleIgnore.Clear();
         }
 
         private static void Pass(SceneView view) {

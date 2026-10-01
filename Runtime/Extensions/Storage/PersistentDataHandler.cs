@@ -72,6 +72,18 @@ public static class PersistentDataHandler
         }
     }
 
+    // The adapter caches file contents in memory; a new Play session re-reads the file.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        lock (initLock)
+        {
+            dataFilePath = "";
+            adapter = null;
+            isInitialized = false;
+        }
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void SubscribeLifecycle()
     {

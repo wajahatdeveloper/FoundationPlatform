@@ -1716,7 +1716,14 @@ public static class EventBus
 	// Enter Play Mode without domain reload (Unity 6.6 default) leaves _subscribers holding
 	// closures over last session's destroyed scene objects. Reuse the existing test/reset Clear().
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-	private static void ResetOnPlayModeEnter() => Clear();
+	private static void ResetOnPlayModeEnter()
+	{
+		// Nothing is mid-publish at Play enter; a Stop inside a publish or gate left these raised.
+		_invokeDepth = 0;
+		_domainPublishGateDepth = 0;
+		_domainRestoreModeDepth = 0;
+		Clear();
+	}
 
 	/// <summary>
 	/// Clear all subscribers (useful for tests or resets).

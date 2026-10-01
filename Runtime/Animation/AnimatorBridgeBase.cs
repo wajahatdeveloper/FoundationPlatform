@@ -75,6 +75,14 @@ namespace AetherNexus.FoundationPlatform.Animation
 		// AnimationClip.events copies the array on every read.
 		private static readonly Dictionary<AnimationClip, AnimationEvent[]> ClipEventCache = new Dictionary<AnimationClip, AnimationEvent[]>();
 
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+		private static void ResetStatics()
+		{
+			ClipEventCache.Clear();
+			lock (AvatarMaskCacheLock)
+				_avatarMaskCache = null;
+		}
+
 		protected bool CanPlayPresentation => IsReady && animancer != null && animancer.IsValid;
 
 		/// <summary>

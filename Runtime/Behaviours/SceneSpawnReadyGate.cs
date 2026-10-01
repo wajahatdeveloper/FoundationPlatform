@@ -13,6 +13,14 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 
 		public static event Action OnReady;
 
+		[UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+		private static void ResetStatics()
+		{
+			UsesDeterministicStartup = false;
+			IsReady = false;
+			OnReady = null;
+		}
+
 		public static void BeginDeterministicSceneLoad()
 		{
 			UsesDeterministicStartup = true;

@@ -233,6 +233,14 @@ namespace AetherNexus.FoundationPlatform.Animation
         private float _layerFadeSpeed = 1000f;
 
         private static AvatarMask _defaultMask;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetDefaultMask()
+        {
+            if (_defaultMask != null)
+                UnityEngine.Object.DestroyImmediate(_defaultMask);
+            _defaultMask = null;
+        }
         public AvatarMask Mask
         {
             set

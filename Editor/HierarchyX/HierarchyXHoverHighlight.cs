@@ -16,6 +16,14 @@ namespace HierarchyX {
         static HierarchyXHoverHighlight() {
             SceneView.duringSceneGui += OnSceneGui;
             EditorApplication.update += Tick;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange change) {
+            if (change != PlayModeStateChange.ExitingEditMode && change != PlayModeStateChange.ExitingPlayMode)
+                return;
+            hovered = null;
+            drawBuffer[0] = null;
         }
 
         /// <summary>Row pass: records the hovered GameObject (Repaint events carry a live mouse position).</summary>

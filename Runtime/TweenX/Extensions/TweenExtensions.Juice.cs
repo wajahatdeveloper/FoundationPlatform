@@ -12,6 +12,9 @@ public static class JuiceTweenExtensions
 {
     private static int _shakeSeed;   // varies successive shakes; pass an explicit seed for reproducibility
 
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetShakeSeed() => _shakeSeed = 0;
+
     // ---- Punch (overshoot then settle back to origin) ----
 
     public static TweenHandle TweenPunchPosition(this Transform tr, Vector3 punch, float duration, float vibrato = 10f)

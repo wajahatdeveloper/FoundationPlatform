@@ -29,6 +29,9 @@ namespace AetherNexus.FoundationPlatform.Logging
         private static int _approxMainThreadCount = 0;
         private static int _droppedCount = 0;
 
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => Interlocked.Exchange(ref _droppedCount, 0);
+
         public static void Start()
         {
             if (_isRunning)

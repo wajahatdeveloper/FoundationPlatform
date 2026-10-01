@@ -17,6 +17,19 @@ namespace HierarchyX {
         private static GameObject visibilityIsolated;
         private static GameObject pickingSoloed;
 
+        [InitializeOnLoadMethod]
+        private static void HookPlayModeReset() {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange change) {
+            if (change != PlayModeStateChange.ExitingEditMode && change != PlayModeStateChange.ExitingPlayMode)
+                return;
+            visibilityIsolated = null;
+            pickingSoloed = null;
+        }
+
         internal static void Draw(Rect rect, GameObject go, HierarchyXSettings s) {
             if (!s.rowActiveToggle && !s.soloButtons)
                 return;

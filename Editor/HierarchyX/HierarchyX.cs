@@ -38,7 +38,14 @@ namespace HierarchyX {
         static HierarchyX() {
             EditorApplication.hierarchyWindowItemOnGUI -= OnItemGUI;
             EditorApplication.hierarchyWindowItemOnGUI += OnItemGUI;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorApplication.RepaintHierarchyWindow();
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange change) {
+            if (change == PlayModeStateChange.ExitingEditMode || change == PlayModeStateChange.ExitingPlayMode)
+                dragSelection = null;
         }
 
         [MenuItem(MenuPath, false, int.MinValue)]

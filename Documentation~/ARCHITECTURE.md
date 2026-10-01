@@ -333,7 +333,7 @@ Inspector chrome is centralized in `AetherInspectorTheme.cs`. `GuiKit` is the pu
 
 ```
 [RuntimeInitializeOnLoadMethod(SubsystemRegistration)]
-  └─ PlatformHost.InstallPlayerLoop()    ← one entry after Update.ScriptRunBehaviourUpdate:
+  └─ PlatformHost.InstallPlayerLoop()    ← PlayerLoopInstaller entry after Update.ScriptRunBehaviourUpdate:
                                            TweenManager.TickPresentation + LogQueue main-thread actions
 [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
   ├─ DebugXInitializer.Initialize()      ← logging pipeline
@@ -348,8 +348,28 @@ FoundationPlatform owns exactly one hidden persistent GameObject, `PlatformHost`
 `CoroutineX` routines and raises `FocusChanged` / `PauseChanged` / `Quitting` (internal static events)
 for static services: `PersistentDataHandler` (flush on pause/quit) and `FlushScheduler` (final file-sink
 flush). Per-frame service work is a player-loop entry, not a MonoBehaviour `Update`. Do not add another
-hidden host; subscribe to `PlatformHost` or extend its tick. Subscribers `-=` before `+=` because static
-events survive Stop→Play without a domain reload.
+hidden host; subscribe to `PlatformHost` or extend its tick. `PlatformHost` clears its static events at
+`SubsystemRegistration`, so subscribe at `BeforeSceneLoad` or later.
+
+### Domain reload disabled (contract)
+
+The project enters Play mode without a domain reload, so managed statics and the native player loop
+survive Stop→Play. Every package follows these rules:
+
+- **Every mutable static resets** in a `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]`
+  method in its own file, covering every field: instances, flags, counters, collections, caches, static
+  events. Registries filled at `AfterAssembliesLoaded` / `BeforeSceneLoad` / `AfterSceneLoad` are cleared
+  there and refill afterwards; a subscriber that must survive the clear subscribes later than it.
+- **Player loop edits go through `PlayerLoopInstaller`** (`InsertBefore` / `InsertAfter` with a marker
+  type). It strips every entry with that marker before inserting, so a session never adds a second copy.
+  Never call `PlayerLoop.SetPlayerLoop` directly.
+- **Editor statics holding scene objects** clear on `EditorApplication.playModeStateChanged`
+  (`ExitingEditMode` / `ExitingPlayMode`).
+- **Process-lifetime by design** (not reset): `SessionCounter`, reflection type caches, the AI Bridge
+  `MainThread` and log cursor.
+- **Native globals are not restored** on exit: `Time.timeScale`, `Application.targetFrameRate`,
+  `Physics.simulationMode`, `QualitySettings` and render-pipeline asset writes keep their last value
+  until the next writer.
 
 ---
 

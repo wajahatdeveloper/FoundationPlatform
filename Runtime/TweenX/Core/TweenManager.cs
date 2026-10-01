@@ -44,6 +44,14 @@ namespace AetherNexus.FoundationPlatform.TweenX
 
         // ---------------------------------------------------------------- reset
 
+        // SubsystemRegistration so the deterministic clock is cleared before the new session registers its own.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetClocks()
+        {
+            _clocks[(int)TweenClock.Deterministic] = null;
+            _warnedNoDeterministic = false;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
