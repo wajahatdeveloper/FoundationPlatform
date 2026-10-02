@@ -303,6 +303,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string GasDebugger        = Root + "GAS/Ability System Debugger...";
 			public const string GasTagManager      = Root + "GAS/Gameplay Tag Manager...";
 			public const string AiAuthor           = Root + "AI/AI Author...";
+			public const string AiBrainGraph       = Root + "AI/AI Brain Graph...";
 			public const string AiDebugger         = Root + "AI/AI Debugger...";
 			public const string CharacterDebugger  = Root + "Character/Character Debugger...";
 			public const string CharacterLocomotion = Root + "Character/Locomotion Blend Debug...";
