@@ -119,7 +119,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		public const string AnimSetReportToolId = "anim-set-report";
 
-		[BridgeTool(AnimSetReportToolId, Title = "Animation / Set Report")]
+		[BridgeTool(AnimSetReportToolId, Title = "Animation / Set Report", ReadOnly = true)]
 		[Description("Reports one AnimationSet: every resolved entry with its clip, looping flag, mask, layer, root " +
 			"motion mode and sequence link, which parent set declared it, plus all validation findings — required " +
 			"entries, sequence-link errors, missing clips and event names no code declares. Read-only.")]
@@ -222,7 +222,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		public const string AnimClipReportToolId = "anim-clip-report";
 
-		[BridgeTool(AnimClipReportToolId, Title = "Animation / Clip Report")]
+		[BridgeTool(AnimClipReportToolId, Title = "Animation / Clip Report", ReadOnly = true)]
 		[Description("Reports one AnimationClip: length, frame rate, looping, humanoid or generic, root motion curve " +
 			"presence, native events, and which transform paths it animates. Pass 'target' to check the clip against " +
 			"a rig and get the animated paths that do not exist on it. Read-only.")]

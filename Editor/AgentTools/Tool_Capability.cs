@@ -35,11 +35,9 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 	{
 		public const string CapabilityListToolId = "platform-capability-list";
 
-		[BridgeTool(CapabilityListToolId, Title = "Capability / List")]
-		[Description("Lists every project-owned designer feature (menu entries under Window/Domain, Tools/Domain, " +
-			"Tools/Platform, GameObject/Domain, and the other owned roots), with intent-first title, blurb, " +
-			"designer keywords, kind and doc path. Start here to discover what this project can do before " +
-			"wiring anything by hand. Invoke an entry with platform-capability-invoke using its 'key'.")]
+		[BridgeTool(CapabilityListToolId, Title = "Capability / List", Tier = BridgeToolTier.Direct, ReadOnly = true)]
+		[Description("Search the project's designer features (owned menu items) by keyword before wiring anything " +
+			"by hand. Run one with platform-capability-invoke using its 'key'. Agent tools are listed by unity-run list.")]
 		public IReadOnlyList<FeatureDescriptor> List
 		(
 			[Description("Case-insensitive substring matched against title, keywords, menu path and detail. Empty returns the whole catalog.")]
@@ -66,11 +64,9 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		public const string CapabilityInvokeToolId = "platform-capability-invoke";
 
-		[BridgeTool(CapabilityInvokeToolId, Title = "Capability / Invoke")]
-		[Description("Runs one catalogued designer feature by its 'key' (menu path, or title for a contributed entry) " +
-			"and returns everything Unity logged while it ran. Only entries returned by platform-capability-list can " +
-			"be invoked. Features that open a window or a file dialog will block on user input — prefer a typed tool " +
-			"for unattended work.")]
+		[BridgeTool(CapabilityInvokeToolId, Title = "Capability / Invoke", Tier = BridgeToolTier.Direct)]
+		[Description("Run one designer feature by the 'key' from platform-capability-list; returns the logs it wrote. " +
+			"Features that open a window or dialog block on user input.")]
 		public CapabilityInvokeResult Invoke
 		(
 			[Description("Menu path exactly as returned by platform-capability-list, e.g. 'Tools/Platform/Rebuild All Generated Registries'.")]
