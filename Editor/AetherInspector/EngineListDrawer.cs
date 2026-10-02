@@ -145,13 +145,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             
             var target = targets[0];
             bool readOnly = lds != null && lds.IsReadOnly;
+            // Plain serializable classes/structs recurse too, so their nested lists and headers get the
+            // same treatment; polymorphic (interface/abstract) elements only when attributed.
             bool engineElems = elemType != null && !AetherInspectorRenderer.HasCustomPropertyDrawer(elemType)
                 && !typeof(UnityEngine.Object).IsAssignableFrom(elemType)
                 && (elemType.GetCustomAttribute<InlinePropertyAttribute>() != null
-                    || AetherInspectorRenderer.TypeHasEngineAttributes(elemType));
+                    || AetherInspectorRenderer.TypeHasEngineAttributes(elemType)
+                    || AetherInspectorRenderer.HasUitkOnlyDrawer(elemType)
+                    || AetherInspectorRenderer.IsPlainSerializableType(elemType));
+
+            // A list named like the group/title it sits under keeps only its count and buttons, always open.
+            bool repeatsHeader = AetherInspectorRenderer.RepeatsEnclosingHeader(label.text);
 
             // Expansion: foldout persisted on the property; first-seen default from the settings.
-            bool showFoldout = lds == null || lds.ShowFoldout;
+            bool showFoldout = !repeatsHeader && (lds == null || lds.ShowFoldout);
             string initKey = "listinit:" + key;
             if (lds != null && foldouts != null && !foldouts.ContainsKey(initKey))
             {
@@ -164,7 +171,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             // --- Header row ---
             // Explicit-rect foldout (SectionHeaderRow) so nested list headers keep a reliable hit
             // target; EditorGUILayout.Foldout inside Horizontal+FlexibleSpace often mis-hits.
-            string headerText = $"{label.text} ({prop.arraySize})";
+            string headerText = repeatsHeader ? $"({prop.arraySize})" : $"{label.text} ({prop.arraySize})";
             var headerContent = new GUIContent(headerText);
             bool showAdd = !readOnly && (lds == null || !lds.HideAddButton);
             bool disableAdd = vd != null && vd.DisableListAddButtonBehaviour && vd.IsUniqueList;
@@ -408,7 +415,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 return;
             }
 
-            if (engineElems)
+            if (engineElems && (elemProp.propertyType == SerializedPropertyType.Generic
+                || elemProp.propertyType == SerializedPropertyType.ManagedReference))
             {
                 bool elemInline = elemType.GetCustomAttribute<InlinePropertyAttribute>() != null;
                 var entry = new InspectorEntry
@@ -501,12 +509,51 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     if (!failed && v != null) label = v.ToString();
                 }
             }
-            // SerializeReference polymorphic elements: fall back to the concrete type name
-            // (the actual step/verb) instead of Unity's generic "Element N" displayName.
-            if (label == null && elemProp.propertyType == SerializedPropertyType.ManagedReference)
-                label = ManagedReferenceTypeLabel(elemProp);
-            if (label == null) label = elemProp.displayName;
+            if (label == null)
+            {
+                switch (elemProp.propertyType)
+                {
+                    case SerializedPropertyType.Generic:
+                        label = NamedChildLabel(elemProp);
+                        break;
+                    case SerializedPropertyType.ManagedReference:
+                        label = ManagedReferenceTypeLabel(elemProp) ?? NamedChildLabel(elemProp);
+                        break;
+                    default:
+                        // Object fields, enums, tags and primitives already show their value in the row.
+                        return showIndex ? index.ToString() : string.Empty;
+                }
+            }
+            if (label == null) return $"#{index}";
             return showIndex ? $"{index}: {label}" : label;
+        }
+
+        private static readonly string[] s_nameMembers =
+            { "name", "displayName", "label", "id", "m_Name", "Name", "DisplayName", "Label", "Id" };
+
+        // Name-like string member, else the first non-empty string child, else the first referenced Object's name.
+        private static string NamedChildLabel(SerializedProperty elemProp)
+        {
+            foreach (string member in s_nameMembers)
+            {
+                var named = elemProp.FindPropertyRelative(member);
+                if (named != null && named.propertyType == SerializedPropertyType.String && !string.IsNullOrEmpty(named.stringValue))
+                    return named.stringValue;
+            }
+
+            string firstObject = null;
+            var child = elemProp.Copy();
+            var end = elemProp.GetEndProperty();
+            if (!child.NextVisible(true)) return null;
+            do
+            {
+                if (SerializedProperty.EqualContents(child, end)) break;
+                if (child.propertyType == SerializedPropertyType.String && !string.IsNullOrEmpty(child.stringValue))
+                    return child.stringValue;
+                if (firstObject == null && child.propertyType == SerializedPropertyType.ObjectReference && child.objectReferenceValue != null)
+                    firstObject = child.objectReferenceValue.name;
+            } while (child.NextVisible(false));
+            return firstObject;
         }
 
         // "UnityEngine.CoreModule GameplayAbilitySystem.ApplyEffectStep" -> "Apply Effect".

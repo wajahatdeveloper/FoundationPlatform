@@ -26,7 +26,7 @@ public sealed class MyTypeEditor : AetherInspectorEditor
 }
 ```
 
-**Nested `[Serializable]` list elements** — register a drawer so `ShowIf` / `ReadOnly` / buttons work inside lists:
+**Nested `[Serializable]` types** — the engine draws them itself (fields and list elements, at any depth), honoring groups, titles and conditionals. Register a reflected drawer only for surfaces that go through Unity's `PropertyField` outside the engine (e.g. UI Toolkit windows); the engine ignores it:
 
 ```csharp
 using AetherNexus.FoundationPlatform.AetherInspector.Editor;
@@ -56,9 +56,16 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 | `ValueDropdown`, `AssetSelector`, `AssetsOnly`, `SceneObjectsOnly` | Fully Supported | Theme field chrome + Handles caret; searchable popup |
 | `DictionaryDrawerSettings` | Fully Supported | `DisplayMode` and `ShowInInspector` / `IDictionary` read-only grid |
 | `HideReferenceObjectPicker` | Fully Supported | Nested serializable types + inline editors |
-| `InlineProperty`, `InlineEditor`, `PreviewField`, `DrawWithUnity` | Fully Supported | `InlineEditor.MaxHeight` scrolling; PreviewField height + texture preview |
+| `InlineProperty`, `HeaderMember`, `InlineEditor`, `PreviewField`, `DrawWithUnity` | Fully Supported | `InlineEditor.MaxHeight` scrolling; PreviewField height + texture preview |
 | `PropertyRange`, `MinMaxSlider`, `ProgressBar`, `Knob`, `Percentage`, `Curve`, `Wrap`, `MinValue`, `MaxValue`, `EnumToggleButtons`, `ToggleLeft`, `MultiLineProperty` | Fully Supported | Styled sliders (hover min/cur/max); Knob arc fill + labels; Percentage drag-scrub |
 | `DisplayAsString`, `RequireComponentButton` | Fully Supported | DisplayAsString: label left, value uses alignment; RequireComponent: disabled on non-GO |
+
+## Labels and headers
+
+- **Lists:** every list or array with a resolvable element type uses `EngineListDrawer` (Unity's stock list is never used). Row label: `ListDrawerSettings.ListElementLabelName` → a `name` / `displayName` / `label` / `id` string member → the first non-empty string member → the first referenced Object's name → the `[SerializeReference]` concrete type name → `#index`. Object-reference, enum and primitive rows draw no label prefix (the field already shows the value). `ShowElementLabels = false` hides all labels.
+- **Nested objects:** any concrete `[Serializable]` class/struct without an IMGUI `PropertyDrawer` recurses through the engine. Types whose only drawer is UI Toolkit (`CreatePropertyGUI` without `OnGUI`) recurse too instead of showing "No GUI Implemented".
+- **Repeated headers:** a nested-object or list header whose text equals the enclosing `BoxGroup` / `FoldoutGroup` / `TitleGroup` / `[Title]` / parent nested-object header is suppressed: the outer title stays, a nested object draws flush, a list keeps only `(count)` and its buttons.
+- **`[HeaderMember]`** (class/struct): named serialized fields and parameterless `[Button]` methods are drawn right-aligned in the nested object's own header row. `FragmentData<,>` uses it for the Shared / Inline Custom selector and **Promote to Shared**. With `[HideLabel]` on the host field there is no header and the members stay in the body.
 
 ## Theme and performance
 
@@ -75,7 +82,7 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 1. Prefer attributes on runtime types over custom IMGUI in editors.
 2. Extend `AetherInspectorEditor` and call `base.OnInspectorGUI()` first.
 3. Append UI with `GuiKit.Title`, `GuiKit.InfoBox`, `GuiKit.ValidationBox` — not raw `EditorGUILayout.HelpBox`.
-4. Nested payloads in lists need `AetherInspectorReflectedDrawer` unless a bespoke `PropertyDrawer` already exists.
+4. Nested payloads need no drawer inside engine inspectors. A bespoke IMGUI `PropertyDrawer` takes over from the engine for its type; `AetherInspectorReflectedDrawer` does not.
 5. Do not hand-edit generated code — change sources and regenerate.
 6. Cache busting: context menu **Force Rebuild AetherInspector Cache** if metadata looks stale.
 7. Foldouts / headers: use `AetherInspectorTheme.SectionFoldout` or `FlatFoldoutStyle` / `FlatHeaderLabel` — avoid bespoke `foldoutHeader` bars.
@@ -91,7 +98,7 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 | `AetherInspectorTheme` | Skin-aware colors, styles, layout helpers |
 | `GuiKit` | Public facade for editor windows |
 | `PocoInspector` | Reflection drawer for non-serialized members |
-| `AetherInspectorReflectedDrawer` | PropertyDrawer base for nested serializable types |
+| `AetherInspectorReflectedDrawer` | PropertyDrawer base for nested serializable types on Unity `PropertyField` surfaces outside the engine |
 | `EngineListDrawer` / `EngineDictionaryDrawer` / `TableRenderer` | Collection renderers |
 
 ## Implementation notes (audit closure)

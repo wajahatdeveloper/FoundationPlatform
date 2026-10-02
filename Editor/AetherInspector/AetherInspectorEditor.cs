@@ -1065,10 +1065,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     using (new AetherInspectorTheme.ContainerScope())
                     {
+                        string label = null;
                         if (g.ShowLabel)
                         {
-                            string label = g.Box?.LabelText ?? g.Name;
-                            label = InspectorMemberResolver.ResolveString(targets[0], label);
+                            label = InspectorMemberResolver.ResolveString(targets[0], g.Box?.LabelText ?? g.Name);
                             if (!string.IsNullOrEmpty(label))
                             {
                                 if (g.Box != null && g.Box.CenterLabel)
@@ -1078,7 +1078,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                                 else EditorGUILayout.LabelField(label, AetherInspectorTheme.FlatHeaderLabel);
                             }
                         }
-                        RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        using (new EnclosingHeaderScope(string.IsNullOrEmpty(label) ? s_enclosingHeader : label))
+                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
                     }
                     break;
                 }
@@ -1092,26 +1093,30 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         t == null || t.HorizontalLine,
                         t == null || t.BoldTitle);
                     bool indent = t != null && t.Indent;
-                    if (indent)
+                    using (new EnclosingHeaderScope(title))
                     {
-                        using (new AetherInspectorTheme.NestedGroupScope())
-                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        if (indent)
+                        {
+                            using (new AetherInspectorTheme.NestedGroupScope())
+                                RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        }
+                        else RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
                     }
-                    else RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
                     break;
                 }
                 case GroupKind.Foldout:
                 {
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
-                    expanded = AetherInspectorTheme.SectionFoldout(expanded,
-                        InspectorMemberResolver.ResolveString(targets[0], g.Name));
+                    string foldoutTitle = InspectorMemberResolver.ResolveString(targets[0], g.Name);
+                    expanded = AetherInspectorTheme.SectionFoldout(expanded, foldoutTitle);
                     foldouts[g.Path] = expanded;
                     if (expanded)
                     {
                         AetherInspectorTheme.BeginSectionFoldoutBody();
                         try
                         {
-                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                            using (new EnclosingHeaderScope(foldoutTitle))
+                                RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
                         }
                         finally
                         {
@@ -1438,11 +1443,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             if (e.SpaceBefore > 0) EditorGUILayout.Space(e.SpaceBefore);
 
             // [Title] decorator(s).
+            string memberTitle = null;
             if (mm.Titles != null)
             {
                 foreach (var t in mm.Titles)
                 {
-                    AetherInspectorTheme.DrawTitle(InspectorMemberResolver.ResolveString(target, t.Title),
+                    memberTitle = InspectorMemberResolver.ResolveString(target, t.Title);
+                    AetherInspectorTheme.DrawTitle(memberTitle,
                         InspectorMemberResolver.ResolveString(target, t.Subtitle),
                         ToTextAlignment(t.TitleAlignment), t.HorizontalLine, t.Bold);
                 }
@@ -1498,6 +1505,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             float prevLabelWidth = EditorGUIUtility.labelWidth;
             if (mm.LabelWidth != null && mm.LabelWidth.Width > 0) EditorGUIUtility.labelWidth = mm.LabelWidth.Width;
             if (mm.Indent != null) EditorGUI.indentLevel += mm.Indent.IndentLevel;
+            string prevEnclosingHeader = s_enclosingHeader;
+            if (memberTitle != null) s_enclosingHeader = memberTitle;
 
             // try/finally guarantees labelWidth/indent/color are restored even if a reflection call
             // below throws — otherwise a single bad member would leak state into every field after it.
@@ -1622,6 +1631,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (mm.Indent != null) EditorGUI.indentLevel -= mm.Indent.IndentLevel;
                 EditorGUIUtility.labelWidth = prevLabelWidth;
                 GUI.color = prev;
+                s_enclosingHeader = prevEnclosingHeader;
             }
 
             if (e.SpaceAfter > 0) EditorGUILayout.Space(e.SpaceAfter);
@@ -1867,14 +1877,9 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var asList = mm.AssetSelector;
                 var occ = mm.OnCollectionChanged;
                 var elemType = GetElementType(e.Field?.FieldType);
-                // Object-reference element types (ScriptableObject/Component/etc.) get an object field
-                // per row, NOT inline recursion — recursing an object-ref property yields no children
-                // (they live on a different serializedObject) and renders blank rows.
-                bool engineElems = elemType != null && !HasCustomPropertyDrawer(elemType)
-                    && !typeof(UnityEngine.Object).IsAssignableFrom(elemType)
-                    && (mm.InlineProperty != null || TypeHasEngineAttributes(elemType));
-
-                if (lds != null || searchable != null || occ != null || engineElems
+                // Every list with a resolvable element type goes through the engine drawer so rows get
+                // meaningful labels; Unity's stock list can only label them "Element N".
+                if (elemType != null || lds != null || searchable != null || occ != null
                     || (vdList != null && vdList.DrawDropdownForListElements)
                     || (asList != null && asList.DrawDropdownForListElements))
                 {
@@ -2042,7 +2047,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
             if (prop.propertyType == SerializedPropertyType.Generic && prop.hasVisibleChildren && !prop.isArray
                 && !HasCustomPropertyDrawer(fieldType)
-                && (explicitInline || TypeHasEngineAttributes(fieldType)))
+                && (explicitInline || TypeHasEngineAttributes(fieldType) || HasUitkOnlyDrawer(fieldType)
+                    || IsPlainSerializableType(fieldType)))
             {
                 DrawUnityHeaders(mm);
                 float prevLw = EditorGUIUtility.labelWidth;
@@ -2438,6 +2444,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             foreach (var t in parentTargets)
             {
                 var val = InspectorMemberResolver.GetPropertyValue(t, prop.propertyPath, out bool failed);
+                // Nested scopes pass the owning instance, not the root object: resolve the field on it directly.
+                if (failed || val == null) val = InspectorMemberResolver.GetPropertyValue(t, prop.name, out failed);
                 if (!failed && val != null) list.Add(val);
             }
             return list.ToArray();
@@ -2471,7 +2479,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 if (t != null) visited.Add(t);
 
             var lbl = labelOverride ?? GetLabel(e, nestedTargets != null && nestedTargets.Length > 0 ? nestedTargets : targets);
-            bool hideLabel = lbl == GUIContent.none;
+            bool hideLabel = lbl == GUIContent.none || (lbl != null && string.IsNullOrEmpty(lbl.text) && lbl.image == null);
 
             // Fallback: no boxed instance (multi-edit/unresolvable) → default field draw.
             if (nestedTargets == null || nestedTargets.Length == 0)
@@ -2481,47 +2489,61 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 return;
             }
 
-            // Layout:
-            //   [InlineProperty] + [HideLabel] → children flush, no header, no indent.
-            //   [InlineProperty] with a label  → label row, children indented one level.
-            //   default (attributed nested)    → collapsible foldout; HideLabel drops the header entirely.
-            bool indent;
-            if (inline)
-            {
-                if (!hideLabel) EditorGUILayout.LabelField(lbl ?? TempContent(e.Property.displayName));
-                indent = !hideLabel;
-            }
-            else if (hideLabel)
-            {
-                indent = false; // headerless — draw children flush
-            }
-            else
-            {
-                // Collapsible foldout header; skip the body when collapsed.
-                // Foldout alone toggles; a second MouseDown flip would cancel expand.
-                // Rect-based (not EditorGUILayout.Foldout) so HeaderRect can cancel the hierarchyMode
-                // pull when this sits right of a list row's "≡" drag handle (NestedGroupScope) or any
-                // other declared container — otherwise the arrow creeps left into reserved space.
-                var headerRect = AetherInspectorTheme.HeaderRect(
-                    EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight));
-                e.Property.isExpanded = EditorGUI.Foldout(headerRect, e.Property.isExpanded,
-                    lbl ?? TempContent(e.Property.displayName), true, AetherInspectorTheme.FlatFoldoutStyle);
-                if (!e.Property.isExpanded) return;
-                indent = true;
-            }
+            var headerText = hideLabel ? null : (lbl ?? TempContent(e.Property.displayName)).text;
+            // A header repeating the enclosing group/title text adds nothing: draw the body flush under it.
+            if (!hideLabel && RepeatsEnclosingHeader(headerText)) hideLabel = true;
 
-            AetherInspectorTheme.NestedGroupScope indentScope = indent ? new AetherInspectorTheme.NestedGroupScope() : null;
+            var nestedType = nestedTargets[0].GetType();
+            var nestedMeta = GetOrCreateMetadata(nestedType);
+            var nested = GetPooledList();
+            var headerEntries = GetPooledList();
+            AetherInspectorTheme.NestedGroupScope indentScope = null;
             try
             {
-                var nestedMeta = GetOrCreateMetadata(nestedTargets[0].GetType());
-                DrawTypeInfoBoxes(nestedMeta, nestedTargets);
-                var nested = GetPooledList();
                 int seq = 0;
                 foreach (var child in ChildProperties(e.Property))
                     AddFieldEntry(nested, child, nestedMeta, ref seq);
                 AddReflectedEntries(nested, nestedMeta, nestedTargets, ref seq);
-                RenderScope(nested, nestedTargets, foldouts, tabs, maxDepth - 1, visited);
-                ReleasePooledList(nested);
+                if (!hideLabel) TakeHeaderMembers(nestedType, nested, headerEntries);
+
+                // Layout:
+                //   [InlineProperty] + [HideLabel] → children flush, no header, no indent.
+                //   [InlineProperty] with a label  → label row, children indented one level.
+                //   default (attributed nested)    → collapsible foldout; HideLabel drops the header entirely.
+                bool indent;
+                if (hideLabel)
+                {
+                    indent = false;
+                }
+                else
+                {
+                    // Rect-based (not EditorGUILayout.Foldout) so HeaderRect can cancel the hierarchyMode
+                    // pull when this sits right of a list row's "≡" drag handle (NestedGroupScope) or any
+                    // other declared container — otherwise the arrow creeps left into reserved space.
+                    var headerRect = AetherInspectorTheme.HeaderRect(
+                        EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight));
+                    headerRect = DrawHeaderMembers(headerRect, headerEntries, nestedTargets, targets, e.Property.serializedObject);
+                    var headerContent = lbl ?? TempContent(e.Property.displayName);
+                    if (inline)
+                    {
+                        EditorGUI.LabelField(headerRect, headerContent);
+                    }
+                    else
+                    {
+                        // Foldout alone toggles; a second MouseDown flip would cancel expand.
+                        e.Property.isExpanded = EditorGUI.Foldout(headerRect, e.Property.isExpanded,
+                            headerContent, true, AetherInspectorTheme.FlatFoldoutStyle);
+                        if (!e.Property.isExpanded) return;
+                    }
+                    indent = true;
+                }
+
+                if (indent) indentScope = new AetherInspectorTheme.NestedGroupScope();
+                using (new EnclosingHeaderScope(hideLabel ? s_enclosingHeader : headerText))
+                {
+                    DrawTypeInfoBoxes(nestedMeta, nestedTargets);
+                    RenderScope(nested, nestedTargets, foldouts, tabs, maxDepth - 1, visited);
+                }
             }
             catch (ExitGUIException)
             {
@@ -2536,7 +2558,91 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             finally
             {
                 indentScope?.Dispose();
+                ReleasePooledList(headerEntries);
+                ReleasePooledList(nested);
             }
+        }
+
+        // ---- enclosing header: the innermost group/title/nested-object text the current draw sits under ----
+
+        private static string s_enclosingHeader;
+
+        internal static bool RepeatsEnclosingHeader(string text)
+            => !string.IsNullOrEmpty(text) && string.Equals(text, s_enclosingHeader, StringComparison.Ordinal);
+
+        internal readonly struct EnclosingHeaderScope : IDisposable
+        {
+            private readonly string _previous;
+
+            public EnclosingHeaderScope(string header)
+            {
+                _previous = s_enclosingHeader;
+                s_enclosingHeader = header;
+            }
+
+            public void Dispose() => s_enclosingHeader = _previous;
+        }
+
+        // ---- [HeaderMember]: members drawn right-aligned in the nested object's own header row ----
+
+        private static readonly Dictionary<Type, HeaderMemberAttribute> s_headerMembers = new Dictionary<Type, HeaderMemberAttribute>();
+
+        private static void TakeHeaderMembers(Type nestedType, List<InspectorEntry> body, List<InspectorEntry> header)
+        {
+            if (!s_headerMembers.TryGetValue(nestedType, out var attr))
+                s_headerMembers[nestedType] = attr = nestedType.GetCustomAttribute<HeaderMemberAttribute>(true);
+            if (attr == null) return;
+
+            foreach (string member in attr.MemberNames)
+            {
+                int index = body.FindIndex(x => (x.Property != null && x.Property.name == member)
+                    || (x.ButtonMethod != null && x.ButtonMethod.Name == member));
+                if (index < 0)
+                    throw new InvalidOperationException(
+                        $"[FoundationPlatform.AetherInspector] [HeaderMember] '{member}' on {nestedType.Name} is not a serialized field or [Button] method.");
+                header.Add(body[index]);
+                body.RemoveAt(index);
+            }
+        }
+
+        // Draws header members right to left from the end of the row; returns the rect left for the label.
+        private static Rect DrawHeaderMembers(Rect headerRect, List<InspectorEntry> header, object[] nestedTargets,
+            object[] ownerTargets, SerializedObject ownerObject)
+        {
+            const float gap = 4f;
+            const float fieldWidth = 110f;
+            float right = headerRect.xMax;
+            for (int i = header.Count - 1; i >= 0; i--)
+            {
+                var entry = header[i];
+                if (entry.Metadata != null && !IsVisible(entry.Metadata, nestedTargets)) continue;
+
+                if (entry.ButtonMethod != null)
+                {
+                    string text = string.IsNullOrEmpty(entry.Button.Name)
+                        ? ObjectNames.NicifyVariableName(entry.ButtonMethod.Name)
+                        : InspectorMemberResolver.ResolveString(nestedTargets[0], entry.Button.Name);
+                    var content = new GUIContent(text);
+                    float width = AetherInspectorTheme.CompactButton.CalcSize(content).x + 12f;
+                    var rect = new Rect(right - width, headerRect.y, width, headerRect.height);
+                    if (GUI.Button(rect, content, AetherInspectorTheme.CompactButton))
+                    {
+                        InvokeButton(entry, nestedTargets, null);
+                        foreach (var owner in ownerTargets)
+                            if (owner is UnityEngine.Object uo) EditorUtility.SetDirty(uo);
+                        ownerObject.Update();
+                        GUIUtility.ExitGUI();
+                    }
+                    right = rect.x - gap;
+                }
+                else
+                {
+                    var rect = new Rect(right - fieldWidth, headerRect.y, fieldWidth, headerRect.height);
+                    EditorGUI.PropertyField(rect, entry.Property, GUIContent.none);
+                    right = rect.x - gap;
+                }
+            }
+            return new Rect(headerRect.x, headerRect.y, Mathf.Max(0f, right - headerRect.x), headerRect.height);
         }
 
         // Cached: does the type declare ANY AetherNexus.FoundationPlatform.AetherInspector attribute
@@ -3528,12 +3634,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         internal static GUIContent GetLabel(InspectorEntry e, object[] targets)
         {
+            var mm = e.Metadata;
+            // Ahead of the scope label: headerless drawers test for the GUIContent.none instance itself.
+            if (mm != null && mm.HideLabel) return GUIContent.none;
+
             if (ReferenceEquals(e, s_propertyScopeEntry) && s_propertyScopeLabel != null)
                 return s_propertyScopeLabel;
 
-            var mm = e.Metadata;
             if (mm == null) return null;
-            if (mm.HideLabel) return GUIContent.none;
             if (mm.CachedLabel != null) return mm.CachedLabel;
 
             string text = GetLabelText(e, targets);
@@ -3577,13 +3685,17 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // version-independent). Honors useForChildren (drawer applies to subclasses).
         private static HashSet<Type> s_drawnExact;
         private static HashSet<Type> s_drawnForChildren;
+        private static HashSet<Type> s_uitkOnlyDrawn;
         private static readonly Dictionary<Type, bool> s_hasDrawer = new Dictionary<Type, bool>();
+
+        private static readonly Type[] s_onGuiSignature = { typeof(Rect), typeof(SerializedProperty), typeof(GUIContent) };
 
         private static void EnsureDrawerMap()
         {
             if (s_drawnExact != null) return;
             s_drawnExact = new HashSet<Type>();
             s_drawnForChildren = new HashSet<Type>();
+            s_uitkOnlyDrawn = new HashSet<Type>();
             try
             {
                 var cpd = typeof(CustomPropertyDrawer);
@@ -3591,16 +3703,39 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 var fChildren = cpd.GetField("m_UseForChildren", BindingFlags.Instance | BindingFlags.NonPublic);
                 foreach (var drawer in TypeCache.GetTypesDerivedFrom<PropertyDrawer>())
                 {
+                    // Reflected drawers only stand in for the engine on Unity's PropertyField path; the
+                    // engine draws those types itself, honoring groups and titles the drawer cannot.
+                    if (typeof(AetherInspectorReflectedDrawer).IsAssignableFrom(drawer)) continue;
+                    // A drawer without an IMGUI OnGUI renders "No GUI Implemented" in this IMGUI inspector.
+                    var onGui = drawer.GetMethod("OnGUI", BindingFlags.Instance | BindingFlags.Public, null, s_onGuiSignature, null);
+                    bool uitkOnly = onGui != null && onGui.DeclaringType == typeof(PropertyDrawer);
                     foreach (var attr in drawer.GetCustomAttributes(typeof(CustomPropertyDrawer), true))
                     {
                         var target = fType?.GetValue(attr) as Type;
                         if (target == null) continue;
+                        if (uitkOnly) { s_uitkOnlyDrawn.Add(target); continue; }
                         s_drawnExact.Add(target);
                         if (fChildren != null && (bool)fChildren.GetValue(attr)) s_drawnForChildren.Add(target);
                     }
                 }
             }
             catch { /* leave maps empty → HasCustomPropertyDrawer returns false */ }
+        }
+
+        // Concrete [Serializable] class/struct the engine can recurse into, instead of Unity's stock nested
+        // drawing (which labels list rows "Element N" and ignores headers above it). Built-in Unity value
+        // types never reach here: they serialize as their own SerializedPropertyType, not Generic.
+        internal static bool IsPlainSerializableType(Type t)
+            => t != null && !t.IsPrimitive && !t.IsEnum && !t.IsInterface && !t.IsAbstract && t != typeof(string)
+                && !typeof(UnityEngine.Object).IsAssignableFrom(t)
+                && (t.Attributes & TypeAttributes.Serializable) != 0;
+
+        // The engine must draw these itself: Unity's PropertyField would hand them to a UI Toolkit-only drawer.
+        internal static bool HasUitkOnlyDrawer(Type t)
+        {
+            if (t == null) return false;
+            EnsureDrawerMap();
+            return s_uitkOnlyDrawn.Contains(t);
         }
 
         internal static bool HasCustomPropertyDrawer(Type t)

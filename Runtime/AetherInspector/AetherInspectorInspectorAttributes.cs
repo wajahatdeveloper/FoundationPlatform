@@ -1219,6 +1219,19 @@ namespace AetherNexus.FoundationPlatform.AetherInspector
         public InlinePropertyAttribute(int labelWidth) { LabelWidth = labelWidth; }
     }
 
+    /// <summary>
+    /// Draws the named serialized fields and parameterless <c>[Button]</c> methods right-aligned in the
+    /// nested object's own header row instead of its body. With no header (<c>[HideLabel]</c>) they stay in the body.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    public sealed class HeaderMemberAttribute : Attribute
+    {
+        /// <summary>Member names, drawn left to right.</summary>
+        public string[] MemberNames;
+        /// <summary>Draw the given members in the header row.</summary>
+        public HeaderMemberAttribute(params string[] memberNames) { MemberNames = memberNames; }
+    }
+
     /// <summary>Embeds an inspector preview for an Object, GameObject, Component, or ScriptableObject.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public sealed class InlineEditorAttribute : Attribute

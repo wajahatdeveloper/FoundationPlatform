@@ -16,24 +16,19 @@ namespace AetherNexus.FoundationPlatform
     }
 
     [Serializable]
+    [HeaderMember("PromoteToShared", nameof(source))]
     public class FragmentData<TConfig, TPayload>
         where TConfig : ScriptableObject, IFragmentConfig<TPayload>
         where TPayload : class, new()
     {
-        [BoxGroup("Frag", false)]
-        [BoxGroup("Frag/SrcBox", ShowLabel = false)]
-        [HorizontalGroup("Frag/SrcBox/Src")]
-        [GUIColor(0.55f, 0.55f, 0.6f)]
-        [LabelWidth(100)]
+        [Tooltip("Shared: use a reusable asset. Inline Custom: author the values on this field only.")]
         [SerializeField] private FragmentSource source = FragmentSource.Shared;
 
-        [BoxGroup("Frag")]
-        [LabelWidth(100)]
+        [LabelText("Asset")]
         [ShowIf(nameof(source), FragmentSource.Shared)]
         [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
         [SerializeField] private TConfig shared;
 
-        [BoxGroup("Frag")]
         [HideLabel]
         [ShowIf(nameof(source), FragmentSource.InlineCustom)]
         [InlineProperty]
@@ -54,10 +49,8 @@ namespace AetherNexus.FoundationPlatform
         }
 
 #if UNITY_EDITOR
-        [HorizontalGroup("Frag/SrcBox/Src", Width = 170)]
-        [GUIColor(0.55f, 0.55f, 0.6f)]
         [ShowIf(nameof(source), FragmentSource.InlineCustom)]
-        [Button("Promote to Shared Asset")]
+        [Button("Promote to Shared")]
         private void PromoteToShared()
         {
             string path = UnityEditor.EditorUtility.SaveFilePanelInProject(

@@ -30,7 +30,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private static float Line => EditorGUIUtility.singleLineHeight;
 
         // [HideLabel] on the host field arrives as GUIContent.none: draw children flush, no foldout header.
-        private static bool IsHeaderless(GUIContent label) => label == null || label == GUIContent.none;
+        private static bool IsHeaderless(GUIContent label)
+            => label == null || label == GUIContent.none || (string.IsNullOrEmpty(label.text) && label.image == null);
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
