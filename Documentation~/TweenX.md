@@ -134,9 +134,12 @@ Punch/shake return to the captured origin. Reproducibility on `TweenClock.Determ
 
 Add **Foundation Platform ▸ Feedback Player**, then build composable feedbacks (no code):
 
-- Built-ins: Move, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake, Event (UnityEvent)
+- Built-ins: Move, Scale, ScalePunch, PunchRotation, ShakePosition, Flash, Fade, Audio, CameraShake, Event (UnityEvent)
+- Fade and Scale can snap to a **From** value when they fire (`StartFromValue`), so entrance animations replay from the same start
 - **Add Feedback** lists every concrete `Feedback` subclass (TypeCache)
-- `Play()` / `Stop()`; optional Play On Enable
+- `Play()` / `Stop()`; optional Play On Enable. `Stop()` (here and on `TweenAnimator`) rewinds before killing, so an interrupted punch/shake/flash settles back to its origin instead of drifting on the next play
+- `TotalDuration`: seconds until the last active feedback finishes (delay + duration); used by callers that act after a burst, e.g. `PanelTransition`
+- Wire `Play()` to any UnityEvent (`ButtonX.OnPressed`, HUD view events) for no-code juice
 
 ```csharp
 GetComponent<FeedbackPlayer>().Play();

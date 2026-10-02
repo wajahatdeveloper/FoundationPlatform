@@ -179,12 +179,23 @@ namespace AetherNexus.FoundationPlatform.TweenX
 
             for (int idx = _active.Count - 1; idx >= 0; idx--)
             {
+                if (idx >= _active.Count) continue;
                 var t = _active[idx];
                 if (t.Clock == TweenClock.Deterministic) continue;
 
                 float baseDt = t.Clock == TweenClock.Unscaled ? unscaledDt : scaledDt;
-                if (!t.Step(baseDt * t.TimeScale)) RemoveAt(idx, killed: true);
+                int generation = t.Generation;
+                if (!t.Step(baseDt * t.TimeScale)) RemoveFinished(t, idx, generation);
             }
+        }
+
+        // Step can run user callbacks (OnComplete, OnDisable -> Kill) that kill or recycle other tweens and
+        // reshuffle _active, so the finished tween is re-located instead of trusting the loop index.
+        private static void RemoveFinished(Tween t, int idx, int generation)
+        {
+            if (!t.IsAlive || t.Generation != generation) return;
+            int at = idx < _active.Count && ReferenceEquals(_active[idx], t) ? idx : _active.IndexOf(t);
+            if (at >= 0) RemoveAt(at, killed: true);
         }
 
         /// <summary>
@@ -199,9 +210,11 @@ namespace AetherNexus.FoundationPlatform.TweenX
             float dt = clock.DeltaTime;
             for (int idx = _active.Count - 1; idx >= 0; idx--)
             {
+                if (idx >= _active.Count) continue;
                 var t = _active[idx];
                 if (t.Clock != TweenClock.Deterministic) continue;
-                if (!t.Step(dt * t.TimeScale)) RemoveAt(idx, killed: true);
+                int generation = t.Generation;
+                if (!t.Step(dt * t.TimeScale)) RemoveFinished(t, idx, generation);
             }
         }
 

@@ -16,6 +16,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         [Min(0f)] public float Duration = 0.3f;
         public Ease Ease = Ease.OutQuad;
 
+        protected override float ActiveDuration => Duration;
+
         protected override void Execute(FeedbackContext ctx)
         {
             var tr = ResolveTransform(ctx, Target);
@@ -36,6 +38,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         [Min(0f)] public float Duration = 0.3f;
         [Min(1f)] public float Vibrato = 10f;
 
+        protected override float ActiveDuration => Duration;
+
         protected override void Execute(FeedbackContext ctx)
         {
             var tr = ResolveTransform(ctx, Target);
@@ -52,6 +56,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         public Vector3 Punch = new(0f, 0f, 15f);
         [Min(0f)] public float Duration = 0.3f;
         [Min(1f)] public float Vibrato = 10f;
+
+        protected override float ActiveDuration => Duration;
 
         protected override void Execute(FeedbackContext ctx)
         {
@@ -72,6 +78,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         [Tooltip("-1 = auto (varies each play); set >=0 for a reproducible shake.")]
         public int Seed = -1;
 
+        protected override float ActiveDuration => Duration;
+
         protected override void Execute(FeedbackContext ctx)
         {
             var tr = ResolveTransform(ctx, Target);
@@ -90,6 +98,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         [Min(0f)] public float Duration = 0.2f;
         [Min(1)] public int Flashes = 1;
 
+        protected override float ActiveDuration => Duration;
+
         protected override void Execute(FeedbackContext ctx)
         {
             if (Graphic != null) ctx.Track(Graphic.TweenFlash(FlashColor, Duration, Flashes).SetClock(ctx.Clock));
@@ -102,15 +112,44 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
     public sealed class FeedbackFade : Feedback
     {
         public CanvasGroup CanvasGroup;
+        [Tooltip("Snap alpha to From when this feedback fires, so the fade always starts from the same value.")]
+        public bool StartFromValue;
+        [Range(0f, 1f)] public float From;
         [Range(0f, 1f)] public float To;
         [Min(0f)] public float Duration = 0.25f;
         public Ease Ease = Ease.OutQuad;
+
+        protected override float ActiveDuration => Duration;
 
         protected override void Execute(FeedbackContext ctx)
         {
             var cg = CanvasGroup != null ? CanvasGroup : (ctx.Owner != null ? ctx.Owner.GetComponent<CanvasGroup>() : null);
             if (cg == null) return;
+            if (StartFromValue) cg.alpha = From;
             ctx.Track(cg.TweenFade(To, Duration).SetEase(Ease).SetClock(ctx.Clock));
+        }
+    }
+
+    /// <summary>Tween the transform's local scale to a target value.</summary>
+    [Serializable]
+    public sealed class FeedbackScale : Feedback
+    {
+        public Transform Target;
+        [Tooltip("Snap local scale to From when this feedback fires, so the tween always starts from the same value.")]
+        public bool StartFromValue;
+        public Vector3 From = Vector3.one * 0.8f;
+        public Vector3 To = Vector3.one;
+        [Min(0f)] public float Duration = 0.25f;
+        public Ease Ease = Ease.OutBack;
+
+        protected override float ActiveDuration => Duration;
+
+        protected override void Execute(FeedbackContext ctx)
+        {
+            var tr = ResolveTransform(ctx, Target);
+            if (tr == null) return;
+            if (StartFromValue) tr.localScale = From;
+            ctx.Track(tr.TweenScale(To, Duration).SetEase(Ease).SetClock(ctx.Clock));
         }
     }
 
@@ -138,6 +177,8 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         [Min(0f)] public float Duration = 0.3f;
         [Min(1f)] public float Vibrato = 10f;
         public int Seed = -1;
+
+        protected override float ActiveDuration => Duration;
 
         protected override void Execute(FeedbackContext ctx)
         {

@@ -44,5 +44,20 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
 
         /// <summary>Cancel every tween spawned by the last <see cref="Play"/>.</summary>
         public void Stop() => _ctx.Stop();
+
+        /// <summary>Seconds from <see cref="Play"/> until the last active feedback finishes.</summary>
+        public float TotalDuration
+        {
+            get
+            {
+                float total = 0f;
+                for (int i = 0; i < Feedbacks.Count; i++)
+                {
+                    var f = Feedbacks[i];
+                    if (f != null && f.Active && f.TotalDuration > total) total = f.TotalDuration;
+                }
+                return total;
+            }
+        }
     }
 }

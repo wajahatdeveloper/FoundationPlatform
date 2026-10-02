@@ -134,11 +134,15 @@ namespace AetherNexus.FoundationPlatform.TweenX
             }
         }
 
-        /// <summary>Kill every step this animator started.</summary>
+        /// <summary>Rewind and kill every step this animator started, so the next Play starts from the authored values.</summary>
         [Button("Stop", ButtonHeight = ButtonSizes.Medium)]
         public void Stop()
         {
-            for (int i = 0; i < _live.Count; i++) _live[i].Kill();
+            for (int i = 0; i < _live.Count; i++)
+            {
+                _live[i].Rewind();
+                _live[i].Kill();
+            }
             _live.Clear();
         }
 

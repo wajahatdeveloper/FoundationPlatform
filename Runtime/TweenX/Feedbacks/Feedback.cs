@@ -47,7 +47,12 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
         /// <summary>Kill every tween spawned by the feedbacks this context served.</summary>
         public void Stop()
         {
-            for (int i = 0; i < _handles.Count; i++) _handles[i].Kill();
+            // Rewind first: a killed punch/shake keeps its mid-offset, and the next play would capture that as its origin.
+            for (int i = 0; i < _handles.Count; i++)
+            {
+                _handles[i].Rewind();
+                _handles[i].Kill();
+            }
             _handles.Clear();
         }
     }
@@ -81,6 +86,12 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
                 return n.StartsWith("Feedback") ? n.Substring("Feedback".Length) : n;
             }
         }
+
+        /// <summary>Seconds from Play() until this feedback has finished.</summary>
+        public float TotalDuration => Delay + ActiveDuration;
+
+        /// <summary>Seconds this feedback runs once it fires; zero for instant feedbacks.</summary>
+        protected virtual float ActiveDuration => 0f;
 
         /// <summary>Called by the player. Applies the delay, then runs <see cref="Execute"/>.</summary>
         public void Play(FeedbackContext ctx)
