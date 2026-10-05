@@ -37,11 +37,22 @@ namespace AetherNexus.FoundationPlatform.Animation
 				string.Empty);
 		}
 
-		internal static LocomotionBlendStanceDefinition CreateRunStance()
+		internal static LocomotionBlendStanceDefinition CreateJogStance()
 		{
 			return CreateStance(
-				"run",
+				"jog",
 				new[] { "Run_Idle", "Run_Fwd", "Run_Back", "Run_Left", "Run_Right" },
+				"Turn_Left_180",
+				"Turn_Right_180",
+				"Run_Jump",
+				"Run_Jump_Apex");
+		}
+
+		internal static LocomotionBlendStanceDefinition CreateSprintStance()
+		{
+			return CreateStance(
+				"sprint",
+				new[] { "Run_Idle", "Sprint_Fwd", "Run_Back", "Run_Left", "Run_Right" },
 				"Turn_Left_180",
 				"Turn_Right_180",
 				"Run_Jump",

@@ -77,17 +77,68 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 #if UNITY_EDITOR
 		[TitleGroup("Tools")]
-		[Button("Apply Walk / Run / Crouch Template", ButtonSizes.Medium)]
+		[Button("Apply Walk / Jog / Sprint / Crouch Template", ButtonSizes.Medium)]
 		internal void ApplyDefaultLocomotionTemplate()
 		{
 			stances = new[]
 			{
 				LocomotionBlendTemplateUtility.CreateWalkStance(),
-				LocomotionBlendTemplateUtility.CreateRunStance(),
+				LocomotionBlendTemplateUtility.CreateJogStance(),
+				LocomotionBlendTemplateUtility.CreateSprintStance(),
 				LocomotionBlendTemplateUtility.CreateCrouchStance(),
 			};
 			defaultBlendParams = LocomotionBlendParams.Default;
 			UnityEditor.EditorUtility.SetDirty(this);
+		}
+
+		[TitleGroup("Tools")]
+		[Button("Measure Natural Speeds", ButtonSizes.Medium)]
+		internal void MeasureNaturalSpeeds()
+		{
+			var owner = FindOwningAnimationSet();
+			UnityEditor.Undo.RecordObject(this, "Measure Natural Speeds");
+			for (var i = 0; i < stances.Length; i++)
+			{
+				var stance = stances[i];
+				var forwardId = stance.directionEntryIds[1];
+				var entry = owner.FindEntry(forwardId);
+				if (entry == null || entry.clip == null || entry.clip.Clip == null)
+				{
+					Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': forward entry '{forwardId}' has no clip in '{owner.name}'.", this);
+					continue;
+				}
+
+				var average = entry.clip.Clip.averageSpeed;
+				var measured = new Vector2(average.x, average.z).magnitude * entry.clip.Speed;
+				if (measured <= 0.01f)
+				{
+					Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': clip '{entry.clip.Clip.name}' has no root travel (in-place). Enter Natural Speed by hand.", this);
+					continue;
+				}
+
+				stance.naturalSpeed = measured;
+				Debug.Log($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': natural speed {measured:F2} m/s from '{entry.clip.Clip.name}'.", this);
+			}
+
+			UnityEditor.EditorUtility.SetDirty(this);
+		}
+
+		private AnimationSet FindOwningAnimationSet()
+		{
+			AnimationSet owner = null;
+			foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:" + nameof(AnimationSet)))
+			{
+				var set = UnityEditor.AssetDatabase.LoadAssetAtPath<AnimationSet>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+				if (set == null || set.blendProfile != this)
+					continue;
+				if (owner != null)
+					throw new InvalidOperationException($"'{name}': referenced as blendProfile by both '{owner.name}' and '{set.name}'; measure needs one owning set.");
+				owner = set;
+			}
+
+			if (owner == null)
+				throw new InvalidOperationException($"'{name}': no AnimationSet references this profile as its blendProfile.");
+			return owner;
 		}
 
 		[TitleGroup("Tools")]

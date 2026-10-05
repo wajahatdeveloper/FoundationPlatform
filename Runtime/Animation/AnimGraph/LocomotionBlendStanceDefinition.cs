@@ -46,6 +46,21 @@ namespace AetherNexus.FoundationPlatform.Animation
 		[ListDrawerSettings(IsReadOnly = true)]
 		public string[] diagonalDirectionEntryIds = new string[DiagonalDirectionSlotCount];
 
+		[TitleGroup("Stride Matching")]
+		[Min(0f)]
+		[Tooltip("Ground speed (m/s) the forward clip covers at playback 1 (entry Speed included). Moving clips play at body speed / this, so feet don't slip. Use the profile's Measure Natural Speeds button; enter by hand for in-place clips.")]
+		public float naturalSpeed;
+
+		[TitleGroup("Stride Matching")]
+		[Min(0.01f)]
+		[Tooltip("Slowest playback rate stride matching may use. Below it the feet slide rather than the cycle crawling.")]
+		public float minPlaybackRate = 0.6f;
+
+		[TitleGroup("Stride Matching")]
+		[Min(0.01f)]
+		[Tooltip("Fastest playback rate stride matching may use.")]
+		public float maxPlaybackRate = 1.6f;
+
 		[TitleGroup("Turn In Place")]
 		[Tooltip("Enable turn-in-place for this stance.")]
 		public bool enableTurnInPlace = true;
@@ -147,6 +162,14 @@ namespace AetherNexus.FoundationPlatform.Animation
 			    && (diagonalDirectionEntryIds == null || diagonalDirectionEntryIds.Length != DiagonalDirectionSlotCount))
 				throw new InvalidOperationException(
 					$"Locomotion blend profile '{profileName}' stance '{stanceId}': diagonalDirectionEntryIds must have {DiagonalDirectionSlotCount} elements when diagonals are enabled.");
+
+			if (naturalSpeed <= 0f)
+				throw new InvalidOperationException(
+					$"Locomotion blend profile '{profileName}' stance '{stanceId}': naturalSpeed must be above 0 (m/s the forward clip covers at playback 1). Use Measure Natural Speeds or enter it by hand.");
+
+			if (minPlaybackRate > maxPlaybackRate)
+				throw new InvalidOperationException(
+					$"Locomotion blend profile '{profileName}' stance '{stanceId}': minPlaybackRate ({minPlaybackRate}) is above maxPlaybackRate ({maxPlaybackRate}).");
 		}
 	}
 }

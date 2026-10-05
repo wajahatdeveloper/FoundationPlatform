@@ -15,7 +15,11 @@ namespace AetherNexus.FoundationPlatform.Animation
 		void Bind(AnimationSet set, PlayableGraph graph);
 		void Unbind();
 		void SetStance(string stanceId);
-		void UpdateBlend(float moveX, float moveZ);
+		/// <summary>
+		/// <paramref name="planarSpeed"/> (m/s) drives each stance's playback rate against its natural speed,
+		/// so the feet cover the ground the body does.
+		/// </summary>
+		void UpdateBlend(float moveX, float moveZ, float planarSpeed);
 		/// <summary>Instantly apply blend weights (no damp) so the graph is not bind-pose until the first Update.</summary>
 		void SnapBlend(float moveX, float moveZ);
 		string GetDominantEntryId();
