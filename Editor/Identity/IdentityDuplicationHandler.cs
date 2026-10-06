@@ -24,6 +24,15 @@ public static class IdentityDuplicationHandler
     {
         RebuildSnapshot();
         EditorApplication.hierarchyChanged += OnHierarchyChanged;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    // Play-mode duplicates are discarded with the session, so the scan is skipped there and the snapshot
+    // is retaken from the restored edit-mode scene.
+    private static void OnPlayModeStateChanged(PlayModeStateChange change)
+    {
+        if (change == PlayModeStateChange.EnteredEditMode)
+            RebuildSnapshot();
     }
 
     /// <summary>
@@ -48,6 +57,8 @@ public static class IdentityDuplicationHandler
 
     private static void OnHierarchyChanged()
     {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+            return;
         EditorApplication.delayCall -= FixDuplicates;
         EditorApplication.delayCall += FixDuplicates;
     }

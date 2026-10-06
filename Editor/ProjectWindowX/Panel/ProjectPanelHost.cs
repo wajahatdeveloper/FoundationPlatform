@@ -18,6 +18,8 @@ namespace ProjectWindowX {
         internal const float MaxHeight = 320f;
         internal const float CollapsedHeight = 18f;
         private const double PollInterval = 0.4;
+        // FindObjectsOfTypeAll scales with the live object count, which a running scene inflates.
+        private const double PlayModePollInterval = 2.0;
         private const float FallbackUnityStatusBarHeight = 18f;
 
         private static readonly Type ProjectBrowserType =
@@ -73,7 +75,7 @@ namespace ProjectWindowX {
         private static void Poll() {
             if (EditorApplication.timeSinceStartup < nextPoll)
                 return;
-            nextPoll = EditorApplication.timeSinceStartup + PollInterval;
+            nextPoll = EditorApplication.timeSinceStartup + (EditorApplication.isPlaying ? PlayModePollInterval : PollInterval);
 
             if (ProjectBrowserType == null) {
                 if (!warnedUnsupported) {
