@@ -11,6 +11,10 @@ namespace AetherNexus.FoundationPlatform.Animation
         public AnimationMixerPlayable Mixer { get; private set; }
         protected List<PlayableState> _children = new List<PlayableState>();
 
+        // Last weight pushed to each mixer input. Only this class writes them, so an unchanged child skips the
+        // native call; a locomotion stance tree re-pushes every input of every stance each frame otherwise.
+        private readonly List<float> _appliedWeights = new List<float>();
+
         public MixerState(PlayableGraph graph) : this(graph, 0) {}
 
         public MixerState(PlayableGraph graph, int childCount)
@@ -36,6 +40,7 @@ namespace AetherNexus.FoundationPlatform.Animation
         {
             int index = _children.Count;
             _children.Add(state);
+            _appliedWeights.Add(0f);
             if (Mixer.GetInputCount() < _children.Count)
                 Mixer.SetInputCount(_children.Count);
             Mixer.ConnectInput(index, state.Playable, 0, 0f);
@@ -45,13 +50,19 @@ namespace AetherNexus.FoundationPlatform.Animation
         public override void Update(float deltaTime)
         {
             base.Update(deltaTime);
+            bool valid = IsValid;
             for (int i = 0; i < _children.Count; i++)
             {
                 var child = _children[i];
                 if (child != null)
                 {
                     child.Update(deltaTime);
-                    if (IsValid) Mixer.SetInputWeight(i, child.Weight);
+                    float weight = child.Weight;
+                    if (valid && _appliedWeights[i] != weight)
+                    {
+                        Mixer.SetInputWeight(i, weight);
+                        _appliedWeights[i] = weight;
+                    }
                 }
             }
         }
@@ -123,10 +134,34 @@ namespace AetherNexus.FoundationPlatform.Animation
 
     public class DirectionalMixerState : MixerState
     {
-        public Vector2 Parameter { get; set; }
-        public Vector2[] Thresholds { get; set; }
+        private const float AngleFactor = 2f;
 
+        public Vector2 Parameter { get; set; }
+
+        // Thresholds are read as a fixed set: reassign the array to change them, never edit it in place.
+        public Vector2[] Thresholds
+        {
+            get => _thresholds;
+            set
+            {
+                _thresholds = value;
+                _pairCount = -1;
+            }
+        }
+
+        private Vector2[] _thresholds;
         private float[] _weightsBuffer;
+
+        // The threshold-to-threshold half of the gradient-band weight depends only on the thresholds, so it is
+        // built once: weight(i,j) = 1 - (paramDistance(i) * _pairRadial[i,j] + paramAngle(i) * _pairAngular[i,j]).
+        private float[] _magnitudes;
+        private float[] _pairRadial;
+        private float[] _pairAngular;
+        private int _pairCount = -1;
+
+        // The stance tree updates every stance blend several times a frame with the same parameter.
+        private Vector2 _weightedParameter;
+        private int _weightedChildCount = -1;
 
         public DirectionalMixerState(PlayableGraph graph) : this(graph, 0) {}
 
@@ -141,64 +176,93 @@ namespace AetherNexus.FoundationPlatform.Animation
             return Mathf.Atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
         }
 
+        private void BuildPairTerms(int childCount)
+        {
+            _magnitudes = new float[childCount];
+            _pairRadial = new float[childCount * childCount];
+            _pairAngular = new float[childCount * childCount];
+
+            for (int i = 0; i < childCount; i++)
+                _magnitudes[i] = _thresholds[i].magnitude;
+
+            for (int i = 0; i < childCount; i++)
+            {
+                float magnitudeI = _magnitudes[i];
+                for (int j = 0; j < childCount; j++)
+                {
+                    if (j == i) continue;
+                    float magnitudeJ = _magnitudes[j];
+                    float averageMagnitude = (magnitudeJ + magnitudeI) * 0.5f;
+                    if (averageMagnitude < 0.0001f) averageMagnitude = 1f;
+
+                    float angleIToJ = SignedAngle(_thresholds[i], _thresholds[j]) * AngleFactor;
+                    Vector2 polarIToJ = new Vector2((magnitudeJ - magnitudeI) / averageMagnitude, angleIToJ);
+                    float sqrMag = polarIToJ.sqrMagnitude;
+                    if (sqrMag > 0.0001f) polarIToJ /= sqrMag;
+                    else polarIToJ = Vector2.zero;
+
+                    _pairRadial[i * childCount + j] = polarIToJ.x / averageMagnitude;
+                    _pairAngular[i * childCount + j] = polarIToJ.y;
+                }
+            }
+
+            _pairCount = childCount;
+            _weightedChildCount = -1;
+        }
+
         public override void Update(float deltaTime)
         {
-            if (Thresholds != null && _children.Count > 0)
+            if (_thresholds != null && _children.Count > 0)
             {
                 int childCount = _children.Count;
+                Vector2 parameter = Parameter;
+                bool weightsCurrent = _weightedChildCount == childCount && _pairCount == childCount
+                    && parameter.x == _weightedParameter.x && parameter.y == _weightedParameter.y;
 
-                if (_weightsBuffer == null || _weightsBuffer.Length < childCount)
-                    _weightsBuffer = new float[childCount];
-
-                if (childCount == 1)
+                if (!weightsCurrent)
                 {
-                    _children[0].Weight = 1f;
-                }
-                else
-                {
-                    float totalWeight = 0f;
-                    float parameterMagnitude = Parameter.magnitude;
-                    const float AngleFactor = 2f;
-
-                    for (int i = 0; i < childCount; i++)
+                    if (childCount == 1)
                     {
-                        Vector2 thresholdI = Thresholds[i];
-                        float magnitudeI = thresholdI.magnitude;
-                        float differenceIToParameter = parameterMagnitude - magnitudeI;
-                        float angleIToParameter = SignedAngle(thresholdI, Parameter) * AngleFactor;
+                        _children[0].Weight = 1f;
+                    }
+                    else
+                    {
+                        if (_pairCount != childCount)
+                            BuildPairTerms(childCount);
+                        if (_weightsBuffer == null || _weightsBuffer.Length < childCount)
+                            _weightsBuffer = new float[childCount];
 
-                        float weight = 1f;
+                        float totalWeight = 0f;
+                        float parameterMagnitude = parameter.magnitude;
 
-                        for (int j = 0; j < childCount; j++)
+                        for (int i = 0; i < childCount; i++)
                         {
-                            if (j == i) continue;
-                            Vector2 thresholdJ = Thresholds[j];
-                            float magnitudeJ = thresholdJ.magnitude;
-                            float averageMagnitude = (magnitudeJ + magnitudeI) * 0.5f;
-                            if (averageMagnitude < 0.0001f) averageMagnitude = 1f;
+                            float differenceIToParameter = parameterMagnitude - _magnitudes[i];
+                            float angleIToParameter = SignedAngle(_thresholds[i], parameter) * AngleFactor;
+                            int row = i * childCount;
 
-                            float differenceIToJ = magnitudeJ - magnitudeI;
-                            float angleIToJ = SignedAngle(thresholdI, thresholdJ) * AngleFactor;
+                            float weight = 1f;
+                            for (int j = 0; j < childCount; j++)
+                            {
+                                if (j == i) continue;
+                                float newWeight = 1f - (differenceIToParameter * _pairRadial[row + j]
+                                                        + angleIToParameter * _pairAngular[row + j]);
+                                if (weight > newWeight) weight = newWeight;
+                            }
 
-                            Vector2 polarIToJ = new Vector2(differenceIToJ / averageMagnitude, angleIToJ);
-                            float sqrMag = polarIToJ.sqrMagnitude;
-                            if (sqrMag > 0.0001f) polarIToJ /= sqrMag;
-                            else polarIToJ = Vector2.zero;
-
-                            Vector2 polarIToParameter = new Vector2(differenceIToParameter / averageMagnitude, angleIToParameter);
-                            float newWeight = 1f - Vector2.Dot(polarIToParameter, polarIToJ);
-                            if (weight > newWeight) weight = newWeight;
+                            if (weight < 0.01f) weight = 0f;
+                            _weightsBuffer[i] = weight;
+                            totalWeight += weight;
                         }
 
-                        if (weight < 0.01f) weight = 0f;
-                        _weightsBuffer[i] = weight;
-                        totalWeight += weight;
+                        if (totalWeight > 0f)
+                            for (int i = 0; i < childCount; i++) _children[i].Weight = _weightsBuffer[i] / totalWeight;
+                        else
+                            for (int i = 0; i < childCount; i++) _children[i].Weight = 0f;
                     }
 
-                    if (totalWeight > 0f)
-                        for (int i = 0; i < childCount; i++) _children[i].Weight = _weightsBuffer[i] / totalWeight;
-                    else
-                        for (int i = 0; i < childCount; i++) _children[i].Weight = 0f;
+                    _weightedParameter = parameter;
+                    _weightedChildCount = childCount;
                 }
             }
             base.Update(deltaTime);

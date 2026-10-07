@@ -16,6 +16,7 @@ public readonly struct Identity : IEquatable<Identity>
 	public static readonly Identity Global = new Identity("__global__");
 
 	private readonly string _id;
+	private readonly int _hash;
 
 	public bool IsValid => !string.IsNullOrEmpty(_id);
 	public string Value => _id ?? string.Empty;
@@ -23,12 +24,13 @@ public readonly struct Identity : IEquatable<Identity>
 	public Identity(string id)
 	{
 		_id = id;
+		_hash = id != null ? id.GetHashCode() : 0;
 	}
 
-	public bool Equals(Identity other) => string.Equals(_id, other._id, StringComparison.Ordinal);
+	public bool Equals(Identity other) => _hash == other._hash && string.Equals(_id, other._id, StringComparison.Ordinal);
 	public override bool Equals(object obj) => obj is Identity other && Equals(other);
 
-	public override int GetHashCode() => _id != null ? _id.GetHashCode() : 0;
+	public override int GetHashCode() => _hash;
 
 	public override string ToString() => _id ?? "None";
 

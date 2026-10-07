@@ -204,6 +204,8 @@ namespace AetherNexus.FoundationPlatform.Animation
         {
             public PlayableState State;
             public int Port;
+            // Mirror of the state mixer's input weight; only PlayableLayer writes that input.
+            public float Weight;
             public float TargetWeight;
             public float FadeSpeed;
         }
@@ -229,6 +231,8 @@ namespace AetherNexus.FoundationPlatform.Animation
             _layerMixer.ConnectInput(Index, _stateMixer, 0, 1f);
         }
 
+        // Mirror of the layer mixer's input weight for this layer; only this class writes that input.
+        private float _layerWeight = 1f;
         private float _layerTargetWeight = 1f;
         private float _layerFadeSpeed = 1000f;
 
@@ -261,13 +265,14 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public float Weight
         {
-            get => _layerMixer.GetInputWeight(Index);
+            get => _layerWeight;
             set
             {
                 // Direct set must also cancel any pending StartFade target, otherwise the next
                 // Update() fades the layer right back toward the stale target (e.g. Weight = 1
                 // after a TransitionBack faded the target to 0 would immediately fade out again).
                 _layerTargetWeight = value;
+                _layerWeight = value;
                 _layerMixer.SetInputWeight(Index, value);
             }
         }
@@ -323,7 +328,7 @@ namespace AetherNexus.FoundationPlatform.Animation
             bool found = false;
             foreach (var active in _activeStates)
             {
-                float weight = _stateMixer.GetInputWeight(active.Port);
+                float weight = active.Weight;
                 if (active.State == state)
                 {
                     active.TargetWeight = 1f;
@@ -359,6 +364,7 @@ namespace AetherNexus.FoundationPlatform.Animation
                 {
                     State = state,
                     Port = port,
+                    Weight = state.Weight,
                     TargetWeight = 1f,
                     FadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f
                 });
@@ -383,20 +389,23 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public void Update(float deltaTime)
         {
-            float layerW = Weight;
-            if (layerW != _layerTargetWeight)
-                _layerMixer.SetInputWeight(Index, Mathf.MoveTowards(layerW, _layerTargetWeight, _layerFadeSpeed * deltaTime));
+            if (_layerWeight != _layerTargetWeight)
+            {
+                _layerWeight = Mathf.MoveTowards(_layerWeight, _layerTargetWeight, _layerFadeSpeed * deltaTime);
+                _layerMixer.SetInputWeight(Index, _layerWeight);
+            }
 
             for (int i = _activeStates.Count - 1; i >= 0; i--)
             {
                 var active = _activeStates[i];
                 active.State.Update(deltaTime);
 
-                float currentWeight = _stateMixer.GetInputWeight(active.Port);
+                float currentWeight = active.Weight;
                 if (currentWeight != active.TargetWeight)
                 {
                     currentWeight = Mathf.MoveTowards(currentWeight, active.TargetWeight, active.FadeSpeed * deltaTime);
                     _stateMixer.SetInputWeight(active.Port, currentWeight);
+                    active.Weight = currentWeight;
                     active.State.Weight = currentWeight;
                 }
 
