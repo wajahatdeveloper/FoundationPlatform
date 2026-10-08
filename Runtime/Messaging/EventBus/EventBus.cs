@@ -1701,7 +1701,10 @@ public static class EventBus
 
 		if (behavior == NoSubscriberBehavior.Warn)
 		{
+			// Diagnostic only, and it fires on every publish of an unheard event: release players skip it.
+			#if UNITY_EDITOR || DEVELOPMENT_BUILD
 			DebugX.Logger(LogChannels.Framework).Warning("[EventBus] Event '{EventType}' published to channel '{Channel}' with no subscribers.", FormatTypeName(eventType), channel);
+			#endif
 		}
 		else if (behavior == NoSubscriberBehavior.Error)
 		{
@@ -1761,7 +1764,10 @@ public static class EventBus
 				return channels.TryGetValue(channel, out var list) ? list.Count : 0;
 
 			// Total count across all channels if None provided
-			return channels.Values.Sum(l => l.Count);
+			var total = 0;
+			foreach (var list in channels.Values)
+				total += list.Count;
+			return total;
 		}
 		return 0;
 	}

@@ -75,6 +75,8 @@ EventBus.Publish(myEvent);
 
 Debug UI (`EventBusWindow`, subscription/publish history windows) lives in `Editor/Messaging/EventBus/`. GameEngineCore-specific debug-display filtering (recognizing GameAction/RuleSystem infrastructure so it doesn't clutter publisher/subscriber names) is *not* hardcoded here — it's an optional `IRuleSystemDebugClassifier` GameEngineCore registers via `EventBus.RegisterRuleSystemClassifier(...)`, mirroring the `IEventDebugSignalEmitter` seam used for telemetry.
 
+**No subscribers:** `[NoSubscriberBehavior]` decides what a publish with no listener does. The default `Warn` logs only in the Editor and Development Builds — it fires on every such publish, so release players skip it; `Error` still reports in release.
+
 **Player debug reflection (opt-in):** EventBus reflection-based debug metadata (subscriber naming, history enrichment) always compiles in the Editor. Development Builds include it only when Project Settings → EventBus Debug → **Include Reflection In Development Builds** is on, which adds scripting define `EVENTBUS_DEBUG_REFLECTION`. A Development Build with that option enabled shows a Continue/Cancel warning dialog at preprocess (never silent). Release builds never include that path.
 
 ---
