@@ -207,7 +207,19 @@ namespace AetherNexus.FoundationPlatform.Animation
             // Mirror of the state mixer's input weight; only PlayableLayer writes that input.
             public float Weight;
             public float TargetWeight;
+            // Every state in a crossfade shares one linear clock and eases from its own start weight,
+            // so the weights still sum to 1 each frame while the blend starts and ends at zero velocity.
+            public float StartWeight;
+            public float FadeProgress = 1f;
             public float FadeSpeed;
+
+            public void BeginFade(float targetWeight, float fadeDuration)
+            {
+                StartWeight = Weight;
+                TargetWeight = targetWeight;
+                FadeProgress = 0f;
+                FadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
+            }
         }
 
         private List<ActiveState> _activeStates = new List<ActiveState>();
@@ -226,15 +238,19 @@ namespace AetherNexus.FoundationPlatform.Animation
             // layers through instead of overriding with a bind pose, so an idle overlay layer at
             // weight 1 contributes nothing. Do NOT boot overlay layers at weight 0.
             // TransitionBackFromLayer does fade overlay LAYER weight to 0 after a one-shot ends
-            // (its last state stays at weight 1), so every play path on layers 1+ restores
-            // layer.Weight = 1 before playing (the Weight setter also cancels pending fades).
+            // (its last state stays at weight 1), so every play path on layers 1+ calls
+            // FadeInForPlay before playing; StartFade replaces any pending fade target.
             _layerMixer.ConnectInput(Index, _stateMixer, 0, 1f);
         }
 
         // Mirror of the layer mixer's input weight for this layer; only this class writes that input.
         private float _layerWeight = 1f;
         private float _layerTargetWeight = 1f;
+        private float _layerStartWeight = 1f;
+        private float _layerFadeProgress = 1f;
         private float _layerFadeSpeed = 1000f;
+
+        private static float SmoothStep01(float t) => t * t * (3f - 2f * t);
 
         private static AvatarMask _defaultMask;
 
@@ -273,14 +289,30 @@ namespace AetherNexus.FoundationPlatform.Animation
                 // after a TransitionBack faded the target to 0 would immediately fade out again).
                 _layerTargetWeight = value;
                 _layerWeight = value;
+                _layerFadeProgress = 1f;
                 _layerMixer.SetInputWeight(Index, value);
             }
         }
 
         public void StartFade(float targetWeight, float fadeDuration)
         {
+            _layerStartWeight = _layerWeight;
             _layerTargetWeight = targetWeight;
+            _layerFadeProgress = 0f;
             _layerFadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
+        }
+
+        /// <summary>
+        /// Restores an overlay layer before a play. Snapping to 1 would pop whatever the layer still shows
+        /// (a state mid fade-out, or the last state a TransitionBack left at weight 1) to full strength, so
+        /// the layer eases up from its current weight over the same fade the new state crosses in on.
+        /// </summary>
+        public void FadeInForPlay(float fadeDuration)
+        {
+            if (fadeDuration <= 0f)
+                Weight = 1f;
+            else
+                StartFade(1f, fadeDuration);
         }
 
         public ClipState Play(ClipTransitionData transition) => Play(transition, -1f);
@@ -328,17 +360,14 @@ namespace AetherNexus.FoundationPlatform.Animation
             bool found = false;
             foreach (var active in _activeStates)
             {
-                float weight = active.Weight;
                 if (active.State == state)
                 {
-                    active.TargetWeight = 1f;
-                    active.FadeSpeed = fadeDuration > 0f ? Mathf.Max(1f - weight, 0.0001f) / fadeDuration : 1000f;
+                    active.BeginFade(1f, fadeDuration);
                     found = true;
                 }
                 else
                 {
-                    active.TargetWeight = 0f;
-                    active.FadeSpeed = fadeDuration > 0f ? Mathf.Max(weight, 0.0001f) / fadeDuration : 1000f;
+                    active.BeginFade(0f, fadeDuration);
                 }
             }
 
@@ -360,14 +389,9 @@ namespace AetherNexus.FoundationPlatform.Animation
                 if (state.Playable.IsValid()) state.Playable.Play();
                 state.Weight = fadeDuration <= 0f ? 1f : 0f;
 
-                _activeStates.Add(new ActiveState
-                {
-                    State = state,
-                    Port = port,
-                    Weight = state.Weight,
-                    TargetWeight = 1f,
-                    FadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f
-                });
+                var added = new ActiveState { State = state, Port = port, Weight = state.Weight };
+                added.BeginFade(1f, fadeDuration);
+                _activeStates.Add(added);
             }
 
             return state;
@@ -378,20 +402,19 @@ namespace AetherNexus.FoundationPlatform.Animation
         /// <summary>Fades all active states on this layer to weight 0. 0 duration = instant.</summary>
         public void Stop(float fadeDuration)
         {
-            float fadeSpeed = fadeDuration > 0f ? 1f / fadeDuration : 1000f;
             foreach (var active in _activeStates)
-            {
-                active.TargetWeight = 0f;
-                active.FadeSpeed = fadeSpeed;
-            }
+                active.BeginFade(0f, fadeDuration);
             CurrentState = null;
         }
 
         public void Update(float deltaTime)
         {
-            if (_layerWeight != _layerTargetWeight)
+            if (_layerFadeProgress < 1f)
             {
-                _layerWeight = Mathf.MoveTowards(_layerWeight, _layerTargetWeight, _layerFadeSpeed * deltaTime);
+                _layerFadeProgress = Mathf.Min(1f, _layerFadeProgress + _layerFadeSpeed * deltaTime);
+                _layerWeight = _layerFadeProgress >= 1f
+                    ? _layerTargetWeight
+                    : Mathf.LerpUnclamped(_layerStartWeight, _layerTargetWeight, SmoothStep01(_layerFadeProgress));
                 _layerMixer.SetInputWeight(Index, _layerWeight);
             }
 
@@ -401,9 +424,12 @@ namespace AetherNexus.FoundationPlatform.Animation
                 active.State.Update(deltaTime);
 
                 float currentWeight = active.Weight;
-                if (currentWeight != active.TargetWeight)
+                if (active.FadeProgress < 1f)
                 {
-                    currentWeight = Mathf.MoveTowards(currentWeight, active.TargetWeight, active.FadeSpeed * deltaTime);
+                    active.FadeProgress = Mathf.Min(1f, active.FadeProgress + active.FadeSpeed * deltaTime);
+                    currentWeight = active.FadeProgress >= 1f
+                        ? active.TargetWeight
+                        : Mathf.LerpUnclamped(active.StartWeight, active.TargetWeight, SmoothStep01(active.FadeProgress));
                     _stateMixer.SetInputWeight(active.Port, currentWeight);
                     active.Weight = currentWeight;
                     active.State.Weight = currentWeight;

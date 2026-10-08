@@ -191,6 +191,117 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			});
 		}
 
+		public const string RenderClipGridToolId = "render-clip-grid";
+
+		[BridgeTool(RenderClipGridToolId, Title = "Render / Clip Grid")]
+		[Description("Renders several clips on one target as rows of a single contact sheet, one row per clip and one " +
+			"column per sampled time, so a whole animation set is reviewed in one image. With 'overlayClip' and " +
+			"'overlayMask' every row is evaluated as base clip + masked overlay through a PlayableGraph layer mixer, " +
+			"which is how the game layers an upper-body pose over a leg cycle.")]
+		public RenderResult ClipGrid
+		(
+			[Description("Asset path, asset GUID, or 'scene:Root/Child'.")]
+			string target,
+			[Description("Semicolon separated clip references, one row each: asset path or GUID, '#ClipName' suffixed for model files, or 'set=<AnimationSet path>|<entry id>'.")]
+			string clips,
+			[Description("Optional clip layered over every row through 'overlayMask'. Same reference syntax as one 'clips' item.")]
+			string overlayClip = "",
+			[Description("AvatarMask asset path or GUID for 'overlayClip'. Required when 'overlayClip' is set.")]
+			string overlayMask = "",
+			[Description("Number of evenly spaced samples per row, first frame to last.")]
+			int frames = 6,
+			[Description("Camera yaw in degrees for every cell.")]
+			float yaw = 35f,
+			[Description("Camera pitch in degrees for every cell.")]
+			float pitch = 12f,
+			[Description("Vertical field of view in degrees.")]
+			float fieldOfView = 30f,
+			[Description("Framing slack around the fitted bounds.")]
+			float padding = 1.15f,
+			[Description("Width of one cell in pixels.")]
+			int cellWidth = 160,
+			[Description("Height of one cell in pixels.")]
+			int cellHeight = 200,
+			[Description("Optional filename prefix.")]
+			string tag = ""
+		)
+		{
+			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
+			{
+				GameObject source = EditorObjectReference.ResolveGameObject(target, out string description);
+				string[] references = clips.Split(';', StringSplitOptions.RemoveEmptyEntries);
+				if (references.Length == 0)
+					throw new ArgumentException("render-clip-grid needs at least one clip in 'clips'.", nameof(clips));
+
+				var rows = new AnimationClip[references.Length];
+				for (var i = 0; i < references.Length; i++)
+					rows[i] = ResolveGridClip(references[i].Trim());
+
+				AnimationClip overlay = string.IsNullOrWhiteSpace(overlayClip) ? null : ResolveGridClip(overlayClip.Trim());
+				AvatarMask mask = null;
+				if (overlay != null)
+				{
+					if (string.IsNullOrWhiteSpace(overlayMask))
+						throw new ArgumentException("'overlayMask' is required when 'overlayClip' is set.", nameof(overlayMask));
+					mask = EditorObjectReference.LoadAsset<AvatarMask>(overlayMask);
+				}
+
+				float[] sampleTimes = ParseTimes("", frames);
+				var cells = new List<Texture2D>(rows.Length * sampleTimes.Length);
+				var labels = new List<string>(cells.Capacity);
+
+				using var session = new AgentPreviewSession(source, description);
+				try
+				{
+					for (var r = 0; r < rows.Length; r++)
+					{
+						for (var t = 0; t < sampleTimes.Length; t++)
+						{
+							if (overlay == null)
+								session.Sample(rows[r], sampleTimes[t]);
+							else
+								session.SampleLayered(rows[r], overlay, mask, sampleTimes[t]);
+							cells.Add(session.Render(cellWidth, cellHeight, yaw, pitch, fieldOfView, padding));
+							string time = $"t={sampleTimes[t].ToString("0.##", CultureInfo.InvariantCulture)}";
+							labels.Add(t == 0 ? $"{rows[r].name} {time}" : time);
+						}
+					}
+
+					Texture2D sheet = AgentPreviewSheet.Compose(cells, labels, sampleTimes.Length, cellWidth, cellHeight);
+					try
+					{
+						string path = AgentPreviewIO.Write(sheet, string.IsNullOrWhiteSpace(tag) ? $"{source.name}-grid" : tag);
+						RenderResult result = BuildResult(path, sheet.width, sheet.height, description,
+							overlay, session, yaw, pitch, fieldOfView, padding);
+						for (var r = 0; r < rows.Length; r++)
+							result.Cells.Add($"row {r}: {rows[r].name} {rows[r].length.ToString("0.##", CultureInfo.InvariantCulture)}s");
+						return result;
+					}
+					finally
+					{
+						Object.DestroyImmediate(sheet);
+					}
+				}
+				finally
+				{
+					for (var i = 0; i < cells.Count; i++)
+						Object.DestroyImmediate(cells[i]);
+				}
+			});
+		}
+
+		private static AnimationClip ResolveGridClip(string reference)
+		{
+			if (!reference.StartsWith("set=", StringComparison.Ordinal))
+				return AgentClipResolver.Resolve(reference, "", "");
+
+			string body = reference.Substring(4);
+			int bar = body.IndexOf('|');
+			if (bar < 0)
+				throw new ArgumentException($"'{reference}' must be 'set=<AnimationSet path>|<entry id>'.");
+			return AgentClipResolver.Resolve("", body.Substring(0, bar), body.Substring(bar + 1));
+		}
+
 		public const string RenderCompareToolId = "render-compare";
 
 		[BridgeTool(RenderCompareToolId, Title = "Render / Compare")]

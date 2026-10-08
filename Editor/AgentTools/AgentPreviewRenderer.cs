@@ -5,6 +5,8 @@ using System.Globalization;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using Object = UnityEngine.Object;
 
 namespace AetherNexus.FoundationPlatform.AgentTools.Editor
@@ -20,6 +22,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		private readonly PreviewRenderUtility _utility;
 		private readonly GameObject _instance;
 		private readonly List<Renderer> _renderers = new();
+		private readonly Dictionary<SkinnedMeshRenderer, Mesh> _bakedMeshes = new();
+		private PlayableGraph _layeredGraph;
 
 		internal Bounds FramingBounds { get; }
 		internal string SourceName { get; }
@@ -196,6 +200,46 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			}
 		}
 
+		/// <summary>
+		/// Poses the instance with <paramref name="baseClip"/> and <paramref name="overlay"/> on a masked layer
+		/// above it, both at <paramref name="normalizedTime"/> of their own length.
+		/// </summary>
+		internal void SampleLayered(AnimationClip baseClip, AnimationClip overlay, AvatarMask mask, float normalizedTime)
+		{
+			var animator = _instance.GetComponentInChildren<Animator>(true);
+			if (animator == null)
+				throw new InvalidOperationException(
+					$"'{SourceName}' has no Animator, so a layered sample has nothing to drive.");
+
+			// A culling Animator skips the transform write of an off-screen graph evaluation.
+			animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+			DestroyLayeredGraph();
+			PlayableGraph graph = PlayableGraph.Create("AgentPreviewLayered");
+			_layeredGraph = graph;
+			graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+			var output = AnimationPlayableOutput.Create(graph, "Preview", animator);
+			var mixer = AnimationLayerMixerPlayable.Create(graph, 2);
+
+			var basePlayable = AnimationClipPlayable.Create(graph, baseClip);
+			basePlayable.SetTime(baseClip.length * Mathf.Clamp01(normalizedTime));
+			var overlayPlayable = AnimationClipPlayable.Create(graph, overlay);
+			overlayPlayable.SetTime(overlay.length * Mathf.Clamp01(normalizedTime));
+
+			graph.Connect(basePlayable, 0, mixer, 0);
+			graph.Connect(overlayPlayable, 0, mixer, 1);
+			mixer.SetInputWeight(0, 1f);
+			mixer.SetInputWeight(1, 1f);
+			mixer.SetLayerMaskFromAvatarMask(1, mask);
+			output.SetSourcePlayable(mixer);
+			graph.Evaluate(0f);
+		}
+
+		private void DestroyLayeredGraph()
+		{
+			if (_layeredGraph.IsValid())
+				_layeredGraph.Destroy();
+		}
+
 		internal Texture2D Render(int width, int height, float yaw, float pitch, float fieldOfView, float padding)
 		{
 			Camera camera = _utility.camera;
@@ -209,6 +253,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			camera.farClipPlane = distance + radius * 4f;
 
 			_utility.BeginStaticPreview(new Rect(0f, 0f, width, height));
+			DrawBakedSkinnedMeshes();
 			camera.Render();
 			Texture2D texture = _utility.EndStaticPreview();
 
@@ -219,10 +264,40 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			return texture;
 		}
 
+		// The preview scene has no player loop, so a SkinnedMeshRenderer keeps the skin of its first
+		// render; every later sample would show that pose. Bake the current pose and draw it instead.
+		private void DrawBakedSkinnedMeshes()
+		{
+			for (var i = 0; i < _renderers.Count; i++)
+			{
+				if (_renderers[i] is not SkinnedMeshRenderer skinned || skinned.sharedMesh == null)
+					continue;
+
+				if (!_bakedMeshes.TryGetValue(skinned, out Mesh baked))
+				{
+					baked = new Mesh { hideFlags = HideFlags.HideAndDontSave };
+					_bakedMeshes.Add(skinned, baked);
+				}
+
+				skinned.enabled = true;
+				skinned.BakeMesh(baked, true);
+				skinned.enabled = false;
+
+				Transform t = skinned.transform;
+				Matrix4x4 matrix = Matrix4x4.TRS(t.position, t.rotation, Vector3.one);
+				Material[] materials = skinned.sharedMaterials;
+				for (var sub = 0; sub < baked.subMeshCount && sub < materials.Length; sub++)
+					_utility.DrawMesh(baked, matrix, materials[sub], sub);
+			}
+		}
+
 		public void Dispose()
 		{
+			DestroyLayeredGraph();
 			if (_instance != null)
 				Object.DestroyImmediate(_instance);
+			foreach (Mesh baked in _bakedMeshes.Values)
+				Object.DestroyImmediate(baked);
 
 			_utility.Cleanup();
 		}

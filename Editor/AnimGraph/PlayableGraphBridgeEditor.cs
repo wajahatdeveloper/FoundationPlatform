@@ -164,20 +164,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 					SoloState(layer, active);
 
 				if (GuiKit.ActionButton("Stop", 48f))
-				{
-					active.TargetWeight = 0f;
-					active.FadeSpeed = _testFadeDuration > 0f ? 1f / _testFadeDuration : 1000f;
-				}
+					active.BeginFade(0f, _testFadeDuration);
 			}
 		}
 
 		private static void SoloState(PlayableLayer layer, PlayableLayer.ActiveState solo)
 		{
 			foreach (var other in layer.ActiveStates)
-			{
-				other.TargetWeight = other == solo ? 1f : 0f;
-				other.FadeSpeed = 1000f;
-			}
+				other.BeginFade(other == solo ? 1f : 0f, 0f);
 		}
 	}
 }

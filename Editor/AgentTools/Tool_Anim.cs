@@ -107,6 +107,42 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		public string TargetSummary;
 	}
 
+	public sealed class AnimJitterBoneStats
+	{
+		public string Bone;
+
+		[Description("Second difference of character-local position, m/s².")]
+		public float LinearMedian;
+		public float LinearP95;
+		public float LinearMax;
+		public int LinearSpikes;
+
+		[Description("Change in per-frame rotation angle, deg/s².")]
+		public float AngularMedian;
+		public float AngularP95;
+		public float AngularMax;
+		public int AngularSpikes;
+	}
+
+	public sealed class AnimJitterReport
+	{
+		public string Target;
+		public int Frames;
+		public float MeanFrameMs;
+
+		[Description("completed | play-mode-exited | target-destroyed | timed-out")]
+		public string EndReason;
+
+		public List<AnimJitterBoneStats> Bones = new();
+		public int SpikeCount;
+
+		[Description("Worst spikes first: frame, bone, accelerations, then 'L<layer>:<state>@<layer weight>' for every live layer, plus the previous frame's layers when they changed.")]
+		public List<string> Spikes = new();
+
+		[Description("Every frame where the set of playing layer states changed.")]
+		public List<string> LayerTimeline = new();
+	}
+
 	/// <summary>
 	/// Read-only reports over the AnimationSet system. An agent editing animation authoring needs the
 	/// numbers a designer reads in the Inspector plus the findings that currently only reach the
@@ -217,6 +253,212 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 					report.ValidationLog.AddRange(CaptureLogs(() => AnimationSetValidator.LogValidation(set)));
 
 				return report;
+			});
+		}
+
+		public const string AnimImportNormalizeToolId = "anim-import-normalize";
+
+		[BridgeTool(AnimImportNormalizeToolId, Title = "Animation / Import Normalize")]
+		[Description("Sets humanoid model clip import settings for in-place playback: root transform rotation, Y and " +
+			"XZ based upon Original and baked into pose (no root motion), and Loop Pose on clips that loop. Takes " +
+			"model files or folders; reimports only models that change and reports every changed clip.")]
+		public List<string> ImportNormalize
+		(
+			[Description("Semicolon separated model file or folder paths under Assets/.")]
+			string paths,
+			[Description("Skip model files whose path contains this text, e.g. '[RM]' for authored root-motion variants. Empty skips nothing.")]
+			string exclude,
+			[Description("Report what would change without writing.")]
+			bool dryRun
+		)
+		{
+			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
+			{
+				var modelPaths = new SortedSet<string>(StringComparer.Ordinal);
+				foreach (string raw in paths.Split(';', StringSplitOptions.RemoveEmptyEntries))
+				{
+					string path = raw.Trim().Replace('\\', '/');
+					if (AssetDatabase.IsValidFolder(path))
+					{
+						foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { path }))
+							modelPaths.Add(AssetDatabase.GUIDToAssetPath(guid));
+					}
+					else if (AssetImporter.GetAtPath(path) is ModelImporter)
+					{
+						modelPaths.Add(path);
+					}
+					else
+					{
+						throw new ArgumentException($"'{path}' is neither a folder nor a model file.", nameof(paths));
+					}
+				}
+
+				var changes = new List<string>();
+				foreach (string modelPath in modelPaths)
+				{
+					if (!string.IsNullOrEmpty(exclude) && modelPath.Contains(exclude, StringComparison.Ordinal))
+						continue;
+
+					var importer = (ModelImporter)AssetImporter.GetAtPath(modelPath);
+					if (importer.animationType != ModelImporterAnimationType.Human)
+					{
+						changes.Add($"SKIP not humanoid ({importer.animationType}): {modelPath}");
+						continue;
+					}
+
+					ModelImporterClipAnimation[] clips = importer.clipAnimations.Length > 0
+						? importer.clipAnimations
+						: importer.defaultClipAnimations;
+
+					var modelChanged = false;
+					for (var i = 0; i < clips.Length; i++)
+					{
+						ModelImporterClipAnimation c = clips[i];
+						bool wantLoopPose = c.loopTime;
+						if (c.keepOriginalOrientation && c.keepOriginalPositionY && c.keepOriginalPositionXZ
+						    && c.lockRootRotation && c.lockRootHeightY && c.lockRootPositionXZ
+						    && c.loopPose == wantLoopPose)
+							continue;
+
+						changes.Add($"{modelPath}#{c.name}: original+bake, loopPose {c.loopPose}->{wantLoopPose}");
+						c.keepOriginalOrientation = true;
+						c.keepOriginalPositionY = true;
+						c.keepOriginalPositionXZ = true;
+						c.lockRootRotation = true;
+						c.lockRootHeightY = true;
+						c.lockRootPositionXZ = true;
+						c.loopPose = wantLoopPose;
+						modelChanged = true;
+					}
+
+					if (!modelChanged || dryRun)
+						continue;
+
+					importer.clipAnimations = clips;
+					importer.SaveAndReimport();
+				}
+
+				return changes;
+			});
+		}
+
+		public const string AnimSetEditToolId = "anim-set-edit";
+
+		[BridgeTool(AnimSetEditToolId, Title = "Animation / Set Edit")]
+		[Description("Edits entries declared on one AnimationSet in a single undoable batch. One edit per line, fields " +
+			"'key=value' separated by '|'. Keys: id (required), clip (asset path, '#ClipName' suffix, or 'none' to " +
+			"clear), speed, fade, mask (AnimationMask name), maskAsset (AvatarMask path or 'none'), layer, " +
+			"transitionBack, suspendTranslation, template (entry id resolved through the parent chain whose fields " +
+			"seed a new entry), remove=true. An id the set does not declare is added (seeded from template when " +
+			"given), which is how a child set overrides an inherited entry.")]
+		public List<string> SetEdit
+		(
+			[Description("AnimationSet asset path or GUID.")]
+			string animationSet,
+			[Description("Newline separated edits, e.g. 'id=Run_Fwd|clip=Assets/.../Run.fbx|speed=1'.")]
+			string edits
+		)
+		{
+			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
+			{
+				var set = EditorObjectReference.LoadAsset<AnimationSet>(animationSet);
+				Undo.RecordObject(set, "Agent AnimationSet Edit");
+				var entries = new List<AnimationSetEntry>(set.entries);
+				var log = new List<string>();
+
+				foreach (string rawLine in edits.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+				{
+					string line = rawLine.Trim();
+					if (line.Length == 0)
+						continue;
+
+					var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+					foreach (string part in line.Split('|'))
+					{
+						int eq = part.IndexOf('=');
+						if (eq <= 0)
+							throw new ArgumentException($"Field '{part}' in '{line}' is not 'key=value'.", nameof(edits));
+						fields[part.Substring(0, eq).Trim()] = part.Substring(eq + 1).Trim();
+					}
+
+					if (!fields.TryGetValue("id", out string id) || id.Length == 0)
+						throw new ArgumentException($"Edit '{line}' has no id.", nameof(edits));
+
+					int index = entries.FindIndex(e => e != null && e.id == id);
+					if (fields.TryGetValue("remove", out string remove) && bool.Parse(remove))
+					{
+						if (index < 0)
+							throw new InvalidOperationException($"'{set.name}' declares no entry '{id}' to remove.");
+						entries.RemoveAt(index);
+						log.Add($"{id}: removed");
+						continue;
+					}
+
+					AnimationSetEntry entry;
+					if (index >= 0)
+					{
+						entry = entries[index];
+					}
+					else
+					{
+						entry = new AnimationSetEntry { id = id, clip = new ClipTransitionData() };
+						if (fields.TryGetValue("template", out string template))
+						{
+							if (!set.GetResolvedEntries().TryGetValue(template, out AnimationSetEntry source))
+								throw new InvalidOperationException($"'{set.name}' resolves no template entry '{template}'.");
+							EditorJsonUtility.FromJsonOverwrite(EditorJsonUtility.ToJson(source), entry);
+							entry.clip = new ClipTransitionData();
+							EditorJsonUtility.FromJsonOverwrite(EditorJsonUtility.ToJson(source.clip), entry.clip);
+							entry.id = id;
+						}
+						entries.Add(entry);
+						log.Add($"{id}: added");
+					}
+
+					foreach (KeyValuePair<string, string> field in fields)
+					{
+						switch (field.Key)
+						{
+							case "id":
+							case "template":
+								break;
+							case "clip":
+								entry.clip.Clip = field.Value == "none" ? null : AgentClipResolver.Resolve(field.Value, "", "");
+								break;
+							case "speed":
+								entry.clip.Speed = float.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture);
+								break;
+							case "fade":
+								entry.clip.FadeDuration = float.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture);
+								break;
+							case "mask":
+								entry.mask = (AnimationMask)Enum.Parse(typeof(AnimationMask), field.Value);
+								break;
+							case "maskAsset":
+								entry.maskAsset = field.Value == "none" ? null : EditorObjectReference.LoadAsset<AvatarMask>(field.Value);
+								break;
+							case "layer":
+								entry.layerIndex = int.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture);
+								break;
+							case "transitionBack":
+								entry.transitionBack = bool.Parse(field.Value);
+								break;
+							case "suspendTranslation":
+								entry.suspendTranslation = bool.Parse(field.Value);
+								break;
+							default:
+								throw new ArgumentException($"Unknown key '{field.Key}' in '{line}'.", nameof(edits));
+						}
+					}
+
+					log.Add($"{id}: clip={(entry.clip.Clip == null ? "none" : entry.clip.Clip.name)} speed={entry.clip.Speed} " +
+						$"fade={entry.clip.FadeDuration} mask={entry.mask} maskAsset={(entry.maskAsset == null ? "none" : entry.maskAsset.name)}");
+				}
+
+				set.entries = entries.ToArray();
+				EditorUtility.SetDirty(set);
+				AssetDatabase.SaveAssetIfDirty(set);
+				return log;
 			});
 		}
 
@@ -376,6 +618,222 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				: "";
 
 			return $"next='{link.nextEntryId}' in={link.transitionIn:0.###} out={link.transitionOut:0.###}{hold}";
+		}
+
+		public const string AnimJitterProbeToolId = "anim-jitter-probe";
+
+		private static readonly HumanBodyBones[] JitterBones =
+		{
+			HumanBodyBones.Hips, HumanBodyBones.Chest, HumanBodyBones.Head,
+			HumanBodyBones.LeftHand, HumanBodyBones.RightHand,
+			HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot
+		};
+
+		private const int MaxReportedSpikes = 30;
+
+		[BridgeTool(AnimJitterProbeToolId, Title = "Animation / Jitter Probe")]
+		[Description("Play Mode: records key humanoid bones of one live character every rendered frame in " +
+			"character-local space (after animation, Animation Rigging IK and LateUpdate overrides), then reports " +
+			"per-bone linear and angular acceleration (median, p95, max) and the frames where a bone spikes above " +
+			"'spikeFactor' x its median, each tagged with what every PlayableGraphBridge layer was playing. " +
+			"Long runs: '_async': true.")]
+		public static System.Threading.Tasks.Task<AnimJitterReport> JitterProbe
+		(
+			[Description("'scene:Root/Child' path of a live character with a humanoid Animator.")]
+			string target,
+			[Description("Frames to record, 10..3000.")]
+			int frames,
+			[Description("A frame is a spike when its acceleration exceeds this multiple of the bone's median. 6 is a good start.")]
+			float spikeFactor,
+			[Description("Stop after this many real seconds.")]
+			float maxSeconds,
+			[Description("Force AnimatorCullingMode.AlwaysAnimate for the sample window and restore it after, so an off-camera character is not measured as a frozen pose.")]
+			bool forceAlwaysAnimate
+		)
+		{
+			if (!EditorApplication.isPlaying)
+				throw new InvalidOperationException($"{AnimJitterProbeToolId} requires Play Mode.");
+			if (frames < 10 || frames > 3000)
+				throw new ArgumentException("'frames' must be in [10, 3000].", nameof(frames));
+
+			GameObject go = EditorObjectReference.ResolveGameObject(target, out string description);
+			var animator = go.GetComponentInChildren<Animator>();
+			if (animator == null || !animator.isHuman)
+				throw new ArgumentException($"'{description}' has no humanoid Animator.", nameof(target));
+			var bridge = go.GetComponentInChildren<PlayableGraphBridge>();
+			if (bridge == null || bridge.Layers == null)
+				throw new ArgumentException($"'{description}' has no initialized PlayableGraphBridge.", nameof(target));
+
+			var bones = new Transform[JitterBones.Length];
+			for (var i = 0; i < bones.Length; i++)
+				bones[i] = animator.GetBoneTransform(JitterBones[i]);
+
+			Transform root = animator.transform;
+			var positions = new List<Vector3[]>();
+			var rotations = new List<Quaternion[]>();
+			var times = new List<float>();
+			var labels = new List<string>();
+			var tcs = new System.Threading.Tasks.TaskCompletionSource<AnimJitterReport>();
+			int lastFrame = -1;
+			double start = EditorApplication.timeSinceStartup;
+			string endReason = "completed";
+			AnimatorCullingMode originalCulling = animator.cullingMode;
+			if (forceAlwaysAnimate)
+				animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+
+			void Finish(string reason)
+			{
+				EditorApplication.update -= Tick;
+				if (forceAlwaysAnimate && animator != null)
+					animator.cullingMode = originalCulling;
+				endReason = reason;
+				tcs.TrySetResult(BuildJitterReport(description, positions, rotations, times, labels, spikeFactor, endReason));
+			}
+
+			void Tick()
+			{
+				if (!EditorApplication.isPlaying) { Finish("play-mode-exited"); return; }
+				if (root == null) { Finish("target-destroyed"); return; }
+				if (EditorApplication.timeSinceStartup - start > maxSeconds) { Finish("timed-out"); return; }
+				if (Time.frameCount == lastFrame || EditorApplication.isPaused)
+					return;
+				lastFrame = Time.frameCount;
+
+				var p = new Vector3[bones.Length];
+				var r = new Quaternion[bones.Length];
+				Quaternion inverseRoot = Quaternion.Inverse(root.rotation);
+				for (var i = 0; i < bones.Length; i++)
+				{
+					if (bones[i] == null)
+						continue;
+					p[i] = root.InverseTransformPoint(bones[i].position);
+					r[i] = inverseRoot * bones[i].rotation;
+				}
+
+				positions.Add(p);
+				rotations.Add(r);
+				times.Add(Time.time);
+				labels.Add(DescribeLayers(bridge));
+
+				if (positions.Count >= frames)
+					Finish("completed");
+			}
+
+			EditorApplication.update += Tick;
+			return tcs.Task;
+		}
+
+		private static string DescribeLayers(PlayableGraphBridge bridge)
+		{
+			var sb = new System.Text.StringBuilder();
+			for (var i = 0; i < bridge.Layers.Count; i++)
+			{
+				PlayableLayer layer = bridge.Layers[i];
+				if (layer.Weight <= 0.001f || layer.CurrentState == null)
+					continue;
+				string state = layer.CurrentState is ClipState clip && clip.Clip != null
+					? clip.Clip.name
+					: layer.CurrentState.GetType().Name;
+				int fading = 0;
+				for (var s = 0; s < layer.ActiveStates.Count; s++)
+					if (layer.ActiveStates[s].Weight > 0.001f && layer.ActiveStates[s].Weight < 0.999f)
+						fading++;
+				if (sb.Length > 0)
+					sb.Append(" | ");
+				sb.Append($"L{i}:{state}@{layer.Weight:0.##}");
+				if (fading > 0)
+					sb.Append($" (fading {fading})");
+			}
+
+			return sb.ToString();
+		}
+
+		private static AnimJitterReport BuildJitterReport(
+			string description,
+			List<Vector3[]> positions,
+			List<Quaternion[]> rotations,
+			List<float> times,
+			List<string> labels,
+			float spikeFactor,
+			string endReason)
+		{
+			var report = new AnimJitterReport
+			{
+				Target = description,
+				Frames = positions.Count,
+				EndReason = endReason
+			};
+			if (positions.Count < 4)
+				return report;
+
+			float meanDt = (times[times.Count - 1] - times[0]) / (times.Count - 1);
+			report.MeanFrameMs = meanDt * 1000f;
+			float dt2 = Mathf.Max(meanDt * meanDt, 1e-6f);
+
+			int n = positions.Count;
+			var linear = new float[JitterBones.Length][];
+			var angular = new float[JitterBones.Length][];
+			for (var b = 0; b < JitterBones.Length; b++)
+			{
+				linear[b] = new float[n - 2];
+				angular[b] = new float[n - 2];
+				for (var t = 2; t < n; t++)
+				{
+					Vector3 second = positions[t][b] - 2f * positions[t - 1][b] + positions[t - 2][b];
+					linear[b][t - 2] = second.magnitude / dt2;
+					float w1 = Quaternion.Angle(rotations[t - 2][b], rotations[t - 1][b]);
+					float w2 = Quaternion.Angle(rotations[t - 1][b], rotations[t][b]);
+					angular[b][t - 2] = Mathf.Abs(w2 - w1) / dt2;
+				}
+			}
+
+			var spikes = new List<(float score, string line)>();
+			for (var b = 0; b < JitterBones.Length; b++)
+			{
+				var stats = new AnimJitterBoneStats { Bone = JitterBones[b].ToString() };
+				Summarize(linear[b], out stats.LinearMedian, out stats.LinearP95, out stats.LinearMax);
+				Summarize(angular[b], out stats.AngularMedian, out stats.AngularP95, out stats.AngularMax);
+
+				float linearGate = Mathf.Max(stats.LinearMedian * spikeFactor, 5f);
+				float angularGate = Mathf.Max(stats.AngularMedian * spikeFactor, 2000f);
+				for (var i = 0; i < linear[b].Length; i++)
+				{
+					int frame = i + 2;
+					bool lin = linear[b][i] > linearGate;
+					bool ang = angular[b][i] > angularGate;
+					if (!lin && !ang)
+						continue;
+					if (lin) stats.LinearSpikes++;
+					if (ang) stats.AngularSpikes++;
+					float score = Mathf.Max(linear[b][i] / linearGate, angular[b][i] / angularGate);
+					string transition = labels[frame] == labels[frame - 1] ? "" : $" WAS {labels[frame - 1]}";
+					spikes.Add((score, $"f{frame} {stats.Bone} lin={linear[b][i]:0.#} ang={angular[b][i]:0} :: {labels[frame]}{transition}"));
+				}
+
+				report.Bones.Add(stats);
+			}
+
+			spikes.Sort((a, c) => c.score.CompareTo(a.score));
+			for (var i = 0; i < spikes.Count && i < MaxReportedSpikes; i++)
+				report.Spikes.Add(spikes[i].line);
+			report.SpikeCount = spikes.Count;
+
+			for (var t = 0; t < labels.Count; t++)
+				if (t == 0 || labels[t] != labels[t - 1])
+					report.LayerTimeline.Add($"f{t} {labels[t]}");
+			if (report.LayerTimeline.Count > 40)
+				report.LayerTimeline.RemoveRange(40, report.LayerTimeline.Count - 40);
+
+			return report;
+		}
+
+		private static void Summarize(float[] values, out float median, out float p95, out float max)
+		{
+			var sorted = (float[])values.Clone();
+			Array.Sort(sorted);
+			median = sorted[sorted.Length / 2];
+			p95 = sorted[Mathf.Min(sorted.Length - 1, (int)(sorted.Length * 0.95f))];
+			max = sorted[sorted.Length - 1];
 		}
 
 		private static List<string> CaptureLogs(Action action)

@@ -11,8 +11,18 @@ weight, not layer weight — an empty/all-zero state mixer passes the lower laye
 overriding with a bind pose, so an idle overlay layer sitting at layer-weight 1 contributes nothing.
 
 **Do not boot overlay layers at weight 0.** `TransitionBackFromLayer` fades the overlay **layer** weight
-to 0 after a one-shot ends (its last state stays at weight 1), so every play path on layers 1+ restores
-`layer.Weight = 1` before playing — the `Weight` setter also cancels any pending fade.
+to 0 after a one-shot ends (its last state stays at weight 1), so every play path on layers 1+ calls
+`layer.FadeInForPlay(fade)` before playing. It eases the layer up from its current weight over the same
+fade the new state crosses in on; snapping `Weight = 1` would pop a state that is mid fade-out (or the
+stale last state) to full strength. Only zero-fade paths (preview, timeline resync) snap.
+
+## Crossfades are eased and keep state weights summing to 1
+
+`Play` / `Stop` start every active state on one shared fade clock (`ActiveState.BeginFade`). Each state
+eases from its own start weight to its target with smoothstep on that clock, so the weights still sum
+to 1 every frame (a sag lets a humanoid drift toward its default pose) while each blend starts and ends
+at zero velocity. Layer-weight fades (`StartFade`) use the same easing. Anything that retargets a state
+fade, including editor tooling, goes through `BeginFade`.
 
 ## Only `ClipState`s are transient; `MixerState`s are long-lived and reused
 

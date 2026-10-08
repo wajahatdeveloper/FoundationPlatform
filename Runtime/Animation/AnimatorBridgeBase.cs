@@ -612,9 +612,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 			{
 				// Layer 0 (Locomotion) always has the stance mixer present, so layer.Play() will
 				// cross-fade from it naturally with no bind-pose gap. Non-locomotion layers need
-				// their weight set explicitly before playing.
+				// their weight restored before playing.
 				if (layerIndex != AnimLayer.Locomotion)
-					layer.Weight = 1f;
+					layer.FadeInForPlay(transitionIn);
 			}
 
 			var state = layer.Play(entry.clip, transitionIn);
@@ -691,7 +691,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			// A previous TransitionBackFromLayer fades overlay-layer weight to 0; restore it or
 			// this play is invisible. Locomotion (layer 0) is pinned at weight 1 by design.
 			if (layerIndex != AnimLayer.Locomotion)
-				layer.Weight = 1f;
+				layer.FadeInForPlay(fade);
 
 			var state = layer.Play(entry.clip, fadeDurationSeconds);
 			if (startNormalizedTime > 0f)
@@ -937,7 +937,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			var transitionDuration = clipInfo != null ? clipInfo.transitionInAndOut.x : 0.25f;
 
 			if (resolvedLayer != AnimLayer.Locomotion)
-				layer.Weight = 1f;
+				layer.FadeInForPlay(transitionDuration);
 
 			var state = layer.Play(clip, transitionDuration);
 
@@ -962,7 +962,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			var layer = animancer.Layers[loopLayerIndex];
 			layer.Mask = GetAvatarMask(mask);
 			if (loopLayerIndex != AnimLayer.Locomotion)
-				layer.Weight = 1f;
+				layer.FadeInForPlay(transitionIn);
 			layer.Play(clip, transitionIn);
 		}
 

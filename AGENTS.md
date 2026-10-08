@@ -21,7 +21,8 @@ authority, no dependency on GameEngineCore. Symbol detail:
 ## Agent tools
 
 `platform-capability-list`, `platform-capability-invoke`, `render-preview`, `render-clip-strip`,
-`render-compare`, `anim-set-report`, `anim-clip-report`. Compiled only when
+`render-compare`, `render-clip-grid`, `anim-set-report`, `anim-clip-report`, `anim-import-normalize`,
+`anim-set-edit`, `anim-jitter-probe`. Compiled only when
 `com.aethernexus.aibridge` is installed. The two `platform-capability-*` tools are listed directly;
 the rest are Extended (call through `unity-run`). Detail: [Editor/AgentTools/README.md](Editor/AgentTools/README.md).
 
