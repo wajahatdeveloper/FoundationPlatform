@@ -25,8 +25,8 @@ namespace AetherNexus.FoundationPlatform.Logging
 
 #if UNITY_EDITOR
             ConfigureEditorLogging();
-#elif UNITY_ANDROID
-            ConfigureAndroidLogging();
+#elif UNITY_ANDROID || UNITY_IOS
+            ConfigureMobileLogging();
 #elif UNITY_WEBGL
             ConfigureWebGLLogging();
 #else
@@ -83,15 +83,20 @@ namespace AetherNexus.FoundationPlatform.Logging
         }
 #endif
 
-        private static void ConfigureAndroidLogging()
+        // Android and iOS. The app bundle is read-only on iOS, so logs live under persistentDataPath.
+        private static void ConfigureMobileLogging()
         {
             string logPath = Application.persistentDataPath + "/Logs";
             
             FileSink fileSink = null;
             LogPipeline.Configure(config =>
             {
-                config.SetMinimumLevel(LogLevel.Information)
-                      .AddSink(new UnityConsoleSink(includeCallerInfo: false))
+#if DEVELOPMENT_BUILD
+                config.SetMinimumLevel(LogLevel.Information);
+#else
+                config.SetMinimumLevel(LogLevel.Warning);
+#endif
+                config.AddSink(new UnityConsoleSink(includeCallerInfo: false))
                       .ExcludeChannels();
 
 #if DEVELOPMENT_BUILD
@@ -106,7 +111,7 @@ namespace AetherNexus.FoundationPlatform.Logging
                 FlushScheduler.RegisterFileSink(fileSink);
             }
 
-            DebugX.Info("Android logging initialized");
+            DebugX.Info("Mobile logging initialized");
         }
 
         private static void ConfigureWebGLLogging()

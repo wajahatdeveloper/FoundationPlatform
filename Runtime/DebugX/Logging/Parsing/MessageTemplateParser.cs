@@ -11,6 +11,9 @@ namespace AetherNexus.FoundationPlatform.Logging
     /// </summary>
     public static class MessageTemplateParser
     {
+        // Logs are parsed at the call site, which can be any thread.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _overridesToString = new();
+
         public static (string renderedMessage, LogProperty[] properties) Parse(
             string template, object[] values)
         {
@@ -110,8 +113,14 @@ namespace AetherNexus.FoundationPlatform.Logging
             var type = value.GetType();
 
             // Respect custom ToString() overrides (e.g. GameplayTag) before falling to JsonUtility
-            var toStringMethod = type.GetMethod("ToString", System.Type.EmptyTypes);
-            if (toStringMethod != null && toStringMethod.DeclaringType != typeof(object))
+            if (!_overridesToString.TryGetValue(type, out var overridesToString))
+            {
+                var toStringMethod = type.GetMethod("ToString", System.Type.EmptyTypes);
+                overridesToString = toStringMethod != null && toStringMethod.DeclaringType != typeof(object);
+                _overridesToString[type] = overridesToString;
+            }
+
+            if (overridesToString)
             {
                 return value.ToString();
             }

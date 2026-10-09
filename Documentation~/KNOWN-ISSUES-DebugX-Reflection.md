@@ -1,4 +1,9 @@
-# Known issue: DebugX caller-info reflection runs unconditionally in player builds
+# Resolved: DebugX caller-info reflection ran unconditionally in player builds
+
+**Current state:** option 2 below. `GetCallerInfo()` stack-walks only under
+`UNITY_EDITOR || DEVELOPMENT_BUILD` and returns an empty `CallerInfo` in release players (whose
+`UnityConsoleSink`s already had `includeCallerInfo: false`). `MessageTemplateParser` caches its
+`ToString`-override lookup per type. The text below is the original analysis.
 
 ## What
 
@@ -53,6 +58,6 @@ Unity-compile-verified pass.
    IL2CPP/AOT — just with a real per-call perf cost) and document that decision here and in
    `ARCHITECTURE.md`'s Logging (DebugX) section instead of changing code.
 
-**Status (audit closure):** Option 3 accepted. Documented in `Documentation~/ARCHITECTURE.md` § Logging
+**Status (superseded):** Option 2 implemented for mobile performance; the earlier audit closure read: Option 3 accepted. Documented in `Documentation~/ARCHITECTURE.md` § Logging
 (DebugX) and `docs/00-AgentGuide.md` §3. No code change planned unless a dedicated caller-info refactor
 is scheduled.

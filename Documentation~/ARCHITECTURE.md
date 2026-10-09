@@ -102,16 +102,16 @@ DebugXInitializer.Initialize()  [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]
        └─ start LogQueue + capture main thread (MainThreadDispatcher is static; PlatformHost drains)
 ```
 
-| Platform | Sinks |
-|---|---|
-| Editor | `EditorConsoleSink` (feeds the DebugX Console window) + `FileSink` + `JsonFileSink` |
-| Android | `UnityConsoleSink` (+ `FileSink` in development builds) |
-| WebGL | `UnityConsoleSink` |
-| Standalone / other | `UnityConsoleSink` + `FileSink` + `JsonFileSink` |
+| Platform | Minimum level | Sinks |
+|---|---|---|
+| Editor | DebugX Console setting (default Debug) | `EditorConsoleSink` (feeds the DebugX Console window) + `FileSink` + `JsonFileSink` |
+| Android, iOS | Warning in release, Information in development builds | `UnityConsoleSink` (+ `FileSink` under `persistentDataPath` in development builds) |
+| WebGL | Information | `UnityConsoleSink` |
+| Standalone / other | Information (Verbose in development builds) | `UnityConsoleSink` + `FileSink` + `JsonFileSink` |
 
 **DebugX Console window** — `Editor/Console/DebugXConsoleWindow.cs` — reads `ConsoleLogStore` (ring from `EditorConsoleSink` + Unity `Debug.Log*` via `logMessageReceivedThreaded`; compiler tail from CompilationPipeline script diagnostics plus LogEntriesBridge native-only / asset-import rows, and native script-compile rows the pipeline did not report — player-build compiles and diagnostics that outlived a domain reload; on each domain load the store first restores scripting rows already in Unity's console, under a "Restored from Unity Console (pre-reload)" marker). Supports filters, tabs, watch expressions, snippets, compile error/warning surfacing, export.
 
-**Deliberate carve-out — caller-info reflection:** `CallerInfoHelper` and `MessageTemplateParser` use cached `StackTrace`/`MethodBase` reflection on every log call in all builds so file/line/member attribution reaches sinks. This is an intentional trade-off (not a silent violation of the no-runtime-reflection rule). The Unity-stack-extractor fallback remains editor-gated. See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for rationale and future options if attribution is ever threaded via `[CallerMemberName]` instead.
+**Caller info is editor and development-build only:** `CallerInfoHelper.GetCallerInfo` walks the stack (`StackTrace`/`MethodBase`) only under `UNITY_EDITOR || DEVELOPMENT_BUILD`; release players return an empty `CallerInfo`, which their console sinks never printed anyway. `MessageTemplateParser` looks up a type's `ToString` override once and caches it per type. See [KNOWN-ISSUES-DebugX-Reflection.md](KNOWN-ISSUES-DebugX-Reflection.md) for the history and the `[CallerMemberName]` option if release attribution is ever needed.
 
 **`DebugHistory<T>`** — `Runtime/DebugX/DebugHistory.cs` — fixed-capacity ring of timestamped debug entries (`Push(value, time)`, `CopySince(cutoff, list)`, `CopyAll(list)`). Reads fill a caller-owned list oldest first: no per-read allocation, no sort. Shared by every per-actor debug history (GAS tag/effect/cue, item events, character state, tutorial log).
 

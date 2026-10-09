@@ -55,6 +55,7 @@ namespace AetherNexus.FoundationPlatform.Logging
         /// </summary>
         public static CallerInfo GetCallerInfo()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             try
             {
                 // Get the calling method that invoked GetCallerInfo
@@ -88,6 +89,10 @@ namespace AetherNexus.FoundationPlatform.Logging
                 // Graceful degradation - return empty if StackTrace unavailable
                 return default;
             }
+#else
+            // Release players skip the per-call stack walk; their console sinks do not print caller info.
+            return default;
+#endif
         }
 
         private static MethodBase GetCallingMethod()

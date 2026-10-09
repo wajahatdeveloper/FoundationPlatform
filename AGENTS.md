@@ -30,6 +30,6 @@ the rest are Extended (call through `unity-run`). Detail: [Editor/AgentTools/REA
 
 - Cannot reference `GameEngineCore.*`. Determinism here goes through `RandomX` / `IRandomProvider`,
   never `UnityEngine.Random` and never saving/restoring its global state.
-- `DebugX` caller-info reflection is a deliberate, documented carve-out
-  ([KNOWN-ISSUES-DebugX-Reflection.md](Documentation~/KNOWN-ISSUES-DebugX-Reflection.md)); do not strip it without a replacement.
+- `DebugX` caller-info stack walking runs in the editor and development builds only
+  ([KNOWN-ISSUES-DebugX-Reflection.md](Documentation~/KNOWN-ISSUES-DebugX-Reflection.md)); keep new log-path reflection behind the same gate.
 - No `??` on `UnityEngine.Object`; resolve refs in `Awake`/`OnEnable`, not by writing serialized fields in `OnValidate`.

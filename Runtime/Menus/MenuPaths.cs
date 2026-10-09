@@ -34,6 +34,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Tools + "Rebuild/";
             public const string AllConstants     = Root + "Rebuild All Constants";
             public const string GasAbilityLogic  = Root + "GAS/Rebuild Ability Logic";
+            public const string EngineRegistrations = Root + "Rebuild Engine Registrations";
             public const string Registries       = Root + "Rebuild All Generated Registries";
             public const string PackageIntegrations = Root + "Rebuild Package Integrations";
             public const string AnimationRootMotion = Root + "Animation/Bake Root Motion";
