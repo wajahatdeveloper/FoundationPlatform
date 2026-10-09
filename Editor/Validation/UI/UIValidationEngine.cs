@@ -17,18 +17,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
     internal static class UIValidationRuleIds
     {
         public const string ConfigMissingOrInvalid = "UIV000";
-        public const string ScriptOutsideMappedFolders = "UIV001";
-        public const string PrefabOutsideMappedFolders = "UIV002";
         public const string PanelRootReferencesOrchestration = "UIV003";
         public const string WidgetRootReferencesPanelOrOrchestration = "UIV004";
         public const string ReverseLayerReference = "UIV005";
-        public const string InvalidNamingSuffix = "UIV006";
         public const string SerializedDomainDependencyOnRoot = "UIV007";
         public const string MismatchedPrefabFolderLayer = "UIV008";
         public const string ServiceLocatorPattern = "UIV009";
         public const string BroadPublicMutation = "UIV010";
         public const string PrefabCompositionDepthRisk = "UIV011";
-        public const string MixedNamingStyle = "UIV012";
     }
 
     internal sealed class UIValidationIssue
@@ -80,16 +76,12 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
                 string extension = Path.GetExtension(path);
                 if (IsScript(extension))
                 {
-                    ValidateScriptPath(path, result);
                     ValidateScriptWarnings(path, result);
                     continue;
                 }
 
                 if (IsPrefab(extension))
-                {
-                    ValidatePrefabPath(path, result);
                     ValidatePrefabAsset(path, result);
-                }
             }
 
             SortIssuesDeterministically(result.Issues);
@@ -179,38 +171,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             return false;
         }
 
-        private static void ValidateScriptPath(string path, UIValidationResult result)
-        {
-            if (!UIValidationConventions.IsUserUiScriptRoot(path))
-                return;
-
-            bool insideAllowedFolder = false;
-            for (int i = 0; i < UIValidationConventions.UserScriptLayerFolders.Length; i++)
-            {
-                if (!UIValidationConventions.IsPathUnder(path, UIValidationConventions.UserScriptLayerFolders[i]))
-                    continue;
-
-                insideAllowedFolder = true;
-                break;
-            }
-
-            if (!insideAllowedFolder)
-            {
-                AddIssue(result, UIValidationRuleIds.ScriptOutsideMappedFolders, UIValidationSeverity.Error, path,
-                    "UI script is outside mapped layer folders.",
-                    "Move this script under UIElements, Widgets, Panels, or Orchestration.");
-                return;
-            }
-
-            UILayer layer = UIValidationConventions.ResolveLayerFromPath(path);
-            if (!HasValidSuffix(layer, Path.GetFileNameWithoutExtension(path)))
-            {
-                AddIssue(result, UIValidationRuleIds.InvalidNamingSuffix, UIValidationSeverity.Error, path,
-                    $"Script name does not match required suffix for layer '{layer}'.",
-                    "Rename file to match configured suffix conventions.");
-            }
-        }
-
         private static void ValidateScriptWarnings(string path, UIValidationResult result)
         {
             string contents;
@@ -242,13 +202,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
                     "Panel/Widget script appears to expose broad public mutation API.",
                     "Prefer narrow Bind/Render-style entry points.");
             }
-
-            if ((layer == UILayer.Panel || layer == UILayer.Widget) && HasMixedNamingStyle(path))
-            {
-                AddIssue(result, UIValidationRuleIds.MixedNamingStyle, UIValidationSeverity.Warning, path,
-                    "Detected mixed naming style for UI layer type.",
-                    "Use canonical suffixes only (Panel, Widget, View, UIManager/Presenter).");
-            }
         }
 
         private static bool HasBroadMutationPattern(string scriptContents)
@@ -274,49 +227,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             }
 
             return false;
-        }
-
-        private static bool HasMixedNamingStyle(string path)
-        {
-            UILayer layer = UIValidationConventions.ResolveLayerFromPath(path);
-            if (layer == UILayer.Orchestration)
-                return false;
-
-            string fileName = Path.GetFileNameWithoutExtension(path);
-            return fileName.EndsWith("Screen", StringComparison.Ordinal)
-                   || fileName.EndsWith("Window", StringComparison.Ordinal)
-                   || fileName.EndsWith("Page", StringComparison.Ordinal);
-        }
-
-        private static void ValidatePrefabPath(string path, UIValidationResult result)
-        {
-            if (!UIValidationConventions.IsPathUnder(path, "Assets/Content/UI/Prefabs"))
-                return;
-
-            bool insideAllowedFolder = false;
-            for (int i = 0; i < UIValidationConventions.UserPrefabLayerFolders.Length; i++)
-            {
-                if (!UIValidationConventions.IsPathUnder(path, UIValidationConventions.UserPrefabLayerFolders[i]))
-                    continue;
-                insideAllowedFolder = true;
-                break;
-            }
-
-            if (!insideAllowedFolder)
-            {
-                AddIssue(result, UIValidationRuleIds.PrefabOutsideMappedFolders, UIValidationSeverity.Error, path,
-                    "UI prefab is outside mapped prefab layer folders.",
-                    "Move this prefab under UIElements, Widgets, or Panels mapped folders.");
-            }
-
-            UILayer layer = UIValidationConventions.ResolveLayerFromPath(path);
-            string fileName = Path.GetFileNameWithoutExtension(path);
-            if (!HasValidSuffix(layer, fileName))
-            {
-                AddIssue(result, UIValidationRuleIds.InvalidNamingSuffix, UIValidationSeverity.Error, path,
-                    $"Prefab name does not match required suffix for layer '{layer}'.",
-                    "Rename prefab to match layer naming conventions.");
-            }
         }
 
         private static void ValidatePrefabAsset(string path, UIValidationResult result)
@@ -418,20 +328,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             }
 
             return max;
-        }
-
-        private static bool HasValidSuffix(UILayer layer, string nameWithoutExtension)
-        {
-            if (!UIValidationConventions.SuffixesByLayer.TryGetValue(layer, out string[] suffixes))
-                return true;
-
-            for (int i = 0; i < suffixes.Length; i++)
-            {
-                if (nameWithoutExtension.EndsWith(suffixes[i], StringComparison.Ordinal))
-                    return true;
-            }
-
-            return false;
         }
 
         private static void AddError(UIValidationResult result, string ruleId, string path, string message, string fixHint)

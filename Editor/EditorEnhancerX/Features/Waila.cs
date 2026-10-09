@@ -17,15 +17,22 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         // Smart-selection cycle state
         private static readonly List<GameObject> cycleIgnore = new List<GameObject>();
         private static Vector2 cyclePosition;
+        private static bool cyclePending;
 
         static Waila() {
             SceneViewHub.Register("waila", 10, Pass);
-            KeyRouter.Register("smartSelect",
-                () => EditorEnhancerXSettings.instance.smartSelectKey,
-                KeyScope.SceneView,
-                CycleSelection);
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        // Unbound by default; bind in Edit ▸ Shortcuts. Picking needs the Scene View's GUI event, so the
+        // shortcut only requests a cycle and the next Scene View pass performs it.
+        [UnityEditor.ShortcutManagement.Shortcut("EditorEnhancerX/Smart Selection Cycle", typeof(SceneView))]
+        private static void RequestCycle() {
+            if (!EditorEnhancerXSettings.Active || SceneView.lastActiveSceneView == null)
+                return;
+            cyclePending = true;
+            SceneView.lastActiveSceneView.Repaint();
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange change) {
@@ -36,6 +43,11 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         }
 
         private static void Pass(SceneView view) {
+            if (cyclePending && Event.current.type == EventType.Repaint) {
+                cyclePending = false;
+                CycleSelection();
+            }
+
             var s = EditorEnhancerXSettings.instance.waila;
             if (!s.enabled) {
                 hovered = null;

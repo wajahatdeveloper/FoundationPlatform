@@ -133,19 +133,14 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     }
 
     /// <summary>Shortcut entry for rename (SceneView scope; the Hierarchy keeps Unity's native F2).</summary>
-    [InitializeOnLoad]
     internal static class RenameShortcut {
-        static RenameShortcut() {
-            KeyRouter.Register("rename",
-                () => EditorEnhancerXSettings.instance.renameKey,
-                KeyScope.SceneView,
-                () => {
-                    var selection = Selection.objects;
-                    if (selection == null || selection.Length == 0)
-                        return false;
-                    RenameWindow.OpenForTargets(selection);
-                    return true;
-                });
+        [UnityEditor.ShortcutManagement.Shortcut("EditorEnhancerX/Rename Selection", typeof(SceneView), KeyCode.F2)]
+        private static void Rename() {
+            if (!EditorEnhancerXSettings.Active)
+                return;
+            var selection = Selection.objects;
+            if (selection != null && selection.Length > 0)
+                RenameWindow.OpenForTargets(selection);
         }
     }
 }

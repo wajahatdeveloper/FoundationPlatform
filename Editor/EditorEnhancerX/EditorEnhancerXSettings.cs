@@ -6,10 +6,14 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Project-wide EditorEnhancerX settings, stored in ProjectSettings/EditorEnhancerXSettings.asset
     /// (version-controlled, shared by the team). Edited via Project Settings ▸ EditorEnhancerX.
-    /// Every feature is toggleable; shortcut features carry a rebindable <see cref="ShortcutBinding"/>.
+    /// Every feature is toggleable; key bindings live in Unity's Shortcut Manager (Edit ▸ Shortcuts,
+    /// "EditorEnhancerX/..." entries).
     /// </summary>
     [FilePath("ProjectSettings/EditorEnhancerXSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class EditorEnhancerXSettings : ScriptableSingleton<EditorEnhancerXSettings> {
+
+        /// <summary>Master switch every shortcut handler checks.</summary>
+        internal static bool Active => instance.masterEnabled;
 
         public bool masterEnabled = true;
 
@@ -65,50 +69,14 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
         public bool toolValuesEnabled;
         public bool duplicateToolEnabled = true;
         public bool pivotToolsEnabled = true;
-        public bool dropToTabEnabled;               // fragile (internal DockArea) — off by default
-        public bool globalCaptureEnabled;           // Tier-2 key capture (internal API) — off by default
-
-        // ---- Shortcuts ----
-        public ShortcutBinding addComponentKey = new ShortcutBinding(false, KeyCode.A, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding groupKey = new ShortcutBinding(true, KeyCode.G, EventModifiers.Control);
-        public ShortcutBinding ungroupKey = new ShortcutBinding(true, KeyCode.G, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding renameKey = new ShortcutBinding(true, KeyCode.F2, EventModifiers.None);
-        public ShortcutBinding dropToFloorKey = new ShortcutBinding(true, KeyCode.End, EventModifiers.None);
-        public ShortcutBinding rotateLeftKey = new ShortcutBinding(true, KeyCode.LeftArrow, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding rotateRightKey = new ShortcutBinding(true, KeyCode.RightArrow, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding rotateUpKey = new ShortcutBinding(true, KeyCode.UpArrow, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding rotateDownKey = new ShortcutBinding(true, KeyCode.DownArrow, EventModifiers.Control | EventModifiers.Shift);
-        public ShortcutBinding zoomInKey = new ShortcutBinding(false, KeyCode.Equals, EventModifiers.Shift);
-        public ShortcutBinding zoomOutKey = new ShortcutBinding(false, KeyCode.Minus, EventModifiers.Shift);
-        public ShortcutBinding frameBoundsKey = new ShortcutBinding(false, KeyCode.F, EventModifiers.Shift);
-        public ShortcutBinding smartSelectKey = new ShortcutBinding(false, KeyCode.Space, EventModifiers.Control);
-        public ShortcutBinding maximizeKey = new ShortcutBinding(true, KeyCode.Space, EventModifiers.Shift);
-        public ShortcutBinding switchViewKey = new ShortcutBinding(false, KeyCode.Tab, EventModifiers.Control);
 
 #if AETHERNEXUS_UIWIDGETS
         // ---- UI Nudge (UIWidgets present) ----
         public float nudgeStep = 1f;
         public float nudgeStepCoarse = 10f;
-        public ShortcutBinding nudgeLeftKey = new ShortcutBinding(true, KeyCode.LeftArrow, EventModifiers.Alt);
-        public ShortcutBinding nudgeRightKey = new ShortcutBinding(true, KeyCode.RightArrow, EventModifiers.Alt);
-        public ShortcutBinding nudgeUpKey = new ShortcutBinding(true, KeyCode.UpArrow, EventModifiers.Alt);
-        public ShortcutBinding nudgeDownKey = new ShortcutBinding(true, KeyCode.DownArrow, EventModifiers.Alt);
-        public ShortcutBinding nudgeLeftCoarseKey = new ShortcutBinding(true, KeyCode.LeftArrow, EventModifiers.Alt | EventModifiers.Shift);
-        public ShortcutBinding nudgeRightCoarseKey = new ShortcutBinding(true, KeyCode.RightArrow, EventModifiers.Alt | EventModifiers.Shift);
-        public ShortcutBinding nudgeUpCoarseKey = new ShortcutBinding(true, KeyCode.UpArrow, EventModifiers.Alt | EventModifiers.Shift);
-        public ShortcutBinding nudgeDownCoarseKey = new ShortcutBinding(true, KeyCode.DownArrow, EventModifiers.Alt | EventModifiers.Shift);
 #endif
 
         public void SaveNow() {
-            Save(true);
-        }
-
-        public void ExportToJson(string path) {
-            System.IO.File.WriteAllText(path, JsonUtility.ToJson(this, true));
-        }
-
-        public void ImportFromJson(string path) {
-            JsonUtility.FromJsonOverwrite(System.IO.File.ReadAllText(path), this);
             Save(true);
         }
 

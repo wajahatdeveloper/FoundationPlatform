@@ -66,7 +66,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         [LabelText("Auto-Move Out-of-Sync Assets On Import")]
         [Tooltip("When enabled, importing an asset whose type declares a [ContentHome] into the wrong folder silently " +
                  "moves it to its home folder on every import batch. Off by default: prefer the designer-initiated " +
-                 "'Fix Out of Sync' action in the Project window / Central Validation instead of an unprompted move.")]
+                 "'Fix Out of Sync' action in the Project window / the Validation window instead of an unprompted move.")]
         private bool autoMoveOutOfSyncOnImport;
 
         [SerializeField]

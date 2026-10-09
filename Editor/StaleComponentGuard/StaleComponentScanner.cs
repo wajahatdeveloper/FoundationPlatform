@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using AetherNexus.FoundationPlatform.Editor.Utilities.Validation;
 using UnityEditor;
 using UnityEngine;
 
@@ -330,6 +331,41 @@ namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
                     return false;
             }
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Stale components in the shared validation stream, so Validate Project and <c>core-validate</c> report
+    /// data a field rename or removal left behind. Project scope: it is the same full sweep as the scanner
+    /// window and runs only on request. Stripping destroys the data, so the fix asks first and batch fixing
+    /// skips it; the usual correction is <c>[FormerlySerializedAs]</c> on the renamed field.
+    /// </summary>
+    public sealed class StaleComponentValidator : IAuthoringValidator
+    {
+        public ValidationScope Scope => ValidationScope.Project;
+
+        public string Source => "Stale serialized data";
+
+        public Type TargetType => null;
+
+        public void Collect(in ValidationRequest request, List<AuthoringIssue> issues)
+        {
+            foreach (StaleFinding finding in StaleComponentScanner.ScanProject())
+            {
+                StaleFinding captured = finding;
+                issues.Add(new AuthoringIssue
+                {
+                    Severity = AuthoringIssueSeverity.Warning,
+                    Source = Source,
+                    AssetPath = finding.AssetPath,
+                    Message = finding.TypeName + " still serializes fields its script no longer declares: " + finding.OrphanList +
+                              ". Add [FormerlySerializedAs(\"<old name>\")] to a renamed field to keep its data, or strip it.",
+                    Fix = new ValidationFix(
+                        "Strip the orphan data (permanent).",
+                        () => StaleComponentStripper.StripWithConfirm(captured),
+                        true)
+                });
+            }
         }
     }
 }

@@ -26,20 +26,20 @@ namespace ProjectWindowX {
         static ProjectWindowX() {
             EditorApplication.projectWindowItemOnGUI += OnItemGUI;
             EditorApplication.projectChanged += rows.Clear;
-            EditorApplication.update += RepaintWhileHovered;
+            EditorApplication.update += EnableMouseMoveWhileHovered;
         }
 
         // The Project window does not repaint on mouse-move, so hover-driven UI
         // (the "+" button) reads a stale Event.current.mousePosition and flickers /
-        // sticks to the last-repainted row. Force a repaint while the pointer is
-        // over the Project browser so hover state tracks the cursor live.
-        private static void RepaintWhileHovered() {
+        // sticks to the last-repainted row. Opting the browser into MouseMove events
+        // lets OnItemGUI repaint only when the pointer actually moves.
+        private static void EnableMouseMoveWhileHovered() {
             if (!ProjectWindowXSettings.instance.contextActions)
                 return;
 
             var w = EditorWindow.mouseOverWindow;
-            if (w != null && w.GetType().Name == "ProjectBrowser")
-                w.Repaint();
+            if (w != null && !w.wantsMouseMove && w.GetType().Name == "ProjectBrowser")
+                w.wantsMouseMove = true;
         }
 
         private static RowContext Get(string guid) {
@@ -63,6 +63,9 @@ namespace ProjectWindowX {
             var s = ProjectWindowXSettings.instance;
             if (!s.enabled)
                 return;
+
+            if (s.contextActions && Event.current.type == EventType.MouseMove && EditorWindow.mouseOverWindow != null)
+                EditorWindow.mouseOverWindow.Repaint();
 
             var ctx = Get(guid);
             if (string.IsNullOrEmpty(ctx.path))

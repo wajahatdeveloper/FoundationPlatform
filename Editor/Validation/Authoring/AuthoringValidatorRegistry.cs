@@ -8,7 +8,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
     /// <summary>
     /// Auto-discovers every concrete <see cref="IAuthoringValidator"/> across loaded editor assemblies and
     /// serves their findings to the three surfaces that render them: the Project row badge, the Inspector
-    /// strip, and Central Validation. A package contributes checks by declaring a type — there is no
+    /// strip, and the Validation window. A package contributes checks by declaring a type — there is no
     /// registration call to forget, which is what the hand-registered predecessor kept losing.
     /// <para>
     /// Asset-scope validators are indexed by <see cref="IAuthoringValidator.TargetType"/> so a row repaint

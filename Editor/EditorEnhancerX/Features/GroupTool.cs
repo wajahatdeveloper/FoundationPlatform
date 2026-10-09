@@ -1,6 +1,7 @@
 using System.Linq;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
@@ -9,18 +10,16 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// optional name prompt), preserving sibling order. Ungroup: moves children of the
     /// selected group(s) up to the grandparent and deletes the empty parent. Full Undo.
     /// </summary>
-    [InitializeOnLoad]
     internal static class GroupTool {
 
-        static GroupTool() {
-            KeyRouter.Register("group",
-                () => EditorEnhancerXSettings.instance.groupKey,
-                KeyScope.SceneView | KeyScope.Hierarchy,
-                Group);
-            KeyRouter.Register("ungroup",
-                () => EditorEnhancerXSettings.instance.ungroupKey,
-                KeyScope.SceneView | KeyScope.Hierarchy,
-                Ungroup);
+        [Shortcut("EditorEnhancerX/Group Selection", KeyCode.G, ShortcutModifiers.Action)]
+        private static void GroupShortcut() {
+            if (EditorEnhancerXSettings.Active) Group();
+        }
+
+        [Shortcut("EditorEnhancerX/Ungroup", KeyCode.G, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void UngroupShortcut() {
+            if (EditorEnhancerXSettings.Active) Ungroup();
         }
 
         [MenuItem(MenuPaths.EditorEnhancer.GroupSelection, false, 0)]

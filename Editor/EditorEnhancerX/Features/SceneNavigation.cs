@@ -1,39 +1,40 @@
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Scene View navigation shortcuts: fast zoom in/out (halve/double the view size)
-    /// and frame-selected-true-bounds (renderers/colliders/RectTransforms).
+    /// and frame-selected-true-bounds (renderers/colliders/RectTransforms). Unbound by
+    /// default; bind them in Edit ▸ Shortcuts.
     /// </summary>
-    [InitializeOnLoad]
     internal static class SceneNavigation {
 
-        static SceneNavigation() {
-            KeyRouter.Register("zoomIn", () => EditorEnhancerXSettings.instance.zoomInKey, KeyScope.SceneView, () => Zoom(0.5f));
-            KeyRouter.Register("zoomOut", () => EditorEnhancerXSettings.instance.zoomOutKey, KeyScope.SceneView, () => Zoom(2f));
-            KeyRouter.Register("frameBounds",
-                () => EditorEnhancerXSettings.instance.frameBoundsKey,
-                KeyScope.SceneView | KeyScope.Hierarchy,
-                FrameSelectedBounds);
-        }
+        [Shortcut("EditorEnhancerX/Fast Zoom In", typeof(SceneView))]
+        private static void ZoomIn() => Zoom(0.5f);
 
-        private static bool Zoom(float factor) {
+        [Shortcut("EditorEnhancerX/Fast Zoom Out", typeof(SceneView))]
+        private static void ZoomOut() => Zoom(2f);
+
+        [Shortcut("EditorEnhancerX/Frame Selected Bounds")]
+        private static void FrameSelectedBounds() {
+            if (!EditorEnhancerXSettings.Active)
+                return;
             var view = SceneView.lastActiveSceneView;
             if (view == null)
-                return false;
-            view.LookAt(view.pivot, view.rotation, view.size * factor);
-            return true;
-        }
-
-        private static bool FrameSelectedBounds() {
-            var view = SceneView.lastActiveSceneView;
-            if (view == null)
-                return false;
+                return;
             if (!SelectionBoundsUtility.TryGetBounds(Selection.gameObjects, out var bounds))
-                return false;
+                return;
             view.Frame(bounds, false);
-            return true;
+        }
+
+        private static void Zoom(float factor) {
+            if (!EditorEnhancerXSettings.Active)
+                return;
+            var view = SceneView.lastActiveSceneView;
+            if (view == null)
+                return;
+            view.LookAt(view.pivot, view.rotation, view.size * factor);
         }
     }
 }

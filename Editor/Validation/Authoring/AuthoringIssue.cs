@@ -17,7 +17,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
 
     /// <summary>
     /// One authoring-time finding, whatever produced it. Every editor validator in the project emits this
-    /// type, so the Project row badge, the Inspector strip, and Central Validation read one stream and
+    /// type, so the Project row badge, the Inspector strip, and the Validation window read one stream and
     /// speak one vocabulary rather than each rendering its own package's issue shape.
     /// <para>
     /// Deliberately carries no subsystem payload. The content-mapping fields that used to live on the hub's
@@ -30,7 +30,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
     {
         public AuthoringIssueSeverity Severity;
 
-        /// <summary>Which validator spoke, shown as the grouping key in Central Validation.</summary>
+        /// <summary>Which validator spoke, shown as the grouping key in the Validation window.</summary>
         public string Source;
 
         public string Message;

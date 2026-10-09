@@ -53,7 +53,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         {
             private const string Root = Tools + "Utilities/";
             public const string TakeScreenshot       = Root + "Take Screenshot";
-            public const string ImageToStringConverter = Root + "Image To String Converter";
             public const string BakePrefabLightmaps  = Root + "Bake Prefab Lightmaps";
         }
 
@@ -239,7 +238,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 
 			/// <summary>Tools/Domain/GAS/* — GAS authoring and codegen.</summary>
 			public const string GasRebuildAbilityLogic          = Rebuild.GasAbilityLogic;
-			public const string GasMigrateEffectIdentityTags    = Root + "GAS/Migrate Effect Identity Tags";
 			public const string GasCreateNewAbility             = Root + "GAS/Create New Ability...";
 
 			/// <summary>Tools/Domain/AI/* — AI authoring and generators.</summary>
@@ -257,7 +255,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			/// <summary>Tools/Domain/Economy/* — currency registry tooling.</summary>
 			/// <summary>Tools/Domain/Player/* and GameObject/Domain/Player/* — player &amp; pawn authoring.</summary>
 			public const string PlayerCreateInputActions        = Root + "Player/Create Player Input Actions";
-			public const string PlayerFillRosterPrefabs         = Root + "Player/Fill Roster Prefabs From Prefab Map";
 			public const string PlayerCreateSimplePawn          = GameObject + "Domain/Player/Simple Pawn";
 			public const string PlayerCreatePlayerStart         = GameObject + "Domain/Player/Player Start";
 			public const string PlayerCreateTouchControls       = GameObject + "Domain/Player/Touch Controls HUD";
@@ -277,6 +274,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string InputCreateCombatProvision        = Root + "Input/Create Combat Input Setup";
 			public const string InputCreatePartyProvision         = Root + "Input/Create Party Input Setup";
 			public const string InputIntegration                  = Root + "Input/Input Integration";
+			public const string InputIntegrateAll                 = Root + "Input/Add All Missing Input Actions";
 
 			/// <summary>Tools/Domain/PresetLibrary/* — preset asset generation.</summary>
 			public const string PresetLibraryGenerateAll          = Root + "PresetLibrary/Generate All";
@@ -288,7 +286,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			/// <summary>
 			/// The single project-wide authoring check. Every validator in the project reports into it, so
 			/// there is one entry rather than one per check; scoped runs happen by selecting an asset or
-			/// folder, and the detail lives in Central Validation.
+			/// folder, and the detail lives in the Validation window.
 			/// </summary>
 			public const string ValidateProject                   = Root + "Validate Project";
 
@@ -320,7 +318,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 			public const string ItemEquipKit       = Root + "Item/Equip Weapon On Character...";
 			public const string QuestDebugger      = Root + "Quest/Quest Debugger...";
 			public const string ShopEconomy        = Root + "Shop/Shop & Economy Debugger...";
-			public const string CentralWindow      = Root + "Central Validation...";
+			public const string ValidationWindow      = Root + "Validation...";
 			public const string GameState         = Root + "Game State...";
 			public const string GameActionMatrix   = Root + "Game Actions...";
 			public const string AsyncFlowVisualizer = Root + "Async Flow Visualizer...";
@@ -333,7 +331,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
 		{
 			private const string Root = Tools + "Platform/";
 			public const string Setup               = Root + "Project Setup...";
-			public const string MigrateToV2         = Root + "Migrate To v2";
             public const string RegistryRefresh     = Rebuild.Registries;
             public const string PackageRebuild      = Rebuild.PackageIntegrations;
             public const string NetworkValidateSetup = Root + "Network/Validate Setup";

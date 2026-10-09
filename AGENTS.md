@@ -16,7 +16,8 @@ authority, no dependency on GameEngineCore. Symbol detail:
 | Unity-null-safe lookups | `GetComponentInSelfOrParents` / `GetComponentInSelfOrChildren` |
 | Stable IDs | `Identity` (string-backed; its hash is not collision-free — never use it as a key surrogate) |
 | Authoring validation | implement `IAuthoringValidator` (found via `TypeCache`, no registration); emit `AuthoringIssue` |
-| Designer feature index | tag menu items with `[DesignerFeature]`; agents list them with `platform-capability-list` |
+| Designer feature index | tag menu items with `[DesignerFeature]`; agents list them with `platform-capability-list`, humans with `feature:` in Unity Search |
+| Editor code that would prompt | check `EditorInteractivity.IsAgentDriven` (true during an AI Bridge tool call): no popup, menu, modal dialog or selection change then — log instead |
 
 ## Agent tools
 

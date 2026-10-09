@@ -82,11 +82,17 @@ namespace HierarchyX {
 
         private static readonly List<IHierarchyRowDecorator> decorators = new List<IHierarchyRowDecorator>();
         private static readonly Dictionary<int, HierarchyRowDecoration> cache = new Dictionary<int, HierarchyRowDecoration>();
+        private static readonly PlayModeClearGate playModeGate = new PlayModeClearGate();
         private static bool discovered;
 
         static HierarchyXRegistry() {
-            EditorApplication.hierarchyChanged -= ClearCache;
-            EditorApplication.hierarchyChanged += ClearCache;
+            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
+        }
+
+        private static void OnHierarchyChanged() {
+            if (playModeGate.Request())
+                ClearCache();
         }
 
         /// <summary>Add a decorator instance (idempotent). Sorted by <see cref="IHierarchyRowDecorator.Order"/>.</summary>
@@ -126,6 +132,8 @@ namespace HierarchyX {
         /// <summary>Cached decoration for a row, computing (and caching) it on first request.</summary>
         internal static bool TryGet(GameObject go, out HierarchyRowDecoration decoration) {
             EnsureDiscovered();
+            if (playModeGate.ConsumeDue())
+                cache.Clear();
 
             var id = go.GetInstanceID();
             if (cache.TryGetValue(id, out decoration))

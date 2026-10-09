@@ -23,15 +23,29 @@ namespace HierarchyX {
 
         private static readonly Dictionary<int, RowInfo> cache = new Dictionary<int, RowInfo>();
         private static readonly List<Component> componentBuffer = new List<Component>(16);
+        private static readonly PlayModeClearGate playModeGate = new PlayModeClearGate();
 
         static HierarchyXRowCache() {
-            EditorApplication.hierarchyChanged += Clear;
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
             Undo.undoRedoPerformed += Clear;
             ObjectChangeEvents.changesPublished += OnChangesPublished;
         }
 
+        private static void OnHierarchyChanged() {
+            if (playModeGate.Request())
+                Clear();
+        }
+
+        // Property edits (dragging a transform, tweaking a field) cannot change a row's icon, missing-script
+        // flag or asset path, and arrive every frame while a value is dragged.
         private static void OnChangesPublished(ref ObjectChangeEventStream stream) {
-            Clear();
+            for (var i = 0; i < stream.length; i++) {
+                var kind = stream.GetEventType(i);
+                if (kind == ObjectChangeKind.ChangeGameObjectOrComponentProperties || kind == ObjectChangeKind.CreateGameObjectHierarchy)
+                    continue;
+                Clear();
+                return;
+            }
         }
 
         internal static void Clear() {
@@ -39,6 +53,9 @@ namespace HierarchyX {
         }
 
         internal static RowInfo Get(GameObject go) {
+            if (playModeGate.ConsumeDue())
+                Clear();
+
             var id = go.GetInstanceID();
             var rulesVersion = FolderIcons.RulesVersion;
             if (cache.TryGetValue(id, out var info) && info.folderRulesVersion == rulesVersion)
@@ -118,6 +135,48 @@ namespace HierarchyX {
         private static bool IsGenericScriptIcon(Texture icon) {
             var name = icon.name;
             return name == "cs Script Icon" || name == "d_cs Script Icon";
+        }
+    }
+
+    /// <summary>
+    /// Rate-limits cache clears driven by <see cref="EditorApplication.hierarchyChanged"/> while playing, where
+    /// pooled objects reparent nearly every frame. Edit mode clears immediately. A clear skipped by the limit is
+    /// owed, and paid on the next cache read once the interval has passed.
+    /// </summary>
+    internal sealed class PlayModeClearGate {
+        private const double Interval = 0.5;
+
+        private double next;
+        private bool pending;
+
+        /// <summary>True when the caller should clear now.</summary>
+        internal bool Request() {
+            if (!EditorApplication.isPlaying)
+                return true;
+
+            var now = EditorApplication.timeSinceStartup;
+            if (now < next) {
+                pending = true;
+                return false;
+            }
+
+            next = now + Interval;
+            pending = false;
+            return true;
+        }
+
+        /// <summary>True when a clear skipped by <see cref="Request"/> is now due.</summary>
+        internal bool ConsumeDue() {
+            if (!pending)
+                return false;
+
+            var now = EditorApplication.timeSinceStartup;
+            if (now < next)
+                return false;
+
+            next = now + Interval;
+            pending = false;
+            return true;
         }
     }
 }

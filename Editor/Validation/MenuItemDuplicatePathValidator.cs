@@ -38,7 +38,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation
 
     internal static class MenuItemDuplicatePathValidator
     {
-        /// <summary>Reports rather than logs; Central Validation owns the surfacing.</summary>
+        /// <summary>Reports rather than logs; the Validation window owns the surfacing.</summary>
         internal static List<string> FindDuplicates()
         {
             var groups = new Dictionary<(string path, bool isValidate), List<(MethodInfo method, string path)>>();

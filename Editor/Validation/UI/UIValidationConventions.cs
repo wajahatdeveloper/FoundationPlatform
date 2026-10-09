@@ -68,14 +68,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
             { UILayer.Panel, "Assets/Content/UI/Prefabs/Panels" }
         };
 
-        internal static readonly Dictionary<UILayer, string[]> SuffixesByLayer = new()
-        {
-            { UILayer.UIElement, new[] { "View" } },
-            { UILayer.Widget, new[] { "Widget" } },
-            { UILayer.Panel, new[] { "Panel" } },
-            { UILayer.Orchestration, new[] { "UIManager", "Presenter", "Screen", "Flow", "View" } }
-        };
-
         internal static bool IsUserUiScriptRoot(string path)
         {
             return IsPathUnder(path, UserScriptsUiRoot)
@@ -86,24 +78,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
         internal static bool IsCandidateUiPath(string path)
         {
             return IsUserUiScriptRoot(path) || IsPathUnder(path, UserDataUiRoot);
-        }
-
-        /// <summary>
-        /// Asset changes outside these paths do not run incremental UI convention checks.
-        /// </summary>
-        internal static bool TriggersIncrementalValidation(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            string normalized = path.Replace('\\', '/');
-            if (!normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            if (IsCandidateUiPath(normalized))
-                return true;
-
-            return string.Equals(normalized, ConfigAssetPath, StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool IsPathUnder(string path, string root) => PathComparisonUtility.IsPathUnder(path, root);

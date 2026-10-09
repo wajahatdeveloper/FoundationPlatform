@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// <summary>
     /// Draws EditorEnhancerX settings under Project Settings ▸ EditorEnhancerX.
-    /// Project-scoped (stored in ProjectSettings/), with JSON export/import.
+    /// Project-scoped (stored in ProjectSettings/). Key bindings are not here: they are
+    /// "EditorEnhancerX/..." entries in Unity's Shortcut Manager.
     /// </summary>
     public static class EditorEnhancerXSettingsProvider {
 
@@ -20,8 +20,7 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 keywords = new HashSet<string> {
                     "shortcut", "autosave", "group", "ungroup", "rename", "rotate", "zoom",
                     "frame", "bounds", "pivot", "duplicate", "drop", "floor", "waila",
-                    "maximize", "timescale", "stepper", "selection", "tool",
-                    "nudge", "ui"
+                    "timescale", "stepper", "selection", "tool", "nudge", "ui"
                 }
             };
         }
@@ -42,6 +41,11 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
 
             EditorGUILayout.LabelField("General", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("masterEnabled"), new GUIContent("Enabled"));
+            using (new EditorGUILayout.HorizontalScope()) {
+                EditorGUILayout.LabelField("Key bindings live in Edit ▸ Shortcuts (EditorEnhancerX).", EditorStyles.wordWrappedMiniLabel);
+                if (GUILayout.Button("Open Shortcut Manager", GUILayout.Width(170f)))
+                    EditorApplication.ExecuteMenuItem("Edit/Shortcuts...");
+            }
 
             Space();
             EditorGUILayout.LabelField("Autosave", EditorStyles.boldLabel);
@@ -71,33 +75,17 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
 
             Space();
             EditorGUILayout.LabelField("GameObject Tools", EditorStyles.boldLabel);
-            Shortcut("groupKey", "Group Selection");
-            Shortcut("ungroupKey", "Ungroup");
             var group = serialized.FindProperty("group");
-            EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(group.FindPropertyRelative("parentPlacement"), new GUIContent("Group Parent At"));
-            EditorGUILayout.PropertyField(group.FindPropertyRelative("askForName"), new GUIContent("Ask For Name"));
-            EditorGUILayout.PropertyField(group.FindPropertyRelative("defaultName"), new GUIContent("Default Name"));
-            EditorGUI.indentLevel--;
-            Shortcut("renameKey", "Rename / Mass Rename");
-            Shortcut("addComponentKey", "Add Component");
-            Shortcut("dropToFloorKey", "Drop To Floor");
-            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(group.FindPropertyRelative("askForName"), new GUIContent("Group Asks For Name"));
+            EditorGUILayout.PropertyField(group.FindPropertyRelative("defaultName"), new GUIContent("Group Default Name"));
             EditorGUILayout.PropertyField(serialized.FindProperty("dropToFloor").FindPropertyRelative("fallbackToZeroPlane"),
-                new GUIContent("Fallback To Y=0 Plane"));
-            EditorGUI.indentLevel--;
-            Shortcut("rotateLeftKey", "Rotate -90° (Yaw)");
-            Shortcut("rotateRightKey", "Rotate +90° (Yaw)");
-            Shortcut("rotateUpKey", "Rotate -90° (Pitch)");
-            Shortcut("rotateDownKey", "Rotate +90° (Pitch)");
+                new GUIContent("Drop To Floor: Fallback To Y=0 Plane"));
             EditorGUILayout.PropertyField(serialized.FindProperty("pivotToolsEnabled"), new GUIContent("Pivot Tools (Tool Rail)"));
             EditorGUILayout.PropertyField(serialized.FindProperty("duplicateToolEnabled"), new GUIContent("Duplicate Tool (Tool Rail)"));
 
             Space();
             EditorGUILayout.LabelField("Scene View", EditorStyles.boldLabel);
-            Shortcut("zoomInKey", "Fast Zoom In");
-            Shortcut("zoomOutKey", "Fast Zoom Out");
-            Shortcut("frameBoundsKey", "Frame Selected Bounds");
             EditorGUILayout.PropertyField(serialized.FindProperty("selectionBoundsEnabled"), new GUIContent("Selection Bounds Display"));
             EditorGUILayout.PropertyField(serialized.FindProperty("toolValuesEnabled"), new GUIContent("Tool Values Readout"));
             var waila = serialized.FindProperty("waila");
@@ -109,37 +97,18 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 EditorGUILayout.PropertyField(waila.FindPropertyRelative("modifiers"), new GUIContent("Modifier"));
                 EditorGUI.indentLevel--;
             }
-            Shortcut("smartSelectKey", "Smart Selection Cycle");
 
 #if AETHERNEXUS_UIWIDGETS
             Space();
             EditorGUILayout.LabelField("UI Nudge", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("nudgeStep"), new GUIContent("Step (px)"));
             EditorGUILayout.PropertyField(serialized.FindProperty("nudgeStepCoarse"), new GUIContent("Coarse Step (px)"));
-            Shortcut("nudgeLeftKey", "Nudge Left");
-            Shortcut("nudgeRightKey", "Nudge Right");
-            Shortcut("nudgeUpKey", "Nudge Up");
-            Shortcut("nudgeDownKey", "Nudge Down");
-            Shortcut("nudgeLeftCoarseKey", "Nudge Left (Coarse)");
-            Shortcut("nudgeRightCoarseKey", "Nudge Right (Coarse)");
-            Shortcut("nudgeUpCoarseKey", "Nudge Up (Coarse)");
-            Shortcut("nudgeDownCoarseKey", "Nudge Down (Coarse)");
 #endif
 
             Space();
             EditorGUILayout.LabelField("Windows", EditorStyles.boldLabel);
-            Shortcut("maximizeKey", "Maximize Active Window");
-            Shortcut("switchViewKey", "Switch Scene ↔ Game View");
             EditorGUILayout.PropertyField(serialized.FindProperty("viewSwitcher").FindPropertyRelative("switchToGameViewOnPlay"),
                 new GUIContent("Game View On Play"));
-
-            Space();
-            EditorGUILayout.LabelField("Advanced (internal editor APIs)", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serialized.FindProperty("globalCaptureEnabled"), new GUIContent("Global Key Capture"));
-            EditorGUILayout.PropertyField(serialized.FindProperty("dropToTabEnabled"), new GUIContent("Drag && Drop To Tab"));
-            EditorGUILayout.HelpBox("These use internal editor APIs and self-disable when unavailable on a Unity upgrade.", MessageType.None);
-
-            WarnOnDuplicateBindings();
 
             if (EditorGUI.EndChangeCheck()) {
                 serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -149,19 +118,6 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
 
             Space();
             using (new EditorGUILayout.HorizontalScope()) {
-                if (GUILayout.Button("Export...", GUILayout.Width(90f))) {
-                    var path = EditorUtility.SaveFilePanel("Export EditorEnhancerX Settings", "", "EditorEnhancerXSettings", "json");
-                    if (!string.IsNullOrEmpty(path))
-                        EditorEnhancerXSettings.instance.ExportToJson(path);
-                }
-                if (GUILayout.Button("Import...", GUILayout.Width(90f))) {
-                    var path = EditorUtility.OpenFilePanel("Import EditorEnhancerX Settings", "", "json");
-                    if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path)) {
-                        EditorEnhancerXSettings.instance.ImportFromJson(path);
-                        serialized = null;
-                        GUIUtility.ExitGUI();
-                    }
-                }
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Reset to Defaults", GUILayout.Width(140f))) {
                     EditorEnhancerXSettings.instance.ResetToDefaults();
@@ -169,22 +125,6 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                     GUIUtility.ExitGUI();
                 }
             }
-        }
-
-        private static void Shortcut(string propertyName, string label) {
-            ShortcutBindingUI.Field(serialized.FindProperty(propertyName), new GUIContent(label));
-        }
-
-        private static void WarnOnDuplicateBindings() {
-            var duplicates = KeyRouter.Registered()
-                .Where(r => r.binding.enabled && r.binding.key != KeyCode.None)
-                .GroupBy(r => (r.binding.key, r.binding.modifiers))
-                .Where(g => g.Count() > 1)
-                .ToList();
-            foreach (var g in duplicates)
-                EditorGUILayout.HelpBox(
-                    $"Shortcut conflict: {string.Join(", ", g.Select(x => x.id))} all bound to {g.First().binding}.",
-                    MessageType.Warning);
         }
 
         private static void Space() {

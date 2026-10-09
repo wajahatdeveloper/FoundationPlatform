@@ -14,50 +14,17 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
     /// </summary>
     internal static class FeatureCatalog
     {
-        // Unity ships several hundred [MenuItem]s of its own and asset packs add more, so the index
-        // is an allowlist rather than a denylist. These mirror the roots MenuPaths declares - adding
-        // a new root there means adding it here too.
-        private static readonly string[] OwnedRoots =
+        // Unity ships several hundred [MenuItem]s of its own and asset packs add more, so ownership is
+        // decided by where the declaring assembly lives rather than by menu path: a new menu root needs
+        // no registration here.
+        private static readonly string[] VendoredAssetRoots =
         {
-            "Window/Domain/",
-            "Tools/Domain/",
-            "Window/Platform/",
-            "Tools/Platform/",
-            "GameObject/Domain/",
-            "Tools/Utilities/",
-            "Tools/Diagnostics/",
-            "Tools/Rebuild/",
-            "Tools/Debug/",
-            "Tools/Linting/",
-            "Tools/UIWidgets/",
-            "Window/Utilities/",
-            "Window/Diagnostics/",
-            "Window/UIWidgets/",
-            "Assets/Create/From Clipboard/",
-            "Assets/Create/Item/",
-            "Assets/Import Package/",
-            "GameObject/UI (Canvas)/",
-            "Window/HierarchyX/",
-            "Window/ProjectWindowX/"
+            "Assets/AssetPacks/",
+            "Assets/Plugins/",
+            "Assets/Libraries/"
         };
 
-        // Single-window leaves that deliberately sit bare under Window/ or GameObject/ instead of in
-        // a folder-of-one (see the MenuPaths remarks), so a prefix cannot catch them.
-        private static readonly string[] OwnedLeaves =
-        {
-            "Window/DebugX Console...",
-            "Window/Event Bus...",
-            "Window/Tween Debugger...",
-            "GameObject/Drop To Floor",
-            "GameObject/Group Selection",
-            "GameObject/Ungroup",
-            "GameObject/Header",
-            "Edit/HierarchyX Enabled",
-            "Assets/Create Level For This Prefab",
-            "Assets/Create/Content Area",
-            "Assets/Create Domain Event",
-            "Assets/Fix Out of Sync"
-        };
+        private static readonly Dictionary<Assembly, bool> s_ownedAssemblies = new Dictionary<Assembly, bool>();
 
         private static List<FeatureEntry> _entries;
         private static int _version;
@@ -106,7 +73,7 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
                     if (menuItem.validate) continue;
 
                     string path = StripShortcut(menuItem.menuItem);
-                    if (!IsOwned(path)) continue;
+                    if (!IsOwned(method, path)) continue;
                     if (!seenPaths.Add(path)) continue;
 
                     entries.Add(feature == null
@@ -152,17 +119,36 @@ namespace AetherNexus.FoundationPlatform.FeatureFinder.Editor
             return string.Compare(a.Title, b.Title, StringComparison.Ordinal);
         }
 
-        private static bool IsOwned(string path)
+        // CONTEXT/* entries need a target object, so they cannot be dispatched from the catalog.
+        private static bool IsOwned(MethodInfo method, string path)
         {
-            foreach (var root in OwnedRoots)
+            if (path.StartsWith("CONTEXT/", StringComparison.Ordinal)) return false;
+
+            Assembly assembly = method.DeclaringType.Assembly;
+            if (s_ownedAssemblies.TryGetValue(assembly, out bool owned)) return owned;
+
+            // Asmdef-less scripts compile into the predefined Assembly-CSharp* assemblies and belong to the project.
+            string assemblyName = assembly.GetName().Name;
+            string asmdefPath = UnityEditor.Compilation.CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assemblyName);
+            if (string.IsNullOrEmpty(asmdefPath))
             {
-                if (path.StartsWith(root, StringComparison.Ordinal)) return true;
+                owned = assemblyName.StartsWith("Assembly-CSharp", StringComparison.Ordinal);
             }
-            foreach (var leaf in OwnedLeaves)
+            else if (asmdefPath.StartsWith("Packages/com.aethernexus.", StringComparison.Ordinal))
             {
-                if (string.Equals(path, leaf, StringComparison.Ordinal)) return true;
+                owned = true;
             }
-            return false;
+            else
+            {
+                owned = asmdefPath.StartsWith("Assets/", StringComparison.Ordinal);
+                foreach (string root in VendoredAssetRoots)
+                {
+                    if (asmdefPath.StartsWith(root, StringComparison.Ordinal)) owned = false;
+                }
+            }
+
+            s_ownedAssemblies[assembly] = owned;
+            return owned;
         }
 
         // "Tools/Domain/Item/Create/Equippable Item %#e" -> drops the trailing shortcut token.

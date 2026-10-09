@@ -24,33 +24,32 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
             } catch {
                 showMethod = null;
             }
-
-            KeyRouter.Register("addComponent",
-                () => EditorEnhancerXSettings.instance.addComponentKey,
-                KeyScope.SceneView | KeyScope.Hierarchy,
-                Execute);
         }
 
-        private static bool Execute() {
+        // Unbound by default; bind in Edit ▸ Shortcuts. Shortcut callbacks carry no GUI event, so the
+        // popup opens near the top of the window under the pointer.
+        [UnityEditor.ShortcutManagement.Shortcut("EditorEnhancerX/Add Component")]
+        private static void Execute() {
+            if (!EditorEnhancerXSettings.Active)
+                return;
             var gameObjects = Selection.gameObjects;
             if (gameObjects.Length == 0)
-                return false;
+                return;
 
-            var mouse = Event.current != null ? Event.current.mousePosition : Vector2.zero;
-            var screen = GUIUtility.GUIToScreenPoint(mouse);
-            var rect = new Rect(screen.x - 115f, screen.y, 230f, 0f);
+            var host = EditorWindow.mouseOverWindow != null ? EditorWindow.mouseOverWindow : EditorWindow.focusedWindow;
+            var anchor = host != null ? host.position : new Rect(200f, 200f, 460f, 0f);
+            var rect = new Rect(anchor.center.x - 115f, anchor.y + 40f, 230f, 0f);
 
             if (showMethod != null) {
                 try {
                     showMethod.Invoke(null, new object[] { rect, gameObjects });
-                    return true;
+                    return;
                 } catch {
                     // fall through to the in-house popup
                 }
             }
 
             AddComponentPopupX.Open(rect, gameObjects);
-            return true;
         }
     }
 

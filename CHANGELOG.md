@@ -4,6 +4,17 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Editor streamlining (agent-first)
+
+- **Added** `EditorInteractivity.IsAgentDriven`: true while an AI Bridge tool call runs (shared `SessionState` key, no assembly reference either way). Editor code checks it before opening popups, menus, modal dialogs or moving the selection.
+- **Added** `StaleComponentValidator` (Project scope): stale serialized data in Validate Project / `core-validate`; the strip fix is `RequiresChoice`.
+- **Added** `feature:` Unity Search provider over the feature catalog.
+- **Changed** Feature catalog ownership: any `[MenuItem]` declared in a first-party assembly (asmdef under `Packages/com.aethernexus.*` or `Assets/` outside AssetPacks/Plugins/Libraries, or asmdef-less game scripts), replacing the hardcoded menu-root allowlist.
+- **Changed** EditorEnhancerX key bindings are Unity `[Shortcut]`s ("EditorEnhancerX/..." in Edit ▸ Shortcuts); off-by-default shortcuts ship unbound. Bindings are now per-user Shortcut Manager profiles, not `ProjectSettings`. **Removed** `KeyRouter`, `ShortcutBinding`, `GlobalKeyCapture` (reflection into `EditorApplication.globalEventHandler`), `ReflectionGuard`, Drop-to-Tab, the Maximize shortcut (Unity's own Shift+Space), settings JSON export/import.
+- **Changed** HierarchyX row caches ignore property edits and limit Play-mode clears to one per 0.5 s; ProjectWindowX repaints on mouse move instead of every editor frame while hovered.
+- **Changed** UI Validation keeps the layering/composition checks; **removed** folder-placement and suffix rules (UIV001, UIV002, UIV006, UIV012) and its import hook.
+- **Removed** the Image To String Converter window (`ImageStringConverter` stays).
+
 ### Added
 
 - **`DebugDrawKit.CaptureHeadless(draw)`** / **`DebugDrawKit.Headless`**: runs a debug section outside an IMGUI pass and returns its recorded text (used by the `core-report-game-state` agent tool). Every helper records and skips drawing while headless; sections that draw raw GUI must skip it too.

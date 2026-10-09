@@ -10,7 +10,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Validation.UI
 using AetherNexus.FoundationPlatform.Logging;
 
     /// <summary>
-    /// Brings UI convention findings into Central Validation. The import postprocessor keeps its own
+    /// Brings UI convention findings into the Validation window. The import postprocessor keeps its own
     /// console report — it is incremental and fires per import, which this project-wide sweep is not.
     /// </summary>
     internal sealed class UIConventionsValidator : IAuthoringValidator

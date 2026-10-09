@@ -1,5 +1,6 @@
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
@@ -8,16 +9,13 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// bounds base (ignoring the selection's own colliders), translate so the bounds
     /// bottom rests on the hit point. Optional fallback to the y=0 plane.
     /// </summary>
-    [InitializeOnLoad]
     internal static class DropToFloor {
 
         private static readonly RaycastHit[] hitBuffer = new RaycastHit[32];
 
-        static DropToFloor() {
-            KeyRouter.Register("dropToFloor",
-                () => EditorEnhancerXSettings.instance.dropToFloorKey,
-                KeyScope.SceneView | KeyScope.Hierarchy,
-                Execute);
+        [Shortcut("EditorEnhancerX/Drop To Floor", KeyCode.End)]
+        private static void DropShortcut() {
+            if (EditorEnhancerXSettings.Active) Execute();
         }
 
         [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, false, 2)]

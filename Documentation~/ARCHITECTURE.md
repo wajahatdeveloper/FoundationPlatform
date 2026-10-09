@@ -293,19 +293,21 @@ Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, ver
 | AetherInspector | `Editor/AetherInspector/` | Attribute-based inspector engine (groups, drawers, `GuiKit`) |
 | ProjectWindowX | `Editor/ProjectWindowX/` | Project-window row decoration + hover-create + docked panel (see section above) |
 | HierarchyX | `Editor/HierarchyX/` | Hierarchy-window row decoration + docked panel (see section above) |
-| StaleComponentGuard | `Editor/StaleComponentGuard/` | Detects components whose serialized YAML still carries fields the current script no longer declares (renamed/removed without `[FormerlySerializedAs]`); Hierarchy row decorator + inspector badge + Project Settings panel, one sweep `EditorWindow` as last resort |
-| EditorEnhancerX | `Editor/EditorEnhancerX/` | Scene View / Hierarchy power tools: Scene View overlays, native `EditorTool` rail (duplicate-array, pivot-rotation/move tools), `[MainToolbarElement]` timescale slider, Project Settings provider |
+| StaleComponentGuard | `Editor/StaleComponentGuard/` | Detects components whose serialized YAML still carries fields the current script no longer declares (renamed/removed without `[FormerlySerializedAs]`); Hierarchy row decorator + inspector badge + Project Settings panel, one sweep `EditorWindow` as last resort. `StaleComponentValidator` (Project scope) puts the same sweep into Validate Project / `core-validate`; its strip fix is `RequiresChoice`, so batch fixes never destroy data |
+| EditorEnhancerX | `Editor/EditorEnhancerX/` | Scene View / Hierarchy power tools: Scene View overlays, native `EditorTool` rail (duplicate-array, pivot-rotation/move tools), `[MainToolbarElement]` timescale slider, Project Settings provider for feature toggles. Key bindings are Unity `[Shortcut]`s (Edit ▸ Shortcuts, "EditorEnhancerX/..."); off-by-default shortcuts ship unbound. No custom key router, no internal-API key capture |
+| EditorInteractivity | `Editor/Utilities/AuthoringUxShared.cs` | `EditorInteractivity.IsAgentDriven`: true while an AI Bridge tool call runs (a `SessionState` key the bridge writes; neither package references the other). Editor code must not open popups, menus or modal dialogs, or move the selection, while it is true — report through the log; deferred work captures it when scheduled |
+| Feature Finder | `Editor/FeatureFinder/` | Catalog of first-party `[MenuItem]`s (ownership by declaring assembly, not menu path) plus `IFeatureCatalogSource` rows; served by the Find Feature window, the `feature:` Unity Search provider, and `platform-capability-list` / `-invoke` |
 | AssetImport | `Editor/AssetImport/` | Asset-import plugin pipeline |
 | DebugX Console | `Editor/Console/` | Structured log console — **Window → DebugX Console...** |
 | Event Bus windows | `Editor/Messaging/EventBus/` | Debug hub — **Window → Event Bus...** |
 | Tween Debugger | `Editor/TweenX/` | Live tweens — **Window → TweenX → Tween Debugger** |
-| UI Validation | `Editor/Validation/UI/` | UI hierarchy/naming conventions (asset postprocessor) |
+| UI Validation | `Editor/Validation/UI/` | UI layering checks (prefab root composition across the UIElement / Widget / Panel / Orchestration layers, service-locator and broad-mutation heuristics, depth); layers come from the mapped folders. On demand through Validate Project / `core-validate` — no import hook, no folder-placement or suffix rules |
 | DataPathPolicy | `Editor/Validation/DataPathPolicy/` | Read-only asset-path classification / glob matching for authoring surfaces |
 | Content homes | `Runtime/Attributes/ContentHomeAttribute.cs`, `Editor/Utilities/ContentHomes.cs` | `[ContentHome("Domains/*/Items", ...)]` on an authored type is the source of truth for where its assets live (patterns relative to `Assets/Content`; `*` one segment, `**` any depth, leading `***` anywhere; subclasses inherit the nearest declaration). `ContentHomes` is the one editor resolver: declaring types via `TypeCache`, patterns for a type, path-inside-home, concrete folders, suggested folder. The attribute is inert at runtime |
 | ProjectContentConfig | `Editor/Utilities/ProjectContentConfig.cs` | The one per-project content layout asset (default `Assets/Content/Global/Authoring/`): content areas, combined areas, Shared/Global subfolders, required roots, exempt folders, auto-move-on-import flag. `Load()` throws when more than one exists. GameEngineCore reads it; it replaced `DataFolderMappingConfig`, `CentralAuthoringProjectConfig` and `DataFolderExemptionMarker` |
 | MenuItemDuplicatePathValidator | `Editor/Validation/MenuItemDuplicatePathValidator.cs` | `[InitializeOnLoad]` guard against duplicate `[MenuItem]` paths |
 | PackageIntegration | `Editor/PackageIntegration/` | Orphan `HOMAM_GEC` PlayerSettings define cleanup (`HomamGecOrphanDefineCleaner`) |
-| Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import |
+| Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import. Off in this project (`PresetAutomationSettings.enabled`): there are no `.preset` assets, and while on it adds work to every import |
 | Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
 | Game State window | `Editor/Debugging/` | World-scope live state (`IWorldDebugSection`) — **Window → Domain → Game State...** |
 | Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
@@ -316,7 +318,7 @@ Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, ver
 | Clipboard To Script | `Editor/Tools/ClipboardToScript.cs` | Paste clipboard text into a new script asset |
 | Camera Screenshot | `Editor/Tools/CameraScreenshot.cs` | Capture Scene/Game camera frames to disk |
 | Package2Folder | `Editor/Tools/Package2Folder.cs` | Extract a UPM package into a project folder |
-| EditorGUIX Image String Converter | `Editor/Tools/EditorGUIX_ImageStringConverter/` | Convert images to/from embeddable string payloads for editor UI |
+| EditorGUIX Image String Converter | `Editor/Tools/EditorGUIX_ImageStringConverter/` | `ImageStringConverter`: decode embedded string payloads into textures for editor UI (`EditorGUIX`). The authoring window was removed |
 | Weaver | `Editor/Tools/Weaver.cs` | Constant / package rebuild utilities (plain `static class`, not an `EditorWindow`) |
 | Prefab Lightmap Generator | `Runtime/Tools/PrefabLightmapGenerator/` (baked-data component) + `Editor/Tools/PrefabLightmapGenerator/` (baking pipeline, inspector) | Prefab lightmap baking — the `PrefabLightmapData` `MonoBehaviour` compiles into player builds; only the `Lightmapping.Bake()`/`PrefabUtility`-dependent baking pipeline (`PrefabLightmapBaker`) and its custom inspector are editor-only |
 

@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
@@ -7,15 +8,22 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
     /// pitch around the Scene View camera's dominant right axis. Honors
     /// Tools.pivotMode (Center = rotate around shared bounds center).
     /// </summary>
-    [InitializeOnLoad]
     internal static class RotateByShortcut {
 
-        static RotateByShortcut() {
-            var scope = KeyScope.SceneView | KeyScope.Hierarchy;
-            KeyRouter.Register("rotateLeft", () => EditorEnhancerXSettings.instance.rotateLeftKey, scope, () => Rotate(Vector3.up, -90f));
-            KeyRouter.Register("rotateRight", () => EditorEnhancerXSettings.instance.rotateRightKey, scope, () => Rotate(Vector3.up, 90f));
-            KeyRouter.Register("rotateUp", () => EditorEnhancerXSettings.instance.rotateUpKey, scope, () => Rotate(CameraRightAxis(), -90f));
-            KeyRouter.Register("rotateDown", () => EditorEnhancerXSettings.instance.rotateDownKey, scope, () => Rotate(CameraRightAxis(), 90f));
+        [Shortcut("EditorEnhancerX/Rotate -90 (Yaw)", KeyCode.LeftArrow, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void RotateLeft() => RotateIfActive(Vector3.up, -90f);
+
+        [Shortcut("EditorEnhancerX/Rotate +90 (Yaw)", KeyCode.RightArrow, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void RotateRight() => RotateIfActive(Vector3.up, 90f);
+
+        [Shortcut("EditorEnhancerX/Rotate -90 (Pitch)", KeyCode.UpArrow, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void RotateUp() => RotateIfActive(CameraRightAxis(), -90f);
+
+        [Shortcut("EditorEnhancerX/Rotate +90 (Pitch)", KeyCode.DownArrow, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void RotateDown() => RotateIfActive(CameraRightAxis(), 90f);
+
+        private static void RotateIfActive(Vector3 axis, float angle) {
+            if (EditorEnhancerXSettings.Active) Rotate(axis, angle);
         }
 
         // Snap the Scene View camera's right vector to the closest world axis so

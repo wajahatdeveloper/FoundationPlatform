@@ -191,4 +191,18 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             draw();
         }
     }
+
+    /// <summary>
+    /// Whether a human can answer UI right now. False while a coding agent's bridge tool call runs: editor code
+    /// must not open popups, menus or modal dialogs then (nobody can click them, and a modal blocks the bridge),
+    /// nor move the selection. Report through the log instead. Deferred work must capture this when it is
+    /// scheduled, since the tool call has returned by the time a delayCall runs.
+    /// </summary>
+    public static class EditorInteractivity
+    {
+        // Written by the AI Bridge (FileBridgePoller.ToolCallSessionKey); the shared key keeps both packages independent.
+        private const string AgentToolCallKey = "AetherNexus.Editor.AgentToolCall";
+
+        public static bool IsAgentDriven => SessionState.GetBool(AgentToolCallKey, false);
+    }
 }
