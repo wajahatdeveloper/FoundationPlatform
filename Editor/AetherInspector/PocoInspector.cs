@@ -269,11 +269,19 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             var src = m.Info;
 
+            bool asBadge = InspectorXSettings.instance.infoBadges && !m.IsInspectorGui
+                && src.GetCustomAttribute<HideLabelAttribute>() == null;
+            List<(string message, InfoMessageType type)> badges = null;
             foreach (var info in src.GetCustomAttributes<InfoBoxAttribute>())
             {
                 if (!string.IsNullOrEmpty(info.VisibleIf) &&
                     !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                     continue;
+                if (asBadge)
+                {
+                    (badges ??= new List<(string, InfoMessageType)>()).Add((ResolveText(target, info.Message), info.InfoMessageType));
+                    continue;
+                }
                 AetherInspectorTheme.DrawInfoBox(ResolveText(target, info.Message), info.InfoMessageType);
             }
 
@@ -299,11 +307,18 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
 
             bool enabled = IsEnabled(src, target);
-            using (new EditorGUI.DisabledScope(!enabled))
+            Rect fieldRect = default;
+            using (EditorGUILayout.VerticalScope fieldScope = badges != null ? new EditorGUILayout.VerticalScope() : null)
             {
-                if (m.IsButton) DrawButton(m, target);
-                else DrawValue(m, target, depth, metadata: null, visited: visited);
+                if (fieldScope != null) fieldRect = fieldScope.rect;
+                using (new EditorGUI.DisabledScope(!enabled))
+                {
+                    if (m.IsButton) DrawButton(m, target);
+                    else DrawValue(m, target, depth, metadata: null, visited: visited);
+                }
             }
+            if (badges != null)
+                AetherInspectorRenderer.DrawLabelBadge(fieldRect, m.IsButton ? null : ResolveText(target, GetLabel(m.Info)), false, badges);
 
             if (space != null && space.SpaceAfter > 0) EditorGUILayout.Space(space.SpaceAfter);
         }

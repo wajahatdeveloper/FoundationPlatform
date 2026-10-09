@@ -628,23 +628,37 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             var prevEditor = s_activeEditor;
             s_activeEditor = editor;
+            float prevLabelWidth = EditorGUIUtility.labelWidth;
+            if (InspectorXSettings.instance.labelColumn)
+                EditorGUIUtility.labelWidth = AetherInspectorTheme.ResolveLabelColumnWidth();
             try
             {
                 Type type = targets[0].GetType();
                 var meta = GetOrCreateMetadata(type);
 
                 // --- Script row (matches Unity's default look) ---
+                bool typeBadgeDrawn = false;
                 if (drawScriptRow)
                 {
                     var scriptProp = so.FindProperty("m_Script");
                     if (scriptProp != null)
                     {
-                        using (new EditorGUI.DisabledScope(true))
-                            EditorGUILayout.PropertyField(scriptProp);
+                        bool badge = InspectorXSettings.instance.infoBadges && meta.TypeInfoBoxes != null && meta.TypeInfoBoxes.Length > 0;
+                        using (badge ? new EditorGUILayout.HorizontalScope() : null)
+                        {
+                            using (new EditorGUI.DisabledScope(true))
+                                EditorGUILayout.PropertyField(scriptProp);
+                            if (badge)
+                            {
+                                DrawTypeInfoBadge(meta, targets, GUILayoutUtility.GetRect(AetherInspectorTheme.StatusIconSlotWidth,
+                                    EditorGUIUtility.singleLineHeight, GUILayout.Width(AetherInspectorTheme.StatusIconSlotWidth), GUILayout.ExpandWidth(false)));
+                                typeBadgeDrawn = true;
+                            }
+                        }
                     }
                 }
 
-                DrawTypeInfoBoxes(meta, targets);
+                if (!typeBadgeDrawn) DrawTypeInfoBoxes(meta, targets);
 
                 var entries = GetPooledList();
                 int seq = 0;
@@ -667,11 +681,28 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             finally
             {
                 s_activeEditor = prevEditor;
+                EditorGUIUtility.labelWidth = prevLabelWidth;
             }
+        }
+
+        private static void DrawTypeInfoBadge(TypeMetadata meta, object[] targets, Rect slot)
+        {
+            var messages = new List<(string message, InfoMessageType type)>(meta.TypeInfoBoxes.Length);
+            foreach (var box in meta.TypeInfoBoxes)
+                messages.Add((InspectorMemberResolver.ResolveString(targets[0], box.Message), InfoMessageType.Info));
+            AetherInspectorTheme.DrawStatusIcon(slot, InfoMessageType.Info, JoinMessages(messages));
         }
 
         private static void DrawTypeInfoBoxes(TypeMetadata meta, object[] targets)
         {
+            if (meta.TypeInfoBoxes != null && meta.TypeInfoBoxes.Length > 0 && InspectorXSettings.instance.infoBadges)
+            {
+                // No script row to sit on: an icon-only row, right-aligned.
+                var row = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+                DrawTypeInfoBadge(meta, targets, new Rect(row.xMax - AetherInspectorTheme.StatusIconSlotWidth, row.y,
+                    AetherInspectorTheme.StatusIconSlotWidth, row.height));
+                return;
+            }
             if (meta.TypeInfoBoxes != null)
             {
                 foreach (var box in meta.TypeInfoBoxes)
@@ -1088,6 +1119,15 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     var t = g.TitleAttr;
                     string title = InspectorMemberResolver.ResolveString(targets[0], g.Name);
                     string subtitle = t != null ? InspectorMemberResolver.ResolveString(targets[0], t.Subtitle) : null;
+                    if (InspectorXSettings.instance.cardGroups)
+                    {
+                        AetherInspectorTheme.DrawCardHeaderTitle(title, subtitle,
+                            ToTextAlignment(t?.Alignment ?? TitleAlignments.Left), t == null || t.BoldTitle);
+                        using (new AetherInspectorTheme.CardScope())
+                        using (new EnclosingHeaderScope(title))
+                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        break;
+                    }
                     AetherInspectorTheme.DrawTitle(title, subtitle,
                         ToTextAlignment(t?.Alignment ?? TitleAlignments.Left),
                         t == null || t.HorizontalLine,
@@ -1108,6 +1148,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     if (!foldouts.TryGetValue(g.Path, out bool expanded)) expanded = g.DefaultExpanded;
                     string foldoutTitle = InspectorMemberResolver.ResolveString(targets[0], g.Name);
+                    if (InspectorXSettings.instance.cardGroups && AetherInspectorTheme.ContainerDepth <= 0)
+                    {
+                        expanded = AetherInspectorTheme.DrawCardHeaderFoldout(expanded, foldoutTitle);
+                        foldouts[g.Path] = expanded;
+                        if (!expanded) { AetherInspectorTheme.EndCardHeaderOnly(); break; }
+                        using (new AetherInspectorTheme.CardScope())
+                        using (new EnclosingHeaderScope(foldoutTitle))
+                            RenderChildren(g, targets, foldouts, tabs, maxDepth, visited);
+                        break;
+                    }
                     expanded = AetherInspectorTheme.SectionFoldout(expanded, foldoutTitle);
                     foldouts[g.Path] = expanded;
                     if (expanded)
@@ -1176,7 +1226,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         {
             var spec = g.Horizontal;
             string title = spec?.Title;
-            if (!string.IsNullOrEmpty(title))
+            bool titleInLabelColumn = !string.IsNullOrEmpty(title) && InspectorXSettings.instance.labelColumn;
+            if (!string.IsNullOrEmpty(title) && !titleInLabelColumn)
                 AetherInspectorTheme.DrawTitle(InspectorMemberResolver.ResolveString(targets[0], title));
 
             float available = EditorGUIUtility.currentViewWidth - 30f;
@@ -1184,6 +1235,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
+                if (titleInLabelColumn)
+                {
+                    EditorGUILayout.PrefixLabel(InspectorMemberResolver.ResolveString(targets[0], title));
+                    available -= EditorGUIUtility.labelWidth;
+                }
                 if (spec != null && spec.MarginLeft > 0) GUILayout.Space(spec.MarginLeft);
 
                 bool first = true;
@@ -1318,13 +1374,16 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             string title = attr?.GroupTitle ?? ObjectNames.NicifyVariableName(toggleMember);
             title = InspectorMemberResolver.ResolveString(targets[0], title);
 
-            using (new AetherInspectorTheme.ContainerScope())
+            bool card = InspectorXSettings.instance.cardGroups;
+            using (AetherInspectorTheme.ContainerScope scope = card ? null : new AetherInspectorTheme.ContainerScope())
             {
                 var prevMixed = EditorGUI.showMixedValue;
                 if (mixed) EditorGUI.showMixedValue = true;
                 EditorGUI.BeginChangeCheck();
-                bool next = AetherInspectorTheme.DrawToggleSwitchLeft(
-                    EditorGUILayout.GetControlRect(), AetherInspectorTheme.TempContent(title), on);
+                bool next = card
+                    ? AetherInspectorTheme.DrawCardHeaderToggle(title, on)
+                    : AetherInspectorTheme.DrawToggleSwitchLeft(
+                        EditorGUILayout.GetControlRect(), AetherInspectorTheme.TempContent(title), on);
                 EditorGUI.showMixedValue = prevMixed;
                 if (EditorGUI.EndChangeCheck() && !failed)
                 {
@@ -1332,22 +1391,31 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                     on = next;
                 }
 
-                if (on)
+                if (card)
+                {
+                    if (!on) { AetherInspectorTheme.EndCardHeaderOnly(); return; }
+                    using (new AetherInspectorTheme.CardScope())
+                        RenderToggleGroupBody(g, toggleMember, targets, foldouts, tabs, maxDepth, visited);
+                }
+                else if (on)
                 {
                     using (new AetherInspectorTheme.NestedIndentScope())
-                    {
-                        foreach (var child in g.Children)
-                        {
-                            // The toggle member itself is the header; skip its normal row.
-                            if (child is InspectorEntry e &&
-                                ((e.Field != null && e.Field.Name == toggleMember) ||
-                                 (e.Member != null && e.Member.Name == toggleMember)))
-                                continue;
-                            if (child is GroupNode sub) { if (GroupHasVisible(sub, targets)) RenderGroup(sub, targets, foldouts, tabs, maxDepth, visited); }
-                            else if (child is InspectorEntry ie) RenderEntry(ie, targets, foldouts, tabs, maxDepth, visited);
-                        }
-                    }
+                        RenderToggleGroupBody(g, toggleMember, targets, foldouts, tabs, maxDepth, visited);
                 }
+            }
+        }
+
+        private static void RenderToggleGroupBody(GroupNode g, string toggleMember, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, int maxDepth, HashSet<object> visited)
+        {
+            foreach (var child in g.Children)
+            {
+                // The toggle member itself is the header; skip its normal row.
+                if (child is InspectorEntry e &&
+                    ((e.Field != null && e.Field.Name == toggleMember) ||
+                     (e.Member != null && e.Member.Name == toggleMember)))
+                    continue;
+                if (child is GroupNode sub) { if (GroupHasVisible(sub, targets)) RenderGroup(sub, targets, foldouts, tabs, maxDepth, visited); }
+                else if (child is InspectorEntry ie) RenderEntry(ie, targets, foldouts, tabs, maxDepth, visited);
             }
         }
 
@@ -1458,14 +1526,22 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             // Unity's native [Header] is drawn by PropertyField on the default path.
             // Custom field drawers in RenderField call DrawUnityHeaders first.
 
-            // InfoBox(es) attached to the member.
+            // InfoBox(es) attached to the member; with infoBadges on they become a label icon.
+            List<(string message, InfoMessageType type)> badges = null;
             if (mm.InfoBoxes != null)
             {
+                bool asBadge = InspectorXSettings.instance.infoBadges && !mm.HideLabel;
                 foreach (var info in mm.InfoBoxes)
                 {
                     if (!string.IsNullOrEmpty(info.VisibleIf) &&
                         !InspectorMemberResolver.EvaluateBool(target, info.VisibleIf, null, false, true))
                         continue;
+                    if (asBadge)
+                    {
+                        (badges ??= new List<(string, InfoMessageType)>()).Add(
+                            (InspectorMemberResolver.ResolveString(target, info.Message), info.InfoMessageType));
+                        continue;
+                    }
                     string ibKey = "ibox:" + (e.AttributeSource?.Name ?? "?") + ":" + info.Message;
                     if (!foldouts.TryGetValue(ibKey, out bool expanded))
                     {
@@ -1491,8 +1567,11 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 }
             }
 
-            // Validation feedback draws ABOVE the field.
-            RenderValidation(e, targets);
+            // Validation feedback draws ABOVE the field (or inline, see RenderValidation).
+            List<(string message, InfoMessageType type)> inlineStatus = null;
+            RenderValidation(e, targets, InspectorXSettings.instance.inlineValidation, ref inlineStatus);
+            bool hasInlineStatus = inlineStatus != null;
+            bool wrapField = hasInlineStatus || badges != null;
 
             // Enabled (EnableIf/DisableIf/ReadOnly).
             bool enabled = IsEnabled(mm, targets);
@@ -1515,113 +1594,35 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 // [OnInspectorGUI(prepend, append)] on a member.
                 if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Prepend)) InvokeDrawMethod(target, mm.OnInspectorGUI.Prepend);
 
-                using (new EditorGUI.DisabledScope(!enabled))
+                using (EditorGUILayout.HorizontalScope statusRow = hasInlineStatus ? new EditorGUILayout.HorizontalScope() : null)
                 {
-                    var inline = mm.InlineButtons;
-                    bool hasInline = false;
-                    if (inline != null)
-                        foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
-
-                    bool hasReqComp = false;
-                    bool reqCompNeedsAdd = false;
-                    bool reqCompNeedsAssign = false;
-                    bool reqCompNoGameObject = false;
-                    Type compType = null;
-                    if (mm.RequireComponentButton != null)
+                    Rect fieldRect = default;
+                    using (EditorGUILayout.VerticalScope fieldScope = wrapField ? new EditorGUILayout.VerticalScope() : null)
                     {
-                        compType = mm.RequireComponentButton.ComponentType ?? (e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null));
-                        if (compType != null)
-                        {
-                            if (compType.IsArray)
-                            {
-                                compType = compType.GetElementType();
-                            }
-                            else if (compType.IsGenericType && compType.GetGenericTypeDefinition() == typeof(List<>))
-                            {
-                                compType = compType.GetGenericArguments()[0];
-                            }
-                        }
-                        if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
-                        {
-                            bool anyGo = false;
-                            foreach (var t in targets)
-                            {
-                                var go = GetGameObject(t);
-                                if (go == null) continue;
-                                anyGo = true;
-                                bool missingComp = go.GetComponent(compType) == null;
-                                bool missingRef = IsEntryReferenceMissing(e, t);
-                                if (missingComp) reqCompNeedsAdd = true;
-                                else if (missingRef) reqCompNeedsAssign = true;
-                            }
-                            if (!anyGo)
-                            {
-                                reqCompNoGameObject = true;
-                                hasReqComp = true;
-                            }
-                            else
-                                hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
-                        }
+                        if (fieldScope != null) fieldRect = fieldScope.rect;
+                        using (new EditorGUI.DisabledScope(!enabled))
+                            RenderEntryControls(e, targets, foldouts, tabs, maxDepth, visited);
                     }
 
-                    using (EditorGUILayout.HorizontalScope hscope = (hasInline || hasReqComp) ? new EditorGUILayout.HorizontalScope() : null)
+                    if (badges != null)
                     {
-                        switch (e.EntryKind)
-                        {
-                            case InspectorEntry.Kind.Field: RenderField(e, targets, foldouts, tabs, maxDepth, visited); break;
-                            case InspectorEntry.Kind.Shown: RenderShown(e, targets); break;
-                            case InspectorEntry.Kind.Button: RenderButton(e, targets); break;
-                            case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
-                        }
-
-                        if (hasInline && inline != null)
-                        {
-                            foreach (var ib in inline)
-                            {
-                                if (!InlineButtonVisible(ib, target)) continue;
-                                string label = ib.Label != null
-                                    ? InspectorMemberResolver.ResolveString(target, ib.Label)
-                                    : ObjectNames.NicifyVariableName(ib.Action);
-                                var content = MakeButtonContent(label, ib.Icon);
-                                if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
-                                    InvokeAction(targets, ib.Action);
-                            }
-                        }
-
-                        if (hasReqComp)
-                        {
-                            string label = mm.RequireComponentButton.Label;
-                            if (string.IsNullOrEmpty(label))
-                                label = reqCompNeedsAdd ? "Add" : "Assign";
-                            var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
-                            if (reqCompNoGameObject)
-                            {
-                                using (new EditorGUI.DisabledScope(true))
-                                    GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false));
-                            }
-                            else if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
-                            {
-                                foreach (var t in targets)
-                                {
-                                    var go = GetGameObject(t);
-                                    if (go == null) continue;
-                                    var comp = go.GetComponent(compType);
-                                    if (comp == null)
-                                    {
-                                        comp = Undo.AddComponent(go, compType);
-                                        EditorUtility.SetDirty(go);
-                                    }
-                                    AssignEntryComponentReference(e, t, comp);
-                                }
-                                if (e.Property != null)
-                                    e.Property.serializedObject.Update();
-                                InvokeOnValueChanged(e, targets);
-                            }
-                        }
+                        var p = e.Property;
+                        bool isList = p != null && p.isArray && p.propertyType != SerializedPropertyType.String;
+                        bool sectionHeader = isList || (p != null && p.propertyType == SerializedPropertyType.Generic);
+                        string label = e.EntryKind == InspectorEntry.Kind.Button ? null
+                            : GetLabelText(e, targets) ?? p?.displayName ?? e.AttributeSource?.Name;
+                        if (label != null && isList) label += $" ({p.arraySize})";
+                        DrawLabelBadge(fieldRect, label, sectionHeader, badges);
                     }
 
-                    if (reqCompNoGameObject)
-                        AetherInspectorTheme.DrawInfoBox("Requires a GameObject target.", InfoMessageType.Info);
+                    if (hasInlineStatus)
+                    {
+                        var worst = MostSevere(inlineStatus);
+                        AetherInspectorTheme.DrawFieldStatusOutline(fieldRect, worst);
+                        var slot = GUILayoutUtility.GetRect(AetherInspectorTheme.StatusIconSlotWidth, EditorGUIUtility.singleLineHeight,
+                            GUILayout.Width(AetherInspectorTheme.StatusIconSlotWidth), GUILayout.ExpandWidth(false));
+                        AetherInspectorTheme.DrawStatusIcon(slot, worst, JoinMessages(inlineStatus));
+                    }
                 }
 
                 if (mm.OnInspectorGUI != null && !string.IsNullOrEmpty(mm.OnInspectorGUI.Append)) InvokeDrawMethod(target, mm.OnInspectorGUI.Append);
@@ -1635,6 +1636,118 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
 
             if (e.SpaceAfter > 0) EditorGUILayout.Space(e.SpaceAfter);
+        }
+
+        // The field itself plus its [InlineButton] / [RequireComponentButton] trailing buttons.
+        private static void RenderEntryControls(InspectorEntry e, object[] targets, Dictionary<string, bool> foldouts, Dictionary<string, int> tabs, int maxDepth, HashSet<object> visited)
+        {
+            var mm = e.Metadata;
+            var target = targets[0];
+            var inline = mm.InlineButtons;
+            bool hasInline = false;
+            if (inline != null)
+                foreach (var ib in inline) { if (InlineButtonVisible(ib, target)) { hasInline = true; break; } }
+
+            bool hasReqComp = false;
+            bool reqCompNeedsAdd = false;
+            bool reqCompNeedsAssign = false;
+            bool reqCompNoGameObject = false;
+            Type compType = null;
+            if (mm.RequireComponentButton != null)
+            {
+                compType = mm.RequireComponentButton.ComponentType ?? (e.Field != null ? e.Field.FieldType : (e.Member is PropertyInfo p ? p.PropertyType : null));
+                if (compType != null)
+                {
+                    if (compType.IsArray)
+                    {
+                        compType = compType.GetElementType();
+                    }
+                    else if (compType.IsGenericType && compType.GetGenericTypeDefinition() == typeof(List<>))
+                    {
+                        compType = compType.GetGenericArguments()[0];
+                    }
+                }
+                if (compType != null && typeof(UnityEngine.Component).IsAssignableFrom(compType))
+                {
+                    bool anyGo = false;
+                    foreach (var t in targets)
+                    {
+                        var go = GetGameObject(t);
+                        if (go == null) continue;
+                        anyGo = true;
+                        bool missingComp = go.GetComponent(compType) == null;
+                        bool missingRef = IsEntryReferenceMissing(e, t);
+                        if (missingComp) reqCompNeedsAdd = true;
+                        else if (missingRef) reqCompNeedsAssign = true;
+                    }
+                    if (!anyGo)
+                    {
+                        reqCompNoGameObject = true;
+                        hasReqComp = true;
+                    }
+                    else
+                        hasReqComp = reqCompNeedsAdd || reqCompNeedsAssign;
+                }
+            }
+
+            using (EditorGUILayout.HorizontalScope hscope = (hasInline || hasReqComp) ? new EditorGUILayout.HorizontalScope() : null)
+            {
+                switch (e.EntryKind)
+                {
+                    case InspectorEntry.Kind.Field: RenderField(e, targets, foldouts, tabs, maxDepth, visited); break;
+                    case InspectorEntry.Kind.Shown: RenderShown(e, targets); break;
+                    case InspectorEntry.Kind.Button: RenderButton(e, targets); break;
+                    case InspectorEntry.Kind.InspectorGui: InvokeDrawMethodInfo(target, e.ButtonMethod); break;
+                }
+
+                if (hasInline && inline != null)
+                {
+                    foreach (var ib in inline)
+                    {
+                        if (!InlineButtonVisible(ib, target)) continue;
+                        string label = ib.Label != null
+                            ? InspectorMemberResolver.ResolveString(target, ib.Label)
+                            : ObjectNames.NicifyVariableName(ib.Action);
+                        var content = MakeButtonContent(label, ib.Icon);
+                        if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
+                            InvokeAction(targets, ib.Action);
+                    }
+                }
+
+                if (hasReqComp)
+                {
+                    string label = mm.RequireComponentButton.Label;
+                    if (string.IsNullOrEmpty(label))
+                        label = reqCompNeedsAdd ? "Add" : "Assign";
+                    var content = MakeButtonContent(label, mm.RequireComponentButton.Icon ?? "d_Toolbar Plus");
+                    if (reqCompNoGameObject)
+                    {
+                        using (new EditorGUI.DisabledScope(true))
+                            GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false));
+                    }
+                    else if (GUILayout.Button(content, AetherInspectorTheme.CompactButton, GUILayout.ExpandWidth(false)))
+                    {
+                        foreach (var t in targets)
+                        {
+                            var go = GetGameObject(t);
+                            if (go == null) continue;
+                            var comp = go.GetComponent(compType);
+                            if (comp == null)
+                            {
+                                comp = Undo.AddComponent(go, compType);
+                                EditorUtility.SetDirty(go);
+                            }
+                            AssignEntryComponentReference(e, t, comp);
+                        }
+                        if (e.Property != null)
+                            e.Property.serializedObject.Update();
+                        InvokeOnValueChanged(e, targets);
+                    }
+                }
+            }
+
+            if (reqCompNoGameObject)
+                AetherInspectorTheme.DrawInfoBox("Requires a GameObject target.", InfoMessageType.Info);
         }
 
         private static bool InlineButtonVisible(InlineButtonAttribute ib, object target)
@@ -3467,18 +3580,31 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // ---------------------------------------------------------------- validation (drawn above the field)
 
-        private static void RenderValidation(InspectorEntry e, object[] targets)
+        /// <summary>
+        /// Draws validation boxes above the field. With <paramref name="inlineOn"/>
+        /// (<see cref="InspectorXSettings.inlineValidation"/>) only Error results draw a box; Warning/Info
+        /// results are collected into <paramref name="inline"/> for the field outline + trailing icon.
+        /// </summary>
+        private static void RenderValidation(InspectorEntry e, object[] targets, bool inlineOn,
+            ref List<(string message, InfoMessageType type)> inline)
         {
             var mm = e.Metadata;
             if (mm == null || targets == null || targets.Length == 0) return;
             var target = targets[0];
+            var collected = inline;
+            void Emit(string msg, InfoMessageType type)
+            {
+                if (inlineOn && type != InfoMessageType.Error)
+                    (collected ??= new List<(string, InfoMessageType)>()).Add((msg, type));
+                else AetherInspectorTheme.DrawValidationBox(msg, type);
+            }
 
             if (mm.Required != null && e.Property != null && IsEmptyRef(e.Property))
             {
                 string msg = mm.Required.ErrorMessage != null
                     ? InspectorMemberResolver.ResolveString(target, mm.Required.ErrorMessage)
                     : $"{GetLabelText(e, targets) ?? e.Property.displayName} is required.";
-                AetherInspectorTheme.DrawValidationBox(msg, mm.Required.MessageType);
+                Emit(msg, mm.Required.MessageType);
             }
 
             if (mm.NotEmpty != null && e.Property != null && e.Property.propertyType == SerializedPropertyType.String
@@ -3487,7 +3613,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 string msg = mm.NotEmpty.ErrorMessage != null
                     ? InspectorMemberResolver.ResolveString(target, mm.NotEmpty.ErrorMessage)
                     : $"{GetLabelText(e, targets) ?? e.Property.displayName} must not be empty.";
-                AetherInspectorTheme.DrawValidationBox(msg, mm.NotEmpty.MessageType);
+                Emit(msg, mm.NotEmpty.MessageType);
             }
 
             if (mm.ValidateInputs != null)
@@ -3500,10 +3626,69 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                         string msg = message ?? (v.DefaultMessage != null
                             ? InspectorMemberResolver.ResolveString(target, v.DefaultMessage)
                             : "Invalid value.");
-                        AetherInspectorTheme.DrawValidationBox(msg, msgType);
+                        Emit(msg, msgType);
                     }
                 }
             }
+            inline = collected;
+        }
+
+        private static InfoMessageType MostSevere(List<(string message, InfoMessageType type)> items)
+        {
+            var worst = InfoMessageType.None;
+            foreach (var (_, type) in items)
+                if (Severity(type) > Severity(worst)) worst = type;
+            return worst;
+        }
+
+        private static int Severity(InfoMessageType type) => type switch
+        {
+            InfoMessageType.Error => 3,
+            InfoMessageType.Warning => 2,
+            InfoMessageType.Info => 1,
+            _ => 0,
+        };
+
+        private static string JoinMessages(List<(string message, InfoMessageType type)> items)
+        {
+            if (items.Count == 1) return items[0].message;
+            var sb = new System.Text.StringBuilder();
+            foreach (var (message, _) in items)
+            {
+                if (sb.Length > 0) sb.Append("\n\n");
+                sb.Append(message);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Info badge right after the label text on the field's first line, clamped inside the label column.
+        /// A null label (buttons) puts the badge at the row's right edge. A section header (list / nested
+        /// object foldout) has no label column: the badge follows the bold header text instead.
+        /// </summary>
+        internal static void DrawLabelBadge(Rect fieldRect, string label, bool sectionHeader, List<(string message, InfoMessageType type)> badges)
+        {
+            const float size = 16f;
+            const float headerButtonsReserve = 48f;
+            float lineH = EditorGUIUtility.singleLineHeight;
+            float x;
+            if (label == null) x = fieldRect.xMax - size - 2f;
+            else if (sectionHeader)
+            {
+                var style = AetherInspectorTheme.FlatFoldoutStyle;
+                float textStart = AetherInspectorTheme.HeaderRect(fieldRect).x + style.padding.left;
+                float textW = style.CalcSize(AetherInspectorTheme.TempContent(label)).x - style.padding.horizontal;
+                x = Mathf.Min(textStart + textW + 4f, fieldRect.xMax - headerButtonsReserve - size);
+            }
+            else
+            {
+                float indent = EditorGUI.indentLevel * 15f;
+                float textW = EditorStyles.label.CalcSize(AetherInspectorTheme.TempContent(label)).x;
+                float maxX = EditorGUIUtility.labelWidth - size - 2f;
+                x = fieldRect.x + Mathf.Min(indent + textW + 2f, Mathf.Max(0f, maxX));
+            }
+            var rect = new Rect(x, fieldRect.y + (lineH - size) * 0.5f, size, size);
+            AetherInspectorTheme.DrawStatusIcon(rect, MostSevere(badges), JoinMessages(badges));
         }
 
         // Validator signatures, most-specific first:

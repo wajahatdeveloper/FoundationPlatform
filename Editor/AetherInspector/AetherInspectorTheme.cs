@@ -97,6 +97,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             s_progressBarLabelCenter = null;
             s_progressBarLabelLeft = null;
             s_progressBarLabelRight = null;
+            s_cardBody = null;
             s_displayAsStringCache.Clear();
             foreach (var kv in s_tintTexCache)
             {
@@ -441,6 +442,39 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         }
 
         public static Color Accent => SliderFill;
+
+        public static Color CardHeaderBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.28f)
+                    : new Color(0f, 0f, 0f, 0.10f);
+            }
+        }
+
+        public static Color CardBodyBackground
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.025f)
+                    : new Color(1f, 1f, 1f, 0.35f);
+            }
+        }
+
+        public static Color CardBorder
+        {
+            get
+            {
+                EnsureSkin();
+                return EditorGUIUtility.isProSkin
+                    ? new Color(0f, 0f, 0f, 0.45f)
+                    : new Color(0f, 0f, 0f, 0.18f);
+            }
+        }
 
         public static Color InfoBoxBackground(InfoMessageType type)
         {
@@ -1095,6 +1129,124 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         public static void EndBoxHeader() => EditorGUILayout.EndHorizontal();
 
+        // --- Cards (InspectorXSettings.cardGroups) ---------------------------------------
+
+        public const float CardHeaderHeight = 22f;
+        private const float CardHeaderPadding = 6f;
+        private static GUIStyle s_cardBody;
+
+        private static GUIStyle CardBodyStyle
+        {
+            get
+            {
+                EnsureSkin();
+                if (s_cardBody == null)
+                    s_cardBody = new GUIStyle { padding = new RectOffset(8, 8, 6, 6) };
+                return s_cardBody;
+            }
+        }
+
+        /// <summary>Reserves and paints a card header bar; returns the padded content rect inside it.</summary>
+        private static Rect DrawCardHeaderBar()
+        {
+            EditorGUILayout.Space(HeaderSpacing);
+            var rect = EditorGUILayout.GetControlRect(false, CardHeaderHeight);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, GuiTint(CardHeaderBackground));
+                DrawRectOutline(rect, GuiTint(CardBorder));
+            }
+            return new Rect(rect.x + CardHeaderPadding, rect.y, rect.width - CardHeaderPadding * 2f, rect.height);
+        }
+
+        public static bool DrawCardHeaderFoldout(bool expanded, string label)
+        {
+            var inner = DrawCardHeaderBar();
+            inner.xMin += FoldoutHangOffset;
+            return EditorGUI.Foldout(inner, expanded, TempContent(label), true, FlatFoldoutStyle);
+        }
+
+        public static bool DrawCardHeaderToggle(string label, bool value)
+            => DrawToggleSwitchLeft(DrawCardHeaderBar(), TempContent(label), value);
+
+        public static void DrawCardHeaderTitle(string title, string subtitle, TextAlignment alignment, bool bold)
+        {
+            var inner = DrawCardHeaderBar();
+            GUI.Label(inner, title, TitleStyle(alignment, bold));
+            if (!string.IsNullOrEmpty(subtitle))
+                GUI.Label(inner, subtitle, SectionSubtitle);
+        }
+
+        /// <summary>Space after a card whose body is not drawn (collapsed foldout, toggle off).</summary>
+        public static void EndCardHeaderOnly() => EditorGUILayout.Space(SectionSpacing);
+
+        /// <summary>
+        /// Padded, bordered card body under a card header. Counts as a container so nested section
+        /// headers cancel the hierarchyMode foldout pull.
+        /// </summary>
+        public sealed class CardScope : IDisposable
+        {
+            public CardScope()
+            {
+                var rect = EditorGUILayout.BeginVertical(CardBodyStyle);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    EditorGUI.DrawRect(rect, GuiTint(CardBodyBackground));
+                    var border = GuiTint(CardBorder);
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1f, rect.height), border);
+                    EditorGUI.DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), border);
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
+                }
+                PushContainer();
+            }
+
+            public void Dispose()
+            {
+                PopContainer();
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(SectionSpacing);
+            }
+        }
+
+        // --- Inline status (InspectorXSettings.inlineValidation / infoBadges) --------------
+
+        public const float StatusIconSlotWidth = 18f;
+        private static readonly GUIContent s_statusContent = new GUIContent();
+
+        public static Texture StatusIcon(InfoMessageType type) => EditorGUIUtility.IconContent(type switch
+        {
+            InfoMessageType.Error => "console.erroricon.sml",
+            InfoMessageType.Warning => "console.warnicon.sml",
+            _ => "console.infoicon.sml",
+        }).image;
+
+        /// <summary>Severity icon centred in <paramref name="rect"/>; the message shows as its tooltip.</summary>
+        public static void DrawStatusIcon(Rect rect, InfoMessageType type, string tooltip)
+        {
+            s_statusContent.image = StatusIcon(type);
+            s_statusContent.text = string.Empty;
+            s_statusContent.tooltip = tooltip;
+            float size = Mathf.Min(16f, rect.width, rect.height);
+            var iconRect = new Rect(rect.x + (rect.width - size) * 0.5f, rect.y + (rect.height - size) * 0.5f, size, size);
+            GUI.Label(iconRect, s_statusContent, GUIStyle.none);
+        }
+
+        public static void DrawFieldStatusOutline(Rect rect, InfoMessageType type)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            var c = InfoBoxBorder(type);
+            c.a = Mathf.Max(c.a, 0.75f);
+            DrawRectOutline(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), GuiTint(c));
+        }
+
+        // --- Label column (InspectorXSettings.labelColumn) ----------------------------------
+
+        public static float ResolveLabelColumnWidth()
+        {
+            var s = InspectorXSettings.instance;
+            return Mathf.Clamp(EditorGUIUtility.currentViewWidth * s.labelColumnPercent, s.labelColumnMin, s.labelColumnMax);
+        }
+
         public static bool Foldout(bool expanded, string label)
             => SectionFoldout(expanded, label);
 
@@ -1346,26 +1498,48 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // --- Zero-alloc chrome drawing ---------------------------------------------------
 
+        private const int RoundedCornerSegments = 6;
+        private static readonly Vector3[] s_roundedVerts = new Vector3[(RoundedCornerSegments + 1) * 4];
+
+        /// <summary>
+        /// <see cref="GuiTint"/> plus the half-alpha IMGUI applies to disabled controls. Handles-drawn chrome
+        /// does not get that dimming from <see cref="GUI.enabled"/>, so it is applied here explicitly.
+        /// </summary>
+        public static Color HandlesTint(Color c)
+        {
+            c = GuiTint(c);
+            if (!GUI.enabled) c.a *= 0.5f;
+            return c;
+        }
+
         public static void DrawRoundedRect(Rect rect, Color fill, float radius)
         {
             if (Event.current.type != EventType.Repaint) return;
-            fill = GuiTint(fill);
             if (radius <= 0.5f || rect.width < 2f || rect.height < 2f)
             {
-                EditorGUI.DrawRect(rect, fill);
+                EditorGUI.DrawRect(rect, GuiTint(fill));
                 return;
             }
             radius = Mathf.Min(radius, rect.width * 0.5f, rect.height * 0.5f);
-            EditorGUI.DrawRect(new Rect(rect.x + radius, rect.y, rect.width - radius * 2f, rect.height), fill);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y + radius, radius, rect.height - radius * 2f), fill);
-            EditorGUI.DrawRect(new Rect(rect.xMax - radius, rect.y + radius, radius, rect.height - radius * 2f), fill);
+            // A rounded rect is convex: one AA polygon, so every part shares the same tint and edge.
+            int i = 0;
+            AppendCorner(ref i, new Vector2(rect.xMax - radius, rect.y + radius), radius, -90f);
+            AppendCorner(ref i, new Vector2(rect.xMax - radius, rect.yMax - radius), radius, 0f);
+            AppendCorner(ref i, new Vector2(rect.x + radius, rect.yMax - radius), radius, 90f);
+            AppendCorner(ref i, new Vector2(rect.x + radius, rect.y + radius), radius, 180f);
             Handles.BeginGUI();
-            Handles.color = fill;
-            Handles.DrawSolidDisc(new Vector3(rect.x + radius, rect.y + radius, 0f), Vector3.forward, radius);
-            Handles.DrawSolidDisc(new Vector3(rect.xMax - radius, rect.y + radius, 0f), Vector3.forward, radius);
-            Handles.DrawSolidDisc(new Vector3(rect.x + radius, rect.yMax - radius, 0f), Vector3.forward, radius);
-            Handles.DrawSolidDisc(new Vector3(rect.xMax - radius, rect.yMax - radius, 0f), Vector3.forward, radius);
+            Handles.color = HandlesTint(fill);
+            Handles.DrawAAConvexPolygon(s_roundedVerts);
             Handles.EndGUI();
+        }
+
+        private static void AppendCorner(ref int index, Vector2 center, float radius, float startDeg)
+        {
+            for (int s = 0; s <= RoundedCornerSegments; s++)
+            {
+                float rad = (startDeg + 90f * s / RoundedCornerSegments) * Mathf.Deg2Rad;
+                s_roundedVerts[index++] = new Vector3(center.x + Mathf.Cos(rad) * radius, center.y + Mathf.Sin(rad) * radius, 0f);
+            }
         }
 
         public static void DrawDropdownCaret(Rect fieldRect)
@@ -1542,7 +1716,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             {
                 Handles.BeginGUI();
                 // Off thumb: slightly brighter than track so it reads as one knob, not a second circle outline.
-                Handles.color = GuiTint(value ? ToggleThumb : (EditorGUIUtility.isProSkin
+                Handles.color = HandlesTint(value ? ToggleThumb : (EditorGUIUtility.isProSkin
                     ? new Color(0.75f, 0.75f, 0.75f, 1f)
                     : new Color(1f, 1f, 1f, 1f)));
                 Handles.DrawSolidDisc(new Vector3(tx, switchRect.y + h * 0.5f, 0f), Vector3.forward, thumbR);

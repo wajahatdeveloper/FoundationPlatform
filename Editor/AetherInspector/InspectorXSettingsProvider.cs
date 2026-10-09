@@ -21,7 +21,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 {
                     "inspector", "object", "field", "pencil", "drag", "selector",
                     "missing", "script", "fixer", "play", "save", "event",
-                    "fallback", "scope", "override", "prefab"
+                    "fallback", "scope", "override", "prefab",
+                    "layout", "card", "validation", "badge", "label", "column"
                 }
             };
         }
@@ -64,6 +65,23 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUILayout.LabelField("Nested Drawers", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("maxNestedDepth"), new GUIContent("Max Nested Depth", "Maximum recursion depth for nested object drawers (PocoInspector, InlineProperty, engine-attributed nested objects). Prevents stack overflow on deeply nested or circular references. Range: 1-50."));
             EditorGUILayout.HelpBox("Increase if you have deeply nested attributed objects. Decrease to catch circular references earlier. Range: 1-50.", MessageType.None);
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Layout", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serialized.FindProperty("cardGroups"), new GUIContent("Card Groups"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("inlineValidation"), new GUIContent("Inline Validation"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("infoBadges"), new GUIContent("Info Badges"));
+            var labelColumn = serialized.FindProperty("labelColumn");
+            EditorGUILayout.PropertyField(labelColumn, new GUIContent("Label Column"));
+            if (labelColumn.boolValue)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.PropertyField(serialized.FindProperty("labelColumnPercent"), new GUIContent("Width (fraction)"));
+                    EditorGUILayout.PropertyField(serialized.FindProperty("labelColumnMin"), new GUIContent("Min (px)"));
+                    EditorGUILayout.PropertyField(serialized.FindProperty("labelColumnMax"), new GUIContent("Max (px)"));
+                }
+            }
 
             if (EditorGUI.EndChangeCheck())
             {

@@ -103,28 +103,33 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public string labeled = "value";
 
         [LabelText("$DynamicLabelSource")]
-        public string dynamicLabel = "label above comes from DynamicLabelSource";
+        [Tooltip("[LabelText(\"$DynamicLabelSource\")]: the label is read from a member each frame.")]
+        public string dynamicLabel = "dynamic";
 
         private string DynamicLabelSource => $"Dynamic ({counter})";
 
         [HideLabel]
         [MultiLineProperty(2)]
-        public string hiddenLabel = "no label shown";
+        public string hiddenLabel = "[HideLabel] + [MultiLineProperty(2)]";
 
         [ReadOnly]
         public int readOnlyValue = 42;
 
         [LabelWidth(220)]
-        public string wideLabelField = "label column is 220px";
+        [Tooltip("[LabelWidth(220)]: this label column is 220px regardless of the inspector setting.")]
+        public string wideLabelField = "wide";
 
         [Indent(2)]
-        public string indented = "indented two levels";
+        [Tooltip("[Indent(2)]: indented two levels.")]
+        public string indented = "indented";
 
         [DisplayAsString(TextAlignment.Center)]
-        public string displayedAsString = "read-only, centered";
+        [Tooltip("[DisplayAsString(Center)]: read-only text, centered.")]
+        public string displayedAsString = "centered";
 
         [GUIColor("#7FDBFF")]
-        public string hexTinted = "hex GUIColor";
+        [Tooltip("[GUIColor(\"#7FDBFF\")]: tint from a hex string.")]
+        public string hexTinted = "tinted";
 
         [GUIColor(nameof(CounterColor))]
         public int tintedByMember;
@@ -157,7 +162,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private int MaxAdvanced => 10 + counter;
 
         // --- Title group with subtitle/alignment ---
-        [TitleGroup("Stats", "subtitle text", TitleAlignments.Split)]
+        [TitleGroup("Stats", "Combat", TitleAlignments.Split)]
         [ProgressBar(0, 100, ColorGetter = nameof(HealthColor), DrawValueLabel = true)]
         public float health = 65f;
 
@@ -180,8 +185,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public int clamped = 10;
 
         [TitleGroup("Stats")]
-        [Knob(0f, 1f, 48f)]
+        [PropertyRange(0f, 1f)]
         public float intensity = 0.4f;
+
+        [TitleGroup("Stats")]
+        [Knob(0f, 360f, 48f)]
+        [Tooltip("[Knob]: reserved for angular / radial values.")]
+        public float heading = 90f;
 
         [TitleGroup("Stats")]
         [Percentage]
@@ -209,19 +219,20 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         [ShowIf(nameof(showExtra))]
         [InfoBox("Visible only when 'showExtra' is true.", InfoMessageType.Info)]
-        public string extra = "conditionally shown";
+        public string extra = "extra";
 
         [EnableIf(nameof(showExtra))]
-        public string editableWhenExtra = "enabled with showExtra";
+        [Tooltip("[EnableIf(showExtra)]: editable only while showExtra is on.")]
+        public string editableWhenExtra = "editable";
 
         [ShowIf(nameof(mode), Mode.High)]
         [InfoBox("Shown only when mode == High.", InfoMessageType.Warning)]
-        public string highOnly = "high mode field";
+        public string highOnly = "high";
 
         [ShowIf("@showExtra && counter > 3")]
         [DetailedInfoBox("Expression-driven field (click for details).",
             "Visible when showExtra && counter > 3 — the resolver evaluates !, &&, ||, comparisons and parentheses.")]
-        public string exprDriven = "shown by @expression";
+        public string exprDriven = "expression";
 
         // --- Validation ---
         [Title("Validation")]
@@ -252,11 +263,14 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private void OnCounterChanged(int newValue) => Debug.Log($"[Demo] counter changed to {newValue}");
 
         // --- Horizontal group: widths, label width, title ---
-        [HorizontalGroup("Row", Title = "Horizontal (flex | 0.3 | 90px)", LabelWidth = 12)]
+        [HorizontalGroup("Row", Title = "Position", LabelWidth = 12)]
+        [Tooltip("[HorizontalGroup] cell: flexible width.")]
         public float x;
         [HorizontalGroup("Row", 0.3f)]
+        [Tooltip("[HorizontalGroup] cell: 30% of the row.")]
         public float y;
         [HorizontalGroup("Row", 90f)]
+        [Tooltip("[HorizontalGroup] cell: fixed 90px.")]
         public float z;
 
         // --- Toggle group ---
@@ -271,11 +285,12 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // --- Tab group with a nested box ---
         [TabGroup("Tabs", "First")]
-        public string tabOne = "in first tab";
+        public string tabOne = "one";
         [TabGroup("Tabs", "Second")]
-        public string tabTwo = "in second tab";
+        public string tabTwo = "two";
         [TabGroup("Tabs", "Second"), BoxGroup("Tabs/Second/Nested Box")]
-        public string tabTwoBoxed = "boxed inside second tab";
+        [Tooltip("[BoxGroup(\"Tabs/Second/Nested Box\")]: a box nested inside a tab page.")]
+        public string tabTwoBoxed = "boxed";
 
         // --- Dropdowns / assets ---
         [Title("Dropdowns & Assets")]
@@ -414,7 +429,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         [VerticalGroup("Extras")]
         [InfoBox("GUIAlwaysEnabled info — drawn even when parent would disable.", GUIAlwaysEnabled = true)]
         [DisableIf(nameof(toggleLeftBool))]
-        public string disabledUnlessToggleOff = "disabled when toggleLeftBool is true";
+        [Tooltip("[DisableIf(toggleLeftBool)]: disabled while Toggle Left Bool is on.")]
+        public string disabledUnlessToggleOff = "toggle-gated";
 
         // --- Dictionary drawer ---
         [Title("Dictionary")]
@@ -446,7 +462,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         public bool showFoldoutGroup;
 
         [FoldoutGroup("ConditionalFoldout", VisibleIf = nameof(showFoldoutGroup))]
-        public string foldoutVisibleField = "visible when showFoldoutGroup";
+        [Tooltip("[FoldoutGroup(VisibleIf = showFoldoutGroup)]: the whole group hides with the toggle.")]
+        public string foldoutVisibleField = "conditional";
 
         // --- Nested list elements (AetherInspectorReflectedDrawer pattern) ---
         [Title("Nested Lists")]
@@ -509,7 +526,8 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         [PropertyOrder(201)]
         [OnInspectorInit(nameof(NoteInit))]
-        public string initHooked = "OnInspectorInit logged once on first draw";
+        [Tooltip("[OnInspectorInit]: logs once on first draw.")]
+        public string initHooked = "init hooked";
 
         private void NoteInit() => Debug.Log("[Demo] OnInspectorInit ran");
     }

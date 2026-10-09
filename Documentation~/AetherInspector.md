@@ -67,6 +67,19 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 - **Repeated headers:** a nested-object or list header whose text equals the enclosing `BoxGroup` / `FoldoutGroup` / `TitleGroup` / `[Title]` / parent nested-object header is suppressed: the outer title stays, a nested object draws flush, a list keeps only `(count)` and its buttons.
 - **`[HeaderMember]`** (class/struct): named serialized fields and parameterless `[Button]` methods are drawn right-aligned in the nested object's own header row. `FragmentData<,>` uses it for the Shared / Inline Custom selector and **Promote to Shared**. With `[HideLabel]` on the host field there is no header and the members stay in the body.
 
+## Layout settings
+
+Project-wide, opt-in layout features under **Project Settings > AetherInspector > Layout** (`InspectorXSettings`). All default off; each one changes only engine-drawn inspectors.
+
+| Toggle | Effect |
+|--------|--------|
+| **Card Groups** | Top-level `[FoldoutGroup]`, every `[TitleGroup]` and `[ToggleGroup]` draw as a card: darker header bar (arrow / title + subtitle / toggle switch) over a padded, bordered body. Nested foldouts stay flat; `[BoxGroup]` is unchanged. |
+| **Inline Validation** | `Warning` / `Info` results from `[Required]`, `[NotEmpty]`, `[ValidateInput]` outline the field and add a trailing severity icon; messages show on hover. `Error` results keep the full-width box above the field. |
+| **Info Badges** | `[InfoBox]` becomes an icon right after the field label (message on hover); buttons get it at the row's right edge, `[HideLabel]` members keep the box. `[TypeInfoBox]` becomes an icon on the script row. `[DetailedInfoBox]` is unchanged. |
+| **Label Column** | Label width = inspector width × fraction (default 35%), clamped to min/max px. `[LabelWidth]` / `[InlineProperty(LabelWidth)]` still override. A titled `[HorizontalGroup]` puts its title in the label column and its cells in the control column; `[EnumToggleButtons]` already aligns via `PrefixLabel`. |
+
+**Knob vs slider:** use `[Knob]` for angular or radial values (e.g. 0–360°); use `[PropertyRange]` (slider + numeric field, standard row height) for plain numeric ranges.
+
 ## Theme and performance
 
 - **Theme:** soft Unity-native tokens in `AetherInspectorTheme` (Pro/Personal). Foldouts/boxes/tabs/info use Theme/GuiKit only — no raw `HelpBox` / `foldoutHeader` in engine draw paths.

@@ -55,6 +55,28 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         [Tooltip("Maximum nested depth for recursive [ShowInInspector] and [InlineProperty] drawers. Prevents stack overflow on circular references.")]
         public int maxNestedDepth = 10;
 
+        [Tooltip("Top-level [FoldoutGroup], [TitleGroup] and [ToggleGroup] draw as cards: a darker header bar over a padded, bordered body.")]
+        public bool cardGroups;
+
+        [Tooltip("Warning/Info results from [Required], [NotEmpty] and [ValidateInput] outline the field and show a severity icon with the message on hover. Error results keep the full-width box.")]
+        public bool inlineValidation;
+
+        [Tooltip("[InfoBox] draws as an icon after the field label and [TypeInfoBox] as an icon on the first row; the message shows on hover.")]
+        public bool infoBadges;
+
+        [Tooltip("Inspector label width follows a percentage of the inspector width, clamped to the min/max below. [LabelWidth] still overrides per member.")]
+        public bool labelColumn;
+
+        [Tooltip("Label column width as a fraction of the inspector width.")]
+        [Range(0.2f, 0.6f)]
+        public float labelColumnPercent = 0.35f;
+
+        [Tooltip("Narrowest label column in pixels.")]
+        public float labelColumnMin = 120f;
+
+        [Tooltip("Widest label column in pixels.")]
+        public float labelColumnMax = 260f;
+
         public void SaveNow() => Save(true);
 
         public void ExportToJson(string path)

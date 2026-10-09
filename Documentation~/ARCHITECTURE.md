@@ -327,6 +327,7 @@ Inspector chrome is centralized in `AetherInspectorTheme.cs`. `GuiKit` is the pu
 - Default fields still draw through `EditorGUILayout.PropertyField`.
 - Visual harness: **Window → Diagnostics → AetherInspector Demo**.
 - Full attribute matrix: [AetherInspector.md](AetherInspector.md).
+- Opt-in layout features (cards, inline validation, info badges, label column) are `InspectorXSettings` toggles: [AetherInspector.md](AetherInspector.md) § Layout settings.
 - Reflection/IMGUI empty-catch sites and `ObjectSelectorPopupX` scope: see [AetherInspector.md](AetherInspector.md) § Implementation notes.
 
 ---
