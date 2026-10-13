@@ -67,6 +67,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			public bool EndsOnComplete;
 			public bool Started;
 			public bool Presented;
+			public ulong HeldTagMask;
 			public Action OnComplete;
 		}
 
@@ -289,7 +290,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				var onComplete = slot.OnComplete;
 				slot.OnComplete = null;
 				if (slot.EndsOnComplete)
-					slot = default;
+					ResetTimelineSlot(layer);
 				onComplete();
 			}
 
@@ -306,7 +307,124 @@ namespace AetherNexus.FoundationPlatform.Animation
 				slot.Elapsed += deltaTime;
 				slot.ClipTime = ResolveClipTime(slot);
 				FireCrossedEvents(entry, from, slot.ClipTime, firstStep);
+				if (entry.HasTagWindows)
+					UpdateSlotTags(layer);
 			}
+		}
+
+		/// <summary>
+		/// An entry's tag window opened (<paramref name="held"/> true) or closed on the gameplay timeline. Fires
+		/// once per change, from the simulation step or when the slot is replaced or cancelled, never per frame.
+		/// </summary>
+		protected virtual void OnTimelineTagChanged(string tagName, int layerIndex, bool held) { }
+
+		/// <summary>Closes every tag window the gameplay timeline holds, e.g. when the bridge is torn down.</summary>
+		protected void ReleaseAllTimelineTags()
+		{
+			for (var layer = 0; layer < _timeline.Length; layer++)
+				ReleaseSlotTags(layer);
+		}
+
+		private void ResetTimelineSlot(int layerIndex)
+		{
+			ReleaseSlotTags(layerIndex);
+			_timeline[layerIndex] = default;
+		}
+
+		private void ReleaseSlotTags(int layerIndex)
+		{
+			ref var slot = ref _timeline[layerIndex];
+			var held = slot.HeldTagMask;
+			if (held == 0)
+				return;
+
+			slot.HeldTagMask = 0;
+			var windows = slot.Entry.tagWindows;
+			for (var i = 0; i < windows.Length; i++)
+			{
+				if ((held & (1UL << i)) != 0)
+					OnTimelineTagChanged(windows[i].tagName, layerIndex, false);
+			}
+		}
+
+		// Position check, not a crossing check: a skipped step or a mid-window start still holds the tag.
+		private void UpdateSlotTags(int layerIndex)
+		{
+			ref var slot = ref _timeline[layerIndex];
+			var entry = slot.Entry;
+			var windows = entry.tagWindows;
+			if (windows.Length > AnimationTagWindow.MaxPerEntry)
+			{
+				throw new InvalidOperationException(
+					$"{nameof(AnimatorBridgeBase)} on '{name}': entry '{entry.id}' has {windows.Length} tag windows; the limit is {AnimationTagWindow.MaxPerEntry}.");
+			}
+
+			var normalized = NormalizedClipTime(slot);
+			var mask = 0UL;
+			for (var i = 0; i < windows.Length; i++)
+			{
+				var w = windows[i].normalizedWindow;
+				if (normalized >= w.x && normalized <= w.y)
+					mask |= 1UL << i;
+			}
+
+			var changed = mask ^ slot.HeldTagMask;
+			if (changed == 0)
+				return;
+
+			slot.HeldTagMask = mask;
+			for (var i = 0; i < windows.Length; i++)
+			{
+				var bit = 1UL << i;
+				if ((changed & bit) != 0)
+					OnTimelineTagChanged(windows[i].tagName, layerIndex, (mask & bit) != 0);
+			}
+		}
+
+		private static float NormalizedClipTime(in TimelineSlot slot)
+		{
+			var length = slot.Entry.clip.Clip.length;
+			return slot.Entry.clip.IsLooping
+				? Mathf.Repeat(slot.ClipTime, length) / length
+				: Mathf.Clamp01(slot.ClipTime / length);
+		}
+
+		/// <summary>
+		/// Value of the named entry curve at the gameplay timeline's clip time. Searches the active slots from
+		/// the top layer down and returns the first entry that authors the curve. Evaluated on call only.
+		/// </summary>
+		public bool TryGetTimelineCurveValue(string curveName, out float value)
+		{
+			for (var layer = _timeline.Length - 1; layer >= 0; layer--)
+			{
+				var slot = _timeline[layer];
+				if (!slot.Active || !slot.Entry.HasCurves)
+					continue;
+
+				var curves = slot.Entry.curves;
+				for (var i = 0; i < curves.Length; i++)
+				{
+					var c = curves[i];
+					if (c.curveName == null || !string.Equals(c.curveName.Trim(), curveName, StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					value = c.curve.Evaluate(NormalizedClipTime(slot));
+					return true;
+				}
+			}
+
+			value = 0f;
+			return false;
+		}
+
+		/// <summary><see cref="TryGetTimelineCurveValue"/> for callers that require the curve; throws when no playing entry authors it.</summary>
+		public float GetTimelineCurveValue(string curveName)
+		{
+			if (TryGetTimelineCurveValue(curveName, out var value))
+				return value;
+
+			throw new InvalidOperationException(
+				$"{nameof(AnimatorBridgeBase)} on '{name}': no entry playing on the gameplay timeline authors curve '{curveName}'.");
 		}
 
 		/// <summary>Clip time, in seconds, the gameplay timeline has reached for the entry playing on <paramref name="layerIndex"/>.</summary>
@@ -318,7 +436,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			return slot.Active;
 		}
 
-		protected void CancelGameplayTimeline(int layerIndex) => _timeline[layerIndex] = default;
+		protected void CancelGameplayTimeline(int layerIndex) => ResetTimelineSlot(layerIndex);
 
 		/// <summary>
 		/// Multiplies the playback rate of the entry playing on <paramref name="layerIndex"/>: the gameplay timeline
@@ -373,6 +491,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				completeAt = Mathf.Max(0f, clip.length - startClipTime) / speed;
 			}
 
+			ReleaseSlotTags(layerIndex);
 			_timeline[layerIndex] = new TimelineSlot
 			{
 				Active = true,
@@ -544,6 +663,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			var transitionBack = isTerminal
 				&& AnimationSetSequenceUtility.ResolveTerminalTransitionBack(entry, sourceEntry);
 
+			PlayStartNormalizedTime = 0f;
 			OnAnimationSetEntryPlayStarted(entry);
 			int playGeneration = AnimationSetPlayGeneration;
 
@@ -632,8 +752,37 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete)
 		{
-			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(entry.startNormalizedTime));
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, ResolveEntryStartNormalizedTime(entry));
 		}
+
+		/// <summary>
+		/// Authored start time for a standard play of <paramref name="entry"/>: the matching
+		/// <see cref="AnimationSetEntry.sourceStartOffsets"/> row when its source entry is what the gameplay
+		/// timeline is playing on the entry's layer, otherwise <see cref="AnimationSetEntry.startNormalizedTime"/>.
+		/// Read before the new play replaces the slot.
+		/// </summary>
+		protected float ResolveEntryStartNormalizedTime(AnimationSetEntry entry)
+		{
+			var offsets = entry.sourceStartOffsets;
+			if (offsets != null && offsets.Length > 0)
+			{
+				var slot = _timeline[ResolveLayerIndex(entry)];
+				if (slot.Active)
+				{
+					var sourceId = slot.Entry.id;
+					for (var i = 0; i < offsets.Length; i++)
+					{
+						if (string.Equals(offsets[i].sourceEntryId, sourceId, StringComparison.Ordinal))
+							return Mathf.Clamp01(offsets[i].startNormalizedTime);
+					}
+				}
+			}
+
+			return Mathf.Clamp01(entry.startNormalizedTime);
+		}
+
+		/// <summary>Normalized start time of the play being started; valid inside <see cref="OnAnimationSetEntryPlayStarted"/>.</summary>
+		protected float PlayStartNormalizedTime { get; private set; }
 
 		private PlayableState PlayFromPlayableAnimationSetEntry(AnimationSet set, AnimationSetEntry entry, Action onComplete, float startNormalizedTime)
 		{
@@ -659,6 +808,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 					this);
 			}
 
+			PlayStartNormalizedTime = startNormalizedTime;
 			OnAnimationSetEntryPlayStarted(entry);
 			int playGeneration = AnimationSetPlayGeneration;
 			var wrappedOnComplete = WrapAnimationSetEntryOnComplete(entry, onComplete);
@@ -832,7 +982,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
-			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(entry.startNormalizedTime), fadeDurationSeconds, present);
+			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, ResolveEntryStartNormalizedTime(entry), fadeDurationSeconds, present);
 		}
 
 		/// <summary>

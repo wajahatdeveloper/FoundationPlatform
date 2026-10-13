@@ -106,6 +106,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 
 			sb.AppendLine();
 			AppendStanceConstants(sb, profile);
+			AppendCurveConstants(sb, entries, usedNames);
 			AppendRequiredClipConstants(sb, set, className, idToConst, usedNames);
 			AppendCategoryEntryConstants(sb, set, className, idToConst, usedNames);
 			AppendStanceMetadata(sb, profile, idToConst, usedNames);
@@ -132,6 +133,39 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 
 					var constName = ToConstName(stance.stanceId, stanceConstNames);
 					sb.AppendLine($"\t\t\tpublic const string {constName} = \"{EscapeString(stance.stanceId)}\";");
+				}
+			}
+
+			sb.AppendLine("\t\t}");
+			sb.AppendLine();
+		}
+
+		// Curve names read with TryGetTimelineCurveValue; tag windows need none, their names are gameplay tags with their own constants.
+		private static void AppendCurveConstants(
+			StringBuilder sb,
+			List<EntryInfo> entries,
+			HashSet<string> usedConstNames)
+		{
+			usedConstNames.Add("Curves");
+			sb.AppendLine("\t\tpublic static class Curves");
+			sb.AppendLine("\t\t{");
+
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var curveConstNames = new HashSet<string>(StringComparer.Ordinal);
+			foreach (var info in entries)
+			{
+				var curves = info.Entry.curves;
+				if (curves == null)
+					continue;
+
+				for (var i = 0; i < curves.Length; i++)
+				{
+					var curveName = curves[i]?.curveName?.Trim();
+					if (string.IsNullOrEmpty(curveName) || !seen.Add(curveName))
+						continue;
+
+					var constName = ToConstName(curveName, curveConstNames);
+					sb.AppendLine($"\t\t\tpublic const string {constName} = \"{EscapeString(curveName)}\";");
 				}
 			}
 

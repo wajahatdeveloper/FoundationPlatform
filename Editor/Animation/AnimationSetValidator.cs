@@ -26,7 +26,9 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 
 			var warnings = new List<string>();
 			var errors = new List<string>();
-			AnimationSetValidator.CollectLinkChainValidation(set, AnimationSetValidator.BuildEntryMap(set), warnings, errors);
+			var byId = AnimationSetValidator.BuildEntryMap(set);
+			AnimationSetValidator.CollectLinkChainValidation(set, byId, warnings, errors);
+			AnimationSetValidator.CollectEntryWindowValidation(set, byId, errors);
 
 			for (var i = 0; i < errors.Count; i++)
 				issues.Add(Make(AuthoringIssueSeverity.Error, errors[i], set));
@@ -62,6 +64,11 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 			ValidateValidationProfile(set, byId);
 
 			LogLinkChainValidation(set, byId);
+
+			var windowErrors = new List<string>();
+			CollectEntryWindowValidation(set, byId, windowErrors);
+			for (var e = 0; e < windowErrors.Count; e++)
+				Debug.LogError($"[AnimationSet] {windowErrors[e]}", set);
 
 			Debug.Log($"[AnimationSet] Validation finished for '{set.name}' ({byId.Count} entries).", set);
 		}
@@ -157,6 +164,96 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 					errors.Add(ex.Message);
 				}
 			}
+		}
+
+		/// <summary>Tag windows, source start offsets, curves and root-motion windows on the set's own entries.</summary>
+		public static void CollectEntryWindowValidation(
+			AnimationSet set,
+			Dictionary<string, AnimationSetEntry> byId,
+			List<string> errors)
+		{
+			if (set.entries == null)
+				return;
+
+			for (var i = 0; i < set.entries.Length; i++)
+			{
+				var entry = set.entries[i];
+				if (entry == null || string.IsNullOrEmpty(entry.id))
+					continue;
+
+				var looping = entry.clip != null && entry.clip.IsLooping;
+
+				if (entry.tagWindows != null)
+				{
+					if (entry.tagWindows.Length > AnimationTagWindow.MaxPerEntry)
+						errors.Add($"Entry '{entry.id}': {entry.tagWindows.Length} tag windows; the limit is {AnimationTagWindow.MaxPerEntry}.");
+
+					for (var t = 0; t < entry.tagWindows.Length; t++)
+					{
+						var w = entry.tagWindows[t];
+						if (w == null || string.IsNullOrWhiteSpace(w.tagName))
+							errors.Add($"Entry '{entry.id}': tag window {t} has no tag name.");
+						else if (!IsValidWindow(w.normalizedWindow))
+							errors.Add($"Entry '{entry.id}': tag window '{w.tagName}' range {w.normalizedWindow} must satisfy 0 <= start <= end <= 1.");
+					}
+				}
+
+				if (entry.sourceStartOffsets != null)
+				{
+					var seenSources = new HashSet<string>(StringComparer.Ordinal);
+					for (var o = 0; o < entry.sourceStartOffsets.Length; o++)
+					{
+						var offset = entry.sourceStartOffsets[o];
+						if (offset == null || string.IsNullOrWhiteSpace(offset.sourceEntryId))
+						{
+							errors.Add($"Entry '{entry.id}': source start offset {o} has no source entry id.");
+							continue;
+						}
+
+						if (!byId.ContainsKey(offset.sourceEntryId))
+							errors.Add($"Entry '{entry.id}': source start offset references '{offset.sourceEntryId}', which is not in this set or its parents.");
+						if (!seenSources.Add(offset.sourceEntryId))
+							errors.Add($"Entry '{entry.id}': source '{offset.sourceEntryId}' has more than one start offset; only the first is used.");
+					}
+				}
+
+				if (entry.curves != null)
+				{
+					var seenCurves = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					for (var c = 0; c < entry.curves.Length; c++)
+					{
+						var curve = entry.curves[c];
+						var curveName = curve?.curveName?.Trim();
+						if (string.IsNullOrEmpty(curveName))
+							errors.Add($"Entry '{entry.id}': curve {c} has no name.");
+						else if (!seenCurves.Add(curveName))
+							errors.Add($"Entry '{entry.id}': curve name '{curveName}' is used twice (names are trimmed and case-insensitive).");
+						else if (curve.curve == null || curve.curve.length == 0)
+							errors.Add($"Entry '{entry.id}': curve '{curveName}' has no keys.");
+					}
+				}
+
+				ValidateRootMotionWindow(entry, entry.DrivesRootMotionPosition, entry.rootMotionPositionWindow, "position", looping, errors);
+				ValidateRootMotionWindow(entry, entry.DrivesRootMotionRotation, entry.rootMotionRotationWindow, "rotation", looping, errors);
+			}
+		}
+
+		private static bool IsValidWindow(Vector2 window) =>
+			window.x >= 0f && window.y <= 1f && window.x <= window.y;
+
+		private static void ValidateRootMotionWindow(AnimationSetEntry entry, bool drives, Vector2 window, string channel, bool looping, List<string> errors)
+		{
+			if (!drives)
+				return;
+
+			if (!IsValidWindow(window))
+			{
+				errors.Add($"Entry '{entry.id}': root-motion {channel} window {window} must satisfy 0 <= start <= end <= 1.");
+				return;
+			}
+
+			if (looping && window != new Vector2(0f, 1f))
+				errors.Add($"Entry '{entry.id}': root-motion {channel} window is set on a looping clip; windows apply to one-shot clips only. Reset it to 0..1.");
 		}
 
 		private static void LogLinkChainValidation(AnimationSet set, Dictionary<string, AnimationSetEntry> byId)

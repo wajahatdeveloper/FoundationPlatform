@@ -423,6 +423,40 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			}
 		}
 
+		private static readonly Color TagWindowColor = new Color(0.35f, 0.75f, 1f, 0.85f);
+		private static readonly Color RootMotionPositionColor = new Color(1f, 0.6f, 0.2f, 0.85f);
+		private static readonly Color RootMotionRotationColor = new Color(0.8f, 0.4f, 1f, 0.85f);
+
+		// Tag windows as strips along the top edge of the bar, root-motion windows along the bottom.
+		private static void DrawEntryWindows(Rect bar, AnimationSetEntry entry)
+		{
+			if (entry == null)
+				return;
+
+			const float strip = 3f;
+			if (entry.HasTagWindows)
+			{
+				for (int i = 0; i < entry.tagWindows.Length; i++)
+				{
+					var w = entry.tagWindows[i];
+					if (w == null) continue;
+					DrawWindowStrip(bar, w.normalizedWindow, bar.y + i % 3 * strip, strip, TagWindowColor);
+				}
+			}
+
+			if (entry.DrivesRootMotionPosition)
+				DrawWindowStrip(bar, entry.rootMotionPositionWindow, bar.yMax - strip * 2f, strip, RootMotionPositionColor);
+			if (entry.DrivesRootMotionRotation)
+				DrawWindowStrip(bar, entry.rootMotionRotationWindow, bar.yMax - strip, strip, RootMotionRotationColor);
+		}
+
+		private static void DrawWindowStrip(Rect bar, Vector2 window, float y, float height, Color color)
+		{
+			float x0 = bar.x + bar.width * Mathf.Clamp01(window.x);
+			float x1 = bar.x + bar.width * Mathf.Clamp01(window.y);
+			EditorGUI.DrawRect(new Rect(x0, y, Mathf.Max(1f, x1 - x0), height), color);
+		}
+
 		/// <summary>Flashes markers whose normalized time was crossed since the last sample (visual verify).</summary>
 		private void DetectEventCrossings(float curr)
 		{
@@ -477,6 +511,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			float seconds = _normalizedTime * clip.length;
 			DebugDrawKit.Bar("Time", _normalizedTime, $"{seconds:F2}s / {clip.length:F2}s", DebugDrawKit.Fill);
 			DrawEventMarkers(GUILayoutUtility.GetLastRect(), CurrentEntry);
+			DrawEntryWindows(GUILayoutUtility.GetLastRect(), CurrentEntry);
 
 			EditorGUILayout.BeginHorizontal();
 			if (GUILayout.Button(_offlinePlaying ? "❚❚ Pause" : "▶ Play", GUILayout.Height(26)))
@@ -679,6 +714,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 			float progress = state.Length > 0f ? Mathf.Clamp01(state.NormalizedTime % 1f) : 0f;
 			DebugDrawKit.Bar($"▶ {clipName}", progress, $"{state.Time:F2}s / {state.Length:F2}s  •  w {state.Weight * 100f:F0}%", DebugDrawKit.Fill);
 			DrawEventMarkers(GUILayoutUtility.GetLastRect(), CurrentEntry);
+			DrawEntryWindows(GUILayoutUtility.GetLastRect(), CurrentEntry);
 			DetectEventCrossings(Mathf.Clamp01(state.NormalizedTime % 1f));
 
 			EditorGUI.BeginChangeCheck();

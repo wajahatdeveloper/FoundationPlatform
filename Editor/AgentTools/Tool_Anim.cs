@@ -36,6 +36,18 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		[Description("Sequence link, or empty when this entry is standalone.")]
 		public string Link;
+
+		[Description("Root-motion windows as 'position=a..b rotation=c..d' for the channels the mode drives; empty when root motion is off.")]
+		public string RootMotionWindows;
+
+		[Description("Gameplay tags held over part of the clip, as 'tag@start..end'.")]
+		public List<string> TagWindows = new();
+
+		[Description("Per-predecessor start times, as 'sourceEntryId->startNormalizedTime'.")]
+		public List<string> SourceStartOffsets = new();
+
+		[Description("Named entry curves read with TryGetTimelineCurveValue, as 'name(keys)'.")]
+		public List<string> Curves = new();
 	}
 
 	public sealed class AnimationSetReport
@@ -66,6 +78,9 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		[Description("Entries whose clip slot is empty; these throw at play time.")]
 		public List<string> MissingClips = new();
+
+		[Description("Tag window, source start offset, curve and root-motion window errors on the set's own entries.")]
+		public List<string> EntryWindowErrors = new();
 
 		[Description("Event names authored on clips in this set that no [AnimationEventNames] class declares, so no code can subscribe to them.")]
 		public List<string> UnknownEventNames = new();
@@ -157,8 +172,9 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		[BridgeTool(AnimSetReportToolId, Title = "Animation / Set Report", ReadOnly = true)]
 		[Description("Reports one AnimationSet: every resolved entry with its clip, looping flag, mask, layer, root " +
-			"motion mode and sequence link, which parent set declared it, plus all validation findings — required " +
-			"entries, sequence-link errors, missing clips and event names no code declares. Read-only.")]
+			"motion mode and windows, sequence link, tag windows, source start offsets and curves, which parent set declared it, " +
+			"plus all validation findings — required entries, sequence-link errors, entry window errors, missing clips and event " +
+			"names no code declares. Read-only.")]
 		public AnimationSetReport SetReport
 		(
 			[Description("AnimationSet asset path or GUID.")]
@@ -218,8 +234,36 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 						RootMotionMode = entry.rootMotionMode.ToString(),
 						TransitionBack = entry.transitionBack,
 						SuspendTranslation = entry.suspendTranslation,
-						Link = DescribeLink(entry.link)
+						Link = DescribeLink(entry.link),
+						RootMotionWindows = DescribeRootMotionWindows(entry)
 					};
+
+					if (entry.tagWindows != null)
+					{
+						foreach (AnimationTagWindow w in entry.tagWindows)
+						{
+							if (w != null)
+								entryReport.TagWindows.Add($"{w.tagName}@{w.normalizedWindow.x:0.###}..{w.normalizedWindow.y:0.###}");
+						}
+					}
+
+					if (entry.sourceStartOffsets != null)
+					{
+						foreach (AnimationSourceStartOffset o in entry.sourceStartOffsets)
+						{
+							if (o != null)
+								entryReport.SourceStartOffsets.Add($"{o.sourceEntryId}->{o.startNormalizedTime:0.###}");
+						}
+					}
+
+					if (entry.curves != null)
+					{
+						foreach (AnimationEntryCurve c in entry.curves)
+						{
+							if (c != null)
+								entryReport.Curves.Add($"{c.curveName}({(c.curve == null ? 0 : c.curve.length)})");
+						}
+					}
 
 					if (clip == null)
 						report.MissingClips.Add(pair.Key);
@@ -248,6 +292,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 					report.ProfileFindings.AddRange(profile.Validate(set));
 
 				AnimationSetValidator.CollectLinkChainValidation(set, resolved, report.LinkWarnings, report.LinkErrors);
+				AnimationSetValidator.CollectEntryWindowValidation(set, resolved, report.EntryWindowErrors);
 
 				if (runValidationLog)
 					report.ValidationLog.AddRange(CaptureLogs(() => AnimationSetValidator.LogValidation(set)));
@@ -606,6 +651,17 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			}
 
 			return owners;
+		}
+
+		private static string DescribeRootMotionWindows(AnimationSetEntry entry)
+		{
+			string position = entry.DrivesRootMotionPosition
+				? $"position={entry.rootMotionPositionWindow.x:0.###}..{entry.rootMotionPositionWindow.y:0.###}"
+				: "";
+			string rotation = entry.DrivesRootMotionRotation
+				? $"rotation={entry.rootMotionRotationWindow.x:0.###}..{entry.rootMotionRotationWindow.y:0.###}"
+				: "";
+			return (position + " " + rotation).Trim();
 		}
 
 		private static string DescribeLink(AnimationSetLink link)
