@@ -3,7 +3,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Behaviours
 {
-    [AddComponentMenu("FoundationPlatform/Editor/Inspector Separator")]
+    [AddComponentMenu("Editor Helpers/Inspector Separator")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/InspectorSeparator.png")]
     [DesignerIcon(DesignerSymbol.Widget)]
     public class InspectorSeparator : MonoBehaviour, IEditorOnlyComponent

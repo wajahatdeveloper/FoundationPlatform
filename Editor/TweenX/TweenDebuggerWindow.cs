@@ -19,7 +19,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.EditorTools
         private static readonly List<TweenManager.TweenInfo> _buffer = new(256);
         private Vector2 _scroll;
 
-        [MenuItem(MenuPaths.WindowTweenX.TweenDebugger, priority = MenuPriorities.WindowTweenX)]
+        [MenuItem(MenuPaths.EngineWindow.TweenDebugger, priority = MenuPriorities.WindowEngineTools + 2)]
         [DesignerFeature(
             "Tween Debugger",
             "Lists the tweens running right now with their progress and owner, for finding an animation that never finishes or fires twice.",

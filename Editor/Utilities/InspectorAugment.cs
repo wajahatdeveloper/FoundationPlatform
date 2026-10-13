@@ -50,7 +50,7 @@ static class InspectorAugment
     private static Dictionary<Component, HideFlags> OriginalHideFlags;
     private static bool _repaintSubscribed;
 
-    [MenuItem(MenuPaths.ContextComponent.FoldAllComponents, priority = 50)]
+    [MenuItem(MenuPaths.ContextComponent.FoldAllComponents, priority = MenuPriorities.ContextComponent + 2)]
     public static void FoldAllComponents()
     {
         if (!Selection.activeGameObject)
@@ -74,7 +74,7 @@ static class InspectorAugment
         return Selection.activeGameObject != null;
     }
 
-    [MenuItem(MenuPaths.ContextComponent.ExpandAllComponents, priority = 51)]
+    [MenuItem(MenuPaths.ContextComponent.ExpandAllComponents, priority = MenuPriorities.ContextComponent + 3)]
     public static void ExpandAllComponents()
     {
         if (!Selection.activeGameObject)

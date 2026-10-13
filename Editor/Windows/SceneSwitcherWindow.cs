@@ -71,7 +71,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             "Settings"
         };
 
-        [MenuItem(MenuPaths.WindowUtilities.SceneSwitcher, priority = 1101)]
+        [MenuItem(MenuPaths.WindowUtilities.SceneSwitcher, priority = MenuPriorities.WindowUtilities + 1)]
         [DesignerFeature(
             "Scene Switcher",
             "Jumps between the project's scenes in one click, without hunting for the scene file in the Project window.",

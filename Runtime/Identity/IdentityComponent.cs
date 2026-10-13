@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.Identity
 using AetherNexus.FoundationPlatform.Messaging;
 	
 [DisallowMultipleComponent]
-[AddComponentMenu("FoundationPlatform/Identity Component")]
+[AddComponentMenu("Gameplay/Identity")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/IdentityComponent.png")]
 [DesignerIcon(DesignerSymbol.Tag)]
 public class IdentityComponent : MonoBehaviour, IIdentity

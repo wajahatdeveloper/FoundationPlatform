@@ -46,7 +46,7 @@ namespace HierarchyX {
             return true;
         }
 
-        [MenuItem(CreateMenuPath, false, 0)]
+        [MenuItem(CreateMenuPath, false, MenuPriorities.GameObjectEdit)]
         [DesignerFeature(
             "Hierarchy Header",
             "Drops a labelled divider bar into the Hierarchy to group scene objects into readable sections; it is EditorOnly, so builds strip it.",

@@ -18,7 +18,7 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
             if (EditorEnhancerXSettings.Active) Execute();
         }
 
-        [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, false, 2)]
+        [MenuItem(MenuPaths.EditorEnhancer.DropToFloor, false, MenuPriorities.GameObjectEdit + 2)]
         [DesignerFeature(
             "Drop To Floor",
             "Snaps the selected objects down onto the surface beneath them, so props stop floating or sinking after placement.",

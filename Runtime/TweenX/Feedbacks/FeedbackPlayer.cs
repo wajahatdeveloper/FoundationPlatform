@@ -13,7 +13,7 @@ namespace AetherNexus.FoundationPlatform.TweenX.Feedbacks
     /// <para>The feedback list is polymorphic (<c>[SerializeReference]</c>); the inspector's
     /// Add-Feedback dropdown auto-lists every concrete feedback type via TypeCache — no central registry.</para>
     /// </summary>
-    [AddComponentMenu("FoundationPlatform/Feedback Player")]
+    [AddComponentMenu("Presentation/Feedback Player")]
     [DisallowMultipleComponent]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/FeedbackPlayer.png")]
     [DesignerIcon(DesignerSymbol.Effect)]

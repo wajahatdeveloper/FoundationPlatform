@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 {
 	/// <summary>
-	/// Hands off from an out-of-context tool (e.g. the Central Authoring Window) to the in-context
+	/// Hands off from an out-of-context tool (e.g. the Validation window) to the in-context
 	/// <see cref="EntityDebuggerOverlay"/>. The overlay is a transient Scene-View overlay with no
 	/// direct open API — it auto-shows purely as a function of the active selection. So the hand-off
 	/// is: select the target GameObject and focus a Scene View; the overlay surfaces when a section

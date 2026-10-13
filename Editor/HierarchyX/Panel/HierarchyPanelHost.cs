@@ -58,7 +58,7 @@ namespace HierarchyX {
         /// <summary>
         /// Reveal a panel section by id: enable the panel, un-collapse it, expand the target section,
         /// bring the hosting surface forward, and request a scroll so the section is in view. This is the
-        /// hand-off entry point for out-of-context tools (e.g. the Central Authoring Window) that want to
+        /// hand-off entry point for out-of-context tools (e.g. the Validation window) that want to
         /// send the user to the canonical in-context home of a feature instead of duplicating it.
         /// When the docked footer is unsupported, falls back to the companion window.
         /// </summary>

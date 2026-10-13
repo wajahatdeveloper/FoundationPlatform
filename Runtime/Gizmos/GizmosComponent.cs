@@ -11,7 +11,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
     }
 
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/GizmosComponent.png")]
-    [AddComponentMenu("FoundationPlatform/Gizmos Component")]
+    [AddComponentMenu("Editor Helpers/Gizmos")]
     [DesignerIcon(DesignerSymbol.Gizmo)]
     public class GizmosComponent : MonoBehaviour, IEditorOnlyComponent
     {

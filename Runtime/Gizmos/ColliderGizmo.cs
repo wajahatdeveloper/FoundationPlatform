@@ -12,7 +12,7 @@ namespace AetherNexus.FoundationPlatform.Gizmos
 	using UnityEngine.AI;
 	#endif
 
-	[AddComponentMenu("FoundationPlatform/Gizmos/Collider Gizmo")]
+	[AddComponentMenu("Editor Helpers/Collider Gizmo")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/ColliderGizmo.png")]
 	[DesignerIcon(DesignerSymbol.Gizmo)]
 	public class ColliderGizmo : MonoBehaviour

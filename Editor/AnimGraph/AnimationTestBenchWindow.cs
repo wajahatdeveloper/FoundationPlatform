@@ -24,7 +24,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 	/// </summary>
 	public class AnimationTestBenchWindow : EditorWindow
 	{
-        [MenuItem(MenuPaths.Diagnostics.AnimationTestBench, false, MenuPriorities.Diagnostics)]
+        [MenuItem(MenuPaths.EngineWindow.AnimationTestBench, false, MenuPriorities.WindowEngineDemo)]
         [DesignerFeature(
             "Animation Test Bench",
             "Plays and scrubs animation states on a character in isolation so you can check a clip or transition without running the game.",

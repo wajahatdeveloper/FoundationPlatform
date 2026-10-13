@@ -17,7 +17,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 	///  Attached to spawn area GameObjects (one for player, one for enemy, etc.).
 	///  Supports both deterministic (via IRandomProvider) and non-deterministic (Unity Random) spawning.
 	/// </summary>
-	[AddComponentMenu("FoundationPlatform/Area Spawner")]
+	[AddComponentMenu("Gameplay/Area Spawner")]
 	[Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/AreaSpawner.png")]
 	[DesignerIcon(DesignerSymbol.Spawn)]
 	public class AreaSpawner : MonoBehaviour

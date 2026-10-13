@@ -51,7 +51,7 @@ internal sealed class MyPayloadDrawer : AetherInspectorReflectedDrawer { }
 | `ShowIf`, `HideIf`, `EnableIf`, `DisableIf` | Fully Supported | Animated visibility transitions (`Animate = true`) supported via fade groups |
 | `HideInEditorMode`, `HideInPlayMode`, `ShowInPlayMode`, `DisableInEditorMode`, `DisableInPlayMode` | Fully Supported | |
 | `ReadOnly`, `Required`, `NotEmpty`, `ValidateInput`, `InfoBox`, `DetailedInfoBox`, `TypeInfoBox` | Fully Supported | Theme validation / info boxes; `InfoBox.GUIAlwaysEnabled` scope handling supported |
-| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Fully Supported | `Button.Style`, `Icon`, `IconAlignment`, `ButtonAlignment`, parameterized invoke. `OnInspectorInit` / `OnValueChanged(InvokeOnInitialize)` run **once per Editor + target + member** until domain reload or **Force Rebuild AetherInspector Cache** |
+| `ShowInInspector`, `Button`, `ButtonGroup`, `InlineButton`, `OnInspectorGUI`, `OnInspectorInit`, `OnValueChanged` | Fully Supported | `Button.Style`, `Icon`, `IconAlignment`, `ButtonAlignment`, parameterized invoke. `OnInspectorInit` / `OnValueChanged(InvokeOnInitialize)` run **once per Editor + target + member** until domain reload |
 | `ListDrawerSettings`, `Searchable`, `TableList`, `TableColumnWidth`, `OnCollectionChanged` | Fully Supported | `ListDisplayMode` and `Searchable.Recursive` fully implemented |
 | `ValueDropdown`, `AssetSelector`, `AssetsOnly`, `SceneObjectsOnly` | Fully Supported | Theme field chrome + Handles caret; searchable popup |
 | `DictionaryDrawerSettings` | Fully Supported | `DisplayMode` and `ShowInInspector` / `IDictionary` read-only grid |
@@ -88,7 +88,7 @@ Project-wide, opt-in layout features under **Project Settings > AetherInspector 
 - **Perf:** cached GUIStyles (skin-invalidated); pooled render group tree (no per-frame `CloneGroupNode`); Handles discs for rounded chrome; Handles AA caret for dropdowns; optional 1×1 tint `Texture2D` dictionary when a style background is required.
 - **GUIColor:** multiplies Theme chrome colors via `GuiTint` so custom drawers honor the tint.
 - **RequireComponentButton:** on ScriptableObject / non-GameObject targets shows a disabled button plus “Requires a GameObject target.”
-- Cache busting: context menu **Force Rebuild AetherInspector Cache** if metadata looks stale.
+- Cache busting: the metadata cache clears on every domain reload; trigger one if metadata looks stale.
 
 ## Editor extension guidelines
 
@@ -97,7 +97,7 @@ Project-wide, opt-in layout features under **Project Settings > AetherInspector 
 3. Append UI with `GuiKit.Title`, `GuiKit.InfoBox`, `GuiKit.ValidationBox` — not raw `EditorGUILayout.HelpBox`.
 4. Nested payloads need no drawer inside engine inspectors. A bespoke IMGUI `PropertyDrawer` takes over from the engine for its type; `AetherInspectorReflectedDrawer` does not.
 5. Do not hand-edit generated code — change sources and regenerate.
-6. Cache busting: context menu **Force Rebuild AetherInspector Cache** if metadata looks stale.
+6. Cache busting: the metadata cache clears on every domain reload; trigger one if metadata looks stale.
 7. Foldouts / headers: use `AetherInspectorTheme.SectionFoldout` or `FlatFoldoutStyle` / `FlatHeaderLabel` — avoid bespoke `foldoutHeader` bars.
 8. Prefer Theme draw helpers (`DrawStyledSlider`, `DrawToggleSwitch`, `DrawRoundedRect`, `DrawDropdownCaret`) over ad-hoc IMGUI chrome.
 

@@ -34,7 +34,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Debugging
 		private bool _copyPending;
 		private bool _copyActive;
 
-        [MenuItem(MenuPaths.DomainWindow.GameState, false, MenuPriorities.WindowDomainCore)]
+        [MenuItem(MenuPaths.EngineWindow.GameState, false, MenuPriorities.WindowEngine)]
         [DesignerFeature(
             "Game State",
             "World-scope live state that belongs to no GameObject: session readiness, subsystem init, scene stage, players, pipeline, and the random seed.",

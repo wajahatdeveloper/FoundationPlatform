@@ -10,7 +10,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 {
     /// <summary>
     /// Live parity harness for the <see cref="AetherInspectorEditor"/> engine. Menu:
-    /// <c>Tools/Diagnostics/AetherInspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
+    /// <c>Window/Engine/AetherInspector Demo</c>. Hosts an in-memory editor-only ScriptableObject
     /// that exercises every supported AetherInspector attribute, drawn through the
     /// in-house engine. Use it as the visual regression harness for the attribute surface.
     /// Editor-only asset — never ships.
@@ -22,7 +22,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         private IMGUIContainer _imguiContainer;
         private Vector2 _scrollPosition;
 
-        [MenuItem(MenuPaths.Diagnostics.AetherInspectorDemo, false, MenuPriorities.Diagnostics + 1)]
+        [MenuItem(MenuPaths.EngineWindow.AetherInspectorDemo, false, MenuPriorities.WindowEngineDemo + 1)]
         [DesignerFeature(
             "AetherInspector Demo",
             "Shows every inspector attribute the project supports side by side, so you can see what a field will look like before authoring it.",

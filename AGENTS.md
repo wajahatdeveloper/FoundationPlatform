@@ -12,7 +12,7 @@ authority, no dependency on GameEngineCore. Symbol detail:
 | Logging | `DebugX.Logger(channel)` / `DebugX.Builder(channel)` in `AetherNexus.FoundationPlatform.Logging`; channels in `LogChannels` |
 | Seeded random inside this package | `RandomX` (`Extensions/Random/`) or an `IRandomProvider` parameter; the game engine installs the provider |
 | Coroutines / tweens | `CoroutineX`, `TweenX` (no DOTween) |
-| Inspector attributes | AetherInspector (`[Required]`, `[ValidateInput]`, `[Button]`, …); demo: **Window > Diagnostics > AetherInspector Demo** |
+| Inspector attributes | AetherInspector (`[Required]`, `[ValidateInput]`, `[Button]`, …); demo: **Window > Engine > AetherInspector Demo** |
 | Unity-null-safe lookups | `GetComponentInSelfOrParents` / `GetComponentInSelfOrChildren` |
 | Stable IDs | `Identity` (string-backed; its hash is not collision-free — never use it as a key surrogate) |
 | Authoring validation | implement `IAuthoringValidator` (found via `TypeCache`, no registration); emit `AuthoringIssue` |

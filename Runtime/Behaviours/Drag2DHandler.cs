@@ -11,7 +11,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
     /// Dropping while overlapping a <see cref="Drop2DHandler"/> hands the object to it.
     /// </summary>
     [RequireComponent(typeof(BoxCollider2D))]
-    [AddComponentMenu("FoundationPlatform/Drag2D Handler")]
+    [AddComponentMenu("Gameplay/Drag 2D Handler")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Drag2DHandler.png")]
     [DesignerIcon(DesignerSymbol.Input)]
     public class Drag2DHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler

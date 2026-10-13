@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using AetherNexus.FoundationPlatform.AetherInspector;
 using AetherNexus.FoundationPlatform.Attributes;
-using AetherNexus.FoundationPlatform.Utilities.Menus;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -146,13 +145,6 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             InspectorMemberResolver.ClearCache();
             AetherInspectorTheme.InvalidateSkinCache();
             AetherInspectorTheme.ResetContainerDepth();
-        }
-
-        [MenuItem(MenuPaths.ContextComponent.ForceRebuildInspectorCache)]
-        private static void ForceRebuildCache(MenuCommand command)
-        {
-            ClearCache();
-            Debug.Log("[FoundationPlatform.AetherInspector] Cache cleared successfully.");
         }
 
         private static readonly GUIContent s_tempContent = new GUIContent();

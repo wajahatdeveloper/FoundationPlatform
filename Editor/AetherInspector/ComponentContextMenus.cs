@@ -15,7 +15,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
     {
         // ---- Reorder ----------------------------------------------------------
 
-        [MenuItem(MenuPaths.ContextComponent.MoveToTop, false, 510)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToTop, false, MenuPriorities.ContextComponent)]
         private static void MoveToTop(MenuCommand cmd)
         {
             var component = (Component)cmd.context;
@@ -25,7 +25,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         [MenuItem(MenuPaths.ContextComponent.MoveToTop, true)]
         private static bool MoveToTopValidate(MenuCommand cmd) => CanReorder(cmd);
 
-        [MenuItem(MenuPaths.ContextComponent.MoveToBottom, false, 511)]
+        [MenuItem(MenuPaths.ContextComponent.MoveToBottom, false, MenuPriorities.ContextComponent + 1)]
         private static void MoveToBottom(MenuCommand cmd)
         {
             var component = (Component)cmd.context;
@@ -40,13 +40,13 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // ---- JSON copy/paste --------------------------------------------------
 
-        [MenuItem(MenuPaths.ContextComponent.CopyValuesAsJson, false, 520)]
+        [MenuItem(MenuPaths.ContextComponent.CopyValuesAsJson, false, MenuPriorities.ContextValues)]
         private static void CopyJson(MenuCommand cmd)
         {
             EditorGUIUtility.systemCopyBuffer = EditorJsonUtility.ToJson(cmd.context, true);
         }
 
-        [MenuItem(MenuPaths.ContextComponent.PasteValuesFromJson, false, 521)]
+        [MenuItem(MenuPaths.ContextComponent.PasteValuesFromJson, false, MenuPriorities.ContextValues + 1)]
         private static void PasteJson(MenuCommand cmd)
         {
             var json = EditorGUIUtility.systemCopyBuffer;
@@ -71,7 +71,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             return !string.IsNullOrEmpty(json) && json.TrimStart().StartsWith("{");
         }
 
-        [MenuItem(MenuPaths.ContextComponent.SaveValuesToJsonFile, false, 522)]
+        [MenuItem(MenuPaths.ContextComponent.SaveValuesToJsonFile, false, MenuPriorities.ContextValues + 2)]
         private static void SaveJsonFile(MenuCommand cmd)
         {
             var component = cmd.context;
@@ -80,7 +80,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 System.IO.File.WriteAllText(path, EditorJsonUtility.ToJson(component, true));
         }
 
-        [MenuItem(MenuPaths.ContextComponent.LoadValuesFromJsonFile, false, 523)]
+        [MenuItem(MenuPaths.ContextComponent.LoadValuesFromJsonFile, false, MenuPriorities.ContextValues + 3)]
         private static void LoadJsonFile(MenuCommand cmd)
         {
             var path = EditorUtility.OpenFilePanel("Load Component JSON", "", "json");
@@ -100,7 +100,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
 
         // ---- Play-mode value saver ---------------------------------------------
 
-        [MenuItem(MenuPaths.ContextComponent.SaveValuesWhenExitingPlayMode, false, 530)]
+        [MenuItem(MenuPaths.ContextComponent.SaveValuesWhenExitingPlayMode, false, MenuPriorities.ContextValues + 5)]
         private static void ToggleSaveOnExit(MenuCommand cmd)
         {
             PlayModeValuesSaver.Toggle((Component)cmd.context);

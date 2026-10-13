@@ -17,11 +17,11 @@ namespace HierarchyX {
     /// </summary>
     public sealed class HierarchyPanelWindow : EditorWindow {
 
-        public const string MenuPath = MenuPaths.HierarchyX.SetupPanel;
+        public const string MenuPath = MenuPaths.EngineWindow.HierarchySetupPanel;
 
         private Vector2 scroll;
 
-        [MenuItem(MenuPath, false, 2200)]
+        [MenuItem(MenuPath, false, MenuPriorities.WindowEnginePanels)]
         [DesignerFeature(
             "Hierarchy Setup Panel",
             "Opens the Hierarchy setup sections as a dockable window, for when the panel docked under the Hierarchy is unavailable or you want it somewhere else.",

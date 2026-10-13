@@ -13,7 +13,7 @@ namespace AetherNexus.FoundationPlatform.TweenX
     /// a normal tween with a computed start delay, so it shares the exact same engine, clocks, and
     /// scene-view debugging as code-driven tweens.
     /// </summary>
-    [AddComponentMenu("FoundationPlatform/Tween Animator")]
+    [AddComponentMenu("Presentation/Tween Animator")]
     [DisallowMultipleComponent]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/TweenAnimator.png")]
     [DesignerIcon(DesignerSymbol.Animation)]

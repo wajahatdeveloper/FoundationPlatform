@@ -11,7 +11,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public class ActiveSubscriptionsWindow : EditorWindow
 	{
-		// [MenuItem("Window/EventBus/Active Subscriptions")]
 		public static void ShowWindow()
 		{
 			var win = GetWindow<ActiveSubscriptionsWindow>("Active Subscriptions");

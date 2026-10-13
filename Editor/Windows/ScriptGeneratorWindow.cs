@@ -83,7 +83,7 @@ public class ScriptGeneratorWindow : EditorWindow
 		Func<GenerationContext, string> validate) =>
 		Show(title, defaultFolder, defaultFileName, defaultClassName, defaultNamespace, buildCode, validate, null);
 
-        [MenuItem(MenuPaths.WindowUtilities.ScriptGenerator, priority = 1105)]
+        [MenuItem(MenuPaths.WindowUtilities.ScriptGenerator, priority = MenuPriorities.WindowUtilities + 2)]
         [DesignerFeature(
             "Script Generator",
             "Generates a new script from a project template so it starts with the right namespace, base class, and folder.",

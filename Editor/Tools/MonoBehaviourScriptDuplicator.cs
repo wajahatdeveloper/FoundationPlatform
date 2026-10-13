@@ -16,7 +16,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Tools
 {
 public static class MonoBehaviourScriptDuplicator
 {
-	private const int MenuPriority = 100;
+	private const int MenuPriority = MenuPriorities.ContextScript;
 	private const string PendingComponentKey = "FoundationPlatform.MonoBehaviourScriptDuplicator.PendingComponentGlobalId";
 	private const string PendingScriptPathKey = "FoundationPlatform.MonoBehaviourScriptDuplicator.PendingScriptPath";
 	private const string PendingSourceTypeNameKey = "FoundationPlatform.MonoBehaviourScriptDuplicator.PendingSourceTypeName";

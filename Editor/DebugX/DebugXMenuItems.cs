@@ -12,10 +12,7 @@ namespace AetherNexus.FoundationPlatform.Logging
     /// </summary>
     public static class DebugXMenuItems
     {
-        private const string OpenLogsFolderMenuPath = MenuPaths.Debug.OpenLogsFolder;
-        private const string OpenPersistentDataFolderMenuPath = MenuPaths.Debug.OpenPersistentData;
-
-        [MenuItem(OpenLogsFolderMenuPath, false, MenuPriorities.Debug)]
+        [MenuItem(MenuPaths.Utilities.OpenLogsFolder, false, MenuPriorities.Utilities + 5)]
         [DesignerFeature(
             "Open Logs Folder",
             "Opens the folder holding this project's editor log files, for attaching one to a bug report.",
@@ -35,7 +32,7 @@ namespace AetherNexus.FoundationPlatform.Logging
             EditorUtility.RevealInFinder(logPath);
         }
 
-        [MenuItem(OpenPersistentDataFolderMenuPath, false, MenuPriorities.Debug + 1)]
+        [MenuItem(MenuPaths.Utilities.OpenPersistentData, false, MenuPriorities.Utilities + 6)]
         [DesignerFeature(
             "Open Persistent Data Folder",
             "Opens the folder where the game writes saves and settings, so you can inspect or delete a save that is misbehaving.",

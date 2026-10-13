@@ -103,7 +103,7 @@ namespace AetherNexus.FoundationPlatform.Logging.ConsoleView.Editor
         private int _dragAnchor;
         private bool _dragMoved;
 
-        [MenuItem(MenuPaths.WindowDebugX.DebugXConsole, priority = MenuPriorities.WindowDebugX)]
+        [MenuItem(MenuPaths.EngineWindow.DebugXConsole, priority = MenuPriorities.WindowEngineTools)]
         [DesignerFeature(
             "DebugX Console",
             "Structured log console with per-channel filtering and call-site links, for when Unity's console is too noisy to find the message you want.",

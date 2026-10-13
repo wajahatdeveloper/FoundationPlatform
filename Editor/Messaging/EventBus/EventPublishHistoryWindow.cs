@@ -27,7 +27,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 			}
 		}
 
-		// [MenuItem("Window/EventBus/Event Publish History", priority = 100)]
 		public static void ShowWindow()
 		{
 			var win = GetWindow<EventPublishHistoryWindow>(WINDOW_TITLE);

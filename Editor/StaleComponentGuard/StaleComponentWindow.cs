@@ -19,7 +19,7 @@ namespace AetherNexus.FoundationPlatform.StaleComponentGuard.Editor
         private List<StaleFinding> _findings;
         private Vector2 _scroll;
 
-        [MenuItem(MenuPaths.Linting.StaleComponentScanner, false, MenuPriorities.Linting + 5)]
+        [MenuItem(MenuPaths.Linting.StaleComponentScanner, false, MenuPriorities.Linting + 3)]
         [DesignerFeature(
             "Stale Component Scanner",
             "Finds prefabs and scene objects holding missing or broken script references left behind by deleted or renamed components.",

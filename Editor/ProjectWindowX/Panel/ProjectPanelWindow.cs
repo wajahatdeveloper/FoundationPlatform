@@ -6,11 +6,11 @@ namespace ProjectWindowX {
 
     public sealed class ProjectPanelWindow : EditorWindow {
 
-        public const string MenuPath = MenuPaths.ProjectWindowX.ContextPanel;
+        public const string MenuPath = MenuPaths.EngineWindow.ProjectContextPanel;
 
         private Vector2 scroll;
 
-        [MenuItem(MenuPath, false, 2200)]
+        [MenuItem(MenuPath, false, MenuPriorities.WindowEnginePanels + 1)]
         [DesignerFeature(
             "Project Context Panel",
             "Opens the Project window context sections as a dockable window, showing details and create actions for the selected asset outside the docked panel.",

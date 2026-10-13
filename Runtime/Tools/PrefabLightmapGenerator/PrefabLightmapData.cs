@@ -13,7 +13,7 @@ using AetherNexus.FoundationPlatform.Logging;
     /// This component automatically applies stored lightmap data when the prefab is instantiated.
     /// </summary>
     [ExecuteInEditMode]
-    [AddComponentMenu("FoundationPlatform/Tools/Prefab Lightmap Data")]
+    [AddComponentMenu("Presentation/Prefab Lightmap Data")]
     [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/PrefabLightmapData.png")]
     [DesignerIcon(DesignerSymbol.Effect)]
     public class PrefabLightmapData : MonoBehaviour

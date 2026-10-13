@@ -11,7 +11,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Messaging
 {
 	public class SubscriptionHistoryWindow : EditorWindow
 	{
-		// [MenuItem("Window/EventBus/Subscription History")]
 		public static void ShowWindow()
 		{
 			var win = GetWindow<SubscriptionHistoryWindow>("Subscription History");

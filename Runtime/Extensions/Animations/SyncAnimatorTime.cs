@@ -5,7 +5,7 @@ using AetherNexus.FoundationPlatform.Utilities.Menus;
 
 namespace AetherNexus.FoundationPlatform.Extensions
 {
-[AddComponentMenu("FoundationPlatform/Extensions/Sync Animator Time")]
+[AddComponentMenu("Presentation/Sync Animator Time")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/SyncAnimatorTime.png")]
 [DesignerIcon(DesignerSymbol.Animation)]
 public class SyncAnimatorTime : MonoBehaviour

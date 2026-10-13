@@ -19,7 +19,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 	{
 		public const float SampleRate = 60f;
 
-		[MenuItem(MenuPaths.Rebuild.AnimationRootMotion, false, MenuPriorities.Rebuild + 6)]
+		[MenuItem(MenuPaths.Rebuild.AnimationRootMotion, false, MenuPriorities.Rebuild + 7)]
 		[DesignerFeature(
 			"Bake Root Motion",
 			"Re-samples every root-motion clip in every Animation Set so movement driven by an animation is identical on every machine, whether or not the character is on screen.",

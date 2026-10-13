@@ -9,7 +9,7 @@ namespace AetherNexus.FoundationPlatform.Extensions
     
     using Gizmos = UnityEngine.Gizmos;
     
-[AddComponentMenu("Toolkit/Comment")]
+[AddComponentMenu("Editor Helpers/Comment")]
 [Icon("Packages/com.aethernexus.foundationplatform/Editor/Icons/Comment.png")]
 [DesignerIcon(DesignerSymbol.Document)]
 public class Comment : MonoBehaviour, IEditorOnlyComponent

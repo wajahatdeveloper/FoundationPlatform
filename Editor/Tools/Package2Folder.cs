@@ -134,14 +134,14 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities.Tools
         // Unity Editor menus integration
         ///////////////////////////////////////////////////////////////
 
-        [MenuItem(MenuPaths.AssetsImport.Here, true, 10)]
+        [MenuItem(MenuPaths.AssetsImport.Here, true, MenuPriorities.AssetsImport)]
         private static bool IsImportToFolderCheck()
         {
             var selectedFolderPath = GetSelectedFolderPath();
             return !string.IsNullOrEmpty(selectedFolderPath);
         }
 
-        [MenuItem(MenuPaths.AssetsImport.Here, false, 10)]
+        [MenuItem(MenuPaths.AssetsImport.Here, false, MenuPriorities.AssetsImport)]
         [DesignerFeature(
             "Import Package Here",
             "Imports a .unitypackage into the selected folder instead of the paths baked into the package, so third-party content does not scatter across the project.",

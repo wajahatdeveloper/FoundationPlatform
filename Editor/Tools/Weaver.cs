@@ -68,7 +68,7 @@ public static class Weaver
         DebugX.Debug("Layers, Tags and Scenes Rebuild Complete");
     }
 
-    [MenuItem(MenuPaths.Rebuild.AllConstants, false, MenuPriorities.Rebuild + 4)]
+    [MenuItem(MenuPaths.Rebuild.AllConstants, false, MenuPriorities.Rebuild)]
     [DesignerFeature(
         "Rebuild All Constants",
         "Regenerates every typed constant - tags, layers, scenes, animations, animation sets, navmesh areas and shaders - after you add or rename any of them, so code stops referring to names that no longer exist.",
