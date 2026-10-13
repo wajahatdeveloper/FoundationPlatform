@@ -393,7 +393,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[Description("Edits entries declared on one AnimationSet in a single undoable batch. One edit per line, fields " +
 			"'key=value' separated by '|'. Keys: id (required), clip (asset path, '#ClipName' suffix, or 'none' to " +
 			"clear), speed, fade, mask (AnimationMask name), maskAsset (AvatarMask path or 'none'), layer, " +
-			"transitionBack, suspendTranslation, template (entry id resolved through the parent chain whose fields " +
+			"transitionBack, fadeBack (seconds back to the layer base; 0 = reuse fade), suspendTranslation, template (entry id resolved through the parent chain whose fields " +
 			"seed a new entry), remove=true. An id the set does not declare is added (seeded from template when " +
 			"given), which is how a child set overrides an inherited entry.")]
 		public List<string> SetEdit
@@ -488,6 +488,9 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 							case "transitionBack":
 								entry.transitionBack = bool.Parse(field.Value);
 								break;
+							case "fadeBack":
+								entry.transitionBackFadeDuration = float.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture);
+								break;
 							case "suspendTranslation":
 								entry.suspendTranslation = bool.Parse(field.Value);
 								break;
@@ -497,7 +500,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 					}
 
 					log.Add($"{id}: clip={(entry.clip.Clip == null ? "none" : entry.clip.Clip.name)} speed={entry.clip.Speed} " +
-						$"fade={entry.clip.FadeDuration} mask={entry.mask} maskAsset={(entry.maskAsset == null ? "none" : entry.maskAsset.name)}");
+						$"fade={entry.clip.FadeDuration} fadeBack={entry.transitionBackFadeDuration} mask={entry.mask} maskAsset={(entry.maskAsset == null ? "none" : entry.maskAsset.name)}");
 				}
 
 				set.entries = entries.ToArray();

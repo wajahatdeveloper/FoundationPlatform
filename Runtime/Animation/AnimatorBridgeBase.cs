@@ -824,7 +824,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 					if (!IsCurrentAnimationSetPlay(playGeneration))
 						return;
 					if (entry.transitionBack)
-						TransitionBackFromLayer(layerIndex, entry.clip.FadeDuration);
+						TransitionBackFromLayer(layerIndex, entry.TransitionBackFade);
 					wrappedOnComplete?.Invoke();
 				};
 			}
@@ -860,7 +860,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				state.Events().OnEnd = () =>
 				{
 					if (IsCurrentAnimationSetPlay(playGeneration))
-						TransitionBackFromLayer(layerIndex, entry.clip.FadeDuration);
+						TransitionBackFromLayer(layerIndex, entry.TransitionBackFade);
 				};
 			}
 

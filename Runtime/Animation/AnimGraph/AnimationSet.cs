@@ -240,6 +240,11 @@ namespace AetherNexus.FoundationPlatform.Animation
 		[Tooltip("After a one-shot: when true, the overlay is released back to the layer base (default). When false, the overlay holds until replaced or released.")]
 		public bool transitionBack = true;
 
+		[ShowIf(nameof(transitionBack))]
+		[Tooltip("Seconds to blend back to the layer base when this one-shot ends (0 = reuse the clip's Fade Duration). Lets a reaction snap in fast and settle out softly.")]
+		[Min(0f)]
+		public float transitionBackFadeDuration;
+
 		[Tooltip("Direct AvatarMask asset reference. Overrides 'mask' enum when assigned.")]
 		public AvatarMask maskAsset;
 
@@ -277,6 +282,8 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 		public bool DrivesRootMotionRotation =>
 			rootMotionMode == RootMotionMode.RotationOnly || rootMotionMode == RootMotionMode.PositionAndRotation;
+
+		public float TransitionBackFade => transitionBackFadeDuration > 0f ? transitionBackFadeDuration : clip.FadeDuration;
 
 		public bool HasTagWindows => tagWindows != null && tagWindows.Length > 0;
 

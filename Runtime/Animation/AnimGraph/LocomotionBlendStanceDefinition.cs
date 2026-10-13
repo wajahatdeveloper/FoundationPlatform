@@ -47,9 +47,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 		public string[] diagonalDirectionEntryIds = new string[DiagonalDirectionSlotCount];
 
 		[TitleGroup("Stride Matching")]
-		[Min(0f)]
-		[Tooltip("Ground speed (m/s) the forward clip covers at playback 1 (entry Speed included). Moving clips play at body speed / this, so feet don't slip. Use the profile's Measure Natural Speeds button; enter by hand for in-place clips.")]
-		public float naturalSpeed;
+		[Tooltip("Ground speed (m/s) each direction clip covers at playback 1 (entry Speed included), in direction slot order: idle (0, unused), forward, back, left, right, then the diagonals when enabled. Moving clips play at body speed / the blend-weighted speed of the directions in use, so feet don't slip when strafing or backing off either. Use the profile's Measure Natural Speeds button; enter by hand for in-place clips.")]
+		[ListDrawerSettings(ShowIndexLabels = true)]
+		public float[] directionNaturalSpeeds = new float[CardinalDirectionSlotCount];
 
 		[TitleGroup("Stride Matching")]
 		[Min(0.01f)]
@@ -163,9 +163,17 @@ namespace AetherNexus.FoundationPlatform.Animation
 				throw new InvalidOperationException(
 					$"Locomotion blend profile '{profileName}' stance '{stanceId}': diagonalDirectionEntryIds must have {DiagonalDirectionSlotCount} elements when diagonals are enabled.");
 
-			if (naturalSpeed <= 0f)
+			var slotCount = GetDirectionSlotCount();
+			if (directionNaturalSpeeds == null || directionNaturalSpeeds.Length != slotCount)
 				throw new InvalidOperationException(
-					$"Locomotion blend profile '{profileName}' stance '{stanceId}': naturalSpeed must be above 0 (m/s the forward clip covers at playback 1). Use Measure Natural Speeds or enter it by hand.");
+					$"Locomotion blend profile '{profileName}' stance '{stanceId}': directionNaturalSpeeds must have {slotCount} elements, one per direction slot.");
+
+			for (var i = 1; i < slotCount; i++)
+			{
+				if (directionNaturalSpeeds[i] <= 0f)
+					throw new InvalidOperationException(
+						$"Locomotion blend profile '{profileName}' stance '{stanceId}': directionNaturalSpeeds[{i}] must be above 0 (m/s that direction clip covers at playback 1). Use Measure Natural Speeds or enter it by hand.");
+			}
 
 			if (minPlaybackRate > maxPlaybackRate)
 				throw new InvalidOperationException(

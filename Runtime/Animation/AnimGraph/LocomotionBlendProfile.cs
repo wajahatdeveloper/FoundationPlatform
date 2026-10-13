@@ -100,24 +100,33 @@ namespace AetherNexus.FoundationPlatform.Animation
 			for (var i = 0; i < stances.Length; i++)
 			{
 				var stance = stances[i];
-				var forwardId = stance.directionEntryIds[1];
-				var entry = owner.FindEntry(forwardId);
-				if (entry == null || entry.clip == null || entry.clip.Clip == null)
-				{
-					Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': forward entry '{forwardId}' has no clip in '{owner.name}'.", this);
-					continue;
-				}
+				var slotCount = stance.GetDirectionSlotCount();
+				if (stance.directionNaturalSpeeds == null || stance.directionNaturalSpeeds.Length != slotCount)
+					Array.Resize(ref stance.directionNaturalSpeeds, slotCount);
 
-				var average = entry.clip.Clip.averageSpeed;
-				var measured = new Vector2(average.x, average.z).magnitude * entry.clip.Speed;
-				if (measured <= 0.01f)
+				for (var slot = 1; slot < slotCount; slot++)
 				{
-					Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': clip '{entry.clip.Clip.name}' has no root travel (in-place). Enter Natural Speed by hand.", this);
-					continue;
-				}
+					var entryId = slot < LocomotionBlendStanceDefinition.CardinalDirectionSlotCount
+						? stance.directionEntryIds[slot]
+						: stance.diagonalDirectionEntryIds[slot - LocomotionBlendStanceDefinition.CardinalDirectionSlotCount];
+					var entry = owner.FindEntry(entryId);
+					if (entry == null || entry.clip == null || entry.clip.Clip == null)
+					{
+						Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': entry '{entryId}' has no clip in '{owner.name}'.", this);
+						continue;
+					}
 
-				stance.naturalSpeed = measured;
-				Debug.Log($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': natural speed {measured:F2} m/s from '{entry.clip.Clip.name}'.", this);
+					var average = entry.clip.Clip.averageSpeed;
+					var measured = new Vector2(average.x, average.z).magnitude * entry.clip.Speed;
+					if (measured <= 0.01f)
+					{
+						Debug.LogError($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}': clip '{entry.clip.Clip.name}' has no root travel (in-place). Enter its natural speed by hand.", this);
+						continue;
+					}
+
+					stance.directionNaturalSpeeds[slot] = measured;
+					Debug.Log($"[LocomotionBlendProfile] '{name}' stance '{stance.stanceId}' slot {slot}: natural speed {measured:F2} m/s from '{entry.clip.Clip.name}'.", this);
+				}
 			}
 
 			UnityEditor.EditorUtility.SetDirty(this);

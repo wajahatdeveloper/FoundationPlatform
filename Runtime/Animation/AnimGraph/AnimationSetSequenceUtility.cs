@@ -83,7 +83,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 					$"AnimationSet entry '{sourceEntry.id}' has no clip data for transition-out fallback.");
 			}
 
-			return sourceEntry.clip.FadeDuration;
+			return sourceEntry.TransitionBackFade;
 		}
 
 		public static void ValidateSequenceEntryForPlayback(AnimationSetEntry entry, string setName, bool isTerminal)
