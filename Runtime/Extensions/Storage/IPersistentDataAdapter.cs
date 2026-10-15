@@ -29,6 +29,11 @@ public interface IPersistentDataAdapter
     T GetData<T>(string key, T defaultValue);
 
     /// <summary>
+    /// Remove the key. Returns false when it was not stored.
+    /// </summary>
+    bool DeleteKey(string key);
+
+    /// <summary>
     /// Check if the storage file exists.
     /// </summary>
     bool FileExists(string filePath);

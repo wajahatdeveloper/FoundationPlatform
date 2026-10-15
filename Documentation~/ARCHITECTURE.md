@@ -227,8 +227,8 @@ Only helpers something in this repository calls. A member with no caller is dele
 | `Extensions/Animations/` | Animator; `SyncAnimatorTime` component |
 | `Extensions/Physics/` | Rigidbody, Physics casts |
 | `Extensions/Rendering/` | Camera, Renderer, Texture2D |
-| `Extensions/UI/` | RectTransform, Canvas, EventSystem, rich text |
-| `Extensions/Storage/` | `PersistentDataHandler` (JSON-backed device data) |
+| `Extensions/UI/` | RectTransform, Canvas, rich text |
+| `Extensions/Storage/` | `PersistentDataHandler` (JSON-backed device data; `SetData` / `GetData` / `ContainsKey` / `DeleteKey`; flushes to disk on pause, focus loss and quit through `PlatformHost`) |
 | `Extensions/Utilities/` | streams, LayerMask, Action/Invoke helpers, `Comment` component |
 | `Extensions/Reflection/` | `ReflectionExtensions.HasProperty` — editor-only (`#if UNITY_EDITOR`) |
 | `Extensions/Audio/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Scene/` | one concern each, self-explanatory from folder name |

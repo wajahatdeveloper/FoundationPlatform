@@ -110,6 +110,9 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string CharacterCreateFromArchetype  = GameObjectRoot + "Character/Character From Archetype...";
             public const string PlayerCreateSimplePawn        = GameObjectRoot + "Player/Simple Pawn";
             public const string PlayerCreatePlayerStart       = GameObjectRoot + "Player/Player Start";
+            public const string PlayerCreateCameraOrbit       = GameObjectRoot + "Player/Pawn Camera/Third-Person Orbit";
+            public const string PlayerCreateCameraTopDown     = GameObjectRoot + "Player/Pawn Camera/Top-Down";
+            public const string PlayerCreateCamera2DSide      = GameObjectRoot + "Player/Pawn Camera/2D Side-Follow";
             public const string PlayerCreateTouchControls     = GameObjectRoot + "Player/Touch Controls HUD";
             public const string PlayerCreateTouchJoystick     = GameObjectRoot + "Player/Touch/Joystick";
             public const string PlayerCreateTouchDPad         = GameObjectRoot + "Player/Touch/D-Pad";

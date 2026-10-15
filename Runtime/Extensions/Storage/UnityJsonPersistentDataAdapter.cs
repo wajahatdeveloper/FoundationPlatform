@@ -109,6 +109,12 @@ public class UnityJsonPersistentDataAdapter : IPersistentDataAdapter
         }
     }
 
+    public bool DeleteKey(string key)
+    {
+        EnsureInitialized();
+        return dataCache.Remove(key);
+    }
+
     public bool FileExists(string filePath)
     {
         return File.Exists(filePath);

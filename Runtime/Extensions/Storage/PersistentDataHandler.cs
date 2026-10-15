@@ -4,12 +4,11 @@ using UnityEngine;
 namespace AetherNexus.FoundationPlatform.Extensions
 {
 /// <summary>
-/// Canonical path for device-local keyed persistence in new code (JSON-backed via
-/// <see cref="IPersistentDataAdapter"/>). <see cref="PlayerPrefsX"/> is the legacy binary-codec
-/// alternative, kept for existing callers only.
+/// Device-local keyed persistence (JSON-backed via <see cref="IPersistentDataAdapter"/>).
 /// </summary>
 public static class PersistentDataHandler
 {
+    private const string CacheInitKey = "CacheInit";
 
     private static string dataFilePath = "";
     private static IPersistentDataAdapter adapter;
@@ -47,6 +46,22 @@ public static class PersistentDataHandler
         adapter.Initialize(dataFilePath);
     }
 
+    internal static void OnApplicationFocusChanged(bool hasFocus)
+    {
+        if (adapter != null)
+        {
+            adapter.OnApplicationFocusChanged(hasFocus);
+        }
+    }
+
+    internal static void OnApplicationPauseChanged(bool isPaused)
+    {
+        if (adapter != null)
+        {
+            adapter.OnApplicationPauseChanged(isPaused);
+        }
+    }
+
     internal static void OnApplicationQuitting()
     {
         if (adapter != null)
@@ -67,6 +82,17 @@ public static class PersistentDataHandler
         }
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void SubscribeLifecycle()
+    {
+        PlatformHost.FocusChanged -= OnApplicationFocusChanged;
+        PlatformHost.PauseChanged -= OnApplicationPauseChanged;
+        PlatformHost.Quitting -= OnApplicationQuitting;
+        PlatformHost.FocusChanged += OnApplicationFocusChanged;
+        PlatformHost.PauseChanged += OnApplicationPauseChanged;
+        PlatformHost.Quitting += OnApplicationQuitting;
+    }
+
     public static bool ContainsKey(string key)
     {
         EnsureInitialized();
@@ -83,6 +109,12 @@ public static class PersistentDataHandler
     {
         EnsureInitialized();
         return adapter.GetData(key, defaultValue);
+    }
+
+    public static bool DeleteKey(string key)
+    {
+        EnsureInitialized();
+        return adapter.DeleteKey(key);
     }
 
     /// <summary>Gets data using the default value of T.</summary>

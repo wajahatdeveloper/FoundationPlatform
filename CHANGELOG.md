@@ -6,8 +6,8 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ### Extensions trimmed to what the code uses
 
-- **Removed** 1,385 members of the `Runtime/Extensions` static classes with no caller in this repository (call sites found by a Roslyn token scan over every package, `Samples~` and `Assets/Scripts`, under editor, all-symbols and no-symbols preprocessor sets; members kept code depends on were kept transitively). The folder went from 21.6k to 6.6k lines. `Deconstruct` on `Vector2`/`Vector3` is kept (called implicitly by tuple deconstruction), and the `RandomX` `UnityEngine.Random` facade (`RandomX.Unity.cs`) is kept whole because its contract is member-for-member parity.
-- **Removed** whole files: `PlayerPrefsX` (use `PersistentDataHandler`), `TimeX`, the LINQ-to-GameObject traversal enumerables in `GameObjectExtensions` (`Ancestors`/`Descendants`/`BeforeSelf`/`AfterSelf`), and the Animation-clip, Fade, Bitwise, Array, IComparable, IEquatable, Type, Collider, NavMesh, Graphic, RenderTexture, TimeSpan, Base64, File, OR, Pipes, Targeting and Validation extension files.
+- **Removed** 1,381 members of the `Runtime/Extensions` static classes with no caller in this repository (call sites found by a Roslyn token scan over every package, `Samples~` and `Assets/Scripts`, under editor, all-symbols and no-symbols preprocessor sets; members kept code depends on were kept transitively). The folder went from 21.6k to 6.6k lines. `Deconstruct` on `Vector2`/`Vector3` is kept (called implicitly by tuple deconstruction), and the `RandomX` `UnityEngine.Random` facade (`RandomX.Unity.cs`) is kept whole because its contract is member-for-member parity.
+- **Removed** whole files: `PlayerPrefsX` (use `PersistentDataHandler`), `TimeX`, the LINQ-to-GameObject traversal enumerables in `GameObjectExtensions` (`Ancestors`/`Descendants`/`BeforeSelf`/`AfterSelf`), and the Animation-clip, Fade, Bitwise, Array, IComparable, IEquatable, Type, Collider, NavMesh, Graphic, RenderTexture, TimeSpan, Base64, File, OR, Pipes, Targeting, Validation and EventSystem extension files.
 - **Removed** `MonoBehaviourExtensions.RunOnce`, `CollectionExtensions.GetRandom`, `MathExtensions.GetDirectionFromSpread` and `RandomX.NextWeightedInd` among the rest. Full list by class:
 
 <details><summary>Removed members</summary>
@@ -48,7 +48,6 @@ All notable changes to this package are documented here. Format follows [Keep a 
 - `NavMeshExtensions`: GetLength, GetPointOnPath, GetPointsOnPath, GetTimeToPass
 - `NullChecks`: IsNotNull, VerifyNotNull
 - `ORExtension`: IsOneOf
-- `PersistentDataHandler`: CacheInitKey, OnApplicationFocusChanged, OnApplicationPauseChanged, SubscribeLifecycle
 - `Physics2DExtensions`: GetClosestCollider2D, GetCollidersInRange2D, GetGroundHeight2D, GetGroundNormal2D, IsOnGround2D, IsPositionClear2D, OverlapBox2D, OverlapCapsule2D, OverlapCircle2D, Raycast2DDown, Raycast2DTo, Raycast2DUp
 - `PhysicsExtensions`: FindNearestClearPosition, GetClosestCollider, GetCollidersInRange, GetGroundHeight, GetGroundNormal, IsOnGround, RaycastDown, RaycastTo, RaycastUp
 - `Pipes`: Pipe, PipeKeep
@@ -86,6 +85,11 @@ All notable changes to this package are documented here. Format follows [Keep a 
 - `VectorExtensions`: AddX, AddY, AddZ, AngleAroundAxis, ApplyTransform, Approx, AverageVector, BytesToString, ClampX, ClampY, CompareAllComponents, CreateValidated, Distance2D, DistanceSqr2D, DistanceTo, EventlyDistributedPointOnCircle, EventlyDistributedPointOnSphere, FindClosest, GetAnglesTo, GetClosest, GetClosestPointOnRay, GetClosestPointOnSegment, GetXY, GetXZ, GetXZY, GetYX, GetYXZ, GetYZ, GetYZX, GetZX, GetZXY, GetZY, GetZYX, InsertW, InsertX, InsertY, InsertZ, InverseApplyTransform, InverseTransform, InvertX, InvertY, InvertZ, IsInside, IsUniform, MaxComponent, MaxComponentIndex, MidPoint, MidPointTo, MinComponent, MinComponentIndex, MoveToward, NearestPoint, NearlyEquals, OffsetXY, OffsetXZ, OffsetYZ, OneX, OneY, OneZ, ProjectOntoPlane, RelativePosTo, RotateAroundY, ScaleBy, SetXY, SetXZ, SetYZ, SetZ, SmoothDampEuler, SnapToOne, SnapValue, SqrDistance, SqrLineDistance, StringToBytes, ToStringVerbose, ToV3String, ToVector2Int, ToVector2Z, ToVector3, ToVector3Int, ToVector3XZ, Vector3Normal, WithNegate, WithNegateX, WithNegateXY, WithNegateXZ, WithNegateY, WithNegateYZ, WithNegateZ, WithXY, WithXZ, WithYZ, WithZ, WorldToScreenPointInCanvas, ZeroX, ZeroY, ZeroZ
 
 </details>
+
+### Storage
+
+- **Added** `PersistentDataHandler.DeleteKey` / `IPersistentDataAdapter.DeleteKey`.
+- **Fixed** the trim had removed `PersistentDataHandler.SubscribeLifecycle` (a `[RuntimeInitializeOnLoadMethod]` that flushes data on pause, focus loss and quit); restored with its handlers.
 
 ### AetherInspector
 
