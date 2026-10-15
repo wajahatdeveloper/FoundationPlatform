@@ -62,23 +62,6 @@ public static class EnumExtensions
     }
 
     /// <summary>
-    /// Returns the underlying byte value.
-    /// </summary>
-    /// <param name="enumValue">The enum value to get the underlying byte value of.</param>
-    /// <typeparam name="T">The enum type.</typeparam>
-    /// <returns>The underlying byte value.</returns>
-    public static byte ToByte<T>(this T enumValue) where T : Enum
-    {
-        if (enumValue == null)
-            throw new ArgumentNullException(nameof(enumValue));
-
-        if (!typeof(byte).IsAssignableFrom(Enum.GetUnderlyingType(typeof(T))))
-            throw new ArgumentException("Underlying type of enum value isn't byte.");
-
-        return (byte)(object)enumValue;
-    }
-
-    /// <summary>
     /// Returns the underlying integer value.
     /// </summary>
     /// <param name="enumValue">The enum value to get the underlying integer value of.</param>

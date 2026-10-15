@@ -29,21 +29,6 @@ public static class IEnumerableExtensions
         yield return value;
     }
 
-    public static IEnumerable<T> Flatten<TKey, T>(this IEnumerable<IDictionary<TKey, T>> @this)
-    {
-        return @this.SelectMany(i => i.Values);
-    }
-
-    public static IEnumerable<T> Flatten<TKey, T>(this IDictionary<TKey, IEnumerable<T>> @this)
-    {
-        return @this.Values.SelectMany(i => i);
-    }
-
-    public static IEnumerable<T> Flatten<TKey1, TKey2, T>(this IDictionary<TKey1, IDictionary<TKey2, T>> @this)
-    {
-        return @this.Values.SelectMany(i => i.Values);
-    }
-
     public static int IndexOf<T>(this IEnumerable<T> @this, T value, IEqualityComparer<T> comparer)
     {
         if (comparer == null)
@@ -143,31 +128,6 @@ public static class IEnumerableExtensions
         return @this.OrderBy(_ => rnd.Range(0f, 1f));
     }
 
-    public static IEnumerable<TResult> Zip<T1, T2, T3, TResult>(this IEnumerable<T1> source, IEnumerable<T2> second,
-        IEnumerable<T3> third, Func<T1, T2, T3, TResult> selector)
-    {
-        using (var e1 = source.GetEnumerator())
-        using (var e2 = second.GetEnumerator())
-        using (var e3 = third.GetEnumerator())
-            while (e1.MoveNext() && e2.MoveNext() && e3.MoveNext())
-                yield return selector(e1.Current, e2.Current, e3.Current);
-    }
-
-    public static string ConcatString<T>(this IEnumerable<T> @this)
-    {
-        return string.Concat(@this);
-    }
-
-    public static string ConcatString(this IEnumerable<string> @this)
-    {
-        return string.Concat(@this);
-    }
-
-    public static IList<T> AsList<T>(this IEnumerable<T> @this)
-    {
-        return @this as IList<T> ?? @this.ToList();
-    }
-
     public static Dictionary<TKey, T> ToDictionary<TKey, T>(this IEnumerable<KeyValuePair<TKey, T>> @this)
     {
         return @this.ToDictionary(p => p.Key, p => p.Value);
@@ -189,73 +149,6 @@ public static class IEnumerableExtensions
         return new HashSet<TKey>(@this.Select(keySelector), comparer);
     }
 
-    public static SortedSet<T> ToSortedSet<T>(this IEnumerable<T> @this)
-    {
-        return new SortedSet<T>(@this);
-    }
-
-    public static SortedSet<T> ToSortedSet<T>(this IEnumerable<T> @this, IComparer<T> comparer)
-    {
-        return new SortedSet<T>(@this, comparer);
-    }
-
-    public static SortedSet<TKey> ToSortedSet<TKey, T>(this IEnumerable<T> @this, Func<T, TKey> keySelector)
-    {
-        return new SortedSet<TKey>(@this.Select(keySelector));
-    }
-
-    public static SortedSet<TKey> ToSortedSet<TKey, T>(this IEnumerable<T> @this, Func<T, TKey> keySelector,
-        IComparer<TKey> comparer)
-    {
-        return new SortedSet<TKey>(@this.Select(keySelector), comparer);
-    }
-
-    /// <summary>
-    /// ????????????????????
-    /// </summary>
-    /// <typeparam name="T1"></typeparam>
-    /// <typeparam name="T2"></typeparam>
-    /// <param name="first"></param>
-    /// <param name="second"></param>
-    /// <param name="condition">??????</param>
-    /// <returns></returns>
-    public static (List<T1> adds, List<T2> remove, List<T1> updates) CompareChanges<T1, T2>(this IEnumerable<T1> first,
-        IEnumerable<T2> second, Func<T1, T2, bool> condition)
-    {
-        if (first == null)
-            first = new List<T1>();
-        if (second == null)
-            second = new List<T2>();
-        var firstSource = first as ICollection<T1>;
-        if (firstSource == null)
-            firstSource = first.ToList();
-        var secondSource = second as ICollection<T2>;
-        if (secondSource == null)
-            secondSource = second.ToList();
-        var add = firstSource.ExceptBy(secondSource, condition).ToList();
-        var remove = secondSource.ExceptBy(firstSource, (s, f) => condition(f, s)).ToList();
-        var update = firstSource.IntersectBy(secondSource, condition).ToList();
-        return (add, remove, update);
-    }
-
-    /// <summary>
-    /// ??????????
-    /// </summary>
-    public static IEnumerable<TFirst> ExceptBy<TFirst, TSecond>(this IEnumerable<TFirst> first,
-        IEnumerable<TSecond> second, Func<TFirst, TSecond, bool> condition)
-    {
-        return first.Where(f => !second.Any(s => condition(f, s)));
-    }
-
-    /// <summary>
-    /// ??????????
-    /// </summary>
-    public static IEnumerable<TFirst> IntersectBy<TFirst, TSecond>(this IEnumerable<TFirst> first,
-        IEnumerable<TSecond> second, Func<TFirst, TSecond, bool> condition)
-    {
-        return first.Where(f => second.Any(s => condition(f, s)));
-    }
-
     /// <summary>
     ///     An IEnumerable&lt;T&gt; extension method that queries if a not is empty.
     /// </summary>
@@ -265,17 +158,6 @@ public static class IEnumerableExtensions
     public static bool IsNotEmpty<T>(this IEnumerable<T> @this)
     {
         return @this.Any();
-    }
-
-    /// <summary>
-    ///     An IEnumerable&lt;T&gt; extension method that queries if a not null or is empty.
-    /// </summary>
-    /// <typeparam name="T">Generic type parameter.</typeparam>
-    /// <param name="this">The collection to act on.</param>
-    /// <returns>true if a not null or is t>, false if not.</returns>
-    public static bool IsNotNullOrEmpty<T>(this IEnumerable<T> @this)
-    {
-        return @this != null && @this.Any();
     }
 
     /// <summary>
@@ -315,22 +197,6 @@ public static class IEnumerableExtensions
         return string.Join(separator.ToString(), @this);
     }
 
-
-
-    /// <summary>
-    /// Get random elements from the <paramref name="enumerable"/>.
-    /// </summary>
-    /// <typeparam name="T">Source type.</typeparam>
-    /// <param name="enumerable">The enumerable.</param>
-    /// <param name="count">Count of the random elements.</param>
-    /// <returns>Random elements from enumerable.</returns>
-    /// <remarks>PRESENTATION-ONLY: backed by UnityEngine.Random via PopRandoms; not deterministic.</remarks>
-    public static List<T> GetRandomElements<T>(this IEnumerable<T> enumerable, int count)
-    {
-        var poppedIndexes = Enumerable.Range(0, enumerable.Count()).ToList().PopRandoms(count).Select(p => p.index);
-        return enumerable.Where((el, i) => poppedIndexes.Contains(i)).ToList();
-    }
-
     /// <summary>
     /// Excepts passed elements from <paramref name="enumerable"/>.
     /// </summary>
@@ -362,117 +228,6 @@ public static class IEnumerableExtensions
         return enumerable.OrderBy(_ => rnd.Range(0f, 1f));
     }
 
-    /// <summary>
-    /// Get random element index with probability selector.
-    /// </summary>
-    /// <typeparam name="T">Enumerable elements type.</typeparam>
-    /// <param name="enumerable">The enumerable.</param>
-    /// <param name="probabilities">Probabilities, must match in count with enumerable.</param>
-    /// <returns>Tuple with random element and it's index.</returns>
-    /// <exception cref="ArgumentException">Throwed when <paramref name="enumerable"/> and <paramref name="probabilities"/> counts are not match.</exception>
-    public static (T element, int index) GetRandomElementWithProbability<T>(this IEnumerable<T> enumerable,
-        params float[] probabilities) => GetRandomElementWithProbability(enumerable, (IEnumerable<float>)probabilities);
-
-    /// <summary>
-    /// <inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])"/>
-    /// </summary>
-    /// <typeparam name="T"><inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])"/></typeparam>
-    /// <param name="enumerable"><inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])" path="/param[@name='enumerable']"/></param>
-    /// <param name="probabilities"><inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])" path="/param[@name='probabilities']"/></param>
-    /// <returns>Tuple with random element and it's index.</returns>
-    /// <exception cref="ArgumentException">Throwed when <paramref name="enumerable"/> and <paramref name="probabilities"/> counts are not match.</exception>
-    public static (T element, int index) GetRandomElementWithProbability<T>(this IEnumerable<T> enumerable,
-        IEnumerable<float> probabilities)
-    {
-        var items = enumerable as IList<T> ?? enumerable.ToList();
-        var probs = probabilities as IList<float> ?? probabilities.ToList();
-        var count = items.Count;
-
-        if (probs.Count != count)
-            throw new ArgumentException($"Count of probabilities and enumerble elements must be equal.");
-
-        if (count == 0)
-            throw new ArgumentException($"Enumerable count must be greater than zero");
-
-        var sumAll = 0f;
-        for (var i = 0; i < probs.Count; i++)
-            sumAll += probs[i];
-
-        var randomValue = UnityRandom.value * sumAll;
-        var sum = 0f;
-
-        for (var index = 0; index < count; index++)
-        {
-            sum += probs[index];
-
-            if (randomValue < sum || randomValue.Approximately(sum))
-                return (items[index], index);
-        }
-
-        var lastIndex = count - 1;
-        return (items[lastIndex], lastIndex);
-    }
-
-    /// <summary>
-    /// Weighted-random element selection using an explicit randomness source (deterministic when a deterministic provider is passed).
-    /// </summary>
-    public static (T element, int index) GetRandomElementWithProbability<T>(this IEnumerable<T> enumerable,
-        IEnumerable<float> probabilities, IRandomProvider rnd)
-    {
-        if (rnd == null) throw new ArgumentNullException(nameof(rnd));
-
-        var count = enumerable.Count();
-
-        if (probabilities.Count() != count)
-            throw new ArgumentException($"Count of probabilities and enumerble elements must be equal.");
-
-        if (count == 0)
-            throw new ArgumentException($"Enumerable count must be greater than zero");
-
-        var randomValue = rnd.Range(0f, 1f) * probabilities.Sum();
-        var sum = 0f;
-
-        var index = -1;
-        var enumerator = probabilities.GetEnumerator();
-
-        while (enumerator.MoveNext())
-        {
-            index += 1;
-            var probability = enumerator.Current;
-
-            sum += probability;
-
-            if (randomValue < sum || randomValue.Approximately(sum))
-                return (enumerable.ElementAt(index), index);
-        }
-
-        index = probabilities.Count() - 1;
-        return (enumerable.ElementAt(index), index);
-    }
-
-    /// <summary>
-    /// <inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])"/>
-    /// </summary>
-    /// <typeparam name="T"><inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])"/></typeparam>
-    /// <param name="enumerable"><inheritdoc cref="GetRandomElementWithProbability{T}(IEnumerable{T}, float[])" path="/param[@name='enumerable']"/></param>
-    /// <param name="probabilitySelector">Probabilities selector.</param>
-    /// <returns>Tuple with random element and it's index.</returns>
-    /// <exception cref="ArgumentException">Throwed when <paramref name="enumerable"/> and <paramref name="probabilities"/> counts are not match.</exception>
-    public static (T element, int index) GetRandomElementWithProbability<T>(this IEnumerable<T> enumerable,
-        Func<T, float> probabilitySelector)
-    {
-        return GetRandomElementWithProbability(enumerable, enumerable.Select(el => probabilitySelector(el)));
-    }
-
-    /// <summary>
-    /// Weighted-random element selection from a probability selector using an explicit randomness source.
-    /// </summary>
-    public static (T element, int index) GetRandomElementWithProbability<T>(this IEnumerable<T> enumerable,
-        Func<T, float> probabilitySelector, IRandomProvider rnd)
-    {
-        return GetRandomElementWithProbability(enumerable, enumerable.Select(el => probabilitySelector(el)), rnd);
-    }
-
     public static IEnumerable<T> ForEach<T>(this IEnumerable<T> enumerable, Action<T, int> action)
     {
         int index = 0;
@@ -484,31 +239,9 @@ public static class IEnumerableExtensions
         }
     }
 
-    public static IEnumerable<T> WhereIf<T>(this IEnumerable<T> enumerable, bool condition, Func<T, bool> predicate)
-    {
-        return condition ? enumerable.Where(predicate) : enumerable;
-    }
-
-    public static IEnumerable<T> TakeUntil<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
-    {
-        return enumerable.TakeWhile(item => !predicate(item));
-    }
-
     public static IEnumerable<T> Except<T>(this IEnumerable<T> enumerable, T item)
     {
         return enumerable.Except(Enumerable.Repeat(item, 1));
-    }
-
-    public static void Rewrite<T>(this ICollection<T> collection, IEnumerable<T> newCollection)
-    {
-        collection.Clear();
-        foreach (T item in newCollection)
-            collection.Add(item);
-    }
-
-    public static IEnumerable<T> OrEmpty<T>(this IEnumerable<T> enumerable)
-    {
-        return enumerable ?? Enumerable.Empty<T>();
     }
 
     public static IEnumerable<T> Reverse<T>(this IEnumerable<T> enumerable)
@@ -517,55 +250,6 @@ public static class IEnumerableExtensions
 
         for (int i = array.Length - 1; i >= 0; i--)
             yield return array[i];
-    }
-
-    public static T MinBy<T, TMin>(this IEnumerable<T> enumerable, Func<T, TMin> selector)
-        where TMin : IComparable<TMin>
-    {
-        T min = default;
-        bool first = true;
-
-        foreach (T item in enumerable)
-        {
-            if (first)
-            {
-                min = item;
-                first = false;
-            }
-            else if (selector(item).CompareTo(selector(min)) < 0)
-            {
-                min = item;
-            }
-        }
-
-        return min;
-    }
-
-    public static T MaxBy<T, TMax>(this IEnumerable<T> enumerable, Func<T, TMax> selector)
-        where TMax : IComparable<TMax>
-    {
-        T max = default;
-        bool first = true;
-
-        foreach (T item in enumerable)
-        {
-            if (first)
-            {
-                max = item;
-                first = false;
-            }
-            else if (selector(item).CompareTo(selector(max)) > 0)
-            {
-                max = item;
-            }
-        }
-
-        return max;
-    }
-
-    public static T FirstOrNull<T>(this IEnumerable<T> enumerable) where T : class
-    {
-        return enumerable.DefaultIfEmpty(null).FirstOrDefault();
     }
 
     /// <summary>
@@ -676,133 +360,8 @@ public static class IEnumerableExtensions
         return enumerable == null || enumerable.IsEmpty();
     }
 
-    public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> enumerable)
-    {
-        return new ObservableCollection<T>(enumerable);
-    }
-
-    public static string AsString<T>(this IEnumerable<T> enumerable)
-    {
-        return AsString(enumerable, x => x?.ToString(), ", ");
-    }
-
-    public static string AsString<T>(this IEnumerable<T> enumerable, Func<T, string> selector)
-    {
-        return AsString(enumerable, selector, ", ");
-    }
-
-    public static string AsString<T>(this IEnumerable<T> enumerable, string separator)
-    {
-        return AsString(enumerable, x => x?.ToString(), separator);
-    }
-
-    public static string AsString<T>(this IEnumerable<T> enumerable, Func<T, string> selector, string separator)
-    {
-        return enumerable.IsEmpty()
-            ? string.Empty
-            : string.Join(separator, enumerable.Select(x => selector(x) ?? "null"));
-    }
-
-    #region UnityConvertAll
-
-    /// <summary>
-    /// ConvertAll LINQ extension, which runs on WP8 (WP8 doesn't support .ConvertAll())
-    /// </summary>
-    /// <typeparam name="InputType"></typeparam>
-    /// <typeparam name="OutputType"></typeparam>
-    /// <param name="inputList"></param>
-    /// <param name="converter"></param>
-    /// <returns></returns>
-    public static List<OutputType> UnityConvertAll<InputType, OutputType>(this List<InputType> inputList,
-        Func<InputType, OutputType> converter)
-    {
-        int j = inputList.Count;
-        List<OutputType> output = new List<OutputType>(j);
-        for (int i = 0; i < j; i++)
-            output.Add(converter(inputList[i]));
-
-        return output;
-    }
-
-    // UnityConvertAll
-
-    #endregion
-
-    /// <summary>
-    /// Returns all elements of the specified sequence separated by the given separator.
-    /// </summary>
-    /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
-    /// <param name="source">The <see cref="IEnumerable{TSource}"/> to intersperse the separator into.</param>
-    /// <param name="separator">The separator.</param>
-    /// <param name="count">The count of <paramref name="seperator"> between each element. Defaults to 1.</param>
-    /// <returns>The sequence containing the interspersed separator.</returns>
-    /// <example>
-    /// <code>
-    /// int[] numbers = { 1, 2, 3, 4 };
-    /// IEnumerable&lt;int&gt; interspersed = numbers.Intersperse(0, 2);
-    /// </code>
-    /// The <c>interspersed</c> variable, when iterated over, will yield the sequence 1, 0, 0, 2, 0, 0, 3, 0, 0, 4.
-    /// </example>
-    public static IEnumerable<TSource> Intersperse<TSource>(this IEnumerable<TSource> source, TSource separator,
-        int count)
-    {
-        ThrowIf.Argument.IsNull(source, "source");
-        ThrowIf.Argument.IsZeroOrNegative(count, "count");
-
-        return IntersperseIterator(source, separator, count);
-    }
-
-    /// <summary>Intersperses a single separator between elements.</summary>
-    public static IEnumerable<TSource> Intersperse<TSource>(this IEnumerable<TSource> source, TSource separator) =>
-        Intersperse(source, separator, 1);
-
-    private static IEnumerable<TSource> IntersperseIterator<TSource>(IEnumerable<TSource> source, TSource separator,
-        int count)
-    {
-        bool isFirst = true;
-
-        foreach (TSource element in source)
-        {
-            if (!isFirst)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    yield return separator;
-                }
-            }
-            else
-            {
-                isFirst = false;
-            }
-
-            yield return element;
-        }
-    }
-
-
-    /// <summary>
-    /// Returns a flattened sequence that contains the concatenation of all the nested sequences' elements.
-    /// </summary>
-    /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
-    /// <param name="source">A sequence of sequences to be flattened.</param>
-    /// <returns>The concatenation of all the nested sequences' elements.</returns>
-    public static IEnumerable<TSource> Flatten<TSource>(this IEnumerable<IEnumerable<TSource>> source)
-    {
-        ThrowIf.Argument.IsNull(source, "source");
-
-        return FlattenIterator(source);
-    }
-
-    private static IEnumerable<TSource> FlattenIterator<TSource>(IEnumerable<IEnumerable<TSource>> source)
-    {
-        foreach (IEnumerable<TSource> array in source)
-        {
-            foreach (TSource element in array)
-            {
-                yield return element;
-            }
-        }
-    }
+#region UnityConvertAll
+#endregion
 
 
     /// <summary>
@@ -899,29 +458,6 @@ public static class IEnumerableExtensions
         }
     }
 
-    public static T MaxElement<T, TCompare>(this IEnumerable<T> collection, Func<T, TCompare> func)
-        where TCompare : IComparable<TCompare>
-    {
-        T maxItem = default(T);
-        TCompare maxValue = default(TCompare);
-
-        if (collection == null)
-            return maxItem;
-
-        foreach (var item in collection)
-        {
-            TCompare temp = func(item);
-
-            if (maxItem == null || temp.CompareTo(maxValue) > 0)
-            {
-                maxValue = temp;
-                maxItem = item;
-            }
-        }
-
-        return maxItem;
-    }
-
     public static T[] RemoveRange<T>(this T[] array, int index, int count)
     {
         if (count < 0)
@@ -944,20 +480,6 @@ public static class IEnumerableExtensions
         }
 
         return newArray;
-    }
-
-    /// <summary>
-    /// Finds the maximum ID from a collection using a selector function.
-    /// Returns 0 if collection is empty or null.
-    /// </summary>
-    /// <typeparam name="T">Type of the elements in the collection.</typeparam>
-    /// <param name="enumerable">The collection to search.</param>
-    /// <param name="idSelector">Function to extract the ID from each element.</param>
-    /// <returns>The maximum ID found, or 0 if collection is empty or null.</returns>
-    public static int MaxId<T>(this IEnumerable<T> enumerable, Func<T, int> idSelector)
-    {
-        if (enumerable == null) return 0;
-        return enumerable.Where(item => item != null).Select(idSelector).DefaultIfEmpty(0).Max();
     }
 }
 

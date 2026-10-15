@@ -61,7 +61,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
                 case InspectorFallbackScope.AllScripts:
                     return target is MonoBehaviour || target is ScriptableObject;
                 case InspectorFallbackScope.FirstParty:
-                    return IsFirstParty(type);
+                    return IsFirstParty(target, type);
                 case InspectorFallbackScope.Attributed:
                     return AetherInspectorRenderer.TypeHasEngineAttributes(type);
                 default:
@@ -73,19 +73,44 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
         // Assembly names in this repo carry no shared prefix (FoundationPlatform.Runtime, ItemSystem.Editor,
         // Game.Features, ...), so ownership is resolved from where the defining asmdef lives. Types compiled
         // into the predefined assemblies have no asmdef and belong to this project by definition.
-        private static bool IsFirstParty(Type type)
+        // Asset packs import under Assets/ (with or without an asmdef), so the script's own folder decides first.
+        private static bool IsFirstParty(UnityEngine.Object target, Type type)
         {
             if (s_firstParty.TryGetValue(type, out bool cached)) return cached;
 
             string assemblyName = type.Assembly.GetName().Name;
             string asmdefPath = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assemblyName);
-            bool firstParty = string.IsNullOrEmpty(asmdefPath)
-                ? assemblyName.StartsWith("Assembly-CSharp", StringComparison.Ordinal)
-                : asmdefPath.StartsWith("Assets/", StringComparison.Ordinal)
-                  || asmdefPath.StartsWith("Packages/com.aethernexus.", StringComparison.Ordinal);
+            bool firstParty = !IsUnderThirdPartyFolder(ScriptPathOf(target)) && !IsUnderThirdPartyFolder(asmdefPath)
+                && (string.IsNullOrEmpty(asmdefPath)
+                    ? assemblyName.StartsWith("Assembly-CSharp", StringComparison.Ordinal)
+                    : asmdefPath.StartsWith("Assets/", StringComparison.Ordinal)
+                      || asmdefPath.StartsWith("Packages/com.aethernexus.", StringComparison.Ordinal));
 
             s_firstParty[type] = firstParty;
             return firstParty;
+        }
+
+        private static string ScriptPathOf(UnityEngine.Object target)
+        {
+            MonoScript script = target switch
+            {
+                MonoBehaviour behaviour => MonoScript.FromMonoBehaviour(behaviour),
+                ScriptableObject asset => MonoScript.FromScriptableObject(asset),
+                _ => null
+            };
+            return script == null ? null : AssetDatabase.GetAssetPath(script);
+        }
+
+        private static bool IsUnderThirdPartyFolder(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            var folders = InspectorXSettings.instance.thirdPartyFolders;
+            for (int i = 0; i < folders.Length; i++)
+            {
+                string folder = folders[i].TrimEnd('/');
+                if (path.StartsWith(folder + "/", StringComparison.Ordinal)) return true;
+            }
+            return false;
         }
     }
 }

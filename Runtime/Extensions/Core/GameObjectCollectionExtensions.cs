@@ -10,66 +10,8 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class GameObjectCollectionExtensions
 {
-    #region IEnumerables
 
-    public static IEnumerable<GameObject> Ancestors(this IEnumerable<GameObject> source)
-    {
-        foreach (var item in source)
-        {
-            var e = item.Ancestors().GetEnumerator();
-            while (e.MoveNext())
-            {
-                yield return e.Current;
-            }
-        }
-    }
-
-    /// <summary>Returns a collection of GameObjects that contains every GameObject in the source collection, and the ancestors of every GameObject in the source collection.</summary>
-    public static IEnumerable<GameObject> AncestorsAndSelf(this IEnumerable<GameObject> source)
-    {
-        foreach (var item in source)
-        {
-            var e = item.AncestorsAndSelf().GetEnumerator();
-            while (e.MoveNext())
-            {
-                yield return e.Current;
-            }
-        }
-    }
-
-    /// <summary>Returns a collection of GameObjects that contains the descendant GameObjects of every GameObject in the source collection.</summary>
-    public static IEnumerable<GameObject> Descendants(this IEnumerable<GameObject> source,
-        Func<Transform, bool> descendIntoChildren)
-    {
-        foreach (var item in source)
-        {
-            var e = item.Descendants(descendIntoChildren).GetEnumerator();
-            while (e.MoveNext())
-            {
-                yield return e.Current;
-            }
-        }
-    }
-
-    /// <summary>Returns descendants of every GameObject in the source collection, descending into all children.</summary>
-    public static IEnumerable<GameObject> Descendants(this IEnumerable<GameObject> source) => Descendants(source, null);
-
-    /// <summary>Returns a collection of GameObjects that contains every GameObject in the source collection, and the descendent GameObjects of every GameObject in the source collection.</summary>
-    public static IEnumerable<GameObject> DescendantsAndSelf(this IEnumerable<GameObject> source,
-        Func<Transform, bool> descendIntoChildren)
-    {
-        foreach (var item in source)
-        {
-            var e = item.DescendantsAndSelf(descendIntoChildren).GetEnumerator();
-            while (e.MoveNext())
-            {
-                yield return e.Current;
-            }
-        }
-    }
-
-    /// <summary>Returns every GameObject in the source collection plus descendants, descending into all children.</summary>
-    public static IEnumerable<GameObject> DescendantsAndSelf(this IEnumerable<GameObject> source) => DescendantsAndSelf(source, null);
+#region IEnumerables
 
     /// <summary>Returns a collection of the child GameObjects of every GameObject in the source collection.</summary>
     public static IEnumerable<GameObject> Children(this IEnumerable<GameObject> source)
@@ -77,19 +19,6 @@ public static class GameObjectCollectionExtensions
         foreach (var item in source)
         {
             var e = item.Children().GetEnumerator();
-            while (e.MoveNext())
-            {
-                yield return e.Current;
-            }
-        }
-    }
-
-    /// <summary>Returns a collection of GameObjects that contains every GameObject in the source collection, and the child GameObjects of every GameObject in the source collection.</summary>
-    public static IEnumerable<GameObject> ChildrenAndSelf(this IEnumerable<GameObject> source)
-    {
-        foreach (var item in source)
-        {
-            var e = item.ChildrenAndSelf().GetEnumerator();
             while (e.MoveNext())
             {
                 yield return e.Current;

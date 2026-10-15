@@ -47,6 +47,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             EditorGUILayout.LabelField("Fallback Inspector", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("fallbackScope"), new GUIContent("Draw Through Engine"));
             EditorGUILayout.HelpBox("All Scripts draws every MonoBehaviour and ScriptableObject through the engine. Everything adds native components and assets Unity left on its generic inspector. First Party limits it to this project and first-party packages. Attributed limits it to types declaring an AetherInspector attribute.", MessageType.None);
+            EditorGUILayout.PropertyField(serialized.FindProperty("thirdPartyFolders"), new GUIContent("Third-Party Folders"), true);
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Object Fields", EditorStyles.boldLabel);

@@ -10,7 +10,6 @@ namespace AetherNexus.FoundationPlatform.Extensions
 /// </summary>
 public static class PersistentDataHandler
 {
-    private const string CacheInitKey = "CacheInit";
 
     private static string dataFilePath = "";
     private static IPersistentDataAdapter adapter;
@@ -48,22 +47,6 @@ public static class PersistentDataHandler
         adapter.Initialize(dataFilePath);
     }
 
-    internal static void OnApplicationFocusChanged(bool hasFocus)
-    {
-        if (adapter != null)
-        {
-            adapter.OnApplicationFocusChanged(hasFocus);
-        }
-    }
-
-    internal static void OnApplicationPauseChanged(bool isPaused)
-    {
-        if (adapter != null)
-        {
-            adapter.OnApplicationPauseChanged(isPaused);
-        }
-    }
-
     internal static void OnApplicationQuitting()
     {
         if (adapter != null)
@@ -82,17 +65,6 @@ public static class PersistentDataHandler
             adapter = null;
             isInitialized = false;
         }
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void SubscribeLifecycle()
-    {
-        PlatformHost.FocusChanged -= OnApplicationFocusChanged;
-        PlatformHost.PauseChanged -= OnApplicationPauseChanged;
-        PlatformHost.Quitting -= OnApplicationQuitting;
-        PlatformHost.FocusChanged += OnApplicationFocusChanged;
-        PlatformHost.PauseChanged += OnApplicationPauseChanged;
-        PlatformHost.Quitting += OnApplicationQuitting;
     }
 
     public static bool ContainsKey(string key)

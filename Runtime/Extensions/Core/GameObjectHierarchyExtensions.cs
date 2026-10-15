@@ -12,111 +12,11 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class GameObjectHierarchyExtensions
 {
-    #region GetChildrenWithName
 
-    /// <summary>
-    /// Returns all children of the game object with the specified name
-    /// </summary>
-    /// <param name="go"></param>
-    /// <param name="name"></param>
-    /// <remarks>
-    /// Suggested by: Vipsu
-    /// Link: http://forum.unity3d.com/members/vipsu.138664/
-    /// </remarks>
-    public static Transform[] GetChildrenWithName(this GameObject go, string name)
-    {
-        // loop through and add matching children
-        return go.transform.Cast<Transform>()
-            .Where(w => w.name.Equals(name, StringComparison.CurrentCultureIgnoreCase))
-            .Return(r => r.ToArray(), (Transform[])null);
-    }
-
-    #endregion
-
-    #region GetChildrenComponent
-
-    /// <summary>
-    /// Returns a list of components found on all children matching this type
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="go"></param>
-    /// <remarks>
-    /// Suggested by: Vipsu
-    /// Link: http://forum.unity3d.com/members/vipsu.138664/
-    /// </remarks>
-    public static T[] GetChildrenComponent<T>(this GameObject go) where T : Component
-    {
-        // loop through and add matching children
-        return go.transform.Cast<Transform>()
-            .Where(w => w.gameObject.HasComponent<T>())
-            .Return(r => r.ToList().UnityConvertAll(x => x.gameObject.GetComponent<T>()).ToArray(),
-                new List<T>().ToArray());
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Finds a child insides the gameobject that match with the name parameter
-    /// </summary>
-    /// <param name="obj"></param>
-    /// <param name="name">The name of the child you want to search</param>
-    /// <returns>returns a game object or null</returns>
-    public static GameObject GetChildByName(this GameObject obj, string name)
-    {
-        var childCount = obj.transform.childCount;
-        for (int i = 0; i < childCount; i++)
-        {
-            var child = obj.transform.GetChild(i).gameObject;
-            if (child.name == name) return child;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Get all components of specified Layer in childs
-    /// </summary>
-    public static List<Transform> GetObjectsOfLayerInChilds(this GameObject gameObject, int layer)
-    {
-        List<Transform> list = new List<Transform>();
-        CheckChildsOfLayer(gameObject.transform, layer, list);
-        return list;
-    }
-
-    /// <summary>
-    /// Get all components of specified Layer in childs
-    /// </summary>
-    public static List<Transform> GetObjectsOfLayerInChilds(this GameObject gameObject, string layer)
-    {
-        return gameObject.GetObjectsOfLayerInChilds(LayerMask.NameToLayer(layer));
-    }
-
-    /// <summary>
-    /// Get all components of specified Layer in childs
-    /// </summary>
-    public static List<Transform> GetObjectsOfLayerInChilds(this Component component, string layer)
-    {
-        return component.GetObjectsOfLayerInChilds(LayerMask.NameToLayer(layer));
-    }
-
-    /// <summary>
-    /// Get all components of specified Layer in childs
-    /// </summary>
-    public static List<Transform> GetObjectsOfLayerInChilds(this Component component, int layer)
-    {
-        return component.gameObject.GetObjectsOfLayerInChilds(layer);
-    }
-
-    private static void CheckChildsOfLayer(Transform transform, int layer, List<Transform> childsCache)
-    {
-        foreach (Transform t in transform)
-        {
-            CheckChildsOfLayer(t, layer, childsCache);
-
-            if (t.gameObject.layer != layer) continue;
-            childsCache.Add(t);
-        }
-    }
+#region GetChildrenWithName
+#endregion
+#region GetChildrenComponent
+#endregion
 
     #region Traverse
 
@@ -130,82 +30,10 @@ public static class GameObjectHierarchyExtensions
         return parentTransform.gameObject;
     }
 
-    /// <summary>Gets the first child GameObject with the specified name. If there is no GameObject with the speficided name, returns null.</summary>
-    public static GameObject Child(this GameObject origin, string name)
-    {
-        if (origin == null) return null;
-
-        var child = origin.transform.Find(name); // transform.find can get inactive object
-        if (child == null) return null;
-        return child.gameObject;
-    }
-
     /// <summary>Returns a collection of the child GameObjects.</summary>
     public static ChildrenEnumerable Children(this GameObject origin)
     {
         return new ChildrenEnumerable(origin, false);
-    }
-
-    /// <summary>Returns a collection of GameObjects that contain this GameObject, and the child GameObjects.</summary>
-    public static ChildrenEnumerable ChildrenAndSelf(this GameObject origin)
-    {
-        return new ChildrenEnumerable(origin, true);
-    }
-
-    /// <summary>Returns a collection of the ancestor GameObjects of this GameObject.</summary>
-    public static GameObjectExtensions.AncestorsEnumerable Ancestors(this GameObject origin)
-    {
-        return new GameObjectExtensions.AncestorsEnumerable(origin, false);
-    }
-
-    /// <summary>Returns a collection of GameObjects that contain this element, and the ancestors of this GameObject.</summary>
-    public static GameObjectExtensions.AncestorsEnumerable AncestorsAndSelf(this GameObject origin)
-    {
-        return new GameObjectExtensions.AncestorsEnumerable(origin, true);
-    }
-
-    /// <summary>Returns a collection of the descendant GameObjects.</summary>
-    public static GameObjectExtensions.DescendantsEnumerable Descendants(this GameObject origin,
-                                                                         Func<Transform, bool> descendIntoChildren)
-    {
-        return new GameObjectExtensions.DescendantsEnumerable(origin, false, descendIntoChildren);
-    }
-
-    /// <summary>Returns a collection of the descendant GameObjects, descending into all children.</summary>
-    public static GameObjectExtensions.DescendantsEnumerable Descendants(this GameObject origin) => Descendants(origin, null);
-
-    /// <summary>Returns a collection of GameObjects that contain this GameObject, and all descendant GameObjects of this GameObject.</summary>
-    public static GameObjectExtensions.DescendantsEnumerable DescendantsAndSelf(this GameObject origin,
-                                                                                Func<Transform, bool> descendIntoChildren)
-    {
-        return new GameObjectExtensions.DescendantsEnumerable(origin, true, descendIntoChildren);
-    }
-
-    /// <summary>Returns this GameObject and all descendant GameObjects, descending into all children.</summary>
-    public static GameObjectExtensions.DescendantsEnumerable DescendantsAndSelf(this GameObject origin) => DescendantsAndSelf(origin, null);
-
-    /// <summary>Returns a collection of the sibling GameObjects before this GameObject.</summary>
-    public static GameObjectExtensions.BeforeSelfEnumerable BeforeSelf(this GameObject origin)
-    {
-        return new GameObjectExtensions.BeforeSelfEnumerable(origin, false);
-    }
-
-    /// <summary>Returns a collection of GameObjects that contain this GameObject, and the sibling GameObjects before this GameObject.</summary>
-    public static GameObjectExtensions.BeforeSelfEnumerable BeforeSelfAndSelf(this GameObject origin)
-    {
-        return new GameObjectExtensions.BeforeSelfEnumerable(origin, true);
-    }
-
-    /// <summary>Returns a collection of the sibling GameObjects after this GameObject.</summary>
-    public static GameObjectExtensions.AfterSelfEnumerable AfterSelf(this GameObject origin)
-    {
-        return new GameObjectExtensions.AfterSelfEnumerable(origin, false);
-    }
-
-    /// <summary>Returns a collection of GameObjects that contain this GameObject, and the sibling GameObjects after this GameObject.</summary>
-    public static GameObjectExtensions.AfterSelfEnumerable AfterSelfAndSelf(this GameObject origin)
-    {
-        return new GameObjectExtensions.AfterSelfEnumerable(origin, true);
     }
 
     // Traverse struct implementations - these are large and complex, extracted from original file

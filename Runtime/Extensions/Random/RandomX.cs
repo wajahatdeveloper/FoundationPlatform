@@ -53,108 +53,6 @@ public static partial class RandomX
         }
     }
 
-    public static T NextEnum<T>(IRandomProvider rnd)
-    {
-        if (rnd == null)
-        {
-            throw new ArgumentNullException(nameof(rnd));
-        }
-
-        var values = Enum.GetValues(typeof(T));
-        if (values.Length == 0)
-        {
-            throw new InvalidOperationException(
-                "NextEnum<" + typeof(T).Name + ">: enum has no defined values.");
-        }
-
-        return (T)values.GetValue(rnd.Range(0, values.Length));
-    }
-
-    public static float NextDiscrete(float min, float max, int count, IRandomProvider rnd)
-    {
-        if (rnd == null)
-        {
-            throw new ArgumentNullException(nameof(rnd));
-        }
-        if (count < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(count), count, "count must be non-negative.");
-        }
-
-        if (count < 2)
-        {
-            return min;
-        }
-
-        if (max < min)
-        {
-            throw new ArgumentException(
-                "NextDiscrete requires max >= min; got min=" + min + ", max=" + max + ".");
-        }
-
-        return min + rnd.Range(0, count) * (max - min) / (count - 1);
-    }
-
-    public static int NextWeightedInd(int[] weights, IRandomProvider rnd)
-    {
-        if (weights == null)
-        {
-            throw new ArgumentNullException(nameof(weights));
-        }
-
-        return NextWeightedInd(weights.Select(i => (float)i).ToArray(), rnd);
-    }
-
-    public static int NextWeightedInd(float[] weights, IRandomProvider rnd)
-    {
-        if (weights == null)
-        {
-            throw new ArgumentNullException(nameof(weights));
-        }
-        if (rnd == null)
-        {
-            throw new ArgumentNullException(nameof(rnd));
-        }
-
-        if (weights.Length == 0)
-        {
-            throw new ArgumentException("weights must not be empty.", nameof(weights));
-        }
-
-        float total = 0f;
-        for (int i = 0; i < weights.Length; i++)
-        {
-            if (weights[i] < 0f)
-            {
-                throw new ArgumentException(
-                    "weights[" + i + "] is negative (" + weights[i] + "); all weights must be non-negative.",
-                    nameof(weights));
-            }
-
-            total += weights[i];
-        }
-
-        if (total <= 0f)
-        {
-            throw new ArgumentException(
-                "Sum of weights must be positive; got total=" + total + ".",
-                nameof(weights));
-        }
-
-        float random = rnd.Range(0f, total);
-        float sum = 0f;
-        for (int i = 0; i < weights.Length; i++)
-        {
-            sum += weights[i];
-            if (random <= sum)
-            {
-                return i;
-            }
-        }
-
-        return weights.Length - 1;
-    }
-
     /// <summary>
     /// Return random item from array.
     /// </summary>
@@ -235,19 +133,6 @@ public static partial class RandomX
         }
 
         return items;
-    }
-
-    /// <summary>
-    /// Return random bool value.
-    /// </summary>
-    public static bool NextBool(IRandomProvider rnd)
-    {
-        if (rnd == null)
-        {
-            throw new ArgumentNullException(nameof(rnd));
-        }
-
-        return rnd.Range(0, 2) == 0;
     }
 }
 }

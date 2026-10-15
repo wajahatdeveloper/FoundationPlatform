@@ -4,16 +4,6 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class RendererExtensions
 {
-    // http://wiki.unity3d.com/index.php?title=IsVisibleFrom
-    /// <summary>
-    /// Checks if the renderer is visible from the specified camera
-    /// </summary>
-    public static bool IsVisibleFrom(this Renderer renderer, Camera camera)
-    {
-        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
-
-        return GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
-    }
 
     /// <summary>
     /// Sets the alpha channel for the SpriteRenderer's color

@@ -167,9 +167,6 @@ All singletons handle application-quit via an `isQuitting` flag (don't recreate 
 | `ObservableList<T>` | `Runtime/Patterns/ObservableList.cs` | `ItemAdded`, `ItemRemoved`, `Cleared` events |
 | `MaybeMonad` | `Runtime/SupportTypes/MaybeMonad.cs` | **non-generic** static class of LINQ-chain extension methods (`With`, `Return`, `If`, `Unless`, `Do`, `IfNotNull`) — not a generic `Some`/`None` optional-value wrapper |
 | `HSL` / `HSV` | `Runtime/SupportTypes/` | color-space value types |
-
-`MonoBehaviourExtensions.RunOnce` keeps its per-GameObject "already fired" keys in a `ConditionalWeakTable<GameObject, HashSet<string>>`; it adds no component.
-
 ---
 
 ## Identity
@@ -218,25 +215,27 @@ GameFramework's `CharacterAnimator.cs` uses both: an assigned `AnimatorControlle
 
 ---
 
-## Extensions (~180 methods)
+## Extensions
+
+Only helpers something in this repository calls. A member with no caller is deleted rather than kept "in case" (2026-10 trim: 1,385 members removed, list in the CHANGELOG); add one back when real code needs it. Exception: the `RandomX` `UnityEngine.Random` facade stays complete, because swapping `Random.` for `RandomX.` must always compile.
 
 | Folder | Coverage |
 |---|---|
-| `Extensions/Core/` | GameObject, Component, MonoBehaviour, Type, String, null checks |
-| `Extensions/Collections/` | Array, List, Dictionary, IEnumerable |
-| `Extensions/Math/` | Vector2/3/4, Quaternion, Rect, int |
-| `Extensions/Animations/` | Animator, AnimationClip, fade transitions |
-| `Extensions/Physics/` | Collider, Rigidbody, Physics casts |
-| `Extensions/Rendering/` | Camera, Renderer, Texture2D, graphics |
+| `Extensions/Core/` | GameObject, Transform, Component (`GetComponentInSelfOrParents` / `GetComponentInSelfOrChildren`), MonoBehaviour, UnityEvent, String, Enum, null checks |
+| `Extensions/Collections/` | List, Dictionary, IEnumerable, Stack/Queue |
+| `Extensions/Math/` | Vector2/3/4 and int variants, Quaternion, Rect, `MathX` |
+| `Extensions/Animations/` | Animator; `SyncAnimatorTime` component |
+| `Extensions/Physics/` | Rigidbody, Physics casts |
+| `Extensions/Rendering/` | Camera, Renderer, Texture2D |
 | `Extensions/UI/` | RectTransform, Canvas, EventSystem, rich text |
-| `Extensions/Storage/` | `PersistentDataHandler` (JSON-backed, canonical for new code) + `PlayerPrefsX` (legacy binary codec, kept for existing callers) |
-| `Extensions/Utilities/` | Base64, file I/O, streams |
-| `Extensions/Reflection/` | `ReflectionExtensions` (`HasMethod`/`HasField`/`HasProperty`) — editor-only (`#if UNITY_EDITOR`), no runtime callers |
-| `Extensions/Audio/`, `Extensions/Bitwise/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Scene/`, `Extensions/Time/`, `Extensions/Validation/` | one concern each, self-explanatory from folder name |
+| `Extensions/Storage/` | `PersistentDataHandler` (JSON-backed device data) |
+| `Extensions/Utilities/` | streams, LayerMask, Action/Invoke helpers, `Comment` component |
+| `Extensions/Reflection/` | `ReflectionExtensions.HasProperty` — editor-only (`#if UNITY_EDITOR`) |
+| `Extensions/Audio/`, `Extensions/Color/`, `Extensions/Random/`, `Extensions/Scene/` | one concern each, self-explanatory from folder name |
 
 ### RandomX — pluggable random with `UnityEngine.Random`'s shape
 
-`Extensions/Random/RandomX.cs` holds the collection helpers (`Shuffle`, `NextItem`, `NextWeightedInd`, …) that take an `IRandomProvider`. `RandomX.Unity.cs` adds a static facade mirroring `UnityEngine.Random` member for member — `value`, `Range`, `insideUnitCircle`, `insideUnitSphere`, `onUnitSphere`, `rotation`, `rotationUniform`, `ColorHSV` — routed through an installed `RandomX.Provider`.
+`Extensions/Random/RandomX.cs` holds the collection helpers that take an `IRandomProvider`. `RandomX.Unity.cs` adds a static facade with `UnityEngine.Random`'s member names — `value`, `Range`, `insideUnitCircle`, `insideUnitSphere`, `onUnitSphere`, `rotation`, `rotationUniform`, `ColorHSV` — routed through an installed `RandomX.Provider`.
 
 Lowercase member names are deliberate: they match Unity's exactly, so adopting the facade in a file is a mechanical `Random.` → `RandomX.` substitution and nothing else. The point is that a deterministic sim can use the full surface rather than only the two methods a narrower facade offered — the missing members were why `UnityEngine.Random` kept appearing in simulation paths.
 
@@ -251,7 +250,7 @@ Two seams, both in `Runtime/Behaviours/`:
 
 The state payload is an opaque string so this package stays ignorant of any particular RNG implementation. `RandomX.Stream` / `CaptureState` / `RestoreState` throw a naming error when the installed provider only implements the smaller interface.
 
-`CollectionExtensions.GetRandom`/`Shuffle` (in `Extensions/Collections/`) and `MathExtensions.GetDirectionFromSpread` are explicitly documented as PRESENTATION-ONLY (bare `UnityEngine.Random`) — use the `IRandomProvider`-based path above for anything simulation-affecting.
+Any helper that uses bare `UnityEngine.Random` is presentation-only — use the `IRandomProvider`-based path above for anything simulation-affecting.
 
 ---
 

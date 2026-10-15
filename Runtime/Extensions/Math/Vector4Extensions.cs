@@ -11,13 +11,6 @@ public static class Vector4Extensions
         destination - source;
 
     /// <summary>
-    /// Immutably returns the result of the source vector multiplied with
-    /// another vector component-wise.
-    /// </summary>
-    public static Vector4 ScaleBy(this Vector4 source, Vector4 right) =>
-        Vector4.Scale(source, right);
-
-    /// <summary>
     /// Raise each component of the source Vector3 to the specified power.
     /// </summary>
     public static Vector4 Pow(this Vector4 source, float exponent) =>

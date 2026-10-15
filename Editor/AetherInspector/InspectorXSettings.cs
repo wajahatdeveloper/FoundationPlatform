@@ -32,7 +32,10 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
     public sealed class InspectorXSettings : ScriptableSingleton<InspectorXSettings>
     {
         [Tooltip("Which objects the global fallback inspector draws through the AetherInspector engine. Types outside the scope use Unity's default inspector. Concrete custom editors are never affected.")]
-        public InspectorFallbackScope fallbackScope = InspectorFallbackScope.AllScripts;
+        public InspectorFallbackScope fallbackScope = InspectorFallbackScope.FirstParty;
+
+        [Tooltip("Scripts under these folders are third-party for the First Party scope even when they compile into Assembly-CSharp or carry an asmdef under Assets/ (asset store packs).")]
+        public string[] thirdPartyFolders = { "Assets/AssetPacks", "Assets/Plugins" };
 
         [Tooltip("Pencil button next to populated object-reference fields opening a floating Property Editor.")]
         public bool objectFieldPencil = true;

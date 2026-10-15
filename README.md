@@ -18,7 +18,7 @@ Free Unity foundation layer for the **AetherNexus** toolkit (`com.aethernexus.fo
 | **Identity** | String-backed entity / channel ids |
 | **Animation** | `AnimationSet`, locomotion blend profiles, playable tooling |
 | **RandomX** | `UnityEngine.Random`'s API over a pluggable provider — named streams, state save/load |
-| **Extensions** | Broad GameObject / math / physics / UI helpers |
+| **Extensions** | GameObject / math / physics / UI helpers the AetherNexus packages actually call |
 | **Editor** | Framework Inspector, DebugX Console, Event Bus window, Entity Debugger overlay, Game State window, validation & utilities |
 
 Docs index: [Documentation~/index.md](Documentation~/index.md)

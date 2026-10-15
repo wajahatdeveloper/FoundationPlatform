@@ -11,13 +11,6 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class RichTextExtensions
 {
-    /// <summary>
-    /// Renders the text in italics.
-    /// </summary>
-    /// <param name="input">Text to render in italics.</param>
-    /// <returns>Text rendered in italics.</returns>
-    public static string Italics(this string input)
-        => WrapAround("<i>", input, "</i>");
 
     /// <summary>
     /// Sets the size of the text according to the parameter value, given in pixels.
