@@ -645,7 +645,7 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
 
 		private bool IsSetRegistered()
 		{
-			if (_bridge?.AnimationSets == null || _set == null)
+			if (_bridge == null || _bridge.AnimationSets == null || _set == null)
 				return false;
 			foreach (var s in _bridge.AnimationSets)
 				if (s == _set) return true;

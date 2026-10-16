@@ -65,7 +65,7 @@ namespace AetherNexus.FoundationPlatform.AetherInspector.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FoundationPlatform.AetherInspector] inspector draw for '{target?.GetType().Name}' failed: {ex}");
+                Debug.LogError($"[FoundationPlatform.AetherInspector] inspector draw for '{(target != null ? target.GetType().Name : "null")}' failed: {ex}");
                 DrawDefaultInspector();
             }
             serializedObject.ApplyModifiedProperties();

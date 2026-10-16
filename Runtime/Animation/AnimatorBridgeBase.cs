@@ -247,7 +247,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		{
 			if (string.IsNullOrEmpty(setName) || string.IsNullOrEmpty(entryId)) return false;
 			AnimationSet set = FindAnimationSetByName(setName);
-			return IsPlayableAnimationSetEntry(set?.FindEntry(entryId));
+			return set != null && IsPlayableAnimationSetEntry(set.FindEntry(entryId));
 		}
 
 		/// <summary>Called immediately before an AnimationSet entry begins playback.</summary>
@@ -616,7 +616,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{primarySetName}' not found.");
 			}
 
-			AnimationSetEntry entry = primary?.FindEntry(firstEntryId);
+			AnimationSetEntry entry = primary.FindEntry(firstEntryId);
 			if (IsPlayableAnimationSetEntry(entry))
 			{
 				PlayFromSetSequenceStrict(primarySetName, firstEntryId, onComplete);
@@ -642,13 +642,15 @@ namespace AetherNexus.FoundationPlatform.Animation
 			if (generation != _activeSequenceGeneration) return;
 
 			AnimationSet set = FindAnimationSetByName(setName);
+			if (set == null)
+				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
 			var entryId = sequenceIds[stepIndex];
-			var entry = set?.FindEntry(entryId);
+			var entry = set.FindEntry(entryId);
 			var isTerminal = stepIndex == sequenceIds.Count - 1;
 
 			AnimationSetSequenceUtility.ValidateSequenceEntryForPlayback(entry, set.name, isTerminal);
 
-			var sourceEntry = stepIndex > 0 ? set?.FindEntry(sequenceIds[stepIndex - 1]) : null;
+			var sourceEntry = stepIndex > 0 ? set.FindEntry(sequenceIds[stepIndex - 1]) : null;
 
 			if (sourceEntry != null && sourceEntry.mask != entry.mask)
 			{
@@ -906,7 +908,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			AnimationSet set = FindAnimationSetByName(setName);
 			if (set == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = set?.FindEntry(entryId);
+			AnimationSetEntry entry = set.FindEntry(entryId);
 			if (entry == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null)
@@ -938,7 +940,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			CancelActiveSetSequence();
 			AnimationSet set = FindAnimationSetByName(setName);
 			if (set == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = set?.FindEntry(entryId);
+			AnimationSetEntry entry = set.FindEntry(entryId);
 			if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
@@ -953,7 +955,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			CancelActiveSetSequence();
 			AnimationSet set = FindAnimationSetByName(setName); if (set == null)
 				throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = set?.FindEntry(entryId); if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
+			AnimationSetEntry entry = set.FindEntry(entryId); if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
 			return PlayFromPlayableAnimationSetEntry(set, entry, onComplete, Mathf.Clamp01(startNormalizedTime));
@@ -978,7 +980,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 			CancelActiveSetSequence();
 			AnimationSet set = FindAnimationSetByName(setName);
 			if (set == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{setName}' not found.");
-			AnimationSetEntry entry = set?.FindEntry(entryId);
+			AnimationSetEntry entry = set.FindEntry(entryId);
 			if (entry == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' not found in set '{setName}'.");
 			if (entry.clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip data.");
 			if (entry.clip.Clip == null) throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' in set '{setName}' has no clip assigned.");
@@ -992,7 +994,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		{
 			AnimationSet primary = FindAnimationSetByName(primarySetName);
 			if (primary == null) throw new InvalidOperationException($"AnimatorBridgeBase: Animation set '{primarySetName}' not found.");
-			AnimationSetEntry entry = primary?.FindEntry(entryId);
+			AnimationSetEntry entry = primary.FindEntry(entryId);
 			if (IsPlayableAnimationSetEntry(entry))
 			{
 				return PlayFromPlayableAnimationSetEntry(primary, entry, onComplete);
@@ -1000,7 +1002,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
 			AnimationSet fallback = FindAnimationSetByName(fallbackSetName);
 			if (fallback == null) throw new InvalidOperationException($"AnimatorBridgeBase: Fallback animation set '{fallbackSetName}' not found.");
-			entry = fallback?.FindEntry(entryId);
+			entry = fallback.FindEntry(entryId);
 			if (!IsPlayableAnimationSetEntry(entry))
 				throw new InvalidOperationException($"AnimatorBridgeBase: Entry '{entryId}' has no valid playable entry in '{primarySetName}' or '{fallbackSetName}'.");
 			return PlayFromPlayableAnimationSetEntry(fallback, entry, onComplete);

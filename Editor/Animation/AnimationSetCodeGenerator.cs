@@ -183,8 +183,8 @@ namespace AetherNexus.FoundationPlatform.Editor.Animation
 			sb.AppendLine("\t\tpublic static class LocomotionClipCategories");
 			sb.AppendLine("\t\t{");
 
-			var validationProfile = set?.ResolvedValidationProfile;
-			if (validationProfile?.requiredCategoryEntries != null && validationProfile.requiredCategoryEntries.Length > 0)
+			var validationProfile = set != null ? set.ResolvedValidationProfile : null;
+			if (validationProfile != null && validationProfile.requiredCategoryEntries != null && validationProfile.requiredCategoryEntries.Length > 0)
 			{
 				var seenCategories = new HashSet<string>(StringComparer.Ordinal);
 				foreach (var clip in validationProfile.requiredCategoryEntries)

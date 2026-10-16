@@ -30,7 +30,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 				}
 
 				result.Add(currentId);
-				var entry = set?.FindEntry(currentId);
+				var entry = set.FindEntry(currentId);
 				if (entry == null)
 				{
 					throw new InvalidOperationException(

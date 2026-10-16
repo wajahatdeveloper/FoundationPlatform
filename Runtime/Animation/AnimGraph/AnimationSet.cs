@@ -45,6 +45,17 @@ namespace AetherNexus.FoundationPlatform.Animation
 				}
 			}
 
+			// Called on every play request: walk a bounded depth allocation-free. Revisiting a cycle only re-checks
+			// sets that already missed, so the result matches the visited-set walk below.
+			var shallow = parentSet;
+			for (int depth = 0; depth < AllocationFreeResolveDepth; depth++)
+			{
+				if (shallow == null) return null;
+				var found = FindOwnEntry(shallow, entryId);
+				if (found != null) return found;
+				shallow = shallow.parentSet;
+			}
+
 			var visited = new HashSet<AnimationSet>();
 			visited.Add(this);
 			var current = parentSet;
@@ -54,18 +65,23 @@ namespace AetherNexus.FoundationPlatform.Animation
 				{
 					break;
 				}
-				if (current.entries != null)
-				{
-					for (int i = 0; i < current.entries.Length; i++)
-					{
-						var e = current.entries[i];
-						if (e != null && e.id == entryId)
-							return e;
-					}
-				}
+				var found = FindOwnEntry(current, entryId);
+				if (found != null) return found;
 				current = current.parentSet;
 			}
 
+			return null;
+		}
+
+		private static AnimationSetEntry FindOwnEntry(AnimationSet set, string entryId)
+		{
+			if (set.entries == null) return null;
+			for (int i = 0; i < set.entries.Length; i++)
+			{
+				var e = set.entries[i];
+				if (e != null && e.id == entryId)
+					return e;
+			}
 			return null;
 		}
 

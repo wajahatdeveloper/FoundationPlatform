@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Attributes;
 using AetherNexus.FoundationPlatform.Behaviours;
 using UnityRandom = UnityEngine.Random;
 
@@ -215,6 +216,7 @@ public static class IEnumerableExtensions
     /// <typeparam name="T">Source type.</typeparam>
     /// <param name="enumerable">The enumerable.</param>
     /// <returns>Shuffled <paramref name="enumerable"/>.</returns>
+    [PresentationRandom]
     public static IEnumerable<T> Shuffled<T>(this IEnumerable<T> enumerable) =>
         enumerable.OrderBy(v => UnityRandom.value);
 
@@ -255,6 +257,7 @@ public static class IEnumerableExtensions
     /// <summary>
     /// PRESENTATION-ONLY: uses UnityEngine.Random. Use the <see cref="IRandomProvider"/> overload in simulation code.
     /// </summary>
+    [PresentationRandom]
     public static T Random<T>(this IEnumerable<T> enumerable)
     {
         T[] array = enumerable.ToArray();
@@ -276,6 +279,7 @@ public static class IEnumerableExtensions
     /// <summary>
     /// PRESENTATION-ONLY: uses UnityEngine.Random. Use the <see cref="IRandomProvider"/> overload in simulation code.
     /// </summary>
+    [PresentationRandom]
     public static T Random<T>(this IEnumerable<T> enumerable, Func<T, float> chanceSelector)
     {
         T[] orderedArray = enumerable.OrderByDescending(chanceSelector).ToArray();
@@ -345,6 +349,7 @@ public static class IEnumerableExtensions
     /// <summary>
     /// PRESENTATION-ONLY: uses UnityEngine.Random. Use <see cref="Shuffle{T}(IEnumerable{T}, IRandomProvider)"/> in simulation code.
     /// </summary>
+    [PresentationRandom]
     public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> enumerable)
     {
         return enumerable.OrderBy(item => UnityEngine.Random.value);

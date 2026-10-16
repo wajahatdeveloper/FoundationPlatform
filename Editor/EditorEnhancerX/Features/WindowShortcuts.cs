@@ -26,8 +26,8 @@ namespace AetherNexus.FoundationPlatform.EditorEnhancerX {
                 return;
             if (change == PlayModeStateChange.EnteredPlayMode)
                 EditorApplication.ExecuteMenuItem("Window/General/Game");
-            else if (change == PlayModeStateChange.EnteredEditMode)
-                SceneView.lastActiveSceneView?.Focus();
+            else if (change == PlayModeStateChange.EnteredEditMode && SceneView.lastActiveSceneView != null)
+                SceneView.lastActiveSceneView.Focus();
         }
 
         private static bool SwitchView() {

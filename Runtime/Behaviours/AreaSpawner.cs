@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AetherNexus.FoundationPlatform.Logging;
 using AetherNexus.FoundationPlatform.Extensions;
 using AetherNexus.FoundationPlatform.AetherInspector;
+using AetherNexus.FoundationPlatform.Attributes;
 using UnityEngine;
 using AetherNexus.FoundationPlatform.Utilities.Menus;
 #if UNITY_EDITOR
@@ -297,6 +298,7 @@ namespace AetherNexus.FoundationPlatform.Behaviours
 		/// <summary>
 		///  Get a random position within the spawn area bounds.
 		/// </summary>
+		[PresentationRandom]
 		private Vector3 GetRandomSpawnPosition()
 		{
 			Bounds bounds;

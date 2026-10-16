@@ -50,6 +50,30 @@ FoundationPlatform.Editor        (Editor/)
 
 `ProjectWindowX.Editor`, `HierarchyX.Editor` (folder `Editor/HierarchyX/`, despite the type-side asmdef name), `EditorEnhancerX.Editor`, and `FoundationPlatform.StaleComponentGuard.Editor` compile **unconditionally** (`defineConstraints` empty). They still carry `versionDefines` on `com.aethernexus.gameenginecore` so the `HOMAM_GEC` symbol is available for optional `#if` guards (none in this package today). `HierarchyX.Editor` references `ProjectWindowX.Editor` so Hierarchy folder-icon rows can reuse `FolderIcons.TryResolve`. No assembly *reference* to GameEngineCore exists — the top-line "no dependencies on other AetherNexus gameplay packages" claim holds, and these designer-facing subsystems remain present even without GameEngineCore installed. (`HomamGecOrphanDefineCleaner` only strips a stale PlayerSettings `HOMAM_GEC` symbol after GEC uninstall; it does not gate these asmdefs.)
 
+## Analyzers and source generators
+
+`Runtime/Analyzers/AetherNexus.Analyzers.dll` is a Roslyn analyzer + source generator DLL (label `RoslynAnalyzer`,
+no platforms). Because it sits in `FoundationPlatform.Runtime`'s folder, Unity applies it to that assembly and every
+assembly that references it. Source: `Tools~/Analyzers` (Unity 6000.3 runs Roslyn 4.3, so the project pins
+`Microsoft.CodeAnalysis.CSharp` 4.3.0). Rebuild with `dotnet build -c Release` there; the Release build copies the DLL
+into place. `dotnet build -c Survey -p:DefineConstants=SURVEY -o <temp>` produces a copy that reports rule hits as
+warnings, for listing every hit across the solution in one offline build.
+
+| Id | Kind | Rule |
+|----|------|------|
+| AN0001 | Error | `??`, `??=`, `?.` on a `UnityEngine.Object` (bypasses Unity's destroyed-object check) |
+| AN0002 | Error | `UnityEngine.Random` in first-party runtime code unless the member, type or assembly declares `[PresentationRandom]` |
+| AN0101 | Error | a `partial` `GameAction` whose generated `Reset()` cannot be derived (non-collection initializer): write it by hand |
+| AN0102 | Error | a registered subsystem / backend type is nested private or protected |
+| AN0103 | Warning | a `[StateContributorAutoRegister]` type has no accessible `public static Instance` |
+| AN0105 | Error | duplicate ability-logic id inside one assembly |
+| AN0106 | Warning | a `GameStateFacadeBase<T>` subclass is not `partial` |
+
+Rules apply to first-party source only (`Packages/com.aethernexus.*`, `Assets/Scripts`), skipping vendored folders
+(`CoroutineX`, `RagdollHelper`, `Plugins`, `ThirdParty`). Generators: `EngineRegistrationGenerator` (subsystem and
+network backend factories), `AbilityLogicRegistrationGenerator`, `StateContributorGenerator`,
+`GameActionResetGenerator`. They emit nothing to disk; generated members are invisible to codegraph.
+
 ## Event Bus
 
 `EventBus` — `Runtime/Messaging/EventBus/EventBus.cs` — static pub/sub.

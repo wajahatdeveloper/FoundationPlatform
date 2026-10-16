@@ -477,7 +477,9 @@ public static class EditorGUIX
 			{
 				foreach (Object dragged in DragAndDrop.objectReferences)
 				{
-					var validObject = dragged as T ?? AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GetAssetPath(dragged));
+					var validObject = dragged as T;
+					if (validObject == null)
+						validObject = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GetAssetPath(dragged));
 
 					if (validObject != null) result.Add(validObject);
 				}

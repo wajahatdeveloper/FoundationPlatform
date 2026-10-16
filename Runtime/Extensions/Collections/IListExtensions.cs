@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AetherNexus.FoundationPlatform.Attributes;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,6 +10,7 @@ namespace AetherNexus.FoundationPlatform.Extensions
 {
 public static class IListExtensions
 {
+    [PresentationRandom]
     public static T Random<T>(this IList<T> list)
     {
         if (list.Count == 0) throw new IndexOutOfRangeException("List needs at least one entry to call Random()");
@@ -44,6 +46,7 @@ public static class IListExtensions
     /// </summary>
     /// <param name="list">The list to shuffle.</param>
     /// <typeparam name="T">The type of list.</typeparam>
+    [PresentationRandom]
     public static void Shuffle<T>(this IList<T> list)
     {
         for (int i = 0; i < list.Count; i++)
