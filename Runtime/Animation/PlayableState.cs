@@ -67,6 +67,13 @@ namespace AetherNexus.FoundationPlatform.Animation
 			return _events;
 		}
 
+		internal void ClearOnEnd()
+		{
+			if (_events != null) _events.OnEnd = null;
+		}
+
+		internal void ClearEvents() => _events?.Clear();
+
 		public virtual void Destroy()
 		{
 			if (IsValid)

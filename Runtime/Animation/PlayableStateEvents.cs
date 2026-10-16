@@ -31,6 +31,13 @@ namespace AetherNexus.FoundationPlatform.Animation
             _events.Add(new EventEntry { NormalizedTime = normalizedTime, Callback = callback, HasTriggered = false });
         }
 
+        internal void Clear()
+        {
+            OnEnd = null;
+            _events?.Clear();
+            _prevNormalizedTime = 0f;
+        }
+
         public void Update()
         {
             if (!_state.IsValid) return;

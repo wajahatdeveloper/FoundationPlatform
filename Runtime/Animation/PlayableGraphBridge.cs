@@ -15,6 +15,17 @@ namespace AetherNexus.FoundationPlatform.Animation
         public void Fire(string name) { if(_events.TryGetValue(name, out var cb)) cb?.Invoke(); }
     }
 
+    /// <summary>
+    /// Another graph bound to the same Animator (a rig, for one). While the bridge is throttled it must
+    /// stop: a game-time graph left running makes the Animator write a pose every frame, and on the frames
+    /// the bridge skips that pose has none of the bridge's animation in it. Evaluating it on the bridge's
+    /// frames does not help either: evaluated on its own it reads no input from the bridge's graph.
+    /// </summary>
+    public interface IGraphClockFollower
+    {
+        void SetManualClock(bool manual);
+    }
+
     [AddComponentMenu("")]
     public class PlayableGraphBridge : MonoBehaviour
     {
@@ -32,6 +43,13 @@ namespace AetherNexus.FoundationPlatform.Animation
         private float _accumulatedDeltaTime;
         private Animator _animator;
         private Renderer _cullRenderer;
+        private IGraphClockFollower _clockFollower;
+
+        public void SetClockFollower(IGraphClockFollower follower)
+        {
+            _clockFollower = follower;
+            ApplyTimeUpdateMode();
+        }
 
         /// <summary>Frames between evaluations. 1 means every frame.</summary>
         public int UpdateDivisor => _updateDivisor;
@@ -123,6 +141,8 @@ namespace AetherNexus.FoundationPlatform.Animation
             if (!IsValid) return;
 
             Graph.SetTimeUpdateMode(_updateDivisor > 1 ? DirectorUpdateMode.Manual : DirectorUpdateMode.GameTime);
+            if (_clockFollower != null)
+                _clockFollower.SetManualClock(_updateDivisor > 1);
         }
 
         public void Evaluate(float deltaTime) { if (IsValid) Graph.Evaluate(deltaTime); }
@@ -159,6 +179,11 @@ namespace AetherNexus.FoundationPlatform.Animation
                 // No Evaluate here: at divisor 1 the graph is on GameTime and Unity's director advances it.
                 return;
             }
+
+            // The follower can rebuild its graph at any time (a rig rebuild on equip), and a rebuilt graph
+            // starts on game time.
+            if (_clockFollower != null)
+                _clockFollower.SetManualClock(true);
 
             _accumulatedDeltaTime += Time.deltaTime;
             if ((Time.frameCount + _updatePhase) % _updateDivisor != 0) return;
@@ -319,9 +344,9 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public ClipState Play(ClipTransitionData transition, float fadeDuration)
         {
-            var state = new ClipState(_bridge.Graph, transition.Clip);
-            state.Speed = transition.Speed;
             float fade = fadeDuration >= 0f ? fadeDuration : transition.FadeDuration;
+            var state = RentClipState(transition.Clip, fade);
+            state.Speed = transition.Speed;
             // Authored clip events are not wired here: they fire from AnimatorBridgeBase's gameplay
             // timeline on the simulation clock, so a throttled or culled graph cannot move or drop them.
             return Play(state, fade) as ClipState;
@@ -331,8 +356,36 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public ClipState Play(AnimationClip clip, float fadeDuration)
         {
-            var state = new ClipState(_bridge.Graph, clip);
+            var state = RentClipState(clip, fadeDuration);
             return Play(state, fadeDuration) as ClipState;
+        }
+
+        // Faded-out clip states stay connected at weight 0, paused, and are rewound on the next play of
+        // the same clip. Destroying and recreating them changes the graph topology, and every topology
+        // change makes the Animator rebuild its bindings (Animator.PostProcessGraphChanges).
+        private readonly Dictionary<AnimationClip, List<ActiveState>> _idleClipStates =
+            new Dictionary<AnimationClip, List<ActiveState>>();
+
+        private ClipState RentClipState(AnimationClip clip, float fadeDuration)
+        {
+            if (clip == null || !_idleClipStates.TryGetValue(clip, out var idle) || idle.Count == 0)
+                return new ClipState(_bridge.Graph, clip);
+
+            var active = idle[idle.Count - 1];
+            idle.RemoveAt(idle.Count - 1);
+            var state = (ClipState)active.State;
+            state.ClearEvents();
+            state.Speed = 1f;
+            state.Time = 0f;
+            state.Playable.Play();
+
+            float weight = fadeDuration <= 0f ? 1f : 0f;
+            _stateMixer.SetInputWeight(active.Port, weight);
+            active.Weight = weight;
+            active.FadeProgress = 1f;
+            state.Weight = weight;
+            _activeStates.Add(active);
+            return state;
         }
 
         public PlayableState Play(PlayableState state) => Play(state, 0.25f);
@@ -348,7 +401,7 @@ namespace AetherNexus.FoundationPlatform.Animation
                 foreach (var active in _activeStates)
                 {
                     if (active.State != state && active.State is ClipState)
-                        active.State.Events().OnEnd = null;
+                        active.State.ClearOnEnd();
                 }
             }
 
@@ -438,16 +491,19 @@ namespace AetherNexus.FoundationPlatform.Animation
                 if (currentWeight == 0f && active.TargetWeight == 0f && active.State != CurrentState)
                 {
                     active.State.Weight = 0f;
-                    // Only ClipStates are transient (a fresh one is created per Play), so only they
-                    // are disconnected + destroyed here. MixerStates (stance / blend) are long-lived
-                    // and intentionally reused: they stay connected at weight 0 and are re-targeted
-                    // on the next Play, so they are deliberately NOT reclaimed.
-                    if (active.State is ClipState)
+                    // MixerStates (stance / blend) stay in the active list at weight 0 and are re-targeted
+                    // on the next Play. ClipStates leave it for the idle pool, still connected.
+                    if (active.State is ClipState clipState)
                     {
-                        _stateMixer.DisconnectInput(active.Port);
-                        _freePorts.Enqueue(active.Port);
                         _activeStates.RemoveAt(i);
-                        active.State.Destroy();
+                        clipState.ClearEvents();
+                        clipState.Playable.Pause();
+                        if (!_idleClipStates.TryGetValue(clipState.Clip, out var idle))
+                        {
+                            idle = new List<ActiveState>(2);
+                            _idleClipStates.Add(clipState.Clip, idle);
+                        }
+                        idle.Add(active);
                     }
                 }
             }
