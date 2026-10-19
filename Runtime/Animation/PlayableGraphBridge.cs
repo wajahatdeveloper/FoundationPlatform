@@ -16,17 +16,24 @@ namespace AetherNexus.FoundationPlatform.Animation
     }
 
     /// <summary>
-    /// Another graph bound to the same Animator (a rig, for one). While the bridge is throttled it must
-    /// stop: a game-time graph left running makes the Animator write a pose every frame, and on the frames
-    /// the bridge skips that pose has none of the bridge's animation in it. Evaluating it on the bridge's
-    /// frames does not help either: evaluated on its own it reads no input from the bridge's graph.
+    /// Post-pose work (a rig, for one) built into the bridge's own graph, so it shares the bridge's clock
+    /// and evaluation and reads the pose of the same frame. Outputs it adds must read
+    /// <see cref="AnimationStreamSource.PreviousInputs"/> and sort after the bridge's output.
+    /// <para>
+    /// <see cref="Build"/> runs from the bridge's Update, never mid-activation, and again on every graph
+    /// rebuild. The bridge destroys the outputs and playables added during Build before calling
+    /// <see cref="Teardown"/>. <see cref="PreEvaluate"/> runs every frame before the graph is evaluated.
+    /// </para>
     /// </summary>
-    public interface IGraphClockFollower
+    public interface IGraphExtension
     {
-        void SetManualClock(bool manual);
+        void Build(PlayableGraph graph, Animator animator);
+        void PreEvaluate(float deltaTime);
+        void Teardown();
     }
 
     [AddComponentMenu("")]
+    [DefaultExecutionOrder(10000)]
     public class PlayableGraphBridge : MonoBehaviour
     {
         public PlayableGraph Graph { get; private set; }
@@ -36,6 +43,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         private AnimationLayerMixerPlayable _layerMixer;
         private Playable _rootPlayable;
+        private AnimationPlayableOutput _output;
         public List<PlayableLayer> Layers { get; private set; }
 
         private int _updateDivisor = 1;
@@ -43,12 +51,88 @@ namespace AetherNexus.FoundationPlatform.Animation
         private float _accumulatedDeltaTime;
         private Animator _animator;
         private Renderer _cullRenderer;
-        private IGraphClockFollower _clockFollower;
 
-        public void SetClockFollower(IGraphClockFollower follower)
+        private sealed class ExtensionSlot
         {
-            _clockFollower = follower;
-            ApplyTimeUpdateMode();
+            public IGraphExtension Extension;
+            public bool Built;
+            public readonly List<PlayableOutput> Outputs = new List<PlayableOutput>();
+        }
+
+        private readonly List<ExtensionSlot> _extensions = new List<ExtensionSlot>();
+
+        /// <summary>Registers an extension; it is built on the next Update once the graph exists.</summary>
+        public void AddExtension(IGraphExtension extension)
+        {
+            if (FindExtensionSlot(extension) != null)
+                throw new InvalidOperationException(
+                    $"[Animation:ERROR:Graph] '{name}' graph extension '{extension.GetType().Name}' is already registered.");
+            _extensions.Add(new ExtensionSlot { Extension = extension });
+        }
+
+        public void RemoveExtension(IGraphExtension extension)
+        {
+            var slot = FindExtensionSlot(extension);
+            if (slot == null) return;
+            TeardownExtension(slot);
+            _extensions.Remove(slot);
+        }
+
+        /// <summary>Tears the extension's playables down and builds them again against the current hierarchy, immediately.</summary>
+        public void RebuildExtension(IGraphExtension extension)
+        {
+            var slot = FindExtensionSlot(extension)
+                ?? throw new InvalidOperationException(
+                    $"[Animation:ERROR:Graph] '{name}' graph extension '{extension.GetType().Name}' is not registered.");
+            TeardownExtension(slot);
+            BuildExtension(slot);
+        }
+
+        private ExtensionSlot FindExtensionSlot(IGraphExtension extension)
+        {
+            for (int i = 0; i < _extensions.Count; i++)
+                if (_extensions[i].Extension == extension) return _extensions[i];
+            return null;
+        }
+
+        private void BuildExtension(ExtensionSlot slot)
+        {
+            if (!IsValid) return;
+            int before = Graph.GetOutputCount();
+            slot.Extension.Build(Graph, _animator);
+            int after = Graph.GetOutputCount();
+            for (int i = before; i < after; i++)
+                slot.Outputs.Add(Graph.GetOutput(i));
+            slot.Built = true;
+        }
+
+        private void TeardownExtension(ExtensionSlot slot)
+        {
+            if (!slot.Built) return;
+            if (IsValid)
+            {
+                foreach (var output in slot.Outputs)
+                {
+                    var source = output.GetSourcePlayable();
+                    Graph.DestroyOutput(output);
+                    if (source.IsValid()) Graph.DestroySubgraph(source);
+                }
+            }
+            slot.Outputs.Clear();
+            slot.Built = false;
+            slot.Extension.Teardown();
+        }
+
+        private void TeardownAllExtensions()
+        {
+            foreach (var slot in _extensions)
+                TeardownExtension(slot);
+        }
+
+        private void BuildPendingExtensions()
+        {
+            foreach (var slot in _extensions)
+                if (!slot.Built) BuildExtension(slot);
         }
 
         /// <summary>Frames between evaluations. 1 means every frame.</summary>
@@ -66,6 +150,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public void InitializeGraph(Animator animator, int initialLayerCount)
         {
+            TeardownAllExtensions();
             if (Graph.IsValid()) Graph.Destroy();
 
             _animator = animator;
@@ -80,10 +165,10 @@ namespace AetherNexus.FoundationPlatform.Animation
             _updatePhase = 0;
             Graph = PlayableGraph.Create(gameObject.name + " AnimGraph");
 
-            var output = AnimationPlayableOutput.Create(Graph, "Output", animator);
+            _output = AnimationPlayableOutput.Create(Graph, "Output", animator);
             _layerMixer = AnimationLayerMixerPlayable.Create(Graph, initialLayerCount);
             _rootPlayable = _layerMixer;
-            output.SetSourcePlayable(_layerMixer);
+            _output.SetSourcePlayable(_layerMixer);
 
             Layers = new List<PlayableLayer>(initialLayerCount);
             for (int i = 0; i < initialLayerCount; i++)
@@ -141,26 +226,43 @@ namespace AetherNexus.FoundationPlatform.Animation
             if (!IsValid) return;
 
             Graph.SetTimeUpdateMode(_updateDivisor > 1 ? DirectorUpdateMode.Manual : DirectorUpdateMode.GameTime);
-            if (_clockFollower != null)
-                _clockFollower.SetManualClock(_updateDivisor > 1);
         }
 
-        public void Evaluate(float deltaTime) { if (IsValid) Graph.Evaluate(deltaTime); }
+        /// <summary>Manual evaluation (editor stepping, paused preview); extensions sync first so the pose includes their current data.</summary>
+        public void Evaluate(float deltaTime)
+        {
+            if (!IsValid) return;
+            PreEvaluateExtensions(Mathf.Max(0f, deltaTime));
+            Graph.Evaluate(deltaTime);
+        }
 
-        public void Evaluate() { if (IsValid) Graph.Evaluate(); }
+        public void Evaluate() => Evaluate(0f);
+
+        private void PreEvaluateExtensions(float deltaTime)
+        {
+            BuildPendingExtensions();
+            for (int i = 0; i < _extensions.Count; i++)
+                _extensions[i].Extension.PreEvaluate(deltaTime);
+        }
 
         public void SwapOutput(Animator animator)
         {
             if (!IsValid) return;
-            if (Graph.GetOutputCount() > 0)
-                Graph.DestroyOutput(Graph.GetOutput(0));
-            var output = AnimationPlayableOutput.Create(Graph, "Output", animator);
-            output.SetSourcePlayable(_layerMixer);
+            TeardownAllExtensions();
+            Graph.DestroyOutput(_output);
+            _animator = animator;
+            _output = AnimationPlayableOutput.Create(Graph, "Output", animator);
+            _output.SetSourcePlayable(_layerMixer);
         }
 
         private void Update()
         {
             if (!IsValid) return;
+
+            // Built here rather than from InitializeGraph: that runs from OnEnable, mid-activation, where
+            // rig handles cannot resolve their Animator paths. PreEvaluate runs on skipped and culled frames
+            // too, since extension timers advance on frame time.
+            PreEvaluateExtensions(Time.deltaTime);
 
             // Culled visual band uses CullCompletely. Skip Manual Evaluate while Unity says the
             // renderer is gone — otherwise divisor-throttled graphs keep skinning off-screen units.
@@ -179,11 +281,6 @@ namespace AetherNexus.FoundationPlatform.Animation
                 // No Evaluate here: at divisor 1 the graph is on GameTime and Unity's director advances it.
                 return;
             }
-
-            // The follower can rebuild its graph at any time (a rig rebuild on equip), and a rebuilt graph
-            // starts on game time.
-            if (_clockFollower != null)
-                _clockFollower.SetManualClock(true);
 
             _accumulatedDeltaTime += Time.deltaTime;
             if ((Time.frameCount + _updatePhase) % _updateDivisor != 0) return;
@@ -209,6 +306,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         private void OnDestroy()
         {
+            TeardownAllExtensions();
             if (Graph.IsValid()) Graph.Destroy();
         }
     }

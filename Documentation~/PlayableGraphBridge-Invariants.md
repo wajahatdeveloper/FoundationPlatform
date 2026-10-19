@@ -35,3 +35,19 @@ reused across plays rather than recreated.
 If you add a new `PlayableState` subtype, decide up front which lifecycle model it follows — transient
 (reclaim like `ClipState`) or long-lived (reuse like `MixerState`) — and make sure the reclaim check in
 `PlayableLayer`'s update loop treats it consistently.
+
+## One graph per Animator; post-pose work is an `IGraphExtension`
+
+Nothing else may own a graph that writes the bridge's Animator: two graphs run on two clocks, and the
+second reads no input from the first. Post-pose work (Animation Rigging, for one) registers an
+`IGraphExtension` and builds its playables and outputs into `Graph`; its outputs read
+`AnimationStreamSource.PreviousInputs` and sort after the bridge's output.
+
+- `AddExtension` only registers. `Build` runs from the bridge's Update (never mid-activation, where rig
+  handles cannot resolve) and again after every `InitializeGraph` / `SwapOutput`.
+- The bridge records the outputs added during `Build` and destroys them and their source subgraphs
+  before calling `Teardown`. `RebuildExtension` does both immediately.
+- `PreEvaluate(Time.deltaTime)` runs every frame, throttled and culled frames included, before the graph
+  is evaluated. The bridge runs at `[DefaultExecutionOrder(10000)]` so gameplay writes land first.
+- A manual `Evaluate(dt)` / `Evaluate()` (editor stepping, paused preview, pose snaps) also builds pending
+  extensions and calls `PreEvaluate(max(0, dt))` first, so the sampled pose carries current extension data.
