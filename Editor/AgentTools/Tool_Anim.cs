@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Animation;
 using AetherNexus.FoundationPlatform.Editor.Utilities;
@@ -180,7 +181,11 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			[Description("AnimationSet asset path or GUID.")]
 			string animationSet,
 			[Description("Also run the standard AnimationSet validation and capture everything it logs. This writes to the Editor console, exactly as the designer-facing validation does.")]
-			bool runValidationLog = true
+			bool runValidationLog = true,
+			[Description("Comma-separated entry ids to report. Empty = every resolved entry. Findings always cover the whole set.")]
+			string entries = "",
+			[Description("Report only the set header and findings, no entries.")]
+			bool findingsOnly = false
 		)
 		{
 			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
@@ -297,6 +302,16 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				if (runValidationLog)
 					report.ValidationLog.AddRange(CaptureLogs(() => AnimationSetValidator.LogValidation(set)));
 
+				if (findingsOnly)
+				{
+					report.Entries.Clear();
+				}
+				else if (!string.IsNullOrWhiteSpace(entries))
+				{
+					var wanted = new HashSet<string>(entries.Split(',').Select(e => e.Trim()).Where(e => e.Length > 0), StringComparer.Ordinal);
+					report.Entries.RemoveAll(e => !wanted.Contains(e.Id));
+				}
+
 				return report;
 			});
 		}
@@ -393,7 +408,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[Description("Edits entries declared on one AnimationSet in a single undoable batch. One edit per line, fields " +
 			"'key=value' separated by '|'. Keys: id (required), clip (asset path, '#ClipName' suffix, or 'none' to " +
 			"clear), speed, fade, mask (AnimationMask name), maskAsset (AvatarMask path or 'none'), layer, " +
-			"transitionBack, fadeBack (seconds back to the layer base; 0 = reuse fade), suspendTranslation, template (entry id resolved through the parent chain whose fields " +
+			"transitionBack, fadeBack (seconds back to the layer base; 0 = reuse fade), suspendTranslation, next (sequence link " +
+			"target entry id, 'none' to clear), linkIn (blend seconds into the linked entry), template (entry id resolved through the parent chain whose fields " +
 			"seed a new entry), remove=true. An id the set does not declare is added (seeded from template when " +
 			"given), which is how a child set overrides an inherited entry.")]
 		public List<string> SetEdit
@@ -494,13 +510,22 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 							case "suspendTranslation":
 								entry.suspendTranslation = bool.Parse(field.Value);
 								break;
+							case "next":
+								entry.link ??= new AnimationSetLink();
+								entry.link.nextEntryId = field.Value == "none" ? string.Empty : field.Value;
+								break;
+							case "linkIn":
+								entry.link ??= new AnimationSetLink();
+								entry.link.transitionIn = float.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture);
+								break;
 							default:
 								throw new ArgumentException($"Unknown key '{field.Key}' in '{line}'.", nameof(edits));
 						}
 					}
 
 					log.Add($"{id}: clip={(entry.clip.Clip == null ? "none" : entry.clip.Clip.name)} speed={entry.clip.Speed} " +
-						$"fade={entry.clip.FadeDuration} fadeBack={entry.transitionBackFadeDuration} mask={entry.mask} maskAsset={(entry.maskAsset == null ? "none" : entry.maskAsset.name)}");
+						$"fade={entry.clip.FadeDuration} fadeBack={entry.transitionBackFadeDuration} mask={entry.mask} maskAsset={(entry.maskAsset == null ? "none" : entry.maskAsset.name)}" +
+						(entry.link != null && !string.IsNullOrEmpty(entry.link.nextEntryId) ? $" next={entry.link.nextEntryId} linkIn={entry.link.transitionIn}" : ""));
 				}
 
 				set.entries = entries.ToArray();

@@ -12,11 +12,11 @@ ships bridge-free.
 | `render-preview` | `PreviewRenderUtility` + `AnimationClip.SampleAnimation` | One PNG of a model, prefab or scene object at a chosen angle, optionally posed at a clip time. |
 | `render-clip-strip` | same session, many samples | Labelled contact sheet across a clip (`frames` or explicit `times`), one row per `yaws` entry. |
 | `render-compare` | two preview sessions + pixel diff | Two poses side by side under identical framing, plus a difference cell and `changedFraction`. |
-| `anim-set-report` | `AnimationSet.GetResolvedEntries`, `AnimationSetValidator`, `AnimationSetValidationProfile.Validate` | Resolved entries with declaring set, clip facts, links, and every validation finding. |
+| `anim-set-report` | `AnimationSet.GetResolvedEntries`, `AnimationSetValidator`, `AnimationSetValidationProfile.Validate` | Resolved entries with declaring set, clip facts, links, and every validation finding. `entries` limits the entry list to named ids; `findingsOnly` drops it. |
 | `anim-clip-report` | `AnimationUtility` curve and event bindings | Clip facts plus, with `target`, the animated paths that do not resolve on that rig. |
 | `render-clip-grid` | same session, one row per clip | Several clips (or set entries) on one rig in a single contact sheet; with `overlayClip` + `overlayMask` each row is base + masked overlay through a layer mixer. |
 | `anim-import-normalize` | `ModelImporter.clipAnimations` | In-place humanoid import: root rotation / Y / XZ baked from Original, Loop Pose on looping clips. Only changed models reimport; `dryRun` reports. |
-| `anim-set-edit` | `AnimationSet.entries` under one Undo group | Batch add / modify / remove entries, `template` seeds a child-set override from the parent chain. |
+| `anim-set-edit` | `AnimationSet.entries` under one Undo group | Batch add / modify / remove entries, `template` seeds a child-set override from the parent chain, `next` / `linkIn` author a sequence link. |
 | `anim-jitter-probe` | `EditorApplication.update` sampling of a live rig | Play Mode: key bones per frame in character-local space after IK, per-bone acceleration stats and spike frames tagged with every layer's playing state. `forceAlwaysAnimate` stops off-camera culling from reading as frozen poses. |
 
 ## Visual verification
