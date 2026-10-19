@@ -28,7 +28,12 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		internal Bounds FramingBounds { get; }
 		internal string SourceName { get; }
 
-		internal AgentPreviewSession(GameObject source, string sourceDescription)
+		/// <param name="focus">
+		/// 'all' frames every visible renderer; 'body' frames skinned meshes and what hangs off the skeleton
+		/// (held items) and skips decals, rings and markers; 'bone:&lt;HumanBodyBones&gt;' frames a sphere of
+		/// <paramref name="focusRadius"/> around that humanoid bone.
+		/// </param>
+		internal AgentPreviewSession(GameObject source, string sourceDescription, string focus = "all", float focusRadius = 0.35f)
 		{
 			SourceName = sourceDescription;
 
@@ -50,14 +55,103 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			_utility.lights[1].color = new Color(0.85f, 0.9f, 1f, 1f);
 			_utility.lights[1].transform.rotation = Quaternion.Euler(-12f, -110f, 0f);
 
+			// Visibility is read on the source: the clone is built under an inactive holder, and a live
+			// character carries hidden renderers (a disabled 14 m radius ring) that would wreck the framing.
+			var sourceRenderers = source.GetComponentsInChildren<Renderer>(true);
+			var visible = new bool[sourceRenderers.Length];
+			for (var i = 0; i < sourceRenderers.Length; i++)
+			{
+				Renderer r = sourceRenderers[i];
+				visible[i] = r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff;
+			}
+
 			_instance = InstantiateRenderOnly(source);
 			_instance.name = source.name;
 			_instance.hideFlags = HideFlags.HideAndDontSave;
 			_instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			_utility.AddSingleGO(_instance);
 
-			_instance.GetComponentsInChildren(true, _renderers);
-			FramingBounds = ComputeBounds();
+			// Same hierarchy, so GetComponentsInChildren returns the clone's renderers in source order.
+			var cloneRenderers = _instance.GetComponentsInChildren<Renderer>(true);
+			if (cloneRenderers.Length != sourceRenderers.Length)
+				throw new InvalidOperationException(
+					$"Preview clone of '{SourceName}' has {cloneRenderers.Length} renderers but the source has {sourceRenderers.Length}; " +
+					"cannot map source visibility onto the clone.");
+			for (var i = 0; i < cloneRenderers.Length; i++)
+			{
+				if (visible[i])
+					_renderers.Add(cloneRenderers[i]);
+				else
+					cloneRenderers[i].enabled = false;
+			}
+
+			FramingBounds = ComputeFocusBounds(focus, focusRadius);
+		}
+
+		private Bounds ComputeFocusBounds(string focus, float focusRadius)
+		{
+			if (string.IsNullOrWhiteSpace(focus) || focus == "all")
+				return ComputeBounds(_renderers);
+
+			if (focus == "body")
+			{
+				var body = new List<Renderer>();
+				Transform skeleton = ResolveSkeletonRoot();
+				for (var i = 0; i < _renderers.Count; i++)
+				{
+					Renderer r = _renderers[i];
+					if (r is SkinnedMeshRenderer || (skeleton != null && r.transform.IsChildOf(skeleton)))
+						body.Add(r);
+				}
+
+				if (body.Count == 0)
+					throw new InvalidOperationException(
+						$"focus 'body' found no SkinnedMeshRenderer on '{SourceName}'. Use focus 'all' for a non-skinned target.");
+				return ComputeBounds(body);
+			}
+
+			if (focus.StartsWith("bone:", StringComparison.Ordinal))
+			{
+				string boneName = focus.Substring(5).Trim();
+				if (!Enum.TryParse(boneName, true, out HumanBodyBones bone) || bone == HumanBodyBones.LastBone)
+					throw new ArgumentException(
+						$"focus '{focus}': '{boneName}' is not a HumanBodyBones name (e.g. RightHand, LeftHand, Head, Chest).", nameof(focus));
+
+				var animator = _instance.GetComponentInChildren<Animator>(true);
+				if (animator == null || !animator.isHuman)
+					throw new InvalidOperationException(
+						$"focus '{focus}' needs a humanoid Animator on '{SourceName}'; none was found. Use focus 'body' or 'all'.");
+
+				Transform boneTransform = animator.GetBoneTransform(bone);
+				if (boneTransform == null)
+					throw new InvalidOperationException(
+						$"focus '{focus}': the Avatar on '{SourceName}' does not map {bone}.");
+
+				return new Bounds(boneTransform.position, Vector3.one * (Mathf.Max(focusRadius, 0.01f) * 2f));
+			}
+
+			throw new ArgumentException(
+				$"focus '{focus}' is not recognised. Use 'all', 'body' or 'bone:<HumanBodyBones>'.", nameof(focus));
+		}
+
+		// Humanoid hips when there is an Avatar, else the root bone of the first skinned mesh.
+		private Transform ResolveSkeletonRoot()
+		{
+			var animator = _instance.GetComponentInChildren<Animator>(true);
+			if (animator != null && animator.isHuman)
+			{
+				Transform hips = animator.GetBoneTransform(HumanBodyBones.Hips);
+				if (hips != null)
+					return hips;
+			}
+
+			for (var i = 0; i < _renderers.Count; i++)
+			{
+				if (_renderers[i] is SkinnedMeshRenderer skinned && skinned.rootBone != null)
+					return skinned.rootBone;
+			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -132,14 +226,14 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		private static bool Requires(Type required, Type candidate) =>
 			required != null && required.IsAssignableFrom(candidate);
 
-		private Bounds ComputeBounds()
+		private Bounds ComputeBounds(List<Renderer> renderers)
 		{
 			var found = false;
 			var bounds = new Bounds(Vector3.zero, Vector3.zero);
 
-			for (var i = 0; i < _renderers.Count; i++)
+			for (var i = 0; i < renderers.Count; i++)
 			{
-				Renderer renderer = _renderers[i];
+				Renderer renderer = renderers[i];
 				if (renderer == null || renderer is ParticleSystemRenderer)
 					continue;
 
@@ -160,8 +254,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 			if (!found)
 				throw new InvalidOperationException(
-					$"'{SourceName}' has no MeshRenderer or SkinnedMeshRenderer under it, so there is nothing to " +
-					"render. Point the tool at a visual prefab, a model asset, or a scene object with renderers.");
+					$"'{SourceName}' has no visible (enabled, active) MeshRenderer or SkinnedMeshRenderer under it, so there " +
+					"is nothing to render. Point the tool at a visual prefab, a model asset, or a scene object with renderers.");
 
 			if (bounds.size.magnitude < 0.0001f)
 				bounds.size = Vector3.one * 0.1f;

@@ -53,7 +53,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[Description("Renders one model, prefab or scene object to a PNG at a chosen angle, optionally posed at a " +
 			"point in an AnimationClip, and returns the file path. Runs in an off-scene preview scene with fixed " +
 			"lighting: no open scene is touched and no asset is modified. Targeting a live scene object clones its " +
-			"current transforms, which is how an evaluated IK pose gets captured (rigs do not re-evaluate off-scene).")]
+			"current transforms, which is how an evaluated IK pose gets captured (rigs do not re-evaluate off-scene). " +
+			"For a live character use focus 'body' or 'bone:RightHand'; for a view from the game camera use screenshot-capture focusTarget.")]
 		public RenderResult Preview
 		(
 			[Description("Asset path ('Assets/.../Hero.prefab'), asset GUID, or 'scene:Root/Child' for an object in a loaded scene or open prefab stage.")]
@@ -79,7 +80,13 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			[Description("Output height in pixels.")]
 			int height = 640,
 			[Description("Optional filename prefix, e.g. 'idle-front'.")]
-			string tag = ""
+			string tag = "",
+			[Description("What the camera frames. 'all' = every visible renderer; 'body' = skinned meshes plus held items, " +
+				"ignoring decals, rings and markers on a live character; 'bone:<HumanBodyBones>' = a close-up sphere around " +
+				"that bone, e.g. 'bone:RightHand' for a grip. Hidden (disabled or inactive) renderers are never framed or drawn.")]
+			string focus = "all",
+			[Description("Radius in metres of the framed sphere for focus 'bone:<name>'.")]
+			float focusRadius = 0.35f
 		)
 		{
 			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
@@ -87,7 +94,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				GameObject source = EditorObjectReference.ResolveGameObject(target, out string description);
 				AnimationClip resolvedClip = AgentClipResolver.Resolve(clip, animationSet, entry);
 
-				using var session = new AgentPreviewSession(source, description);
+				using var session = new AgentPreviewSession(source, description, focus, focusRadius);
 				session.Sample(resolvedClip, normalizedTime);
 
 				Texture2D texture = session.Render(width, height, yaw, pitch, fieldOfView, padding);
