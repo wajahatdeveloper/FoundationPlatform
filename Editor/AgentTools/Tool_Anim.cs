@@ -9,6 +9,7 @@ using AetherNexus.FoundationPlatform.Editor.Utilities;
 using UnityAiBridge;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 {
@@ -121,6 +122,30 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 
 		[Description("Set when 'target' was passed: how the clip lines up with that rig.")]
 		public string TargetSummary;
+	}
+
+	public sealed class AnimClipCompareReport
+	{
+		public string ClipA;
+		public string ClipB;
+		public string Rig;
+		public int Samples;
+
+		[Description("Set when expectBone was passed: the rotation added to clip A's pose before comparing, as 'Bone euler(x,y,z)'.")]
+		public string Expectation;
+
+		[Description("Worst angle between the two clips per compared bone, degrees, largest first. Bones under 0.05 degrees are left out.")]
+		public List<string> BoneAngles = new();
+
+		public float MaxBoneAngle;
+
+		[Description("Muscles whose largest difference exceeds muscleThreshold, as 'name max=d', largest first.")]
+		public List<string> MuscleDiffs = new();
+
+		[Description("Length, loop, frame rate and clip settings that differ between the clips.")]
+		public List<string> SettingDiffs = new();
+
+		public string Verdict;
 	}
 
 	public sealed class AnimJitterBoneStats
@@ -702,6 +727,257 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				: "";
 
 			return $"next='{link.nextEntryId}' in={link.transitionIn:0.###} out={link.transitionOut:0.###}{hold}";
+		}
+
+		public const string AnimClipCompareToolId = "anim-clip-compare";
+
+		[BridgeTool(AnimClipCompareToolId, Title = "Animation / Clip Compare", ReadOnly = true)]
+		[Description("Samples two humanoid clips on the same rig in Edit Mode and reports how far their poses differ: worst " +
+			"angle per bone, muscles that differ, and clip settings that differ. Pass expectBone + expectEuler to check that " +
+			"clip B equals clip A with a local rotation added to one bone (e.g. a baked wrist correction). The rig is copied " +
+			"and forced to AlwaysAnimate, and a clip whose samples never move fails instead of comparing frozen poses. Read-only.")]
+		public AnimClipCompareReport ClipCompare
+		(
+			[Description("Clip A: AnimationClip asset path or GUID; for a clip inside a model file append '#ClipName'.")]
+			string clipA,
+			[Description("Clip B, same format as clipA.")]
+			string clipB,
+			[Description("Rig with a humanoid Animator: prefab asset path, asset GUID, or 'scene:Root/Child'. A copy is sampled; the original is not touched.")]
+			string rig,
+			[Description("Sample times spread evenly over the shorter clip, 2..60.")]
+			int samples = 5,
+			[Description("Comma-separated HumanBodyBones to compare. Empty = every bone the avatar maps.")]
+			string bones = "",
+			[Description("Optional HumanBodyBones name: clip A's pose gets expectEuler added to this bone's local rotation before comparing.")]
+			string expectBone = "",
+			[Description("Local rotation added to expectBone, as 'x,y,z' degrees.")]
+			string expectEuler = "",
+			[Description("Muscle differences above this are listed.")]
+			float muscleThreshold = 0.01f
+		)
+		{
+			if (samples < 2 || samples > 60)
+				throw new ArgumentException("'samples' must be in [2, 60].", nameof(samples));
+
+			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
+			{
+				AnimationClip a = AgentClipResolver.Resolve(clipA, "", "");
+				AnimationClip b = AgentClipResolver.Resolve(clipB, "", "");
+				if (a == null || b == null)
+					throw new ArgumentException("anim-clip-compare needs both clipA and clipB.");
+				if (!a.humanMotion || !b.humanMotion)
+					throw new ArgumentException($"Both clips must be humanoid ('{a.name}' human={a.humanMotion}, '{b.name}' human={b.humanMotion}).");
+
+				GameObject source = EditorObjectReference.ResolveGameObject(rig, out string description);
+				var report = new AnimClipCompareReport
+				{
+					ClipA = $"{AssetDatabase.GetAssetPath(a)}#{a.name}",
+					ClipB = $"{AssetDatabase.GetAssetPath(b)}#{b.name}",
+					Rig = description,
+					Samples = samples,
+				};
+				CompareClipSettings(a, b, report.SettingDiffs);
+
+				HumanBodyBones expectHuman = HumanBodyBones.LastBone;
+				Quaternion expectRotation = Quaternion.identity;
+				if (!string.IsNullOrWhiteSpace(expectBone))
+				{
+					if (!Enum.TryParse(expectBone.Trim(), true, out expectHuman) || expectHuman == HumanBodyBones.LastBone)
+						throw new ArgumentException($"expectBone '{expectBone}' is not a HumanBodyBones name.", nameof(expectBone));
+					expectRotation = Quaternion.Euler(ParseVector3(expectEuler, nameof(expectEuler)));
+					report.Expectation = $"{expectHuman} euler({expectRotation.eulerAngles.x:0.##},{expectRotation.eulerAngles.y:0.##},{expectRotation.eulerAngles.z:0.##})";
+				}
+
+				var instance = UnityEngine.Object.Instantiate(source);
+				instance.hideFlags = HideFlags.HideAndDontSave;
+				try
+				{
+					var animator = instance.GetComponentsInChildren<Animator>(true).FirstOrDefault(x => x.avatar != null && x.avatar.isHuman);
+					if (animator == null)
+						throw new ArgumentException($"'{description}' has no Animator with a humanoid Avatar.", nameof(rig));
+					animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+					animator.applyRootMotion = false;
+
+					var compared = ResolveCompareBones(animator, bones);
+					Transform expectTransform = null;
+					if (expectHuman != HumanBodyBones.LastBone)
+					{
+						expectTransform = animator.GetBoneTransform(expectHuman);
+						if (expectTransform == null)
+							throw new ArgumentException($"The avatar on '{description}' does not map {expectHuman}.", nameof(expectBone));
+					}
+
+					var worstAngle = new float[compared.Count];
+					var worstMuscle = new float[HumanTrait.MuscleCount];
+					var handler = new HumanPoseHandler(animator.avatar, animator.transform);
+					var pose = new HumanPose();
+					var aFirst = new Quaternion[compared.Count];
+					var bFirst = new Quaternion[compared.Count];
+					bool aMoved = false, bMoved = false;
+					float length = Mathf.Min(a.length, b.length);
+					try
+					{
+						for (int s = 0; s < samples; s++)
+						{
+							float time = length * s / (samples - 1);
+
+							SampleHumanoidClip(animator, a, time);
+							if (expectTransform != null)
+								expectTransform.localRotation *= expectRotation;
+							var aRot = CaptureCharacterSpace(animator.transform, compared);
+							handler.GetHumanPose(ref pose);
+							var aMuscles = (float[])pose.muscles.Clone();
+
+							SampleHumanoidClip(animator, b, time);
+							var bRot = CaptureCharacterSpace(animator.transform, compared);
+							handler.GetHumanPose(ref pose);
+
+							for (int i = 0; i < compared.Count; i++)
+							{
+								worstAngle[i] = Mathf.Max(worstAngle[i], Quaternion.Angle(aRot[i], bRot[i]));
+								if (s == 0) { aFirst[i] = aRot[i]; bFirst[i] = bRot[i]; }
+								else
+								{
+									aMoved |= Quaternion.Angle(aFirst[i], aRot[i]) > 0.01f;
+									bMoved |= Quaternion.Angle(bFirst[i], bRot[i]) > 0.01f;
+								}
+							}
+
+							for (int m = 0; m < worstMuscle.Length; m++)
+								worstMuscle[m] = Mathf.Max(worstMuscle[m], Mathf.Abs(aMuscles[m] - pose.muscles[m]));
+						}
+					}
+					finally
+					{
+						handler.Dispose();
+					}
+
+					if (!aMoved || !bMoved)
+						throw new InvalidOperationException(
+							$"anim-clip-compare: every sample of {(!aMoved ? $"'{a.name}'" : $"'{b.name}'")} returned the same pose on '{description}'. " +
+							"The graph did not evaluate (or the clip is a single held pose), so a comparison would be meaningless.");
+
+					for (int i = 0; i < compared.Count; i++)
+						report.MaxBoneAngle = Mathf.Max(report.MaxBoneAngle, worstAngle[i]);
+					report.BoneAngles = Enumerable.Range(0, compared.Count)
+						.Where(i => worstAngle[i] >= 0.05f)
+						.OrderByDescending(i => worstAngle[i])
+						.Select(i => $"{compared[i].bone} {worstAngle[i]:0.##}")
+						.ToList();
+					report.MuscleDiffs = Enumerable.Range(0, worstMuscle.Length)
+						.Where(m => worstMuscle[m] > muscleThreshold)
+						.OrderByDescending(m => worstMuscle[m])
+						.Select(m => $"{HumanTrait.MuscleName[m]} max={worstMuscle[m]:0.###}")
+						.ToList();
+
+					string subject = expectTransform != null ? "B vs A + expectation" : "B vs A";
+					report.Verdict = $"{subject}: worst bone {report.MaxBoneAngle:0.##} deg over {compared.Count} bones, " +
+					                 $"{report.MuscleDiffs.Count} muscles above {muscleThreshold}, {report.SettingDiffs.Count} setting differences.";
+				}
+				finally
+				{
+					UnityEngine.Object.DestroyImmediate(instance);
+				}
+
+				return report;
+			});
+		}
+
+		private static List<(HumanBodyBones bone, Transform transform)> ResolveCompareBones(Animator animator, string bones)
+		{
+			var result = new List<(HumanBodyBones, Transform)>();
+			if (string.IsNullOrWhiteSpace(bones))
+			{
+				for (int i = 0; i < (int)HumanBodyBones.LastBone; i++)
+				{
+					var t = animator.GetBoneTransform((HumanBodyBones)i);
+					if (t != null)
+						result.Add(((HumanBodyBones)i, t));
+				}
+				return result;
+			}
+
+			foreach (string part in bones.Split(','))
+			{
+				string name = part.Trim();
+				if (name.Length == 0)
+					continue;
+				if (!Enum.TryParse(name, true, out HumanBodyBones bone) || bone == HumanBodyBones.LastBone)
+					throw new ArgumentException($"'{name}' is not a HumanBodyBones name.", nameof(bones));
+				var t = animator.GetBoneTransform(bone);
+				if (t == null)
+					throw new ArgumentException($"The avatar does not map {bone}.", nameof(bones));
+				result.Add((bone, t));
+			}
+			return result;
+		}
+
+		private static void SampleHumanoidClip(Animator animator, AnimationClip clip, float time)
+		{
+			var graph = UnityEngine.Playables.PlayableGraph.Create("anim-clip-compare");
+			try
+			{
+				graph.SetTimeUpdateMode(UnityEngine.Playables.DirectorUpdateMode.Manual);
+				var output = UnityEngine.Animations.AnimationPlayableOutput.Create(graph, "compare", animator);
+				var playable = UnityEngine.Animations.AnimationClipPlayable.Create(graph, clip);
+				playable.SetApplyFootIK(false);
+				output.SetSourcePlayable(playable);
+				playable.SetTime(time);
+				graph.Evaluate(0f);
+			}
+			finally
+			{
+				graph.Destroy();
+			}
+		}
+
+		private static Quaternion[] CaptureCharacterSpace(Transform root, List<(HumanBodyBones bone, Transform transform)> bones)
+		{
+			var inverse = Quaternion.Inverse(root.rotation);
+			var result = new Quaternion[bones.Count];
+			for (int i = 0; i < bones.Count; i++)
+				result[i] = inverse * bones[i].transform.rotation;
+			return result;
+		}
+
+		private static void CompareClipSettings(AnimationClip a, AnimationClip b, List<string> diffs)
+		{
+			void Check<T>(string name, T x, T y)
+			{
+				if (!EqualityComparer<T>.Default.Equals(x, y))
+					diffs.Add($"{name}: {x} vs {y}");
+			}
+
+			Check("length", Mathf.Round(a.length * 1000f) / 1000f, Mathf.Round(b.length * 1000f) / 1000f);
+			Check("frameRate", a.frameRate, b.frameRate);
+			Check("isLooping", a.isLooping, b.isLooping);
+			var sa = AnimationUtility.GetAnimationClipSettings(a);
+			var sb = AnimationUtility.GetAnimationClipSettings(b);
+			Check("loopTime", sa.loopTime, sb.loopTime);
+			Check("loopBlend", sa.loopBlend, sb.loopBlend);
+			Check("cycleOffset", sa.cycleOffset, sb.cycleOffset);
+			Check("mirror", sa.mirror, sb.mirror);
+			Check("loopBlendOrientation", sa.loopBlendOrientation, sb.loopBlendOrientation);
+			Check("loopBlendPositionY", sa.loopBlendPositionY, sb.loopBlendPositionY);
+			Check("loopBlendPositionXZ", sa.loopBlendPositionXZ, sb.loopBlendPositionXZ);
+			Check("keepOriginalOrientation", sa.keepOriginalOrientation, sb.keepOriginalOrientation);
+			Check("keepOriginalPositionY", sa.keepOriginalPositionY, sb.keepOriginalPositionY);
+			Check("keepOriginalPositionXZ", sa.keepOriginalPositionXZ, sb.keepOriginalPositionXZ);
+			Check("heightFromFeet", sa.heightFromFeet, sb.heightFromFeet);
+			Check("orientationOffsetY", sa.orientationOffsetY, sb.orientationOffsetY);
+			Check("level", sa.level, sb.level);
+			Check("events", AnimationUtility.GetAnimationEvents(a).Length, AnimationUtility.GetAnimationEvents(b).Length);
+		}
+
+		private static Vector3 ParseVector3(string value, string parameter)
+		{
+			var parts = (value ?? "").Split(',');
+			if (parts.Length != 3
+			    || !float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x)
+			    || !float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float y)
+			    || !float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z))
+				throw new ArgumentException($"'{value}' is not 'x,y,z'.", parameter);
+			return new Vector3(x, y, z);
 		}
 
 		public const string AnimJitterProbeToolId = "anim-jitter-probe";

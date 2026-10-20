@@ -15,6 +15,7 @@ ships bridge-free.
 | `render-compare` | two preview sessions + pixel diff | Two poses side by side under identical framing, plus a difference cell and `changedFraction`. |
 | `anim-set-report` | `AnimationSet.GetResolvedEntries`, `AnimationSetValidator`, `AnimationSetValidationProfile.Validate` | Resolved entries with declaring set, clip facts, links, and every validation finding. `entries` limits the entry list to named ids; `findingsOnly` drops it. |
 | `anim-clip-report` | `AnimationUtility` curve and event bindings | Clip facts plus, with `target`, the animated paths that do not resolve on that rig. |
+| `anim-clip-compare` | Manual `PlayableGraph` on a copy of the rig + `HumanPoseHandler` | Edit Mode: worst angle per bone, differing muscles and clip settings between two humanoid clips; `expectBone` + `expectEuler` checks B = A plus a bone correction (baked IK). Forces `AlwaysAnimate` and fails on frozen samples. |
 | `render-clip-grid` | same session, one row per clip | Several clips (or set entries) on one rig in a single contact sheet; with `overlayClip` + `overlayMask` each row is base + masked overlay through a layer mixer. |
 | `anim-import-normalize` | `ModelImporter.clipAnimations` | In-place humanoid import: root rotation / Y / XZ baked from Original, Loop Pose on looping clips. Only changed models reimport; `dryRun` reports. |
 | `anim-set-edit` | `AnimationSet.entries` under one Undo group | Batch add / modify / remove entries, `template` seeds a child-set override from the parent chain, `next` / `linkIn` author a sequence link. |
