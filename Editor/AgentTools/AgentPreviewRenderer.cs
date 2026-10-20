@@ -400,7 +400,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 	internal static class AgentPreviewIO
 	{
 		internal static string RenderDirectory =>
-			Path.Combine(Application.temporaryCachePath, "UnityBridge", "renders");
+			UnityAiBridge.Editor.BridgePaths.Normalize(Path.Combine(Application.temporaryCachePath, "UnityBridge", "renders"));
 
 		internal static string Write(Texture2D texture, string tag)
 		{
@@ -411,8 +411,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				throw new InvalidOperationException($"PNG encoding produced no bytes for '{tag}'.");
 
 			string safeTag = string.IsNullOrWhiteSpace(tag) ? "render" : Sanitize(tag);
-			string path = Path.Combine(RenderDirectory,
-				$"{safeTag}_{DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture)}.png");
+			string path = RenderDirectory + "/" +
+				$"{safeTag}_{DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture)}.png";
 			File.WriteAllBytes(path, png);
 			return path;
 		}

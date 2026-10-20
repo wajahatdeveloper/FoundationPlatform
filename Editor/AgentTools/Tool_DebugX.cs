@@ -43,13 +43,25 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			[Description("Most rows returned; the newest are kept.")]
 			int max = 50,
 			[Description("Messages longer than this are cut.")]
-			int maxChars = 400
+			int maxChars = 400,
+			[Description("Comma-separated case-insensitive substrings; rows whose message contains any are dropped, e.g. 'no subscribers,font asset'.")]
+			string exclude = "",
+			[Description("Fold rows with the same level, channel and message into one row ('xN', first and last id). Default true.")]
+			bool collapse = true
 		)
 		{
 			if (!Enum.TryParse(minLevel, true, out LogLevel floor))
 				throw new ArgumentException($"minLevel '{minLevel}' is not one of: {string.Join(", ", Enum.GetNames(typeof(LogLevel)))}.");
 			if (max < 1)
 				throw new ArgumentException("max must be at least 1.", nameof(max));
+
+			var excludes = new List<string>();
+			foreach (var part in exclude.Split(','))
+			{
+				var trimmed = part.Trim();
+				if (trimmed.Length > 0)
+					excludes.Add(trimmed);
+			}
 
 			return UnityAiBridge.Utils.MainThread.Instance.Run(() =>
 			{
@@ -68,21 +80,52 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 						continue;
 					if (contains.Length > 0 && (entry.Message == null || entry.Message.IndexOf(contains, StringComparison.OrdinalIgnoreCase) < 0))
 						continue;
+					if (excludes.Count > 0 && entry.Message != null && excludes.Exists(x => entry.Message.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0))
+						continue;
 					matches.Add(entry);
 				}
 
 				result.Matched = matches.Count;
-				for (var i = Math.Max(0, matches.Count - max); i < matches.Count; i++)
+				if (!collapse)
 				{
-					var entry = matches[i];
-					var message = entry.Message ?? string.Empty;
-					if (message.Length > maxChars)
-						message = message.Substring(0, maxChars) + "...";
-					result.Rows.Add($"#{entry.Id} {entry.Timestamp:HH:mm:ss.f} {entry.Level} [{entry.Channel}] {message}");
+					for (var i = Math.Max(0, matches.Count - max); i < matches.Count; i++)
+						result.Rows.Add(Format(matches[i], maxChars, 1, 0));
+					return result;
 				}
 
+				// Groups keep the position of their newest row, so the output stays chronological by last sighting.
+				var groups = new Dictionary<string, (ConsoleEntry first, ConsoleEntry last, int count)>();
+				var order = new List<string>();
+				foreach (var entry in matches)
+				{
+					var key = $"{entry.Level}|{entry.Channel}|{entry.Message}";
+					if (groups.TryGetValue(key, out var g))
+					{
+						groups[key] = (g.first, entry, g.count + 1);
+						order.Remove(key);
+					}
+					else
+					{
+						groups[key] = (entry, entry, 1);
+					}
+					order.Add(key);
+				}
+				for (var i = Math.Max(0, order.Count - max); i < order.Count; i++)
+				{
+					var g = groups[order[i]];
+					result.Rows.Add(Format(g.last, maxChars, g.count, g.first.Id));
+				}
 				return result;
 			});
+		}
+
+		static string Format(ConsoleEntry entry, int maxChars, int count, long firstId)
+		{
+			var message = entry.Message ?? string.Empty;
+			if (message.Length > maxChars)
+				message = message.Substring(0, maxChars) + "...";
+			var repeat = count > 1 ? $" (x{count}, first #{firstId})" : "";
+			return $"#{entry.Id} {entry.Timestamp:HH:mm:ss.f} {entry.Level} [{entry.Channel}] {message}{repeat}";
 		}
 	}
 }
