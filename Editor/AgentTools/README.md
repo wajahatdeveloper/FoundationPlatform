@@ -9,6 +9,7 @@ ships bridge-free.
 |---|---|---|
 | `platform-capability-list` | `FeatureCatalogApi.List` over `FeatureCatalog` | The `[DesignerFeature]` index: menu path, intent-first title, blurb, designer keywords, kind, doc. Filter with `keyword`. |
 | `platform-capability-invoke` | `FeatureCatalogApi.Invoke` → the entry's own action | Catalogued entries only; unknown keys fail with the closest matches. Returns everything Unity logged while it ran. |
+| `debugx-logs` | `ConsoleLogStore` (the DebugX Console ring) | Read-only. Every `DebugX.Logger` / `DebugX.Builder` row plus Unity `Debug.Log` and compiler rows, one line each; `minLevel`, `channel`, `contains`, `sinceId` → `NextId`, `max`, `maxChars`. In the editor DebugX does not relay to the Unity console, so `console-get-logs` cannot see these. |
 | `render-preview` | `PreviewRenderUtility` + `AnimationClip.SampleAnimation` | One PNG of a model, prefab or scene object at a chosen angle, optionally posed at a clip time. Only renderers enabled and active on the source are framed or drawn; `focus` `body` skips rings and markers on a live character, `bone:<HumanBodyBones>` gives a close-up (e.g. a grip). |
 | `render-clip-strip` | same session, many samples | Labelled contact sheet across a clip (`frames` or explicit `times`), one row per `yaws` entry. |
 | `render-compare` | two preview sessions + pixel diff | Two poses side by side under identical framing, plus a difference cell and `changedFraction`. |
