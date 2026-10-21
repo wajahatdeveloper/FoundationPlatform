@@ -19,13 +19,47 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 	}
 
 	/// <summary>
-	/// The DebugX Console store exposed to agents. In the editor DebugX.Logger output goes only to this
-	/// store (it is not relayed to UnityEngine.Debug), so console-get-logs never sees it.
+	/// The DebugX Console store exposed to agents. DebugX.Logger rows are also copied onto
+	/// console-get-logs as `debugx`. This tool is the channel and level filter. DebugX is not
+	/// relayed to UnityEngine.Debug.
 	/// </summary>
 	[BridgeToolType]
 	public partial class Tool_DebugX
 	{
 		public const string DebugXLogsToolId = "debugx-logs";
+
+		/// <summary>DebugX-logger rows for console-get-logs. Unity and compiler mirrors stay out.</summary>
+		internal static string[] DebugXOnly(string contains, string regex, int max)
+		{
+			System.Text.RegularExpressions.Regex? pattern = null;
+			if (!string.IsNullOrEmpty(regex))
+			{
+				try
+				{
+					pattern = new System.Text.RegularExpressions.Regex(regex, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+				}
+				catch (ArgumentException)
+				{
+					return Array.Empty<string>();
+				}
+			}
+
+			var rows = new List<string>();
+			for (var i = 0; i < ConsoleLogStore.Count; i++)
+			{
+				var entry = ConsoleLogStore.Get(i);
+				if (entry == null || entry.Source != ConsoleSource.DebugX)
+					continue;
+				if (contains.Length > 0 && (entry.Message == null || entry.Message.IndexOf(contains, StringComparison.OrdinalIgnoreCase) < 0))
+					continue;
+				if (pattern != null && (entry.Message == null || !pattern.IsMatch(entry.Message)))
+					continue;
+				rows.Add(Format(entry, 400, 1, 0));
+			}
+			if (max > 0 && rows.Count > max)
+				rows.RemoveRange(0, rows.Count - max);
+			return rows.ToArray();
+		}
 
 		[BridgeTool(DebugXLogsToolId, Title = "DebugX / Logs", ReadOnly = true)]
 		[Description("Rows of the DebugX Console: every DebugX.Logger / DebugX.Builder message plus Unity Debug.Log and " +
@@ -126,6 +160,15 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				message = message.Substring(0, maxChars) + "...";
 			var repeat = count > 1 ? $" (x{count}, first #{firstId})" : "";
 			return $"#{entry.Id} {entry.Timestamp:HH:mm:ss.f} {entry.Level} [{entry.Channel}] {message}{repeat}";
+		}
+	}
+
+	[UnityEditor.InitializeOnLoad]
+	static class DebugXConsoleHook
+	{
+		static DebugXConsoleHook()
+		{
+			UnityAiBridge.Editor.BridgeGameHooks.DebugXRows = Tool_DebugX.DebugXOnly;
 		}
 	}
 }
