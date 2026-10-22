@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using UnityAiBridge.Editor.Tools;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -484,7 +485,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 				int dg = Mathf.Abs(left[i].g - right[i].g);
 				int db = Mathf.Abs(left[i].b - right[i].b);
 				int magnitude = Mathf.Min(255, dr + dg + db);
-				if (magnitude > 12)
+				if (magnitude > Tool_Screenshot.Repeat.ChannelDelta)
 					changed++;
 
 				output[i] = new Color32((byte)magnitude, (byte)(magnitude / 3), (byte)(magnitude / 6), 255);

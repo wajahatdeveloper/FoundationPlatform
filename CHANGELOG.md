@@ -4,6 +4,10 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Agent image size
+
+- `render-preview` defaults to 320×320. `render-clip-strip`, `render-clip-grid` and `render-compare` cells default to 160×160. Results include `sincePrevious` and `readImage`. Read the PNG only when `readImage` is true. `changedFraction` on `render-compare` is still the A/B pose difference.
+
 ### Extensions trimmed to what the code uses
 
 - **Removed** 1,381 members of the `Runtime/Extensions` static classes with no caller in this repository (call sites found by a Roslyn token scan over every package, `Samples~` and `Assets/Scripts`, under editor, all-symbols and no-symbols preprocessor sets; members kept code depends on were kept transitively). The folder went from 21.6k to 6.6k lines. `Deconstruct` on `Vector2`/`Vector3` is kept (called implicitly by tuple deconstruction), and the `RandomX` `UnityEngine.Random` facade (`RandomX.Unity.cs`) is kept whole because its contract is member-for-member parity.

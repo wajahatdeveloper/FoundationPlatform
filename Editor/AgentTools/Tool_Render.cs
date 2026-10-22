@@ -7,6 +7,7 @@ using System.IO;
 using AetherNexus.FoundationPlatform.Animation;
 using AetherNexus.FoundationPlatform.Editor.Utilities;
 using UnityAiBridge;
+using UnityAiBridge.Editor.Tools;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,8 +16,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 {
 	public sealed class RenderResult
 	{
-		[Description("Absolute path to the saved PNG. Read it to see the render.")]
-		public string Path;
+			[Description("Absolute path to the saved PNG. Read it only when ReadImage is true.")]
+			public string Path;
 
 		public int Width;
 		public int Height;
@@ -34,9 +35,15 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[Description("One entry per rendered cell, in reading order.")]
 		public List<string> Cells = new();
 
-		[Description("Set only by render-compare: fraction of pixels that differ beyond a small threshold.")]
-		public float ChangedFraction;
-	}
+			[Description("Set only by render-compare: fraction of pixels that differ between the two poses, beyond a small threshold.")]
+			public float ChangedFraction;
+
+			[Description("Fraction of pixels that differ from the previous image of this tool, target and size. 1 on the first.")]
+			public float SincePrevious;
+
+			[Description("False when SincePrevious is under 0.005. Do not Read Path when this is false.")]
+			public bool ReadImage;
+		}
 
 	/// <summary>
 	/// Renders models, prefabs, poses and animation frames to PNG for agents. The bridge's
@@ -54,7 +61,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			"point in an AnimationClip, and returns the file path. Runs in an off-scene preview scene with fixed " +
 			"lighting: no open scene is touched and no asset is modified. Targeting a live scene object clones its " +
 			"current transforms, which is how an evaluated IK pose gets captured (rigs do not re-evaluate off-scene). " +
-			"For a live character use focus 'body' or 'bone:RightHand'; for a view from the game camera use screenshot-capture focusTarget.")]
+			"For a live character use focus 'body' or 'bone:RightHand'; for a view from the game camera use screenshot-capture focusTarget. " +
+			"Read the PNG only when readImage is true. Pass width and height for more detail than the 320 default.")]
 		public RenderResult Preview
 		(
 			[Description("Asset path ('Assets/.../Hero.prefab'), asset GUID, or 'scene:Root/Child' for an object in a loaded scene or open prefab stage.")]
@@ -75,10 +83,10 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			float fieldOfView = 30f,
 			[Description("Framing slack around the fitted bounds. 1.0 fills the frame, higher zooms out.")]
 			float padding = 1.08f,
-			[Description("Output width in pixels.")]
-			int width = 640,
-			[Description("Output height in pixels.")]
-			int height = 640,
+			[Description("Output width in pixels (default: 320).")]
+			int width = 320,
+			[Description("Output height in pixels (default: 320).")]
+			int height = 320,
 			[Description("Optional filename prefix, e.g. 'idle-front'.")]
 			string tag = "",
 			[Description("What the camera frames. 'all' = every visible renderer; 'body' = skinned meshes plus held items, " +
@@ -103,6 +111,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 					string path = AgentPreviewIO.Write(texture, string.IsNullOrWhiteSpace(tag) ? source.name : tag);
 					var result = BuildResult(path, width, height, description, resolvedClip, session, yaw, pitch, fieldOfView, padding);
 					result.Cells.Add(CellLabel(resolvedClip, normalizedTime, yaw));
+					MarkRepeat(result, texture, RenderPreviewToolId, description);
 					return result;
 				}
 				finally
@@ -117,7 +126,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[BridgeTool(RenderClipStripToolId, Title = "Render / Clip Strip")]
 		[Description("Renders a contact sheet of one target across an animation, one labelled cell per sampled time " +
 			"and one row per camera yaw. This is the primary way to review an animation without watching it: the " +
-			"whole motion arrives as a single PNG with 't=' printed in every cell.")]
+			"whole motion arrives as a single PNG with 't=' printed in every cell. Read it only when readImage is true.")]
 		public RenderResult ClipStrip
 		(
 			[Description("Asset path, asset GUID, or 'scene:Root/Child'.")]
@@ -140,10 +149,10 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			float fieldOfView = 30f,
 			[Description("Framing slack around the fitted bounds; the same framing is used for every cell so the motion is comparable.")]
 			float padding = 1.15f,
-			[Description("Width of one cell in pixels.")]
-			int cellWidth = 320,
-			[Description("Height of one cell in pixels.")]
-			int cellHeight = 320,
+			[Description("Width of one cell in pixels (default: 160).")]
+			int cellWidth = 160,
+			[Description("Height of one cell in pixels (default: 160).")]
+			int cellHeight = 160,
 			[Description("Optional filename prefix.")]
 			string tag = ""
 		)
@@ -183,6 +192,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 						RenderResult result = BuildResult(path, sheet.width, sheet.height, description, resolvedClip,
 							session, sampleYaws[0], pitch, fieldOfView, padding);
 						result.Cells.AddRange(labels);
+						MarkRepeat(result, sheet, RenderClipStripToolId, description);
 						return result;
 					}
 					finally
@@ -204,7 +214,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[Description("Renders several clips on one target as rows of a single contact sheet, one row per clip and one " +
 			"column per sampled time, so a whole animation set is reviewed in one image. With 'overlayClip' and " +
 			"'overlayMask' every row is evaluated as base clip + masked overlay through a PlayableGraph layer mixer, " +
-			"which is how the game layers an upper-body pose over a leg cycle.")]
+			"which is how the game layers an upper-body pose over a leg cycle. Read the PNG only when readImage is true.")]
 		public RenderResult ClipGrid
 		(
 			[Description("Asset path, asset GUID, or 'scene:Root/Child'.")]
@@ -225,10 +235,10 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			float fieldOfView = 30f,
 			[Description("Framing slack around the fitted bounds.")]
 			float padding = 1.15f,
-			[Description("Width of one cell in pixels.")]
+			[Description("Width of one cell in pixels (default: 160).")]
 			int cellWidth = 160,
-			[Description("Height of one cell in pixels.")]
-			int cellHeight = 200,
+			[Description("Height of one cell in pixels (default: 160).")]
+			int cellHeight = 160,
 			[Description("Optional filename prefix.")]
 			string tag = ""
 		)
@@ -282,6 +292,7 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 							overlay, session, yaw, pitch, fieldOfView, padding);
 						for (var r = 0; r < rows.Length; r++)
 							result.Cells.Add($"row {r}: {rows[r].name} {rows[r].length.ToString("0.##", CultureInfo.InvariantCulture)}s");
+						MarkRepeat(result, sheet, RenderClipGridToolId, description);
 						return result;
 					}
 					finally
@@ -314,7 +325,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 		[BridgeTool(RenderCompareToolId, Title = "Render / Compare")]
 		[Description("Renders two poses side by side under identical framing and appends a difference cell, for " +
 			"answering 'did this change anything' about a pose, a grip offset, or two variants of the same rig. " +
-			"Leave targetB empty to compare two times or two clips on the same target.")]
+			"Leave targetB empty to compare two times or two clips on the same target. Read the PNG only when readImage is true. " +
+			"changedFraction is the A/B pose difference; sincePrevious is this sheet against the previous compare.")]
 		public RenderResult Compare
 		(
 			[Description("Left-hand asset path, asset GUID, or 'scene:Root/Child'.")]
@@ -337,10 +349,10 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 			float fieldOfView = 30f,
 			[Description("Framing slack; the left-hand target's bounds frame both cells so the two renders are comparable.")]
 			float padding = 1.15f,
-			[Description("Width of one cell in pixels.")]
-			int cellWidth = 400,
-			[Description("Height of one cell in pixels.")]
-			int cellHeight = 400,
+			[Description("Width of one cell in pixels (default: 160).")]
+			int cellWidth = 160,
+			[Description("Height of one cell in pixels (default: 160).")]
+			int cellHeight = 160,
 			[Description("Append a third cell holding the per-pixel difference.")]
 			bool includeDifference = true,
 			[Description("Optional filename prefix.")]
@@ -395,6 +407,8 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 							resolvedA, sessionA, yaw, pitch, fieldOfView, padding);
 						result.Cells.AddRange(labels);
 						result.ChangedFraction = changedFraction;
+						MarkRepeat(result, sheet, RenderCompareToolId,
+							descriptionA == descriptionB ? descriptionA : descriptionA + "|" + descriptionB);
 						return result;
 					}
 					finally
@@ -408,6 +422,14 @@ namespace AetherNexus.FoundationPlatform.AgentTools.Editor
 						Object.DestroyImmediate(cells[i]);
 				}
 			});
+		}
+
+		private static void MarkRepeat(RenderResult result, Texture2D image, string tool, string subject)
+		{
+			result.SincePrevious = Tool_Screenshot.Repeat.Measure(
+				Tool_Screenshot.Repeat.Key(tool, subject, image.width, image.height),
+				image.GetPixels32(), image.width, image.height);
+			result.ReadImage = Tool_Screenshot.Repeat.ShouldRead(result.SincePrevious);
 		}
 
 		private static RenderResult BuildResult(

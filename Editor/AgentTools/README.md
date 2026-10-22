@@ -27,7 +27,9 @@ ships bridge-free.
 invisible to agents. The `render-*` tools close that gap without touching an open scene: they
 instantiate into a `PreviewRenderUtility` scene with fixed lights and fit-to-bounds framing, so the
 same inputs give the same pixels, and `framing` in the result is the exact camera to reproduce or
-nudge.
+nudge. Each result includes `readImage`. Read the PNG only when it is true. Defaults are 320×320
+for `render-preview` and 160×160 cells for the sheets; pass `width` / `height` or `cellWidth` /
+`cellHeight` when the check needs more detail.
 
 Animation Rigging does **not** evaluate off-scene. To see an evaluated IK pose, target the live
 object — `scene:Archetype_Player` — because cloning it copies the transforms the rig already wrote.
