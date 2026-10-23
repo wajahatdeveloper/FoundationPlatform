@@ -251,6 +251,7 @@ namespace AetherNexus.FoundationPlatform.Animation
             TeardownAllExtensions();
             Graph.DestroyOutput(_output);
             _animator = animator;
+            _cullRenderer = animator != null ? animator.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
             _output = AnimationPlayableOutput.Create(Graph, "Output", animator);
             _output.SetSourcePlayable(_layerMixer);
         }
