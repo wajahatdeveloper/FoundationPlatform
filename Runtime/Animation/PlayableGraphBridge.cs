@@ -148,8 +148,15 @@ namespace AetherNexus.FoundationPlatform.Animation
 
         public void InitializeGraph(Animator animator) => InitializeGraph(animator, 3);
 
-        public void InitializeGraph(Animator animator, int initialLayerCount)
+        public void InitializeGraph(Animator animator, int initialLayerCount) =>
+            InitializeGraph(animator, initialLayerCount, 1);
+
+        public void InitializeGraph(Animator animator, int initialLayerCount, int updateDivisor)
         {
+            if (updateDivisor < 1)
+                throw new ArgumentOutOfRangeException(nameof(updateDivisor), updateDivisor,
+                    $"[Animation:ERROR:Graph] '{name}' update divisor must be at least 1.");
+
             TeardownAllExtensions();
             if (Graph.IsValid()) Graph.Destroy();
 
@@ -158,10 +165,9 @@ namespace AetherNexus.FoundationPlatform.Animation
             // reports its own visibility, and the CullCompletely skip below would then throttle on it.
             _cullRenderer = animator != null ? animator.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
             _accumulatedDeltaTime = 0f;
-            // A rebuilt graph starts at full rate. Carrying the old divisor over would create the new graph
-            // on the Manual clock and the caller's following SetUpdateDivisor(1) would have to flip it back,
-            // which is the transition that leaves a graph running but frozen.
-            _updateDivisor = 1;
+            // The clock is chosen here and must not be flipped later. A rebuilt graph passes its own
+            // divisor: runtime graphs stay on GameTime (1). The edit-mode IK preview is born Manual.
+            _updateDivisor = updateDivisor;
             _updatePhase = 0;
             Graph = PlayableGraph.Create(gameObject.name + " AnimGraph");
 
