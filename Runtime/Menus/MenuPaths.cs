@@ -145,7 +145,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string CombatPreview     = Root + "Combat/Combat Preview...";
             // Labels are intent-first ("what the designer wants to do"), not implementation-first,
             // so both the menu and the Feature Finder match the words a designer searches for.
-            public const string ItemRig           = Root + "Item/Weapon Attach Points & Holsters...";
             public const string ItemIkPreview     = Root + "Item/Weapon Grip & Hand IK...";
             public const string ItemIkBake        = Root + "Item/Bake Weapon Grip Into Clips...";
             public const string ItemDebugger      = Root + "Item/Item Debugger...";
