@@ -290,6 +290,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string ItemEquippable   = Root + "Item/Equippable Item";
             public const string ItemConsumable   = Root + "Item/Consumable Item";
             public const string ItemEquipmentKit = Root + "Item/Equipment Kit";
+            public const string ItemCreateWizard = Root + "Item/Create Item...";
         }
 
         /// <summary>Assets/* — content-area actions on the selected asset or folder.</summary>

@@ -48,6 +48,13 @@ namespace AetherNexus.FoundationPlatform
             source = FragmentSource.Shared;
         }
 
+        /// <summary>Switches the fragment to the inline payload, creating it when needed.</summary>
+        public void SetInlineCustom()
+        {
+            source = FragmentSource.InlineCustom;
+            custom ??= new TPayload();
+        }
+
 #if UNITY_EDITOR
         [ShowIf(nameof(source), FragmentSource.InlineCustom)]
         [Button("Promote to Shared")]
