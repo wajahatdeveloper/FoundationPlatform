@@ -139,6 +139,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string AiBrainGraph      = Root + "AI/AI Brain Graph...";
             public const string AiDebugger        = Root + "AI/AI Debugger...";
             public const string CharacterDebugger = Root + "Character/Character Debugger...";
+            public const string CharacterSetup    = Root + "Character/Character Setup...";
             public const string CharacterRagdoll  = Root + "Character/Ragdoll Helper...";
             public const string CombatDebugger    = Root + "Combat/Combat Debugger...";
             public const string WeaponWizard      = Root + "Combat/Weapon Wizard...";
