@@ -264,6 +264,7 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         {
             public const string ReconcileSubsystemHub = Context + "CharacterSubsystemHub/Reconcile Subsystem Hub";
             public const string OpenRagdollHelper     = Context + "BoneMapper/Open Ragdoll Helper";
+            public const string OpenCharacterSetup    = Context + "CharacterEntity/Open Character Setup";
         }
 
         /// <summary>CONTEXT/CombatComponent/* — right-click actions on the fighter that owns the attack.</summary>
