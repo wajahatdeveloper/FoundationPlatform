@@ -192,6 +192,19 @@ namespace AetherNexus.FoundationPlatform.Animation
 		PositionAndRotation
 	}
 
+	/// <summary>
+	/// Which channels of a baked root trajectory a mode drives. The single source of truth: the authored entry
+	/// reads it for its own windows, and every locomotion backend reads it to decide what to consume.
+	/// </summary>
+	public static class RootMotionModeExtensions
+	{
+		public static bool DrivesPosition(this RootMotionMode mode) =>
+			mode == RootMotionMode.PositionOnly || mode == RootMotionMode.PositionAndRotation;
+
+		public static bool DrivesRotation(this RootMotionMode mode) =>
+			mode == RootMotionMode.RotationOnly || mode == RootMotionMode.PositionAndRotation;
+	}
+
 	[Serializable]
 	public class AnimationTagWindow
 	{
@@ -270,7 +283,7 @@ namespace AetherNexus.FoundationPlatform.Animation
 		[Tooltip("Explicit Animancer layer index for this clip (-1 = auto: looping→1, one-shot→2). Set explicitly for channeled actions, stun loops, concurrent overlays, etc.")]
 		public int layerIndex = -1;
 
-		[Tooltip("Which axes of root motion drive the KCC motor for this clip. Any mode other than None needs a baked trajectory below.")]
+		[Tooltip("Which axes of root motion drive the locomotion controller for this clip (whichever backend the animator is wired to). Any mode other than None needs a baked trajectory below.")]
 		public RootMotionMode rootMotionMode = RootMotionMode.None;
 
 		[HideIf(nameof(rootMotionMode), RootMotionMode.None)]
@@ -287,17 +300,15 @@ namespace AetherNexus.FoundationPlatform.Animation
 		[MinMaxSlider(0f, 1f, true)]
 		public Vector2 rootMotionRotationWindow = new Vector2(0f, 1f);
 
-		[Tooltip("While this clip plays: block KCC translation from move input. Input-driven rotation still applies. Does not replace rootMotionMode position drive.")]
+		[Tooltip("While this clip plays: block the locomotion controller's translation from move input. Input-driven rotation still applies. Does not replace rootMotionMode position drive.")]
 		public bool suspendTranslation;
 
 		[Tooltip("Optional chain to the next entry when using PlayFromSetSequence. Only the terminal step may be looping. Standalone PlayFromSet ignores link.")]
 		public AnimationSetLink link = new();
 
-		public bool DrivesRootMotionPosition =>
-			rootMotionMode == RootMotionMode.PositionOnly || rootMotionMode == RootMotionMode.PositionAndRotation;
+		public bool DrivesRootMotionPosition => rootMotionMode.DrivesPosition();
 
-		public bool DrivesRootMotionRotation =>
-			rootMotionMode == RootMotionMode.RotationOnly || rootMotionMode == RootMotionMode.PositionAndRotation;
+		public bool DrivesRootMotionRotation => rootMotionMode.DrivesRotation();
 
 		public float TransitionBackFade => transitionBackFadeDuration > 0f ? transitionBackFadeDuration : clip.FadeDuration;
 

@@ -99,6 +99,11 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 - **Changed** the fallback scope default is `FirstParty`. **Added** `InspectorXSettings.thirdPartyFolders` (default `Assets/AssetPacks`, `Assets/Plugins`): scripts under them are third-party even when they compile into `Assembly-CSharp` or carry an asmdef under `Assets/`, so asset-store packs keep Unity's inspector.
 
+### Animation
+
+- **Added** `RootMotionModeExtensions.DrivesPosition` / `DrivesRotation`: the one place that says which channels a `RootMotionMode` drives. `AnimationSetEntry.DrivesRootMotionPosition/Rotation` read through them, and both CharacterSystem locomotion backends consume baked deltas against the same predicates instead of re-deciding per backend.
+- **Changed** `rootMotionMode` and `suspendTranslation` tooltips to name "the locomotion controller" rather than "the KCC motor" — root motion is authored the same way on both backends now.
+
 ### Editor streamlining (agent-first)
 
 - **Added** `EditorInteractivity.IsAgentDriven`: true while an AI Bridge tool call runs (shared `SessionState` key, no assembly reference either way). Editor code checks it before opening popups, menus, modal dialogs or moving the selection.
