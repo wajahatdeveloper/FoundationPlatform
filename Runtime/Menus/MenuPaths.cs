@@ -277,7 +277,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
         public static class ItemContext
         {
             public const string OpenIkPreview         = Context + "EquipmentIKRuntime/Open Weapon Grip & Hand IK";
-            public const string OpenEquipmentBindings = Context + "InventoryComponent/Open Weapon Attach Points & Holsters";
         }
 
         // ============================================================================
