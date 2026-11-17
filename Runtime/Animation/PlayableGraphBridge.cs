@@ -514,18 +514,42 @@ namespace AetherNexus.FoundationPlatform.Animation
             // Independent per-state speeds let the sum sag mid-crossfade (a short reaction fading out
             // under a longer swing fading in), and a humanoid pulls the missing weight toward its default
             // pose: the body floats or sinks for those frames.
+            // A zero duration cannot wait for Update: a paused preview evaluates with delta time 0, and
+            // BeginFade would leave every outgoing clip at mixer weight 1. Those weights sum, so the body
+            // climbs and the limbs overshoot. Snap the mixer before the caller evaluates.
             CurrentState = state;
             bool found = false;
-            foreach (var active in _activeStates)
+            bool instant = fadeDuration <= 0f;
+            if (instant)
             {
-                if (active.State == state)
+                for (int i = _activeStates.Count - 1; i >= 0; i--)
                 {
-                    active.BeginFade(1f, fadeDuration);
-                    found = true;
+                    var active = _activeStates[i];
+                    if (active.State == state)
+                    {
+                        SnapStateWeight(active, 1f);
+                        found = true;
+                    }
+                    else
+                    {
+                        SnapStateWeight(active, 0f);
+                        TryRetireClipState(i);
+                    }
                 }
-                else
+            }
+            else
+            {
+                foreach (var active in _activeStates)
                 {
-                    active.BeginFade(0f, fadeDuration);
+                    if (active.State == state)
+                    {
+                        active.BeginFade(1f, fadeDuration);
+                        found = true;
+                    }
+                    else
+                    {
+                        active.BeginFade(0f, fadeDuration);
+                    }
                 }
             }
 
@@ -543,13 +567,17 @@ namespace AetherNexus.FoundationPlatform.Animation
                         _stateMixer.SetInputCount(_nextAvailablePort);
                 }
 
-                _stateMixer.ConnectInput(port, state.Playable, 0, fadeDuration <= 0f ? 1f : 0f);
+                float weight = instant ? 1f : 0f;
+                _stateMixer.ConnectInput(port, state.Playable, 0, weight);
                 if (state.Playable.IsValid()) state.Playable.Play();
-                state.Weight = fadeDuration <= 0f ? 1f : 0f;
+                state.Weight = weight;
 
-                var added = new ActiveState { State = state, Port = port, Weight = state.Weight };
-                added.BeginFade(1f, fadeDuration);
+                var added = new ActiveState { State = state, Port = port, Weight = weight };
                 _activeStates.Add(added);
+                if (instant)
+                    SnapStateWeight(added, 1f);
+                else
+                    added.BeginFade(1f, fadeDuration);
             }
 
             return state;
@@ -560,9 +588,54 @@ namespace AetherNexus.FoundationPlatform.Animation
         /// <summary>Fades all active states on this layer to weight 0. 0 duration = instant.</summary>
         public void Stop(float fadeDuration)
         {
+            if (fadeDuration <= 0f)
+            {
+                CurrentState = null;
+                for (int i = _activeStates.Count - 1; i >= 0; i--)
+                {
+                    SnapStateWeight(_activeStates[i], 0f);
+                    TryRetireClipState(i);
+                }
+                return;
+            }
+
             foreach (var active in _activeStates)
                 active.BeginFade(0f, fadeDuration);
             CurrentState = null;
+        }
+
+        private void SnapStateWeight(ActiveState active, float weight)
+        {
+            active.StartWeight = weight;
+            active.TargetWeight = weight;
+            active.Weight = weight;
+            active.FadeProgress = 1f;
+            active.FadeSpeed = 1000f;
+            active.State.Weight = weight;
+            _stateMixer.SetInputWeight(active.Port, weight);
+        }
+
+        // MixerStates (stance / blend) stay in the active list at weight 0 and are re-targeted
+        // on the next Play. ClipStates leave it for the idle pool, still connected.
+        private void TryRetireClipState(int index)
+        {
+            var active = _activeStates[index];
+            if (active.Weight != 0f || active.TargetWeight != 0f || active.State == CurrentState)
+                return;
+
+            active.State.Weight = 0f;
+            if (!(active.State is ClipState clipState))
+                return;
+
+            _activeStates.RemoveAt(index);
+            clipState.ClearEvents();
+            clipState.Playable.Pause();
+            if (!_idleClipStates.TryGetValue(clipState.Clip, out var idle))
+            {
+                idle = new List<ActiveState>(2);
+                _idleClipStates.Add(clipState.Clip, idle);
+            }
+            idle.Add(active);
         }
 
         public void Update(float deltaTime)
@@ -593,24 +666,7 @@ namespace AetherNexus.FoundationPlatform.Animation
                     active.State.Weight = currentWeight;
                 }
 
-                if (currentWeight == 0f && active.TargetWeight == 0f && active.State != CurrentState)
-                {
-                    active.State.Weight = 0f;
-                    // MixerStates (stance / blend) stay in the active list at weight 0 and are re-targeted
-                    // on the next Play. ClipStates leave it for the idle pool, still connected.
-                    if (active.State is ClipState clipState)
-                    {
-                        _activeStates.RemoveAt(i);
-                        clipState.ClearEvents();
-                        clipState.Playable.Pause();
-                        if (!_idleClipStates.TryGetValue(clipState.Clip, out var idle))
-                        {
-                            idle = new List<ActiveState>(2);
-                            _idleClipStates.Add(clipState.Clip, idle);
-                        }
-                        idle.Add(active);
-                    }
-                }
+                TryRetireClipState(i);
             }
         }
     }
