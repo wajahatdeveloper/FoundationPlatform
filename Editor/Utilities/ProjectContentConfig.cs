@@ -63,13 +63,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         private List<string> requiredAssetFolderRoots = new();
 
         [SerializeField]
-        [LabelText("Auto-Move Out-of-Sync Assets On Import")]
-        [Tooltip("When enabled, importing an asset whose type declares a [ContentHome] into the wrong folder silently " +
-                 "moves it to its home folder on every import batch. Off by default: prefer the designer-initiated " +
-                 "'Fix Out of Sync' action in the Project window / the Validation window instead of an unprompted move.")]
-        private bool autoMoveOutOfSyncOnImport;
-
-        [SerializeField]
         [LabelText("Exempt Folders")]
         [Tooltip("Folders under Assets/ excluded, with everything beneath them, from content-home ownership, out-of-sync " +
                  "and unclaimed-type validation. Types whose script lives inside one are not reported as unclaimed.")]
@@ -81,7 +74,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
         public IReadOnlyList<string> DataSharedSubfolders => dataSharedSubfolders;
         public IReadOnlyList<string> DataGlobalSubfolders => dataGlobalSubfolders;
         public IReadOnlyList<string> RequiredAssetFolderRoots => requiredAssetFolderRoots;
-        public bool AutoMoveOutOfSyncOnImport => autoMoveOutOfSyncOnImport;
         public IReadOnlyList<string> ExemptFolders => exemptFolders;
 
         [Button(ButtonSizes.Medium)]
@@ -223,7 +215,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
             IEnumerable<string> legacySharedSubfolders,
             IEnumerable<string> legacyGlobalSubfolders,
             IEnumerable<string> legacyRequiredRoots,
-            bool legacyAutoMove,
             IEnumerable<string> legacyExemptFolders)
         {
             int added = AddMissing(domains, legacyDomains)
@@ -232,11 +223,6 @@ namespace AetherNexus.FoundationPlatform.Editor.Utilities
                         + AddMissing(dataGlobalSubfolders, legacyGlobalSubfolders)
                         + AddMissing(requiredAssetFolderRoots, legacyRequiredRoots)
                         + AddMissing(exemptFolders, legacyExemptFolders);
-            if (legacyAutoMove && !autoMoveOutOfSyncOnImport)
-            {
-                autoMoveOutOfSyncOnImport = true;
-                added++;
-            }
             if (added > 0)
                 Save();
             return added;
