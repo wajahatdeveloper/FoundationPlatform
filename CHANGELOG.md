@@ -4,6 +4,10 @@ All notable changes to this package are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Preset Automation removed
+
+- **Removed** `Editor/Tools/PresetAutomation/` (import-time preset enforcement, window, settings asset). It was disabled with no `.preset` assets; use Unity's Preset Manager (default presets with `glob:` filters) and folder-based presets instead. Unity does not apply default presets on Reimport; use Reset on the importer.
+
 ### Agent image size
 
 - `render-preview` defaults to 320×320. `render-clip-strip`, `render-clip-grid` and `render-compare` cells default to 160×160. Results include `sincePrevious` and `readImage`. Read the PNG only when `readImage` is true. `changedFraction` on `render-compare` is still the A/B pose difference.

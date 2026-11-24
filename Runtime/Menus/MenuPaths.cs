@@ -173,7 +173,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             private const string Root = Window + "Utilities/";
             public const string SceneSwitcher      = Root + "Scene Switcher...";
             public const string ScriptGenerator    = Root + "Script Generator...";
-            public const string PresetAutomation   = Root + "Preset Automation Settings...";
             public const string AutoBinder         = Root + "Auto Binder...";
             public const string CreateEventChannel = Root + "Create Event Channel...";
         }

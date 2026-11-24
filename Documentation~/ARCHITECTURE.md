@@ -331,7 +331,6 @@ Settings persist to `ProjectSettings/HierarchyXSettings.asset` (per-project, ver
 | ProjectContentConfig | `Editor/Utilities/ProjectContentConfig.cs` | The one per-project content layout asset (default `Assets/Content/Global/Authoring/`): content areas, combined areas, Shared/Global subfolders, required roots, exempt folders. `Load()` throws when more than one exists. GameEngineCore reads it; it replaced `DataFolderMappingConfig`, `CentralAuthoringProjectConfig` and `DataFolderExemptionMarker` |
 | MenuItemDuplicatePathValidator | `Editor/Validation/MenuItemDuplicatePathValidator.cs` | `[InitializeOnLoad]` guard against duplicate `[MenuItem]` paths |
 | PackageIntegration | `Editor/PackageIntegration/` | Orphan `HOMAM_GEC` PlayerSettings define cleanup (`HomamGecOrphanDefineCleaner`) |
-| Preset Automation | `Editor/Tools/PresetAutomation/` | Enforce asset presets on import. Off in this project (`PresetAutomationSettings.enabled`): there are no `.preset` assets, and while on it adds work to every import |
 | Entity Debugger Overlay | `Editor/Debugging/` | Selection-following Scene view overlay (`IEntityDebugSection`) |
 | Game State window | `Editor/Debugging/` | World-scope live state (`IWorldDebugSection`) — **Window → Domain → Game State...** |
 | Scene Switcher | `Editor/Windows/SceneSwitcherWindow.cs` | Scene navigation |
