@@ -117,10 +117,6 @@ namespace AetherNexus.FoundationPlatform.Utilities.Menus
             public const string PlayerCreateTouchActionButton = GameObjectRoot + "Player/Touch/Action Button";
             public const string PlayerCreateTouchLookPad      = GameObjectRoot + "Player/Touch/Look Pad";
             public const string PlayerTouchQuickSetup         = GameObjectRoot + "Player/Set Up Touch Controls In Scene";
-            public const string LevelCreateForInSceneRoot     = GameObjectRoot + "Level/Create Level For This GameObject";
-
-            /// <summary>Assets/* — one-click LevelDefinition authoring for the GameObject loader kind.</summary>
-            public const string LevelCreateForPrefab = Assets + "Create Level For This Prefab";
         }
 
         // ============================================================================
